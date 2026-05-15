@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="CarteDeBucate.App/CarteDeBucate.App.csproj" />
+  <Project Path="CarteDeBucate.Tests/CarteDeBucate.Tests.csproj" />
+</Solution>

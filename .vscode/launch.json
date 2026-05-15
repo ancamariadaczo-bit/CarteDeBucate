@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug CarteDeBucate.App",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/CarteDeBucate.App/bin/Debug/net10.0/CarteDeBucate.App.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/CarteDeBucate.App",
+            "console": "integratedTerminal",
+            "stopAtEntry": false,
+            "preLaunchTask": "build-app"
+        }
+    ]
+}
