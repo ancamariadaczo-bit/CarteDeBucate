@@ -62,6 +62,7 @@ obj/Debug/net10.0/
  CarteDeBucate.Tests.AssemblyInfo.cs
  CarteDeBucate.Tests.GlobalUsings.g.cs
 RecipeImporterTests.cs
+UrlValidatorTests.cs
 
 [metadataReferences]
 ../CarteDeBucate.App/obj/Debug/net10.0/ref/CarteDeBucate.App.dll

@@ -2,6 +2,23 @@ using System.Net;
 
 public class RecipeImporterTests
 {
+    [Theory]
+    [InlineData("abc")]
+    [InlineData("www.google.com")]
+    [InlineData("google.com")]
+    [InlineData("ftp://example.com/recipe")]
+    [InlineData("mailto:test@example.com")]
+    public async Task ImportFromUrlAsync_WithInvalidUrl_ShouldFail(string url)
+    {
+        RecipeImporter importer = CreateImporterReturningHtml("");
+
+        RecipeImportResult result = await importer.ImportFromUrlAsync(url);
+
+        Assert.False(result.Success);
+        Assert.Null(result.Recipe);
+        Assert.Equal(AppTexts.ImportFailedInvalidUrl, result.Message);
+    }
+
     [Fact]
     public async Task ImportFromUrlAsync_WithEmptyUrl_ShouldFail()
     {
