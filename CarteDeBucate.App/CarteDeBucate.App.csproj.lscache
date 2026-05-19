@@ -64,12 +64,14 @@ Data/
  JsonRecipeRepository.cs
  RecipeStorage.cs
  StorageMode.cs
-MenuKeys.cs
-MenuOption.cs
-Models/
+Domain/Models/
  Recipe.cs
  RecipeIngredient.cs
  RecipeStep.cs
+ RecipeValidationResult.cs
+Domain/Validation/RecipeValidator.cs
+MenuKeys.cs
+MenuOption.cs
 obj/Debug/net10.0/
  .NETCoreApp,Version=v10.0.AssemblyAttributes.cs
  CarteDeBucate.App.AssemblyInfo.cs

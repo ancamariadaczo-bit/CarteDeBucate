@@ -8,6 +8,4 @@ public static class MenuKeys
     public const string EditRecipe = "6";
     public const string DeleteRecipe = "7";
     public const string Exit = "8";
-
-    public const string aaa = "9";
 }

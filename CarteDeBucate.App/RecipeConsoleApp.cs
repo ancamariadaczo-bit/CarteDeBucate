@@ -94,6 +94,14 @@ public class RecipeConsoleApp
     {
         Recipe recipe = _reader.ReadRecipeFromConsole();
 
+        RecipeValidationResult validationResult = RecipeValidator.ValidateForSave(recipe);
+
+        if (!validationResult.IsValid)
+        {
+            throw new InvalidOperationException(
+                string.Join(Environment.NewLine, validationResult.Errors));
+        }
+
         if (_recipeRepository.RecipeExistsBySourceUrl(recipe.SourceUrl))
         {
             _display.DisplayMessage(AppTexts.RecipeAlreadyExists);
@@ -274,6 +282,14 @@ public class RecipeConsoleApp
         _display.DisplayRecipeDetails(recipe);
 
         Recipe editedRecipe = _reader.ReadRecipeEditsFromConsole(recipe);
+
+        RecipeValidationResult validationResult = RecipeValidator.ValidateForSave(editedRecipe);
+
+        if (!validationResult.IsValid)
+        {
+            throw new InvalidOperationException(
+                string.Join(Environment.NewLine, validationResult.Errors));
+        }
 
         _recipeRepository.UpdateRecipe(editedRecipe);
 

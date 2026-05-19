@@ -106,4 +106,9 @@ public static class AppTexts
     public const string EditRecipeTitle = "=== Editare rețetă ===";
     public const string EditIngredientsPrompt = "Vrei să editezi ingredientele? Scrie da pentru editare sau apasă Enter ca să le păstrezi.";
     public const string EditStepsPrompt = "Vrei să editezi pașii? Scrie da pentru editare sau apasă Enter ca să îi păstrezi.";
+    public const string RecipeNameRequired = "Recipe name is required.";
+    public const string RecipeSourceUrlRequired = "Source URL is required.";
+    public const string RecipeSavedDateRequired = "Saved date is required.";
+    public const string RecipeIngredientsRequired = "Ingredients are required.";
+    public const string RecipeStepsRequired = "Steps are required.";
 }
