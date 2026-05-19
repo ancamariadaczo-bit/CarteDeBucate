@@ -2,21 +2,16 @@ using System.Linq;
 
 public class RecipeConsoleApp
 {
-    private readonly IRecipeRepository _recipeRepository;
-    private readonly RecipeImporter _recipeImporter;
+    private readonly IRecipeService _recipeService;
+
     private readonly RecipeConsoleReader _reader;
     private readonly RecipeConsoleDisplay _display;
-    private readonly List<Recipe> _recipes;
 
-    public RecipeConsoleApp(
-        IRecipeRepository recipeRepository,
-        RecipeImporter recipeImporter)
+    public RecipeConsoleApp(IRecipeService recipeService)
     {
-        _recipeRepository = recipeRepository;
-        _recipeImporter = recipeImporter;
+        _recipeService = recipeService;
         _reader = new RecipeConsoleReader();
         _display = new RecipeConsoleDisplay();
-        _recipes = _recipeRepository.GetAllRecipes();
     }
 
     public async Task RunAsync()
@@ -44,7 +39,7 @@ public class RecipeConsoleApp
                     break;
 
                 case MenuKeys.ShowRecipes:
-                    _display.DisplayRecipeList(_recipes);
+                    ShowRecipes();
                     break;
 
                 case MenuKeys.SearchRecipe:
@@ -78,41 +73,25 @@ public class RecipeConsoleApp
     private List<MenuOption> CreateMenuOptions()
     {
         return new List<MenuOption>
-    {
-        new MenuOption { Key = MenuKeys.AddRecipe, Text = AppTexts.MenuAddRecipe },
-        new MenuOption { Key = MenuKeys.ImportRecipeFromUrl, Text = AppTexts.MenuImportRecipeFromUrl },
-        new MenuOption { Key = MenuKeys.ShowRecipes, Text = AppTexts.MenuShowRecipes },
-        new MenuOption { Key = MenuKeys.SearchRecipe, Text = AppTexts.MenuSearchRecipe },
-        new MenuOption { Key = MenuKeys.ViewRecipeDetails, Text = AppTexts.MenuViewRecipeDetails },
-        new MenuOption { Key = MenuKeys.EditRecipe, Text = AppTexts.MenuEditRecipe },
-        new MenuOption { Key = MenuKeys.DeleteRecipe, Text = AppTexts.MenuDeleteRecipe },
-        new MenuOption { Key = MenuKeys.Exit, Text = AppTexts.MenuExit }
-    };
+        {
+            new MenuOption { Key = MenuKeys.AddRecipe, Text = AppTexts.MenuAddRecipe },
+            new MenuOption { Key = MenuKeys.ImportRecipeFromUrl, Text = AppTexts.MenuImportRecipeFromUrl },
+            new MenuOption { Key = MenuKeys.ShowRecipes, Text = AppTexts.MenuShowRecipes },
+            new MenuOption { Key = MenuKeys.SearchRecipe, Text = AppTexts.MenuSearchRecipe },
+            new MenuOption { Key = MenuKeys.ViewRecipeDetails, Text = AppTexts.MenuViewRecipeDetails },
+            new MenuOption { Key = MenuKeys.EditRecipe, Text = AppTexts.MenuEditRecipe },
+            new MenuOption { Key = MenuKeys.DeleteRecipe, Text = AppTexts.MenuDeleteRecipe },
+            new MenuOption { Key = MenuKeys.Exit, Text = AppTexts.MenuExit }
+        };
     }
 
     private void AddRecipe()
     {
         Recipe recipe = _reader.ReadRecipeFromConsole();
 
-        RecipeValidationResult validationResult = RecipeValidator.ValidateForSave(recipe);
+        RecipeSaveResult result = _recipeService.SaveRecipe(recipe);
 
-        if (!validationResult.IsValid)
-        {
-            throw new InvalidOperationException(
-                string.Join(Environment.NewLine, validationResult.Errors));
-        }
-
-        if (_recipeRepository.RecipeExistsBySourceUrl(recipe.SourceUrl))
-        {
-            _display.DisplayMessage(AppTexts.RecipeAlreadyExists);
-            _display.DisplayMessage(AppTexts.RecipeNotSaved);
-            return;
-        }
-
-        _recipeRepository.AddRecipe(recipe);
-        _recipes.Add(recipe);
-
-        _display.DisplayMessage(AppTexts.RecipeAdded);
+        _display.DisplayMessage(result.Message);
     }
 
     private async Task ImportRecipeFromUrlAsync()
@@ -127,7 +106,7 @@ public class RecipeConsoleApp
 
         _display.DisplayMessage(AppTexts.ImportingRecipe);
 
-        RecipeImportResult importResult = await _recipeImporter.ImportFromUrlAsync(url);
+        RecipeImportResult importResult = await _recipeService.ImportRecipeFromUrlAsync(url);
 
         _display.DisplayMessage(importResult.Message);
 
@@ -140,24 +119,36 @@ public class RecipeConsoleApp
 
         _display.DisplayImportedRecipe(importedRecipe);
 
-        if (_recipeRepository.RecipeExistsBySourceUrl(importedRecipe.SourceUrl))
+        _reader.CompleteImportedRecipeFromConsole(importedRecipe);
+
+        RecipeSaveResult saveResult = _recipeService.SaveRecipe(importedRecipe);
+
+        _display.DisplayMessage(saveResult.Message);
+
+        if (!saveResult.IsSuccess)
         {
-            _display.DisplayMessage(AppTexts.RecipeAlreadyExists);
             _display.DisplayMessage(AppTexts.RecipeNotSaved);
+        }
+    }
+
+    private void ShowRecipes()
+    {
+        List<Recipe> recipes = _recipeService.GetAllRecipes();
+
+        if (recipes.Count == 0)
+        {
+            _display.DisplayMessage(AppTexts.NoRecipes);
             return;
         }
 
-        _reader.CompleteImportedRecipeFromConsole(importedRecipe);
-
-        _recipeRepository.AddRecipe(importedRecipe);
-        _recipes.Add(importedRecipe);
-
-        _display.DisplayMessage(AppTexts.RecipeAdded);
+        _display.DisplayRecipeList(recipes);
     }
 
     private void SearchRecipes()
     {
-        if (_recipes.Count == 0)
+        List<Recipe> recipes = _recipeService.GetAllRecipes();
+
+        if (recipes.Count == 0)
         {
             _display.DisplayMessage(AppTexts.NoRecipes);
             return;
@@ -171,68 +162,22 @@ public class RecipeConsoleApp
             return;
         }
 
-        List<Recipe> foundRecipes = _recipes
-            .Where(recipe =>
-                recipe.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-                recipe.SourceUrl.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-                (recipe.Notes ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-                recipe.Ingredients.Any(ingredient =>
-                    ingredient.Contains(searchText, StringComparison.OrdinalIgnoreCase)) ||
-                recipe.Steps.Any(step =>
-                    step.Contains(searchText, StringComparison.OrdinalIgnoreCase)))
-            .ToList();
+        List<Recipe> foundRecipes = _recipeService.SearchRecipes(searchText);
 
         _display.DisplaySearchResults(foundRecipes);
     }
 
-    private void DeleteRecipe()
-    {
-        if (_recipes.Count == 0)
-        {
-            _display.DisplayMessage(AppTexts.NoRecipes);
-            return;
-        }
-
-        _display.DisplayRecipeList(_recipes);
-
-        int recipeId = _reader.ReadRecipeIdToDelete();
-
-        if (recipeId <= 0)
-        {
-            _display.DisplayMessage(AppTexts.InvalidRecipeId);
-            return;
-        }
-
-        Recipe? recipeToDelete = _recipeRepository.GetRecipeById(recipeId);
-
-        if (recipeToDelete == null)
-        {
-            _display.DisplayMessage(AppTexts.RecipeNotFound);
-            return;
-        }
-
-        _recipeRepository.DeleteRecipe(recipeId);
-
-        Recipe? recipeFromMemory = _recipes
-            .FirstOrDefault(recipe => recipe.Id == recipeId);
-
-        if (recipeFromMemory != null)
-        {
-            _recipes.Remove(recipeFromMemory);
-        }
-
-        _display.DisplayMessage(AppTexts.RecipeDeleted);
-    }
-
     private void ViewRecipeDetails()
     {
-        if (_recipes.Count == 0)
+        List<Recipe> recipes = _recipeService.GetAllRecipes();
+
+        if (recipes.Count == 0)
         {
             _display.DisplayMessage(AppTexts.NoRecipes);
             return;
         }
 
-        _display.DisplayRecipeList(_recipes);
+        _display.DisplayRecipeList(recipes);
 
         int recipeId = _reader.ReadRecipeIdToView();
 
@@ -242,7 +187,7 @@ public class RecipeConsoleApp
             return;
         }
 
-        Recipe? recipe = _recipeRepository.GetRecipeById(recipeId);
+        Recipe? recipe = _recipeService.GetRecipeById(recipeId);
 
         if (recipe == null)
         {
@@ -255,13 +200,15 @@ public class RecipeConsoleApp
 
     private void EditRecipe()
     {
-        if (_recipes.Count == 0)
+        List<Recipe> recipes = _recipeService.GetAllRecipes();
+
+        if (recipes.Count == 0)
         {
             _display.DisplayMessage(AppTexts.NoRecipes);
             return;
         }
 
-        _display.DisplayRecipeList(_recipes);
+        _display.DisplayRecipeList(recipes);
 
         int recipeId = _reader.ReadRecipeIdToEdit();
 
@@ -271,7 +218,7 @@ public class RecipeConsoleApp
             return;
         }
 
-        Recipe? recipe = _recipeRepository.GetRecipeById(recipeId);
+        Recipe? recipe = _recipeService.GetRecipeById(recipeId);
 
         if (recipe == null)
         {
@@ -283,31 +230,33 @@ public class RecipeConsoleApp
 
         Recipe editedRecipe = _reader.ReadRecipeEditsFromConsole(recipe);
 
-        RecipeValidationResult validationResult = RecipeValidator.ValidateForSave(editedRecipe);
+        RecipeSaveResult result = _recipeService.UpdateRecipe(editedRecipe);
 
-        if (!validationResult.IsValid)
-        {
-            throw new InvalidOperationException(
-                string.Join(Environment.NewLine, validationResult.Errors));
-        }
-
-        _recipeRepository.UpdateRecipe(editedRecipe);
-
-        RefreshRecipeInMemory(editedRecipe);
-
-        _display.DisplayMessage(AppTexts.RecipeUpdated);
+        _display.DisplayMessage(result.Message);
     }
 
-    private void RefreshRecipeInMemory(Recipe updatedRecipe)
+    private void DeleteRecipe()
     {
-        int recipeIndex = _recipes.FindIndex(recipe => recipe.Id == updatedRecipe.Id);
+        List<Recipe> recipes = _recipeService.GetAllRecipes();
 
-        if (recipeIndex == -1)
+        if (recipes.Count == 0)
         {
-            _recipes.Add(updatedRecipe);
+            _display.DisplayMessage(AppTexts.NoRecipes);
             return;
         }
 
-        _recipes[recipeIndex] = updatedRecipe;
+        _display.DisplayRecipeList(recipes);
+
+        int recipeId = _reader.ReadRecipeIdToDelete();
+
+        if (recipeId <= 0)
+        {
+            _display.DisplayMessage(AppTexts.InvalidRecipeId);
+            return;
+        }
+
+        RecipeSaveResult result = _recipeService.DeleteRecipe(recipeId);
+
+        _display.DisplayMessage(result.Message);
     }
 }

@@ -70,6 +70,7 @@ Domain/Models/
  RecipeStep.cs
  RecipeValidationResult.cs
 Domain/Validation/RecipeValidator.cs
+IRecipeImporter.cs
 MenuKeys.cs
 MenuOption.cs
 obj/Debug/net10.0/
@@ -84,6 +85,10 @@ RecipeImportConstants.cs
 RecipeImporter.cs
 RecipeImportKeywords.cs
 RecipeImportResult.cs
+Services/
+ IRecipeImporterService.cs
+ RecipeImporterService.cs
+ RecipeSaveResult.cs
 TextHelper.cs
 UrlValidator.cs
 

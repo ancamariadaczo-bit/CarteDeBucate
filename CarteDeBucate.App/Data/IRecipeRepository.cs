@@ -8,7 +8,7 @@ public interface IRecipeRepository
 
     void UpdateRecipe(Recipe recipe);
 
-    bool RecipeExistsBySourceUrl(string sourceUrl);
-
     void DeleteRecipe(int recipeId);
+
+    bool RecipeExistsBySourceUrl(string sourceUrl);
 }

@@ -3,7 +3,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using HtmlAgilityPack;
 
-public class RecipeImporter
+public class RecipeImporter : IRecipeImporter
 {
     private readonly HttpClient _httpClient;
 

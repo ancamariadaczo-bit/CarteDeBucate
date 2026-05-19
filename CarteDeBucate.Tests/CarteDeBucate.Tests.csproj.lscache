@@ -63,6 +63,7 @@ obj/Debug/net10.0/
  CarteDeBucate.Tests.AssemblyInfo.cs
  CarteDeBucate.Tests.GlobalUsings.g.cs
 RecipeImporterTests.cs
+Services/RecipeServiceTests.cs
 UrlValidatorTests.cs
 Validators/RecipeValidatorTests.cs
 
