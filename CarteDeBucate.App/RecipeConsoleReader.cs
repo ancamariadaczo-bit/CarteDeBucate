@@ -1,0 +1,220 @@
+public class RecipeConsoleReader
+{
+    public Recipe ReadRecipeFromConsole()
+    {
+        Recipe recipe = new Recipe();
+
+        Console.Write(AppTexts.EnterRecipeName);
+        recipe.Name = Console.ReadLine() ?? "";
+
+        Console.Write(AppTexts.EnterSourceUrl);
+        recipe.SourceUrl = Console.ReadLine() ?? "";
+
+        Console.WriteLine();
+        Console.WriteLine(AppTexts.EnterIngredientsIntro);
+        Console.WriteLine(AppTexts.EmptyLineToFinish);
+
+        recipe.Ingredients = ReadMultipleLines(AppTexts.IngredientPrompt);
+
+        Console.WriteLine();
+        Console.WriteLine(AppTexts.EnterStepsIntro);
+        Console.WriteLine(AppTexts.EmptyLineToFinish);
+
+        recipe.Steps = ReadMultipleLines(AppTexts.StepPrompt);
+
+        Console.WriteLine();
+        Console.Write(AppTexts.EnterNotes);
+        recipe.Notes = Console.ReadLine() ?? "";
+
+        recipe.SavedAt = DateTime.Now;
+
+        return recipe;
+    }
+
+    public string ReadRecipeUrlToImport()
+    {
+        Console.Write(AppTexts.EnterRecipeUrlToImport);
+
+        return Console.ReadLine() ?? "";
+    }
+
+    public string ReadSearchText()
+    {
+        Console.Write(AppTexts.SearchPrompt);
+
+        return Console.ReadLine() ?? "";
+    }
+
+    public void CompleteImportedRecipeFromConsole(Recipe recipe)
+    {
+        Console.WriteLine();
+        Console.WriteLine(AppTexts.KeepImportedIngredientsPrompt);
+        Console.WriteLine(AppTexts.EditImportedIngredientsPrompt);
+        Console.Write(AppTexts.ConsolePrompt);
+
+        string shouldEditIngredients = Console.ReadLine() ?? "";
+
+        if (!string.IsNullOrWhiteSpace(shouldEditIngredients))
+        {
+            Console.WriteLine();
+            Console.WriteLine(AppTexts.EnterIngredientsIntro);
+            Console.WriteLine(AppTexts.EmptyLineToFinish);
+
+            recipe.Ingredients = ReadMultipleLines(AppTexts.IngredientPrompt);
+        }
+
+        Console.WriteLine();
+        Console.WriteLine(AppTexts.KeepImportedStepsPrompt);
+        Console.WriteLine(AppTexts.EditImportedStepsPrompt);
+        Console.Write(AppTexts.ConsolePrompt);
+
+        string shouldEditSteps = Console.ReadLine() ?? "";
+
+        if (!string.IsNullOrWhiteSpace(shouldEditSteps))
+        {
+            Console.WriteLine();
+            Console.WriteLine(AppTexts.EnterStepsIntro);
+            Console.WriteLine(AppTexts.EmptyLineToFinish);
+
+            recipe.Steps = ReadMultipleLines(AppTexts.StepPrompt);
+        }
+
+        Console.WriteLine();
+        Console.Write(AppTexts.EnterNotes);
+        recipe.Notes = Console.ReadLine() ?? "";
+
+        recipe.SavedAt = DateTime.Now;
+    }
+
+    public int ReadRecipeIdToEdit()
+    {
+        Console.Write(AppTexts.EnterRecipeIdToEdit);
+
+        string input = Console.ReadLine() ?? "";
+
+        if (!int.TryParse(input, out int recipeId))
+        {
+            return 0;
+        }
+
+        return recipeId;
+    }
+
+    public Recipe ReadRecipeEditsFromConsole(Recipe recipe)
+    {
+        Console.WriteLine();
+        Console.WriteLine(AppTexts.EditRecipeTitle);
+        Console.WriteLine(AppTexts.KeepCurrentValuePrompt);
+
+        Console.WriteLine();
+        Console.WriteLine($"{AppTexts.CurrentValueLabel}{recipe.Name}");
+        Console.Write(AppTexts.EnterRecipeName);
+        string name = Console.ReadLine() ?? "";
+
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            recipe.Name = name;
+        }
+
+        Console.WriteLine();
+        Console.WriteLine($"{AppTexts.CurrentValueLabel}{recipe.SourceUrl}");
+        Console.Write(AppTexts.EnterSourceUrl);
+        string sourceUrl = Console.ReadLine() ?? "";
+
+        if (!string.IsNullOrWhiteSpace(sourceUrl))
+        {
+            recipe.SourceUrl = sourceUrl;
+        }
+
+        Console.WriteLine();
+        Console.WriteLine($"{AppTexts.CurrentValueLabel}{recipe.Notes}");
+        Console.Write(AppTexts.EnterNotes);
+        string notes = Console.ReadLine() ?? "";
+
+        if (!string.IsNullOrWhiteSpace(notes))
+        {
+            recipe.Notes = notes;
+        }
+
+        Console.WriteLine();
+        Console.WriteLine(AppTexts.EditIngredientsPrompt);
+        Console.Write(AppTexts.ConsolePrompt);
+        string shouldEditIngredients = Console.ReadLine() ?? "";
+
+        if (shouldEditIngredients.Equals("da", StringComparison.OrdinalIgnoreCase))
+        {
+            Console.WriteLine();
+            Console.WriteLine(AppTexts.EnterIngredientsIntro);
+            Console.WriteLine(AppTexts.EmptyLineToFinish);
+
+            recipe.Ingredients = ReadMultipleLines(AppTexts.IngredientPrompt);
+        }
+
+        Console.WriteLine();
+        Console.WriteLine(AppTexts.EditStepsPrompt);
+        Console.Write(AppTexts.ConsolePrompt);
+        string shouldEditSteps = Console.ReadLine() ?? "";
+
+        if (shouldEditSteps.Equals("da", StringComparison.OrdinalIgnoreCase))
+        {
+            Console.WriteLine();
+            Console.WriteLine(AppTexts.EnterStepsIntro);
+            Console.WriteLine(AppTexts.EmptyLineToFinish);
+
+            recipe.Steps = ReadMultipleLines(AppTexts.StepPrompt);
+        }
+
+        recipe.SavedAt = DateTime.Now;
+
+        return recipe;
+    }
+
+    private List<string> ReadMultipleLines(string prompt)
+    {
+        List<string> values = new List<string>();
+
+        while (true)
+        {
+            Console.Write(prompt);
+
+            string value = Console.ReadLine() ?? "";
+
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                break;
+            }
+
+            values.Add(value);
+        }
+
+        return values;
+    }
+
+    public int ReadRecipeIdToDelete()
+    {
+        Console.Write(AppTexts.EnterRecipeIdToDelete);
+
+        string input = Console.ReadLine() ?? "";
+
+        if (!int.TryParse(input, out int recipeId))
+        {
+            return 0;
+        }
+
+        return recipeId;
+    }
+
+    public int ReadRecipeIdToView()
+    {
+        Console.Write(AppTexts.EnterRecipeIdToView);
+
+        string input = Console.ReadLine() ?? "";
+
+        if (!int.TryParse(input, out int recipeId))
+        {
+            return 0;
+        }
+
+        return recipeId;
+    }
+}
