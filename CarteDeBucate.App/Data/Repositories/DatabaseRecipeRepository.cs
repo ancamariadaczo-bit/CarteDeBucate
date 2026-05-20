@@ -121,10 +121,10 @@ public class DatabaseRecipeRepository : IRecipeRepository
 
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
-        SELECT COUNT(*)
-        FROM Recipes
-        WHERE LOWER(TRIM(SourceUrl)) = LOWER(TRIM(@SourceUrl));
-        """;
+            SELECT COUNT(*)
+            FROM Recipes
+            WHERE LOWER(TRIM(SourceUrl)) = LOWER(TRIM(@SourceUrl));
+            """;
 
         command.Parameters.AddWithValue("@SourceUrl", sourceUrl);
 

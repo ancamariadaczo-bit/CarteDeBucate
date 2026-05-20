@@ -121,14 +121,24 @@ public class RecipeConsoleApp
 
         _reader.CompleteImportedRecipeFromConsole(importedRecipe);
 
-        RecipeSaveResult saveResult = _recipeService.SaveRecipe(importedRecipe);
+        bool shouldSave = _reader.AskForSaveConfirmation();
 
-        _display.DisplayMessage(saveResult.Message);
+        if (shouldSave)
+        {
+            RecipeSaveResult saveResult = _recipeService.SaveRecipe(importedRecipe);
 
-        if (!saveResult.IsSuccess)
+            _display.DisplayMessage(saveResult.Message);
+
+            if (!saveResult.IsSuccess)
+            {
+                _display.DisplayMessage(AppTexts.RecipeNotSaved);
+            }
+        }
+        else
         {
             _display.DisplayMessage(AppTexts.RecipeNotSaved);
         }
+        ;
     }
 
     private void ShowRecipes()

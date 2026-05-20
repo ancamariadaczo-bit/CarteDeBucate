@@ -111,4 +111,8 @@ public static class AppTexts
     public const string RecipeSavedDateRequired = "Saved date is required.";
     public const string RecipeIngredientsRequired = "Ingredients are required.";
     public const string RecipeStepsRequired = "Steps are required.";
+
+    public const string SaveRecipeQuestion = "Dorești să salvezi această rețetă? (Y/N)?";
+    public const string InvalidSaveOption = "Opțiune invalidă. Te rog introdu Y pentru Da sau N pentru Nu.";
+
 }

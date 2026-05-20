@@ -217,4 +217,29 @@ public class RecipeConsoleReader
 
         return recipeId;
     }
+
+    public bool AskForSaveConfirmation()
+    {
+        while (true)
+        {
+            Console.WriteLine();
+            Console.WriteLine(AppTexts.SaveRecipeQuestion);
+            Console.Write(AppTexts.ConsolePrompt);
+
+            string? input = Console.ReadLine()?.Trim().ToLower();
+
+            if (input == "y" || input == "yes" || input == "da" || input == "d")
+            {
+                return true;
+            }
+
+            if (input == "n" || input == "no" || input == "nu")
+            {
+                return false;
+            }
+
+            Console.WriteLine();
+            Console.WriteLine(AppTexts.InvalidSaveOption);
+        }
+    }
 }
