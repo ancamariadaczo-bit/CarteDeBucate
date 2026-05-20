@@ -1,10 +1,13 @@
 ﻿
+IRecipeConsoleReader recipeReader = new RecipeConsoleReader();
+IRecipeConsoleWriter recipeWriter = new RecipeConsoleWriter();
+
 IRecipeRepository recipeRepository = CreateRecipeRepository(AppSettings.CurrentStorageMode);
 RecipeImporter recipeImporter = new RecipeImporter();
 
 IRecipeService recipeService = new RecipeService(recipeRepository, recipeImporter);
 
-RecipeConsoleApp app = new RecipeConsoleApp(recipeService);
+RecipeConsoleApp app = new RecipeConsoleApp(recipeReader, recipeWriter, recipeService);
 
 await app.RunAsync();
 

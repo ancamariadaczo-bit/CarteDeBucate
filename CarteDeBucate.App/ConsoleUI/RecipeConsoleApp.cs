@@ -2,16 +2,18 @@ using System.Linq;
 
 public class RecipeConsoleApp
 {
+    private readonly IRecipeConsoleReader _reader;
+    private readonly IRecipeConsoleWriter _writer;
     private readonly IRecipeService _recipeService;
 
-    private readonly RecipeConsoleReader _reader;
-    private readonly RecipeConsoleDisplay _display;
-
-    public RecipeConsoleApp(IRecipeService recipeService)
+    public RecipeConsoleApp(
+        IRecipeConsoleReader reader,
+        IRecipeConsoleWriter writer,
+        IRecipeService recipeService)
     {
+        _reader = reader;
+        _writer = writer;
         _recipeService = recipeService;
-        _reader = new RecipeConsoleReader();
-        _display = new RecipeConsoleDisplay();
     }
 
     public async Task RunAsync()
@@ -22,7 +24,7 @@ public class RecipeConsoleApp
 
         while (isRunning)
         {
-            _display.ShowMenu(menuOptions);
+            _writer.ShowMenu(menuOptions);
 
             string selectedOption = Console.ReadLine() ?? "";
 
@@ -60,11 +62,11 @@ public class RecipeConsoleApp
 
                 case MenuKeys.Exit:
                     isRunning = false;
-                    _display.DisplayMessage(AppTexts.AppClosed);
+                    _writer.DisplayMessage(AppTexts.AppClosed);
                     break;
 
                 default:
-                    _display.DisplayMessage(AppTexts.InvalidOption);
+                    _writer.DisplayMessage(AppTexts.InvalidOption);
                     break;
             }
         }
@@ -91,7 +93,7 @@ public class RecipeConsoleApp
 
         RecipeSaveResult result = _recipeService.SaveRecipe(recipe);
 
-        _display.DisplayMessage(result.Message);
+        _writer.DisplayMessage(result.Message);
     }
 
     private async Task ImportRecipeFromUrlAsync()
@@ -100,15 +102,15 @@ public class RecipeConsoleApp
 
         if (string.IsNullOrWhiteSpace(url))
         {
-            _display.DisplayMessage(AppTexts.EmptyUrl);
+            _writer.DisplayMessage(AppTexts.EmptyUrl);
             return;
         }
 
-        _display.DisplayMessage(AppTexts.ImportingRecipe);
+        _writer.DisplayMessage(AppTexts.ImportingRecipe);
 
         RecipeImportResult importResult = await _recipeService.ImportRecipeFromUrlAsync(url);
 
-        _display.DisplayMessage(importResult.Message);
+        _writer.DisplayMessage(importResult.Message);
 
         if (!importResult.Success || importResult.Recipe == null)
         {
@@ -117,7 +119,7 @@ public class RecipeConsoleApp
 
         Recipe importedRecipe = importResult.Recipe;
 
-        _display.DisplayImportedRecipe(importedRecipe);
+        _writer.DisplayImportedRecipe(importedRecipe);
 
         _reader.CompleteImportedRecipeFromConsole(importedRecipe);
 
@@ -127,16 +129,16 @@ public class RecipeConsoleApp
         {
             RecipeSaveResult saveResult = _recipeService.SaveRecipe(importedRecipe);
 
-            _display.DisplayMessage(saveResult.Message);
+            _writer.DisplayMessage(saveResult.Message);
 
             if (!saveResult.IsSuccess)
             {
-                _display.DisplayMessage(AppTexts.RecipeNotSaved);
+                _writer.DisplayMessage(AppTexts.RecipeNotSaved);
             }
         }
         else
         {
-            _display.DisplayMessage(AppTexts.RecipeNotSaved);
+            _writer.DisplayMessage(AppTexts.RecipeNotSaved);
         }
         ;
     }
@@ -147,11 +149,11 @@ public class RecipeConsoleApp
 
         if (recipes.Count == 0)
         {
-            _display.DisplayMessage(AppTexts.NoRecipes);
+            _writer.DisplayMessage(AppTexts.NoRecipes);
             return;
         }
 
-        _display.DisplayRecipeList(recipes);
+        _writer.DisplayRecipeList(recipes);
     }
 
     private void SearchRecipes()
@@ -160,7 +162,7 @@ public class RecipeConsoleApp
 
         if (recipes.Count == 0)
         {
-            _display.DisplayMessage(AppTexts.NoRecipes);
+            _writer.DisplayMessage(AppTexts.NoRecipes);
             return;
         }
 
@@ -168,13 +170,13 @@ public class RecipeConsoleApp
 
         if (string.IsNullOrWhiteSpace(searchText))
         {
-            _display.DisplayMessage(AppTexts.InvalidOption);
+            _writer.DisplayMessage(AppTexts.InvalidOption);
             return;
         }
 
         List<Recipe> foundRecipes = _recipeService.SearchRecipes(searchText);
 
-        _display.DisplaySearchResults(foundRecipes);
+        _writer.DisplaySearchResults(foundRecipes);
     }
 
     private void ViewRecipeDetails()
@@ -183,17 +185,17 @@ public class RecipeConsoleApp
 
         if (recipes.Count == 0)
         {
-            _display.DisplayMessage(AppTexts.NoRecipes);
+            _writer.DisplayMessage(AppTexts.NoRecipes);
             return;
         }
 
-        _display.DisplayRecipeList(recipes);
+        _writer.DisplayRecipeList(recipes);
 
         int recipeId = _reader.ReadRecipeIdToView();
 
         if (recipeId <= 0)
         {
-            _display.DisplayMessage(AppTexts.InvalidRecipeId);
+            _writer.DisplayMessage(AppTexts.InvalidRecipeId);
             return;
         }
 
@@ -201,11 +203,11 @@ public class RecipeConsoleApp
 
         if (recipe == null)
         {
-            _display.DisplayMessage(AppTexts.RecipeNotFound);
+            _writer.DisplayMessage(AppTexts.RecipeNotFound);
             return;
         }
 
-        _display.DisplayRecipeDetails(recipe);
+        _writer.DisplayRecipeDetails(recipe);
     }
 
     private void EditRecipe()
@@ -214,17 +216,17 @@ public class RecipeConsoleApp
 
         if (recipes.Count == 0)
         {
-            _display.DisplayMessage(AppTexts.NoRecipes);
+            _writer.DisplayMessage(AppTexts.NoRecipes);
             return;
         }
 
-        _display.DisplayRecipeList(recipes);
+        _writer.DisplayRecipeList(recipes);
 
         int recipeId = _reader.ReadRecipeIdToEdit();
 
         if (recipeId <= 0)
         {
-            _display.DisplayMessage(AppTexts.InvalidRecipeId);
+            _writer.DisplayMessage(AppTexts.InvalidRecipeId);
             return;
         }
 
@@ -232,17 +234,17 @@ public class RecipeConsoleApp
 
         if (recipe == null)
         {
-            _display.DisplayMessage(AppTexts.RecipeNotFound);
+            _writer.DisplayMessage(AppTexts.RecipeNotFound);
             return;
         }
 
-        _display.DisplayRecipeDetails(recipe);
+        _writer.DisplayRecipeDetails(recipe);
 
         Recipe editedRecipe = _reader.ReadRecipeEditsFromConsole(recipe);
 
         RecipeSaveResult result = _recipeService.UpdateRecipe(editedRecipe);
 
-        _display.DisplayMessage(result.Message);
+        _writer.DisplayMessage(result.Message);
     }
 
     private void DeleteRecipe()
@@ -251,22 +253,22 @@ public class RecipeConsoleApp
 
         if (recipes.Count == 0)
         {
-            _display.DisplayMessage(AppTexts.NoRecipes);
+            _writer.DisplayMessage(AppTexts.NoRecipes);
             return;
         }
 
-        _display.DisplayRecipeList(recipes);
+        _writer.DisplayRecipeList(recipes);
 
         int recipeId = _reader.ReadRecipeIdToDelete();
 
         if (recipeId <= 0)
         {
-            _display.DisplayMessage(AppTexts.InvalidRecipeId);
+            _writer.DisplayMessage(AppTexts.InvalidRecipeId);
             return;
         }
 
         RecipeSaveResult result = _recipeService.DeleteRecipe(recipeId);
 
-        _display.DisplayMessage(result.Message);
+        _writer.DisplayMessage(result.Message);
     }
 }

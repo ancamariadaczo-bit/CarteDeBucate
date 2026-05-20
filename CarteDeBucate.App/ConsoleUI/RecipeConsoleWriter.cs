@@ -1,4 +1,6 @@
-public class RecipeConsoleDisplay
+
+
+public class RecipeConsoleWriter : IRecipeConsoleWriter
 {
     public void ShowMenu(List<MenuOption> options)
     {

@@ -56,9 +56,11 @@ TemporaryDependencyNodeTargetIdentifier=net10.0
 [sourceFiles]
 Configuration/AppSettings.cs
 ConsoleUI/
+ IRecipeConsoleReader.cs
+ IRecipeConsoleWriter.cs
  RecipeConsoleApp.cs
- RecipeConsoleDisplay.cs
  RecipeConsoleReader.cs
+ RecipeConsoleWriter.cs
 Constants/
  AppsTexts.cs
  MenuKeys.cs

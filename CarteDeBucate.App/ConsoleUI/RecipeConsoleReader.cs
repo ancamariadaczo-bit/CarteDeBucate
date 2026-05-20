@@ -1,4 +1,4 @@
-public class RecipeConsoleReader
+public class RecipeConsoleReader : IRecipeConsoleReader
 {
     public Recipe ReadRecipeFromConsole()
     {
