@@ -54,43 +54,46 @@ TemporaryDependencyNodeTargetIdentifier=net10.0
 /warnaserror+:NU1605,SYSLIB0011
 
 [sourceFiles]
-AppSettings.cs
-AppsTexts.cs
-Data/
+Configuration/AppSettings.cs
+ConsoleUI/
+ RecipeConsoleApp.cs
+ RecipeConsoleDisplay.cs
+ RecipeConsoleReader.cs
+Constants/
+ AppsTexts.cs
+ MenuKeys.cs
+ MenuOption.cs
+ RecipeImportConstants.cs
+ RecipeImportKeywords.cs
+Data/Database/
  DatabaseInitializer.cs
- DatabaseRecipeRepository.cs
  DatabaseScripts.cs
+Data/Repositories/
+ DatabaseRecipeRepository.cs
  IRecipeRepository.cs
  JsonRecipeRepository.cs
- RecipeStorage.cs
- StorageMode.cs
-Domain/Models/
+Data/StorageMode.cs
+Helpers/TextHelper.cs
+Models/
  Recipe.cs
+ RecipeImportResult.cs
  RecipeIngredient.cs
+ RecipeSaveResult.cs
  RecipeStep.cs
  RecipeValidationResult.cs
-Domain/Validation/RecipeValidator.cs
-IRecipeImporter.cs
-MenuKeys.cs
-MenuOption.cs
 obj/Debug/net10.0/
  .NETCoreApp,Version=v10.0.AssemblyAttributes.cs
  CarteDeBucate.App.AssemblyInfo.cs
  CarteDeBucate.App.GlobalUsings.g.cs
 Program.cs
-RecipeConsoleApp.cs
-RecipeConsoleDisplay.cs
-RecipeConsoleReader.cs
-RecipeImportConstants.cs
-RecipeImporter.cs
-RecipeImportKeywords.cs
-RecipeImportResult.cs
 Services/
+ IRecipeImporter.cs
  IRecipeImporterService.cs
+ RecipeImporter.cs
  RecipeImporterService.cs
- RecipeSaveResult.cs
-TextHelper.cs
-UrlValidator.cs
+Validation/
+ RecipeValidator.cs
+ UrlValidator.cs
 
 [metadataReferences]
 <DOTNET>/packs/Microsoft.NETCore.App.Ref/10.0.7/ref/net10.0/

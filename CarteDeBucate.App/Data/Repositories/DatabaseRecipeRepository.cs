@@ -18,10 +18,10 @@ public class DatabaseRecipeRepository : IRecipeRepository
 
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
-        SELECT Id, Name, SourceUrl, SavedAt, Notes
-        FROM Recipes
-        ORDER BY SavedAt DESC;
-        """;
+            SELECT Id, Name, SourceUrl, SavedAt, Notes
+            FROM Recipes
+            ORDER BY SavedAt DESC;
+            """;
 
         using SqliteDataReader reader = command.ExecuteReader();
 
@@ -142,11 +142,11 @@ public class DatabaseRecipeRepository : IRecipeRepository
         command.Transaction = transaction;
 
         command.CommandText = """
-        INSERT INTO Recipes (Name, SourceUrl, SavedAt, Notes)
-        VALUES (@Name, @SourceUrl, @SavedAt, @Notes);
+            INSERT INTO Recipes (Name, SourceUrl, SavedAt, Notes)
+            VALUES (@Name, @SourceUrl, @SavedAt, @Notes);
 
-        SELECT last_insert_rowid();
-        """;
+            SELECT last_insert_rowid();
+            """;
 
         command.Parameters.AddWithValue("@Name", recipe.Name);
         command.Parameters.AddWithValue("@SourceUrl", recipe.SourceUrl);
@@ -170,9 +170,9 @@ public class DatabaseRecipeRepository : IRecipeRepository
             command.Transaction = transaction;
 
             command.CommandText = """
-            INSERT INTO RecipeIngredients (RecipeId, IngredientOrder, IngredientText)
-            VALUES (@RecipeId, @IngredientOrder, @IngredientText);
-            """;
+                INSERT INTO RecipeIngredients (RecipeId, IngredientOrder, IngredientText)
+                VALUES (@RecipeId, @IngredientOrder, @IngredientText);
+                """;
 
             command.Parameters.AddWithValue("@RecipeId", recipeId);
             command.Parameters.AddWithValue("@IngredientOrder", i + 1);
@@ -194,9 +194,9 @@ public class DatabaseRecipeRepository : IRecipeRepository
             command.Transaction = transaction;
 
             command.CommandText = """
-            INSERT INTO RecipeSteps (RecipeId, StepOrder, StepText)
-            VALUES (@RecipeId, @StepOrder, @StepText);
-            """;
+                INSERT INTO RecipeSteps (RecipeId, StepOrder, StepText)
+                VALUES (@RecipeId, @StepOrder, @StepText);
+                """;
 
             command.Parameters.AddWithValue("@RecipeId", recipeId);
             command.Parameters.AddWithValue("@StepOrder", i + 1);
@@ -212,11 +212,11 @@ public class DatabaseRecipeRepository : IRecipeRepository
 
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
-        SELECT IngredientText
-        FROM RecipeIngredients
-        WHERE RecipeId = @RecipeId
-        ORDER BY IngredientOrder;
-        """;
+            SELECT IngredientText
+            FROM RecipeIngredients
+            WHERE RecipeId = @RecipeId
+            ORDER BY IngredientOrder;
+            """;
 
         command.Parameters.AddWithValue("@RecipeId", recipeId);
 
@@ -236,11 +236,11 @@ public class DatabaseRecipeRepository : IRecipeRepository
 
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
-        SELECT StepText
-        FROM RecipeSteps
-        WHERE RecipeId = @RecipeId
-        ORDER BY StepOrder;
-        """;
+            SELECT StepText
+            FROM RecipeSteps
+            WHERE RecipeId = @RecipeId
+            ORDER BY StepOrder;
+            """;
 
         command.Parameters.AddWithValue("@RecipeId", recipeId);
 
@@ -285,9 +285,9 @@ public class DatabaseRecipeRepository : IRecipeRepository
         command.Transaction = transaction;
 
         command.CommandText = """
-    DELETE FROM RecipeIngredients
-    WHERE RecipeId = @RecipeId;
-    """;
+            DELETE FROM RecipeIngredients
+            WHERE RecipeId = @RecipeId;
+            """;
 
         command.Parameters.AddWithValue("@RecipeId", recipeId);
 
@@ -303,9 +303,9 @@ public class DatabaseRecipeRepository : IRecipeRepository
         command.Transaction = transaction;
 
         command.CommandText = """
-    DELETE FROM RecipeSteps
-    WHERE RecipeId = @RecipeId;
-    """;
+            DELETE FROM RecipeSteps
+            WHERE RecipeId = @RecipeId;
+            """;
 
         command.Parameters.AddWithValue("@RecipeId", recipeId);
 
@@ -321,9 +321,9 @@ public class DatabaseRecipeRepository : IRecipeRepository
         command.Transaction = transaction;
 
         command.CommandText = """
-    DELETE FROM Recipes
-    WHERE Id = @RecipeId;
-    """;
+            DELETE FROM Recipes
+            WHERE Id = @RecipeId;
+            """;
 
         command.Parameters.AddWithValue("@RecipeId", recipeId);
 
@@ -335,10 +335,10 @@ public class DatabaseRecipeRepository : IRecipeRepository
         using SqliteCommand command = connection.CreateCommand();
 
         command.CommandText = """
-    SELECT Id, Name, SourceUrl, SavedAt, Notes
-    FROM Recipes
-    WHERE Id = @RecipeId;
-    """;
+            SELECT Id, Name, SourceUrl, SavedAt, Notes
+            FROM Recipes
+            WHERE Id = @RecipeId;
+            """;
 
         command.Parameters.AddWithValue("@RecipeId", recipeId);
 
@@ -375,13 +375,13 @@ public class DatabaseRecipeRepository : IRecipeRepository
         command.Transaction = transaction;
 
         command.CommandText = """
-    UPDATE Recipes
-    SET Name = @Name,
-        SourceUrl = @SourceUrl,
-        SavedAt = @SavedAt,
-        Notes = @Notes
-    WHERE Id = @RecipeId;
-    """;
+            UPDATE Recipes
+            SET Name = @Name,
+                SourceUrl = @SourceUrl,
+                SavedAt = @SavedAt,
+                Notes = @Notes
+            WHERE Id = @RecipeId;
+            """;
 
         command.Parameters.AddWithValue("@RecipeId", recipe.Id);
         command.Parameters.AddWithValue("@Name", recipe.Name);

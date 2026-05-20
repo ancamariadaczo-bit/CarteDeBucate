@@ -137,8 +137,8 @@ public static class RecipeImportKeywords
     "cooking",
     "baking"
 };
-public static readonly string[] BlockedPageKeywords =
-{
+    public static readonly string[] BlockedPageKeywords =
+    {
     "please wait while your request is being verified",
     "checking your browser before accessing",
     "verify you are human",
@@ -146,23 +146,23 @@ public static readonly string[] BlockedPageKeywords =
     "cf-browser-verification",
     "cloudflare ray id"
 };
-public static readonly string[] StrongBlockedPageKeywords =
-{
+    public static readonly string[] StrongBlockedPageKeywords =
+    {
     "please wait while your request is being verified",
     "checking your browser before accessing",
     "checking if the site connection is secure",
     "verify you are human"
 };
 
-public static readonly string[] CloudflareBlockedPageKeywords =
-{
+    public static readonly string[] CloudflareBlockedPageKeywords =
+    {
     "cloudflare ray id",
     "attention required",
     "access denied",
     "error 1020"
 };
 
-public const int BlockedPageMinimumKeywordScore = 2;
+    public const int BlockedPageMinimumKeywordScore = 2;
 
-public const string CloudflareRayIdKeyword = "cloudflare ray id";
+    public const string CloudflareRayIdKeyword = "cloudflare ray id";
 }
