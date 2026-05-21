@@ -1,5 +1,10 @@
 public class RecipeConsoleReader : IRecipeConsoleReader
 {
+    public string ReadMenuOption()
+    {
+        return Console.ReadLine() ?? string.Empty;
+    }
+
     public Recipe ReadRecipeFromConsole()
     {
         Recipe recipe = new Recipe();

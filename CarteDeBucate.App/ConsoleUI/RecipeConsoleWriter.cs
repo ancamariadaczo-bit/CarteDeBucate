@@ -2,6 +2,11 @@
 
 public class RecipeConsoleWriter : IRecipeConsoleWriter
 {
+    public void DisplayEmptyLine()
+    {
+        Console.WriteLine();
+    }
+
     public void ShowMenu(List<MenuOption> options)
     {
         Console.WriteLine();

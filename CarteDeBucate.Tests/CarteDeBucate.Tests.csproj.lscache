@@ -57,11 +57,16 @@ TemporaryDependencyNodeTargetIdentifier=net10.0
 <NUGET>/microsoft.net.test.sdk/17.14.1/build/net8.0/Microsoft.NET.Test.Sdk.Program.cs
  @folderNames=..,..,..,.nuget,packages,microsoft.net.test.sdk,17.14.1,build,net8.0
 DatabaseRecipeRepositoryTests.cs
-FakeHttpMessageHandler.cs
+Fakes/
+ FakeHttpMessageHandler.cs
+ FakeRecipeConsoleReader.cs
+ FakeRecipeConsoleWriter.cs
+ FakeRecipeService.cs
 obj/Debug/net10.0/
  .NETCoreApp,Version=v10.0.AssemblyAttributes.cs
  CarteDeBucate.Tests.AssemblyInfo.cs
  CarteDeBucate.Tests.GlobalUsings.g.cs
+RecipeConsoleAppTests.cs
 RecipeImporterTests.cs
 Services/RecipeServiceTests.cs
 UrlValidatorTests.cs

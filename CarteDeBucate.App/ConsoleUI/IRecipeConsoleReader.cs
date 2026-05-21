@@ -1,5 +1,6 @@
 public interface IRecipeConsoleReader
 {
+    string ReadMenuOption();
     bool AskForSaveConfirmation();
     void CompleteImportedRecipeFromConsole(Recipe recipe);
     Recipe ReadRecipeEditsFromConsole(Recipe recipe);

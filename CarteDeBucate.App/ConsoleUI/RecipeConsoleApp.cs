@@ -26,9 +26,9 @@ public class RecipeConsoleApp
         {
             _writer.ShowMenu(menuOptions);
 
-            string selectedOption = Console.ReadLine() ?? "";
+            string selectedOption = _reader.ReadMenuOption();
 
-            Console.WriteLine();
+            _writer.DisplayEmptyLine();
 
             switch (selectedOption)
             {
