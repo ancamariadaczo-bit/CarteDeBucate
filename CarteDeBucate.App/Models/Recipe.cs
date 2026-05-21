@@ -7,4 +7,5 @@ public class Recipe
     public List<string> Ingredients { get; set; } = new();
     public List<string> Steps { get; set; } = new();
     public string Notes { get; set; } = "";
+    public RecipeStatus Status { get; set; } = RecipeStatus.Saved;
 }

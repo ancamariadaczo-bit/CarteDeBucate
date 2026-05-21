@@ -13,7 +13,8 @@ public static class DatabaseScripts
         Name TEXT NOT NULL,
         SourceUrl TEXT NOT NULL,
         SavedAt TEXT NOT NULL,
-        Notes TEXT NULL
+        Notes TEXT NULL,
+        Status INTEGER NOT NULL DEFAULT 0
     );
     """;
 
@@ -35,5 +36,18 @@ public static class DatabaseScripts
         StepText TEXT NOT NULL,
         FOREIGN KEY (RecipeId) REFERENCES Recipes(Id)
     );
+    """;
+
+    public const string CreateSchemaMigrationsTable = """
+    CREATE TABLE IF NOT EXISTS SchemaMigrations (
+        Version INTEGER PRIMARY KEY,
+        Name TEXT NOT NULL,
+        AppliedAt TEXT NOT NULL
+    );
+    """;
+
+    public const string AddRecipeStatusColumn = """
+    ALTER TABLE Recipes
+    ADD COLUMN Status INTEGER NOT NULL DEFAULT 0;
     """;
 }

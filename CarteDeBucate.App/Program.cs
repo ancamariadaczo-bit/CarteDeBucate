@@ -23,6 +23,9 @@ IRecipeRepository CreateRecipeRepository(StorageMode storageMode)
         DatabaseInitializer databaseInitializer = new DatabaseInitializer(AppSettings.DatabasePath);
         databaseInitializer.Initialize();
 
+        DatabaseMigrator migrator = new DatabaseMigrator(AppSettings.DatabasePath);
+        migrator.ApplyMigrations();
+
         return new DatabaseRecipeRepository(AppSettings.DatabasePath);
     }
 

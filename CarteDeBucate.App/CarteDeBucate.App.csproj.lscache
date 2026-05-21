@@ -69,6 +69,8 @@ Constants/
  RecipeImportKeywords.cs
 Data/Database/
  DatabaseInitializer.cs
+ DatabaseMigration.cs
+ DatabaseMigrator.cs
  DatabaseScripts.cs
 Data/Repositories/
  DatabaseRecipeRepository.cs
@@ -81,6 +83,7 @@ Models/
  RecipeImportResult.cs
  RecipeIngredient.cs
  RecipeSaveResult.cs
+ RecipeStatus.cs
  RecipeStep.cs
  RecipeValidationResult.cs
 obj/Debug/net10.0/

@@ -18,7 +18,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
 
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
-            SELECT Id, Name, SourceUrl, SavedAt, Notes
+            SELECT Id, Name, SourceUrl, SavedAt, Notes, Status
             FROM Recipes
             ORDER BY SavedAt DESC;
             """;
@@ -109,6 +109,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
             throw;
         }
     }
+
     public bool RecipeExistsBySourceUrl(string sourceUrl)
     {
         if (string.IsNullOrWhiteSpace(sourceUrl))
@@ -142,8 +143,8 @@ public class DatabaseRecipeRepository : IRecipeRepository
         command.Transaction = transaction;
 
         command.CommandText = """
-            INSERT INTO Recipes (Name, SourceUrl, SavedAt, Notes)
-            VALUES (@Name, @SourceUrl, @SavedAt, @Notes);
+            INSERT INTO Recipes (Name, SourceUrl, SavedAt, Notes, Status)
+            VALUES (@Name, @SourceUrl, @SavedAt, @Notes, @Status);
 
             SELECT last_insert_rowid();
             """;
@@ -152,6 +153,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
         command.Parameters.AddWithValue("@SourceUrl", recipe.SourceUrl);
         command.Parameters.AddWithValue("@SavedAt", recipe.SavedAt.ToString("O"));
         command.Parameters.AddWithValue("@Notes", string.IsNullOrWhiteSpace(recipe.Notes) ? DBNull.Value : recipe.Notes);
+        command.Parameters.AddWithValue("@Status", (int)recipe.Status);
 
         long recipeId = (long)(command.ExecuteScalar() ?? 0);
 
@@ -277,8 +279,8 @@ public class DatabaseRecipeRepository : IRecipeRepository
     }
 
     private void DeleteRecipeIngredients(
-    SqliteConnection connection,
-    SqliteTransaction transaction,
+        SqliteConnection connection,
+        SqliteTransaction transaction,
     int recipeId)
     {
         using SqliteCommand command = connection.CreateCommand();
@@ -361,6 +363,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
             SourceUrl = reader.GetString(2),
             SavedAt = DateTime.Parse(reader.GetString(3)),
             Notes = reader.IsDBNull(4) ? "" : reader.GetString(4),
+            Status = (RecipeStatus)reader.GetInt32(reader.GetOrdinal("Status")),
             Ingredients = new List<string>(),
             Steps = new List<string>()
         };
@@ -379,7 +382,8 @@ public class DatabaseRecipeRepository : IRecipeRepository
             SET Name = @Name,
                 SourceUrl = @SourceUrl,
                 SavedAt = @SavedAt,
-                Notes = @Notes
+                Notes = @Notes,
+                Status = @Status
             WHERE Id = @RecipeId;
             """;
 
@@ -387,9 +391,8 @@ public class DatabaseRecipeRepository : IRecipeRepository
         command.Parameters.AddWithValue("@Name", recipe.Name);
         command.Parameters.AddWithValue("@SourceUrl", recipe.SourceUrl);
         command.Parameters.AddWithValue("@SavedAt", recipe.SavedAt.ToString("O"));
-        command.Parameters.AddWithValue(
-            "@Notes",
-            string.IsNullOrWhiteSpace(recipe.Notes) ? DBNull.Value : recipe.Notes);
+        command.Parameters.AddWithValue("@Notes", string.IsNullOrWhiteSpace(recipe.Notes) ? DBNull.Value : recipe.Notes);
+        command.Parameters.AddWithValue("@Status", (int)recipe.Status);
 
         command.ExecuteNonQuery();
     }
