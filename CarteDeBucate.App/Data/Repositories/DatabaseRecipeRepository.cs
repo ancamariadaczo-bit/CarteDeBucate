@@ -337,7 +337,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
         using SqliteCommand command = connection.CreateCommand();
 
         command.CommandText = """
-            SELECT Id, Name, SourceUrl, SavedAt, Notes
+            SELECT Id, Name, SourceUrl, SavedAt, Notes, Status
             FROM Recipes
             WHERE Id = @RecipeId;
             """;

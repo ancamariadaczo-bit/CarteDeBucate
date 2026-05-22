@@ -94,6 +94,8 @@ public class RecipeConsoleApp
             new MenuOption { Key = MenuKeys.ViewRecipeDetails, Text = AppTexts.MenuViewRecipeDetails },
             new MenuOption { Key = MenuKeys.EditRecipe, Text = AppTexts.MenuEditRecipe },
             new MenuOption { Key = MenuKeys.DeleteRecipe, Text = AppTexts.MenuDeleteRecipe },
+            new MenuOption { Key = MenuKeys.ExportBackup, Text = AppTexts.MenuExportBackup },
+            new MenuOption { Key = MenuKeys.ImportBackup, Text = AppTexts.MenuImportBackup },
             new MenuOption { Key = MenuKeys.Exit, Text = AppTexts.MenuExit }
         };
     }

@@ -90,7 +90,7 @@ public class RecipeBackupService : IRecipeBackupService
             return new RecipeSaveResult
             {
                 IsSuccess = true,
-                Message = AppTexts.BackupImportCompleted
+                Message = string.Format(AppTexts.BackupImportCompleted, importedCount, skippedCount)
             };
         }
         catch (Exception exception)

@@ -119,12 +119,14 @@ public static class AppTexts
     public const string EnterImportBackupFilePath = "Pentru a importa rețetele dintr-un fișier JSON, este nevoie de calea către acesta.";
     public const string BackupPrompt = "Introdu calea către fișier: ";
 
+    public const string MenuExportBackup = "Exportă backup (JSON)";
+    public const string MenuImportBackup = "Importă backup (JSON)";
     public const string BackupFileNotFound = "Fișierul de backup nu a fost găsit.";
     public const string InvalidBackupFile = "Calea către fișierul de backup este invalidă.";
     public const string BackupExportCompleted = "Exportul backup-ului JSON a fost finalizat.";
     public const string BackupExportFailed = "Exportul backup-ului a eșuat: {0}";
     public const string BackupImportCompleted =
-    "Importul backup-ului JSON a fost finalizat. Importate: {0}. Sărite (existente): {1}.";
+    "Importul backup-ului JSON a fost finalizat. Importate: {0}. Ignorate (existente): {1}.";
     public const string BackupImportFailed = "Importul backup-ului a eșuat: {0}";
 
 }
