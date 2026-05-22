@@ -7,5 +7,7 @@ public static class MenuKeys
     public const string ViewRecipeDetails = "5";
     public const string EditRecipe = "6";
     public const string DeleteRecipe = "7";
-    public const string Exit = "8";
+    public const string ExportBackup = "8";
+    public const string ImportBackup = "9";
+    public const string Exit = "10";
 }

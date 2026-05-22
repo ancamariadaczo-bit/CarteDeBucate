@@ -6,7 +6,7 @@ public class RecipeServiceTests
         FakeRecipeRepository repository = new FakeRecipeRepository();
         FakeRecipeImporter importer = new FakeRecipeImporter();
 
-        RecipeService service = new RecipeService(repository, importer);
+        RecipeImporterService service = new RecipeImporterService(repository, importer);
 
         Recipe recipe = CreateValidRecipe();
 
@@ -23,7 +23,7 @@ public class RecipeServiceTests
         FakeRecipeRepository repository = new FakeRecipeRepository();
         FakeRecipeImporter importer = new FakeRecipeImporter();
 
-        RecipeService service = new RecipeService(repository, importer);
+        RecipeImporterService service = new RecipeImporterService(repository, importer);
 
         Recipe recipe = CreateValidRecipe();
         recipe.Name = "";
@@ -44,7 +44,7 @@ public class RecipeServiceTests
 
         FakeRecipeImporter importer = new FakeRecipeImporter();
 
-        RecipeService service = new RecipeService(repository, importer);
+        RecipeImporterService service = new RecipeImporterService(repository, importer);
 
         Recipe recipe = CreateValidRecipe();
 
@@ -69,7 +69,7 @@ public class RecipeServiceTests
             }
         };
 
-        RecipeService service = new RecipeService(repository, importer);
+        RecipeImporterService service = new RecipeImporterService(repository, importer);
 
         RecipeImportResult result = await service.ImportRecipeFromUrlAsync("https://example.com");
 
@@ -95,7 +95,7 @@ public class RecipeServiceTests
             }
         };
 
-        RecipeService service = new RecipeService(repository, importer);
+        RecipeImporterService service = new RecipeImporterService(repository, importer);
 
         RecipeImportResult result = await service.ImportRecipeFromUrlAsync(recipe.SourceUrl);
 
@@ -122,7 +122,7 @@ public class RecipeServiceTests
             }
         };
 
-        RecipeService service = new RecipeService(repository, importer);
+        RecipeImporterService service = new RecipeImporterService(repository, importer);
 
         RecipeSaveResult result = await service.ImportFromUrlAndSaveAsync(recipe.SourceUrl);
 

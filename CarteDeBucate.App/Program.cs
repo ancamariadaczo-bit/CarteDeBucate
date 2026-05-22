@@ -5,9 +5,11 @@ IRecipeConsoleWriter recipeWriter = new RecipeConsoleWriter();
 IRecipeRepository recipeRepository = CreateRecipeRepository(AppSettings.CurrentStorageMode);
 RecipeImporter recipeImporter = new RecipeImporter();
 
-IRecipeService recipeService = new RecipeService(recipeRepository, recipeImporter);
+IRecipeImporterService importerService = new RecipeImporterService(recipeRepository, recipeImporter);
 
-RecipeConsoleApp app = new RecipeConsoleApp(recipeReader, recipeWriter, recipeService);
+IRecipeBackupService backupService = new RecipeBackupService(recipeRepository);
+
+RecipeConsoleApp app = new RecipeConsoleApp(recipeReader, recipeWriter, importerService, backupService);
 
 await app.RunAsync();
 

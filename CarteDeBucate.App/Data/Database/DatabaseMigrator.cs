@@ -31,10 +31,7 @@ public class DatabaseMigrator
     {
         return new List<DatabaseMigration>
         {
-            new DatabaseMigration(
-                1,
-                "Add recipe status column",
-                DatabaseScripts.AddRecipeStatusColumn)
+            new DatabaseMigration(1, "Add recipe status column", DatabaseScripts.AddRecipeStatusColumn)
         };
     }
 

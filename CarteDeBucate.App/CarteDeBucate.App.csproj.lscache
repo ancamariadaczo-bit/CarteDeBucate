@@ -92,8 +92,10 @@ obj/Debug/net10.0/
  CarteDeBucate.App.GlobalUsings.g.cs
 Program.cs
 Services/
+ IRecipeBackupService.cs
  IRecipeImporter.cs
  IRecipeImporterService.cs
+ RecipeBackupService.cs
  RecipeImporter.cs
  RecipeImporterService.cs
 Validation/

@@ -1,11 +1,11 @@
 using System.Linq;
 
-public class RecipeService : IRecipeService
+public class RecipeImporterService : IRecipeImporterService
 {
     private readonly IRecipeRepository _recipeRepository;
     private readonly IRecipeImporter _recipeImporter;
 
-    public RecipeService(
+    public RecipeImporterService(
         IRecipeRepository recipeRepository,
         IRecipeImporter recipeImporter)
     {

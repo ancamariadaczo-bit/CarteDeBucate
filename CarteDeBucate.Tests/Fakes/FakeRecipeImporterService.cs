@@ -1,4 +1,4 @@
-public class FakeRecipeService : IRecipeService
+public class FakeRecipeImporterService : IRecipeImporterService
 {
     public List<Recipe> RecipesToReturn { get; set; } = new();
     public Recipe? RecipeToReturn { get; set; }

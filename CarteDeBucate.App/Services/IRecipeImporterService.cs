@@ -1,4 +1,4 @@
-public interface IRecipeService
+public interface IRecipeImporterService
 {
     List<Recipe> GetAllRecipes();
 

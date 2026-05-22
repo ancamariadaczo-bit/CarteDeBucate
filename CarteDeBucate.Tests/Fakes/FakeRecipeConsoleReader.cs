@@ -11,6 +11,7 @@ public class FakeRecipeConsoleReader : IRecipeConsoleReader
 
     public string RecipeUrlToImport { get; set; } = string.Empty;
     public string SearchText { get; set; } = string.Empty;
+    public string BackupFilePath { get; set; } = string.Empty;
 
     public bool AskForSaveConfirmationWasCalled { get; private set; }
     public bool CompleteImportedRecipeFromConsoleWasCalled { get; private set; }
@@ -21,6 +22,7 @@ public class FakeRecipeConsoleReader : IRecipeConsoleReader
     public bool ReadRecipeIdToViewWasCalled { get; private set; }
     public bool ReadRecipeUrlToImportWasCalled { get; private set; }
     public bool ReadSearchTextWasCalled { get; private set; }
+    public bool ReadBackupFilePathWasCalled { get; private set; }
 
     public Recipe? RecipePassedToCompleteImportedRecipe { get; private set; }
     public Recipe? RecipePassedToReadEdits { get; private set; }
@@ -93,5 +95,11 @@ public class FakeRecipeConsoleReader : IRecipeConsoleReader
     {
         ReadSearchTextWasCalled = true;
         return SearchText;
+    }
+
+    public string ReadBackupFilePath()
+    {
+        ReadBackupFilePathWasCalled = true;
+        return BackupFilePath;
     }
 }

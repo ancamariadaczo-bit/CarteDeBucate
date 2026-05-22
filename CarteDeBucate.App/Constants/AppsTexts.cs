@@ -97,7 +97,7 @@ public static class AppTexts
     public const string RecipeDetailsTitle = "=== Detalii rețetă ===";
     public const string RecipeDetailsEndLine = "======================";
     public const string IdLabel = "ID";
-    public const string UnknownStorageModeError = "Unknown storage mode.";
+    public const string UnknownStorageModeError = "Mod de stocare al rețetelor necunoscut.";
     public const string MenuEditRecipe = "Editează rețetă";
     public const string EnterRecipeIdToEdit = "Introdu ID-ul rețetei pe care vrei să o editezi: ";
     public const string RecipeUpdated = "Rețeta a fost actualizată.";
@@ -106,13 +106,25 @@ public static class AppTexts
     public const string EditRecipeTitle = "=== Editare rețetă ===";
     public const string EditIngredientsPrompt = "Vrei să editezi ingredientele? Scrie da pentru editare sau apasă Enter ca să le păstrezi.";
     public const string EditStepsPrompt = "Vrei să editezi pașii? Scrie da pentru editare sau apasă Enter ca să îi păstrezi.";
-    public const string RecipeNameRequired = "Recipe name is required.";
-    public const string RecipeSourceUrlRequired = "Source URL is required.";
-    public const string RecipeSavedDateRequired = "Saved date is required.";
-    public const string RecipeIngredientsRequired = "Ingredients are required.";
-    public const string RecipeStepsRequired = "Steps are required.";
+    public const string RecipeNameRequired = "Numele rețetei este obligatoriu.";
+    public const string RecipeSourceUrlRequired = "URL-ul sursa este obligatoriu.";
+    public const string RecipeSavedDateRequired = "Data de savare a rețetei este obligatorie.";
+    public const string RecipeIngredientsRequired = "Ingredientele sunt obligatorii.";
+    public const string RecipeStepsRequired = "Pșii sunt obligatorii.";
 
     public const string SaveRecipeQuestion = "Dorești să salvezi această rețetă? (Y/N)?";
     public const string InvalidSaveOption = "Opțiune invalidă. Te rog introdu Y pentru Da sau N pentru Nu.";
+
+    public const string EnterExportBackupFilePath = "Pentru a exporta rețetele într-un fișier JSON, este nevoie de calea unde vrei să fie salvat.";
+    public const string EnterImportBackupFilePath = "Pentru a importa rețetele dintr-un fișier JSON, este nevoie de calea către acesta.";
+    public const string BackupPrompt = "Introdu calea către fișier: ";
+
+    public const string BackupFileNotFound = "Fișierul de backup nu a fost găsit.";
+    public const string InvalidBackupFile = "Calea către fișierul de backup este invalidă.";
+    public const string BackupExportCompleted = "Exportul backup-ului JSON a fost finalizat.";
+    public const string BackupExportFailed = "Exportul backup-ului a eșuat: {0}";
+    public const string BackupImportCompleted =
+    "Importul backup-ului JSON a fost finalizat. Importate: {0}. Sărite (existente): {1}.";
+    public const string BackupImportFailed = "Importul backup-ului a eșuat: {0}";
 
 }

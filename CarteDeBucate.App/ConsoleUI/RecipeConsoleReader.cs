@@ -247,4 +247,11 @@ public class RecipeConsoleReader : IRecipeConsoleReader
             Console.WriteLine(AppTexts.InvalidSaveOption);
         }
     }
+
+    public string ReadBackupFilePath()
+    {
+        Console.Write(AppTexts.BackupPrompt);
+
+        return Console.ReadLine() ?? "";
+    }
 }

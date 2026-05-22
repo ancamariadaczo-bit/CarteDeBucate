@@ -4,16 +4,19 @@ public class RecipeConsoleApp
 {
     private readonly IRecipeConsoleReader _reader;
     private readonly IRecipeConsoleWriter _writer;
-    private readonly IRecipeService _recipeService;
+    private readonly IRecipeImporterService _importerService;
+    private readonly IRecipeBackupService _backupService;
 
     public RecipeConsoleApp(
         IRecipeConsoleReader reader,
         IRecipeConsoleWriter writer,
-        IRecipeService recipeService)
+        IRecipeImporterService importerService,
+        IRecipeBackupService backupService)
     {
         _reader = reader;
         _writer = writer;
-        _recipeService = recipeService;
+        _importerService = importerService;
+        _backupService = backupService;
     }
 
     public async Task RunAsync()
@@ -60,6 +63,14 @@ public class RecipeConsoleApp
                     DeleteRecipe();
                     break;
 
+                case MenuKeys.ExportBackup:
+                    ExportBackup();
+                    break;
+
+                case MenuKeys.ImportBackup:
+                    ImportBackup();
+                    break;
+
                 case MenuKeys.Exit:
                     isRunning = false;
                     _writer.DisplayMessage(AppTexts.AppClosed);
@@ -91,7 +102,7 @@ public class RecipeConsoleApp
     {
         Recipe recipe = _reader.ReadRecipeFromConsole();
 
-        RecipeSaveResult result = _recipeService.SaveRecipe(recipe);
+        RecipeSaveResult result = _importerService.SaveRecipe(recipe);
 
         _writer.DisplayMessage(result.Message);
     }
@@ -108,7 +119,7 @@ public class RecipeConsoleApp
 
         _writer.DisplayMessage(AppTexts.ImportingRecipe);
 
-        RecipeImportResult importResult = await _recipeService.ImportRecipeFromUrlAsync(url);
+        RecipeImportResult importResult = await _importerService.ImportRecipeFromUrlAsync(url);
 
         _writer.DisplayMessage(importResult.Message);
 
@@ -127,7 +138,7 @@ public class RecipeConsoleApp
 
         if (shouldSave)
         {
-            RecipeSaveResult saveResult = _recipeService.SaveRecipe(importedRecipe);
+            RecipeSaveResult saveResult = _importerService.SaveRecipe(importedRecipe);
 
             _writer.DisplayMessage(saveResult.Message);
 
@@ -145,7 +156,7 @@ public class RecipeConsoleApp
 
     private void ShowRecipes()
     {
-        List<Recipe> recipes = _recipeService.GetAllRecipes();
+        List<Recipe> recipes = _importerService.GetAllRecipes();
 
         if (recipes.Count == 0)
         {
@@ -158,7 +169,7 @@ public class RecipeConsoleApp
 
     private void SearchRecipes()
     {
-        List<Recipe> recipes = _recipeService.GetAllRecipes();
+        List<Recipe> recipes = _importerService.GetAllRecipes();
 
         if (recipes.Count == 0)
         {
@@ -174,14 +185,14 @@ public class RecipeConsoleApp
             return;
         }
 
-        List<Recipe> foundRecipes = _recipeService.SearchRecipes(searchText);
+        List<Recipe> foundRecipes = _importerService.SearchRecipes(searchText);
 
         _writer.DisplaySearchResults(foundRecipes);
     }
 
     private void ViewRecipeDetails()
     {
-        List<Recipe> recipes = _recipeService.GetAllRecipes();
+        List<Recipe> recipes = _importerService.GetAllRecipes();
 
         if (recipes.Count == 0)
         {
@@ -199,7 +210,7 @@ public class RecipeConsoleApp
             return;
         }
 
-        Recipe? recipe = _recipeService.GetRecipeById(recipeId);
+        Recipe? recipe = _importerService.GetRecipeById(recipeId);
 
         if (recipe == null)
         {
@@ -212,7 +223,7 @@ public class RecipeConsoleApp
 
     private void EditRecipe()
     {
-        List<Recipe> recipes = _recipeService.GetAllRecipes();
+        List<Recipe> recipes = _importerService.GetAllRecipes();
 
         if (recipes.Count == 0)
         {
@@ -230,7 +241,7 @@ public class RecipeConsoleApp
             return;
         }
 
-        Recipe? recipe = _recipeService.GetRecipeById(recipeId);
+        Recipe? recipe = _importerService.GetRecipeById(recipeId);
 
         if (recipe == null)
         {
@@ -242,14 +253,14 @@ public class RecipeConsoleApp
 
         Recipe editedRecipe = _reader.ReadRecipeEditsFromConsole(recipe);
 
-        RecipeSaveResult result = _recipeService.UpdateRecipe(editedRecipe);
+        RecipeSaveResult result = _importerService.UpdateRecipe(editedRecipe);
 
         _writer.DisplayMessage(result.Message);
     }
 
     private void DeleteRecipe()
     {
-        List<Recipe> recipes = _recipeService.GetAllRecipes();
+        List<Recipe> recipes = _importerService.GetAllRecipes();
 
         if (recipes.Count == 0)
         {
@@ -267,7 +278,29 @@ public class RecipeConsoleApp
             return;
         }
 
-        RecipeSaveResult result = _recipeService.DeleteRecipe(recipeId);
+        RecipeSaveResult result = _importerService.DeleteRecipe(recipeId);
+
+        _writer.DisplayMessage(result.Message);
+    }
+
+    private void ExportBackup()
+    {
+        _writer.DisplayMessage(AppTexts.EnterExportBackupFilePath);
+
+        string backupFilePath = _reader.ReadBackupFilePath();
+
+        RecipeSaveResult result = _backupService.ExportToJson(backupFilePath);
+
+        _writer.DisplayMessage(result.Message);
+    }
+
+    private void ImportBackup()
+    {
+        _writer.DisplayMessage(AppTexts.EnterImportBackupFilePath);
+
+        string backupFilePath = _reader.ReadBackupFilePath();
+
+        RecipeSaveResult result = _backupService.ImportFromJson(backupFilePath);
 
         _writer.DisplayMessage(result.Message);
     }

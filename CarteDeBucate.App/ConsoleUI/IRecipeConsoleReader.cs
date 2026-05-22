@@ -10,4 +10,5 @@ public interface IRecipeConsoleReader
     int ReadRecipeIdToView();
     string ReadRecipeUrlToImport();
     string ReadSearchText();
+    string ReadBackupFilePath();
 }

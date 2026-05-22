@@ -59,9 +59,10 @@ TemporaryDependencyNodeTargetIdentifier=net10.0
 DatabaseRecipeRepositoryTests.cs
 Fakes/
  FakeHttpMessageHandler.cs
+ FakeRecipeBackupService.cs
  FakeRecipeConsoleReader.cs
  FakeRecipeConsoleWriter.cs
- FakeRecipeService.cs
+ FakeRecipeImporterService.cs
 obj/Debug/net10.0/
  .NETCoreApp,Version=v10.0.AssemblyAttributes.cs
  CarteDeBucate.Tests.AssemblyInfo.cs
