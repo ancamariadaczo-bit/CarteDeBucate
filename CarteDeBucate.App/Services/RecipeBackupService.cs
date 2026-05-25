@@ -13,6 +13,18 @@ public class RecipeBackupService : IRecipeBackupService
     {
         try
         {
+            string? directoryPath = Path.GetDirectoryName(backupFilePath);
+
+            if (string.IsNullOrWhiteSpace(backupFilePath) ||
+                (!string.IsNullOrWhiteSpace(directoryPath) && !Directory.Exists(directoryPath)))
+            {
+                return new RecipeBackupResult
+                {
+                    IsSuccess = false,
+                    Message = AppTexts.InvalidBackupFile
+                };
+            }
+
             List<Recipe> recipes = _recipeRepository.GetAllRecipes();
 
             JsonSerializerOptions options = new JsonSerializerOptions

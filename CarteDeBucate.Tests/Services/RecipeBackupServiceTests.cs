@@ -127,6 +127,38 @@ public class RecipeBackupServiceTests
         Assert.Equal(0, result.SkippedCount);
     }
 
+    [Fact]
+    public void ExportToJson_WithEmptyPath_ShouldFail()
+    {
+        FakeRecipeRepository repository = new FakeRecipeRepository();
+
+        RecipeBackupService service = new RecipeBackupService(repository);
+
+        RecipeBackupResult result = service.ExportToJson("");
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(AppTexts.InvalidBackupFile, result.Message);
+        Assert.Equal(0, result.ExportedCount);
+    }
+
+    [Fact]
+    public void ExportToJson_WithInvalidDirectory_ShouldFail()
+    {
+        string invalidFilePath = Path.Combine(
+            Path.GetTempPath(),
+            Guid.NewGuid().ToString(),
+            "recipes-backup.json");
+
+        FakeRecipeRepository repository = new FakeRecipeRepository();
+
+        RecipeBackupService service = new RecipeBackupService(repository);
+
+        RecipeBackupResult result = service.ExportToJson(invalidFilePath);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(AppTexts.InvalidBackupFile, result.Message);
+        Assert.Equal(0, result.ExportedCount);
+    }
     private static Recipe CreateValidRecipe()
     {
         return new Recipe

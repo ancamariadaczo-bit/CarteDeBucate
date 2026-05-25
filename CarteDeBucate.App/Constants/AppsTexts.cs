@@ -128,5 +128,4 @@ public static class AppTexts
     public const string BackupImportCompleted =
     "Importul backup-ului JSON a fost finalizat. Importate: {0}. Ignorate (existente): {1}.";
     public const string BackupImportFailed = "Importul backup-ului a eșuat: {0}";
-
 }
