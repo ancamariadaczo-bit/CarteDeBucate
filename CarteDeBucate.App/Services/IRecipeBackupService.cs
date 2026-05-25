@@ -1,5 +1,5 @@
 public interface IRecipeBackupService
 {
-    RecipeSaveResult ExportToJson(string backupFilePath);
-    RecipeSaveResult ImportFromJson(string backupFilePath);
+    RecipeBackupResult ExportToJson(string backupFilePath);
+    RecipeBackupResult ImportFromJson(string backupFilePath);
 }

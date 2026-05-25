@@ -62,14 +62,18 @@ Fakes/
  FakeRecipeBackupService.cs
  FakeRecipeConsoleReader.cs
  FakeRecipeConsoleWriter.cs
+ FakeRecipeImporter.cs
  FakeRecipeImporterService.cs
+ FakeRecipeRepository.cs
 obj/Debug/net10.0/
  .NETCoreApp,Version=v10.0.AssemblyAttributes.cs
  CarteDeBucate.Tests.AssemblyInfo.cs
  CarteDeBucate.Tests.GlobalUsings.g.cs
 RecipeConsoleAppTests.cs
 RecipeImporterTests.cs
-Services/RecipeServiceTests.cs
+Services/
+ RecipeBackupServiceTests.cs
+ RecipeImporterServiceTests.cs
 UrlValidatorTests.cs
 Validators/RecipeValidatorTests.cs
 

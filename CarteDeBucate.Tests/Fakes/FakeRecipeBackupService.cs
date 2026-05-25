@@ -1,12 +1,12 @@
 public class FakeRecipeBackupService : IRecipeBackupService
 {
-    public RecipeSaveResult ExportResultToReturn { get; set; } = new()
+    public RecipeBackupResult ExportResultToReturn { get; set; } = new()
     {
         IsSuccess = true,
         Message = "Backup exported successfully."
     };
 
-    public RecipeSaveResult ImportResultToReturn { get; set; } = new()
+    public RecipeBackupResult ImportResultToReturn { get; set; } = new()
     {
         IsSuccess = true,
         Message = "Backup import completed."
@@ -18,7 +18,7 @@ public class FakeRecipeBackupService : IRecipeBackupService
     public string? FilePathPassedToExportToJson { get; private set; }
     public string? FilePathPassedToImportFromJson { get; private set; }
 
-    public RecipeSaveResult ExportToJson(string backupFilePath)
+    public RecipeBackupResult ExportToJson(string backupFilePath)
     {
         ExportToJsonWasCalled = true;
         FilePathPassedToExportToJson = backupFilePath;
@@ -26,7 +26,7 @@ public class FakeRecipeBackupService : IRecipeBackupService
         return ExportResultToReturn;
     }
 
-    public RecipeSaveResult ImportFromJson(string backupFilePath)
+    public RecipeBackupResult ImportFromJson(string backupFilePath)
     {
         ImportFromJsonWasCalled = true;
         FilePathPassedToImportFromJson = backupFilePath;

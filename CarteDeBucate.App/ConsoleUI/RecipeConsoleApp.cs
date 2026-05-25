@@ -291,7 +291,7 @@ public class RecipeConsoleApp
 
         string backupFilePath = _reader.ReadBackupFilePath();
 
-        RecipeSaveResult result = _backupService.ExportToJson(backupFilePath);
+        RecipeBackupResult result = _backupService.ExportToJson(backupFilePath);
 
         _writer.DisplayMessage(result.Message);
     }
@@ -302,7 +302,7 @@ public class RecipeConsoleApp
 
         string backupFilePath = _reader.ReadBackupFilePath();
 
-        RecipeSaveResult result = _backupService.ImportFromJson(backupFilePath);
+        RecipeBackupResult result = _backupService.ImportFromJson(backupFilePath);
 
         _writer.DisplayMessage(result.Message);
     }

@@ -80,6 +80,7 @@ Data/StorageMode.cs
 Helpers/TextHelper.cs
 Models/
  Recipe.cs
+ RecipeBackupResult.cs
  RecipeImportResult.cs
  RecipeIngredient.cs
  RecipeSaveResult.cs

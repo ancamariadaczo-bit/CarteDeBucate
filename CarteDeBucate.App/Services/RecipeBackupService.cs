@@ -9,7 +9,7 @@ public class RecipeBackupService : IRecipeBackupService
         _recipeRepository = recipeRepository;
     }
 
-    public RecipeSaveResult ExportToJson(string backupFilePath)
+    public RecipeBackupResult ExportToJson(string backupFilePath)
     {
         try
         {
@@ -24,15 +24,16 @@ public class RecipeBackupService : IRecipeBackupService
 
             File.WriteAllText(backupFilePath, json);
 
-            return new RecipeSaveResult
+            return new RecipeBackupResult
             {
                 IsSuccess = true,
-                Message = AppTexts.BackupExportCompleted
+                Message = string.Format(AppTexts.BackupExportCompleted, recipes.Count),
+                ExportedCount = recipes.Count
             };
         }
         catch (Exception exception)
         {
-            return new RecipeSaveResult
+            return new RecipeBackupResult
             {
                 IsSuccess = false,
                 Message = string.Format(AppTexts.BackupExportFailed, exception.Message)
@@ -40,13 +41,13 @@ public class RecipeBackupService : IRecipeBackupService
         }
     }
 
-    public RecipeSaveResult ImportFromJson(string backupFilePath)
+    public RecipeBackupResult ImportFromJson(string backupFilePath)
     {
         try
         {
             if (!File.Exists(backupFilePath))
             {
-                return new RecipeSaveResult
+                return new RecipeBackupResult
                 {
                     IsSuccess = false,
                     Message = AppTexts.BackupFileNotFound
@@ -59,7 +60,7 @@ public class RecipeBackupService : IRecipeBackupService
 
             if (recipes == null)
             {
-                return new RecipeSaveResult
+                return new RecipeBackupResult
                 {
                     IsSuccess = false,
                     Message = AppTexts.InvalidBackupFile
@@ -87,15 +88,17 @@ public class RecipeBackupService : IRecipeBackupService
 
             }
 
-            return new RecipeSaveResult
+            return new RecipeBackupResult
             {
                 IsSuccess = true,
-                Message = string.Format(AppTexts.BackupImportCompleted, importedCount, skippedCount)
+                Message = string.Format(AppTexts.BackupImportCompleted, importedCount, skippedCount),
+                ImportedCount = importedCount,
+                SkippedCount = skippedCount
             };
         }
         catch (Exception exception)
         {
-            return new RecipeSaveResult
+            return new RecipeBackupResult
             {
                 IsSuccess = false,
                 Message = string.Format(AppTexts.BackupImportFailed, exception.Message)
