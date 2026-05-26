@@ -56,11 +56,19 @@ TemporaryDependencyNodeTargetIdentifier=net10.0
 [sourceFiles]
 Configuration/AppSettings.cs
 ConsoleUI/
+ ClassicConsole/ClassicConsoleRecipeApp.cs
+ IRecipeApp.cs
  IRecipeConsoleReader.cs
  IRecipeConsoleWriter.cs
- RecipeConsoleApp.cs
+ RecipeAppFactory.cs
  RecipeConsoleReader.cs
  RecipeConsoleWriter.cs
+ RichConsole/
+  MainMenuOption.cs
+  MainMenuOptionExtensions.cs
+  RichConsoleDisplay.cs
+  RichConsoleMenu.cs
+  RichConsoleRecipeApp.cs
 Constants/
  AppsTexts.cs
  MenuKeys.cs
@@ -72,11 +80,13 @@ Data/Database/
  DatabaseMigration.cs
  DatabaseMigrator.cs
  DatabaseScripts.cs
-Data/Repositories/
- DatabaseRecipeRepository.cs
- IRecipeRepository.cs
- JsonRecipeRepository.cs
-Data/StorageMode.cs
+Data/
+ InterfaceMode.cs
+ Repositories/
+  DatabaseRecipeRepository.cs
+  IRecipeRepository.cs
+  JsonRecipeRepository.cs
+ StorageMode.cs
 Helpers/TextHelper.cs
 Models/
  Recipe.cs
@@ -275,6 +285,8 @@ Validation/
 <NUGET>/
  htmlagilitypack/1.12.4/lib/net7.0/HtmlAgilityPack.dll
  microsoft.data.sqlite.core/10.0.8/lib/net8.0/Microsoft.Data.Sqlite.dll
+ spectre.console.ansi/0.55.2/lib/net10.0/Spectre.Console.Ansi.dll
+ spectre.console/0.55.2/lib/net10.0/Spectre.Console.dll
  sqlitepclraw.bundle_e_sqlite3/2.1.11/lib/netstandard2.0/SQLitePCLRaw.batteries_v2.dll
  sqlitepclraw.core/2.1.11/lib/netstandard2.0/SQLitePCLRaw.core.dll
  sqlitepclraw.provider.e_sqlite3/2.1.11/lib/net6.0/SQLitePCLRaw.provider.e_sqlite3.dll

@@ -1,13 +1,13 @@
 using System.Linq;
 
-public class RecipeConsoleApp
+public class ClassicConsoleRecipeApp : IRecipeApp
 {
     private readonly IRecipeConsoleReader _reader;
     private readonly IRecipeConsoleWriter _writer;
     private readonly IRecipeImporterService _importerService;
     private readonly IRecipeBackupService _backupService;
 
-    public RecipeConsoleApp(
+    public ClassicConsoleRecipeApp(
         IRecipeConsoleReader reader,
         IRecipeConsoleWriter writer,
         IRecipeImporterService importerService,

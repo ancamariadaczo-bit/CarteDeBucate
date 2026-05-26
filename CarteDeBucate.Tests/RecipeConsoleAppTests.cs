@@ -10,7 +10,7 @@ public class RecipeConsoleAppTests
 
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
 
-        RecipeConsoleApp app = new RecipeConsoleApp(reader, writer, importerService, backupService);
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importerService, backupService);
 
         await app.RunAsync();
 
@@ -41,7 +41,7 @@ public class RecipeConsoleAppTests
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.ShowRecipes);
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
 
-        RecipeConsoleApp app = new RecipeConsoleApp(reader, writer, importService, backupService);
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, backupService);
 
         await app.RunAsync();
 
@@ -74,7 +74,7 @@ public class RecipeConsoleAppTests
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.ViewRecipeDetails);
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
 
-        RecipeConsoleApp app = new RecipeConsoleApp(reader, writer, importService, backupService);
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, backupService);
 
         await app.RunAsync();
 
@@ -113,7 +113,7 @@ public class RecipeConsoleAppTests
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.ViewRecipeDetails);
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
 
-        RecipeConsoleApp app = new RecipeConsoleApp(reader, writer, importService, backupService);
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, backupService);
 
         await app.RunAsync();
 
@@ -154,7 +154,7 @@ public class RecipeConsoleAppTests
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.SearchRecipe);
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
 
-        RecipeConsoleApp app = new RecipeConsoleApp(reader, writer, importService, backupService);
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, backupService);
 
         await app.RunAsync();
 
@@ -199,7 +199,7 @@ public class RecipeConsoleAppTests
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.DeleteRecipe);
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
 
-        RecipeConsoleApp app = new RecipeConsoleApp(reader, writer, importService, backupService);
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, backupService);
 
         await app.RunAsync();
 
@@ -242,7 +242,7 @@ public class RecipeConsoleAppTests
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.AddRecipe);
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
 
-        RecipeConsoleApp app = new RecipeConsoleApp(reader, writer, importService, backupService);
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, backupService);
 
         await app.RunAsync();
 
@@ -295,7 +295,7 @@ public class RecipeConsoleAppTests
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.EditRecipe);
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
 
-        RecipeConsoleApp app = new RecipeConsoleApp(reader, writer, importService, backupService);
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, backupService);
 
         await app.RunAsync();
 
@@ -340,7 +340,7 @@ public class RecipeConsoleAppTests
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.EditRecipe);
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
 
-        RecipeConsoleApp app = new RecipeConsoleApp(reader, writer, importService, backupService);
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, backupService);
 
         await app.RunAsync();
 
@@ -393,7 +393,7 @@ public class RecipeConsoleAppTests
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.ImportRecipeFromUrl);
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
 
-        RecipeConsoleApp app = new RecipeConsoleApp(reader, writer, importService, backupService);
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, backupService);
 
         await app.RunAsync();
 
@@ -448,7 +448,7 @@ public class RecipeConsoleAppTests
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.ImportRecipeFromUrl);
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
 
-        RecipeConsoleApp app = new RecipeConsoleApp(reader, writer, importService, backupService);
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, backupService);
 
         await app.RunAsync();
 
@@ -484,7 +484,7 @@ public class RecipeConsoleAppTests
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.ImportRecipeFromUrl);
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
 
-        RecipeConsoleApp app = new RecipeConsoleApp(reader, writer, importService, backupService);
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, backupService);
 
         await app.RunAsync();
 
@@ -510,7 +510,7 @@ public class RecipeConsoleAppTests
         reader.MenuOptionsToReturn.Enqueue("abc");
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
 
-        RecipeConsoleApp app = new RecipeConsoleApp(reader, writer, importService, backupService);
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, backupService);
 
         await app.RunAsync();
         Assert.True(writer.DisplayMessageWasCalled);

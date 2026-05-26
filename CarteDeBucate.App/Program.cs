@@ -9,7 +9,8 @@ IRecipeImporterService importerService = new RecipeImporterService(recipeReposit
 
 IRecipeBackupService backupService = new RecipeBackupService(recipeRepository);
 
-RecipeConsoleApp app = new RecipeConsoleApp(recipeReader, recipeWriter, importerService, backupService);
+IRecipeApp app = RecipeAppFactory.Create(AppSettings.CurrentInterfaceMode,
+    recipeReader, recipeWriter, importerService, backupService);
 
 await app.RunAsync();
 

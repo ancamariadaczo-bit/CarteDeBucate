@@ -9,5 +9,5 @@ public static class MenuKeys
     public const string DeleteRecipe = "7";
     public const string ExportBackup = "8";
     public const string ImportBackup = "9";
-    public const string Exit = "10";
+    public const string Exit = "0";
 }
