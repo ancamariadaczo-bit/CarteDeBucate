@@ -1,35 +1,37 @@
 ﻿
+AppSettings appSettings = AppSettings.Load();
+
 IRecipeConsoleReader recipeReader = new RecipeConsoleReader();
 IRecipeConsoleWriter recipeWriter = new RecipeConsoleWriter();
 
-IRecipeRepository recipeRepository = CreateRecipeRepository(AppSettings.CurrentStorageMode);
+IRecipeRepository recipeRepository = CreateRecipeRepository(appSettings);
 RecipeImporter recipeImporter = new RecipeImporter();
 
 IRecipeImporterService importerService = new RecipeImporterService(recipeRepository, recipeImporter);
 
 IRecipeBackupService backupService = new RecipeBackupService(recipeRepository);
 
-IRecipeApp app = RecipeAppFactory.Create(AppSettings.CurrentInterfaceMode,
+IRecipeApp app = RecipeAppFactory.Create(appSettings.CurrentInterfaceMode,
     recipeReader, recipeWriter, importerService, backupService);
 
 await app.RunAsync();
 
-IRecipeRepository CreateRecipeRepository(StorageMode storageMode)
+IRecipeRepository CreateRecipeRepository(AppSettings settings)
 {
-    if (storageMode == StorageMode.Json)
+    if (settings.CurrentStorageMode == StorageMode.Json)
     {
-        return new JsonRecipeRepository(AppSettings.JsonFilePath);
+        return new JsonRecipeRepository(settings.JsonFilePath);
     }
 
-    if (storageMode == StorageMode.Database)
+    if (settings.CurrentStorageMode == StorageMode.Database)
     {
-        DatabaseInitializer databaseInitializer = new DatabaseInitializer(AppSettings.DatabasePath);
+        DatabaseInitializer databaseInitializer = new DatabaseInitializer(settings.DatabasePath);
         databaseInitializer.Initialize();
 
-        DatabaseMigrator migrator = new DatabaseMigrator(AppSettings.DatabasePath);
+        DatabaseMigrator migrator = new DatabaseMigrator(settings.DatabasePath);
         migrator.ApplyMigrations();
 
-        return new DatabaseRecipeRepository(AppSettings.DatabasePath);
+        return new DatabaseRecipeRepository(settings.DatabasePath);
     }
 
     throw new InvalidOperationException(AppTexts.UnknownStorageModeError);

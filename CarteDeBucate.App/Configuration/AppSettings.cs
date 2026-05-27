@@ -1,18 +1,94 @@
-public static class AppSettings
+using System.Text.Json;
+
+public class AppSettings
 {
-    public const string JsonFilePath = "recipes.json";
+    private const string ConfigurationFileName = "appsettings.json";
 
-    public const string DatabasePath = "recipes.db";
+    public string JsonFilePath { get; private set; } = "recipes.json";
 
-    // Choose where recipes should be read from and saved to.
-    // For JSON storage:
-    //public const StorageMode CurrentStorageMode = StorageMode.Json;
-    // For database storage:
-    public const StorageMode CurrentStorageMode = StorageMode.Database;
+    public string DatabasePath { get; private set; } = "recipes.db";
 
-    // Choose the UI to render.
-    // For a classic consule:
-    //public const InterfaceMode CurrentInterfaceMode = InterfaceMode.ClassicConsole;
-    // For a modern console:
-    public const InterfaceMode CurrentInterfaceMode = InterfaceMode.RichConsole;
+    public StorageMode CurrentStorageMode { get; private set; } = StorageMode.Json;
+
+    public InterfaceMode CurrentInterfaceMode { get; private set; } = InterfaceMode.ClassicConsole;
+
+    public static AppSettings Load()
+    {
+        string? configurationFilePath = FindConfigurationFilePath();
+
+        if (configurationFilePath == null)
+        {
+            return new AppSettings();
+        }
+
+        string json = File.ReadAllText(configurationFilePath);
+
+        AppSettingsFile? settingsFile = JsonSerializer.Deserialize<AppSettingsFile>(
+            json,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        return FromFile(settingsFile);
+    }
+
+    private static string? FindConfigurationFilePath()
+    {
+        string currentDirectoryPath = Path.Combine(Directory.GetCurrentDirectory(), ConfigurationFileName);
+
+        if (File.Exists(currentDirectoryPath))
+        {
+            return currentDirectoryPath;
+        }
+
+        string executableDirectoryPath = Path.Combine(AppContext.BaseDirectory, ConfigurationFileName);
+
+        if (File.Exists(executableDirectoryPath))
+        {
+            return executableDirectoryPath;
+        }
+
+        return null;
+    }
+
+    private static AppSettings FromFile(AppSettingsFile? settingsFile)
+    {
+        AppSettings settings = new AppSettings();
+
+        if (settingsFile == null)
+        {
+            return settings;
+        }
+
+        if (!string.IsNullOrWhiteSpace(settingsFile.JsonFilePath))
+        {
+            settings.JsonFilePath = settingsFile.JsonFilePath;
+        }
+
+        if (!string.IsNullOrWhiteSpace(settingsFile.DatabasePath))
+        {
+            settings.DatabasePath = settingsFile.DatabasePath;
+        }
+
+        if (Enum.TryParse(settingsFile.StorageMode, ignoreCase: true, out StorageMode storageMode))
+        {
+            settings.CurrentStorageMode = storageMode;
+        }
+
+        if (Enum.TryParse(settingsFile.InterfaceMode, ignoreCase: true, out InterfaceMode interfaceMode))
+        {
+            settings.CurrentInterfaceMode = interfaceMode;
+        }
+
+        return settings;
+    }
+
+    private class AppSettingsFile
+    {
+        public string? StorageMode { get; set; }
+
+        public string? InterfaceMode { get; set; }
+
+        public string? JsonFilePath { get; set; }
+
+        public string? DatabasePath { get; set; }
+    }
 }
