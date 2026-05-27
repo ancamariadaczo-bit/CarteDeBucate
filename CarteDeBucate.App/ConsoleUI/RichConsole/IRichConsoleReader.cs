@@ -1,10 +1,10 @@
 public interface IRichConsoleReader
 {
-    Recipe ReadRecipe();
+    Recipe? ReadRecipe();
 
-    string ReadRecipeUrlToImport();
+    string? ReadRecipeUrlToImport();
 
-    string ReadSearchText();
+    string? ReadSearchText();
 
     bool ConfirmKeepImportedIngredients();
 
@@ -18,13 +18,17 @@ public interface IRichConsoleReader
 
     bool ConfirmSaveRecipe();
 
-    Recipe SelectRecipe(List<Recipe> recipes, string title);
+    bool ConfirmImportAnotherRecipe();
+
+    bool ConfirmSearchAnotherRecipe();
+
+    Recipe? SelectRecipe(List<Recipe> recipes, string title);
 
     Recipe ReadRecipeEdits(Recipe recipe);
 
     bool ConfirmDeleteRecipe(Recipe recipe);
 
-    string ReadBackupFilePath();
+    string? ReadBackupFilePath();
 
     void WaitForContinue();
 }

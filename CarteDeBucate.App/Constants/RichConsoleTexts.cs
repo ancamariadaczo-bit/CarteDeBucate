@@ -23,6 +23,10 @@ public static class RichConsoleTexts
     public const string SelectRecipeToView = "Selectează rețeta pe care vrei să o vezi:";
     public const string SelectRecipeToEdit = "Selectează rețeta pe care vrei să o editezi:";
     public const string SelectRecipeToDelete = "Selectează rețeta pe care vrei să o ștergi:";
+    public const string BackToMainMenuOption = "Înapoi la meniul principal";
+    public const string NextActionTitle = "Ce vrei să faci mai departe?";
+    public const string ImportAnotherRecipeOption = "Importă altă rețetă";
+    public const string SearchAnotherRecipeOption = "Caută altă rețetă";
 
     public const string NameColumn = "Nume";
     public const string SourceColumn = "Sursă";
@@ -47,4 +51,7 @@ public static class RichConsoleTexts
     public const string NoRecipes = "Nu ai nicio rețetă salvată încă.";
     public const string NoIngredientsFound = "- Nu au fost găsite ingrediente.";
     public const string NoStepsFound = "- Nu au fost găsiți pași.";
+    public const string ReturnToMainMenuPrompt = "Apasă Enter pentru a reveni la meniul principal.";
+    public const string ReturnedToMainMenu = "Ai revenit la meniul principal.";
+    public const string EmptyInputReturnsToMainMenu = "Lasă gol și apasă Enter pentru a reveni la meniul principal.";
 }

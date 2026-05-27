@@ -9,6 +9,8 @@ public class FakeRichConsoleReader : IRichConsoleReader
     public List<string> StepsToReturn { get; set; } = new();
     public string NotesToReturn { get; set; } = "";
     public bool SaveRecipeConfirmation { get; set; } = true;
+    public bool ImportAnotherRecipeConfirmation { get; set; }
+    public bool SearchAnotherRecipeConfirmation { get; set; }
     public Recipe? SelectedRecipe { get; set; }
     public Recipe? EditedRecipe { get; set; }
     public bool DeleteRecipeConfirmation { get; set; } = true;
@@ -20,6 +22,8 @@ public class FakeRichConsoleReader : IRichConsoleReader
     public bool ConfirmKeepImportedIngredientsWasCalled { get; private set; }
     public bool ConfirmKeepImportedStepsWasCalled { get; private set; }
     public bool ConfirmSaveRecipeWasCalled { get; private set; }
+    public bool ConfirmImportAnotherRecipeWasCalled { get; private set; }
+    public bool ConfirmSearchAnotherRecipeWasCalled { get; private set; }
     public bool SelectRecipeWasCalled { get; private set; }
     public bool ReadRecipeEditsWasCalled { get; private set; }
     public bool ConfirmDeleteRecipeWasCalled { get; private set; }
@@ -29,19 +33,19 @@ public class FakeRichConsoleReader : IRichConsoleReader
     public Recipe? RecipePassedToReadRecipeEdits { get; private set; }
     public Recipe? RecipePassedToConfirmDeleteRecipe { get; private set; }
 
-    public Recipe ReadRecipe()
+    public Recipe? ReadRecipe()
     {
         ReadRecipeWasCalled = true;
         return RecipeToReturn;
     }
 
-    public string ReadRecipeUrlToImport()
+    public string? ReadRecipeUrlToImport()
     {
         ReadRecipeUrlToImportWasCalled = true;
         return RecipeUrlToImport;
     }
 
-    public string ReadSearchText()
+    public string? ReadSearchText()
     {
         ReadSearchTextWasCalled = true;
         return SearchText;
@@ -80,7 +84,19 @@ public class FakeRichConsoleReader : IRichConsoleReader
         return SaveRecipeConfirmation;
     }
 
-    public Recipe SelectRecipe(List<Recipe> recipes, string title)
+    public bool ConfirmImportAnotherRecipe()
+    {
+        ConfirmImportAnotherRecipeWasCalled = true;
+        return ImportAnotherRecipeConfirmation;
+    }
+
+    public bool ConfirmSearchAnotherRecipe()
+    {
+        ConfirmSearchAnotherRecipeWasCalled = true;
+        return SearchAnotherRecipeConfirmation;
+    }
+
+    public Recipe? SelectRecipe(List<Recipe> recipes, string title)
     {
         SelectRecipeWasCalled = true;
         return SelectedRecipe ?? recipes[0];
@@ -100,7 +116,7 @@ public class FakeRichConsoleReader : IRichConsoleReader
         return DeleteRecipeConfirmation;
     }
 
-    public string ReadBackupFilePath()
+    public string? ReadBackupFilePath()
     {
         ReadBackupFilePathWasCalled = true;
         return BackupFilePath;

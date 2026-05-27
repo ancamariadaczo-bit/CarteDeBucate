@@ -45,15 +45,16 @@ public class RichConsoleRecipeApp : IRecipeApp
             MainMenuOption selectedOption = _menu.ShowMainMenu();
 
             _display.Clear();
+            bool shouldWaitForContinue = true;
 
             switch (selectedOption)
             {
                 case MainMenuOption.AddRecipe:
-                    AddRecipe();
+                    shouldWaitForContinue = AddRecipe();
                     break;
 
                 case MainMenuOption.ImportRecipeFromUrl:
-                    await ImportFromUrlAsync();
+                    shouldWaitForContinue = await ImportFromUrlAsync();
                     break;
 
                 case MainMenuOption.ShowRecipes:
@@ -61,27 +62,27 @@ public class RichConsoleRecipeApp : IRecipeApp
                     break;
 
                 case MainMenuOption.SearchRecipe:
-                    SearchRecipe();
+                    shouldWaitForContinue = SearchRecipe();
                     break;
 
                 case MainMenuOption.ViewRecipeDetails:
-                    ViewRecipeDetails();
+                    shouldWaitForContinue = ViewRecipeDetails();
                     break;
 
                 case MainMenuOption.EditRecipe:
-                    EditRecipe();
+                    shouldWaitForContinue = EditRecipe();
                     break;
 
                 case MainMenuOption.DeleteRecipe:
-                    DeleteRecipe();
+                    shouldWaitForContinue = DeleteRecipe();
                     break;
 
                 case MainMenuOption.ExportBackup:
-                    ExportBackup();
+                    shouldWaitForContinue = ExportBackup();
                     break;
 
                 case MainMenuOption.ImportBackup:
-                    ImportBackup();
+                    shouldWaitForContinue = ImportBackup();
                     break;
 
                 case MainMenuOption.Exit:
@@ -90,53 +91,69 @@ public class RichConsoleRecipeApp : IRecipeApp
                     break;
             }
 
-            if (!shouldExit)
+            if (!shouldExit && shouldWaitForContinue)
             {
                 _reader.WaitForContinue();
             }
         }
     }
 
-    private void AddRecipe()
+    private bool AddRecipe()
     {
-        Recipe recipe = _reader.ReadRecipe();
+        Recipe? recipe = _reader.ReadRecipe();
+        if (recipe == null)
+        {
+            return false;
+        }
+
         recipe.SavedAt = DateTime.Now;
 
         RecipeSaveResult result = _importerService.SaveRecipe(recipe);
 
         ShowSaveResult(result);
+        return true;
     }
 
-    private async Task ImportFromUrlAsync()
+    private async Task<bool> ImportFromUrlAsync()
     {
-        string url = _reader.ReadRecipeUrlToImport();
-
-        if (string.IsNullOrWhiteSpace(url))
+        while (true)
         {
-            _display.ShowError(AppTexts.EmptyUrl);
-            return;
+            string? url = _reader.ReadRecipeUrlToImport();
+
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                return false;
+            }
+
+            RecipeImportResult importResult = await AnsiConsole.Status()
+                .StartAsync(AppTexts.ImportingRecipe, async _ =>
+                    await _importerService.ImportRecipeFromUrlAsync(url));
+
+            if (importResult.Success)
+            {
+                _display.ShowSpacedSuccess(importResult.Message);
+            }
+            else
+            {
+                _display.ShowError(importResult.Message);
+            }
+
+            if (importResult.Success && importResult.Recipe != null)
+            {
+                CompleteImportedRecipe(importResult.Recipe);
+            }
+
+            if (!_reader.ConfirmImportAnotherRecipe())
+            {
+                return false;
+            }
+
+            _display.Clear();
         }
+    }
 
-        RecipeImportResult importResult = await AnsiConsole.Status()
-            .StartAsync(AppTexts.ImportingRecipe, async _ =>
-                await _importerService.ImportRecipeFromUrlAsync(url));
-
-        if (importResult.Success)
-        {
-            _display.ShowSpacedSuccess(importResult.Message);
-        }
-        else
-        {
-            _display.ShowError(importResult.Message);
-        }
-
-        if (!importResult.Success || importResult.Recipe == null)
-        {
-            return;
-        }
-
-        Recipe importedRecipe = importResult.Recipe;
-
+    private void CompleteImportedRecipe(Recipe importedRecipe)
+    {
         _display.ShowImportedRecipe(importedRecipe);
 
         if (!_reader.ConfirmKeepImportedIngredients())
@@ -152,19 +169,20 @@ public class RichConsoleRecipeApp : IRecipeApp
         importedRecipe.Notes = _reader.ReadNotes();
         importedRecipe.SavedAt = DateTime.Now;
 
-        if (!_reader.ConfirmSaveRecipe())
+        if (_reader.ConfirmSaveRecipe())
         {
-            _display.ShowInfo(AppTexts.RecipeNotSaved);
+            RecipeSaveResult saveResult = _importerService.SaveRecipe(importedRecipe);
+            ShowSaveResult(saveResult);
+
+            if (!saveResult.IsSuccess)
+            {
+                _display.ShowInfo(AppTexts.RecipeNotSaved);
+            }
+
             return;
         }
 
-        RecipeSaveResult saveResult = _importerService.SaveRecipe(importedRecipe);
-        ShowSaveResult(saveResult);
-
-        if (!saveResult.IsSuccess)
-        {
-            _display.ShowInfo(AppTexts.RecipeNotSaved);
-        }
+        _display.ShowInfo(AppTexts.RecipeNotSaved);
     }
 
     private void ShowAllRecipes()
@@ -174,36 +192,45 @@ public class RichConsoleRecipeApp : IRecipeApp
         _display.ShowRecipes(recipes);
     }
 
-    private void SearchRecipe()
+    private bool SearchRecipe()
     {
-        List<Recipe> recipes = _importerService.GetAllRecipes();
-
-        if (recipes.Count == 0)
+        while (true)
         {
-            _display.ShowInfo(AppTexts.NoRecipes);
-            return;
+            List<Recipe> recipes = _importerService.GetAllRecipes();
+
+            if (recipes.Count == 0)
+            {
+                _display.ShowInfo(AppTexts.NoRecipes);
+                return true;
+            }
+
+            string? searchText = _reader.ReadSearchText();
+
+            if (string.IsNullOrWhiteSpace(searchText))
+            {
+                return false;
+            }
+
+            List<Recipe> foundRecipes = _importerService.SearchRecipes(searchText);
+
+            _display.ShowRecipes(foundRecipes, AppTexts.SearchResults, AppTexts.NoSearchResults);
+
+            if (!_reader.ConfirmSearchAnotherRecipe())
+            {
+                return false;
+            }
+
+            _display.Clear();
         }
-
-        string searchText = _reader.ReadSearchText();
-
-        if (string.IsNullOrWhiteSpace(searchText))
-        {
-            _display.ShowError(AppTexts.InvalidOption);
-            return;
-        }
-
-        List<Recipe> foundRecipes = _importerService.SearchRecipes(searchText);
-
-        _display.ShowRecipes(foundRecipes, AppTexts.SearchResults, AppTexts.NoSearchResults);
     }
 
-    private void ViewRecipeDetails()
+    private bool ViewRecipeDetails()
     {
-        Recipe? selectedRecipe = SelectExistingRecipe(RichConsoleTexts.SelectRecipeToView);
+        Recipe? selectedRecipe = SelectExistingRecipe(RichConsoleTexts.SelectRecipeToView, out bool returnedToMainMenu);
 
         if (selectedRecipe == null)
         {
-            return;
+            return !returnedToMainMenu;
         }
 
         Recipe? recipe = _importerService.GetRecipeById(selectedRecipe.Id);
@@ -211,19 +238,20 @@ public class RichConsoleRecipeApp : IRecipeApp
         if (recipe == null)
         {
             _display.ShowError(AppTexts.RecipeNotFound);
-            return;
+            return true;
         }
 
         _display.ShowRecipeDetails(recipe);
+        return true;
     }
 
-    private void EditRecipe()
+    private bool EditRecipe()
     {
-        Recipe? selectedRecipe = SelectExistingRecipe(RichConsoleTexts.SelectRecipeToEdit);
+        Recipe? selectedRecipe = SelectExistingRecipe(RichConsoleTexts.SelectRecipeToEdit, out bool returnedToMainMenu);
 
         if (selectedRecipe == null)
         {
-            return;
+            return !returnedToMainMenu;
         }
 
         Recipe? recipe = _importerService.GetRecipeById(selectedRecipe.Id);
@@ -231,25 +259,32 @@ public class RichConsoleRecipeApp : IRecipeApp
         if (recipe == null)
         {
             _display.ShowError(AppTexts.RecipeNotFound);
-            return;
+            return true;
         }
 
         _display.ShowRecipeDetails(recipe, AppTexts.EditRecipeTitle);
 
         Recipe editedRecipe = _reader.ReadRecipeEdits(recipe);
 
+        if (!_reader.ConfirmSaveRecipe())
+        {
+            _display.ShowInfo(AppTexts.RecipeNotSaved);
+            return true;
+        }
+
         RecipeSaveResult result = _importerService.UpdateRecipe(editedRecipe);
 
         ShowSaveResult(result);
+        return true;
     }
 
-    private void DeleteRecipe()
+    private bool DeleteRecipe()
     {
-        Recipe? selectedRecipe = SelectExistingRecipe(RichConsoleTexts.SelectRecipeToDelete);
+        Recipe? selectedRecipe = SelectExistingRecipe(RichConsoleTexts.SelectRecipeToDelete, out bool returnedToMainMenu);
 
         if (selectedRecipe == null)
         {
-            return;
+            return !returnedToMainMenu;
         }
 
         Recipe? recipe = _importerService.GetRecipeById(selectedRecipe.Id);
@@ -257,56 +292,58 @@ public class RichConsoleRecipeApp : IRecipeApp
         if (recipe == null)
         {
             _display.ShowError(AppTexts.RecipeNotFound);
-            return;
+            return true;
         }
 
         if (!_reader.ConfirmDeleteRecipe(recipe))
         {
             _display.ShowInfo(AppTexts.RecipeNotSaved);
-            return;
+            return true;
         }
 
         RecipeSaveResult result = _importerService.DeleteRecipe(recipe.Id);
 
         ShowSaveResult(result);
+        return true;
     }
 
-    private void ExportBackup()
+    private bool ExportBackup()
     {
         _display.ShowInfo(AppTexts.EnterExportBackupFilePath);
 
-        string backupFilePath = _reader.ReadBackupFilePath();
+        string? backupFilePath = _reader.ReadBackupFilePath();
 
         if (string.IsNullOrWhiteSpace(backupFilePath))
         {
-            _display.ShowError(AppTexts.InvalidBackupFile);
-            return;
+            return false;
         }
 
         RecipeBackupResult result = _backupService.ExportToJson(backupFilePath);
 
         ShowBackupResult(result);
+        return true;
     }
 
-    private void ImportBackup()
+    private bool ImportBackup()
     {
         _display.ShowInfo(AppTexts.EnterImportBackupFilePath);
 
-        string backupFilePath = _reader.ReadBackupFilePath();
+        string? backupFilePath = _reader.ReadBackupFilePath();
 
         if (string.IsNullOrWhiteSpace(backupFilePath))
         {
-            _display.ShowError(AppTexts.InvalidBackupFile);
-            return;
+            return false;
         }
 
         RecipeBackupResult result = _backupService.ImportFromJson(backupFilePath);
 
         ShowBackupResult(result);
+        return true;
     }
 
-    private Recipe? SelectExistingRecipe(string title)
+    private Recipe? SelectExistingRecipe(string title, out bool returnedToMainMenu)
     {
+        returnedToMainMenu = false;
         List<Recipe> recipes = _importerService.GetAllRecipes();
 
         if (recipes.Count == 0)
@@ -315,7 +352,14 @@ public class RichConsoleRecipeApp : IRecipeApp
             return null;
         }
 
-        return _reader.SelectRecipe(recipes, title);
+        Recipe? selectedRecipe = _reader.SelectRecipe(recipes, title);
+
+        if (selectedRecipe == null)
+        {
+            returnedToMainMenu = true;
+        }
+
+        return selectedRecipe;
     }
 
     private void ShowSaveResult(RecipeSaveResult result)

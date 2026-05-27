@@ -2,12 +2,26 @@ using Spectre.Console;
 
 public class RichConsoleReader : IRichConsoleReader
 {
-    public Recipe ReadRecipe()
+    public Recipe? ReadRecipe()
     {
+        ShowBackToMainMenuHint();
+
+        string name = ReadOptionalText(AppTexts.EnterRecipeName);
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return null;
+        }
+
+        string sourceUrl = ReadOptionalText(AppTexts.EnterSourceUrl);
+        if (string.IsNullOrWhiteSpace(sourceUrl))
+        {
+            return null;
+        }
+
         return new Recipe
         {
-            Name = ReadRequiredText(AppTexts.EnterRecipeName),
-            SourceUrl = ReadRequiredText(AppTexts.EnterSourceUrl),
+            Name = name,
+            SourceUrl = sourceUrl,
             Ingredients = ReadIngredients(),
             Steps = ReadSteps(),
             Notes = ReadNotes(),
@@ -15,13 +29,17 @@ public class RichConsoleReader : IRichConsoleReader
         };
     }
 
-    public string ReadRecipeUrlToImport()
+    public string? ReadRecipeUrlToImport()
     {
+        ShowBackToMainMenuHint();
+
         return ReadOptionalText(AppTexts.EnterRecipeUrlToImport);
     }
 
-    public string ReadSearchText()
+    public string? ReadSearchText()
     {
+        ShowBackToMainMenuHint();
+
         return ReadOptionalText(AppTexts.SearchPrompt);
     }
 
@@ -55,14 +73,32 @@ public class RichConsoleReader : IRichConsoleReader
         return Confirm("Dorești să salvezi această rețetă?", true);
     }
 
-    public Recipe SelectRecipe(List<Recipe> recipes, string title)
+    public bool ConfirmImportAnotherRecipe()
     {
-        return AnsiConsole.Prompt(
-            new SelectionPrompt<Recipe>()
+        return SelectFollowUpAction(RichConsoleTexts.ImportAnotherRecipeOption);
+    }
+
+    public bool ConfirmSearchAnotherRecipe()
+    {
+        return SelectFollowUpAction(RichConsoleTexts.SearchAnotherRecipeOption);
+    }
+
+    public Recipe? SelectRecipe(List<Recipe> recipes, string title)
+    {
+        List<RecipeSelection> choices = recipes
+            .Select(recipe => new RecipeSelection(recipe))
+            .ToList();
+
+        choices.Add(RecipeSelection.BackToMainMenu);
+
+        RecipeSelection selection = AnsiConsole.Prompt(
+            new SelectionPrompt<RecipeSelection>()
                 .Title(Markup.Escape(title))
                 .PageSize(10)
-                .UseConverter(CreateRecipeSelectionText)
-                .AddChoices(recipes));
+                .UseConverter(selection => selection.Text)
+                .AddChoices(choices));
+
+        return selection.Recipe;
     }
 
     public Recipe ReadRecipeEdits(Recipe recipe)
@@ -105,25 +141,20 @@ public class RichConsoleReader : IRichConsoleReader
         return Confirm($"Sigur ștergi rețeta \"{recipe.Name}\"?", false);
     }
 
-    public string ReadBackupFilePath()
+    public string? ReadBackupFilePath()
     {
+        ShowBackToMainMenuHint();
+
         return ReadOptionalText(AppTexts.BackupPrompt);
     }
 
     public void WaitForContinue()
     {
         AnsiConsole.WriteLine();
-        AnsiConsole.MarkupLine(CreateMarkupMessage(RichConsoleTexts.UserOptionMarkupStart, "Apasă Enter pentru a continua..."));
+        AnsiConsole.MarkupLine(CreateMarkupMessage(
+            RichConsoleTexts.UserOptionMarkupStart,
+            RichConsoleTexts.ReturnToMainMenuPrompt));
         Console.ReadLine();
-    }
-
-    private static string ReadRequiredText(string prompt)
-    {
-        return AnsiConsole.Prompt(
-            new TextPrompt<string>(Markup.Escape(prompt))
-                .Validate(value => string.IsNullOrWhiteSpace(value)
-                    ? ValidationResult.Error(Markup.Escape(AppTexts.RecipeNameRequired))
-                    : ValidationResult.Success()));
     }
 
     private static string ReadOptionalText(string prompt)
@@ -168,14 +199,67 @@ public class RichConsoleReader : IRichConsoleReader
     {
         if (string.IsNullOrWhiteSpace(recipe.SourceUrl))
         {
-            return recipe.Name;
+            return Markup.Escape(recipe.Name);
         }
 
-        return string.Concat(recipe.Name, RichConsoleTexts.SelectionDetailsSeparator, recipe.SourceUrl);
+        return string.Concat(
+            Markup.Escape(recipe.Name),
+            RichConsoleTexts.SelectionDetailsSeparator,
+            Markup.Escape(recipe.SourceUrl));
     }
 
     private static string CreateMarkupMessage(string markupStart, string message)
     {
         return string.Concat(markupStart, Markup.Escape(message), RichConsoleTexts.MarkupEnd);
+    }
+
+    private static void ShowBackToMainMenuHint()
+    {
+        AnsiConsole.MarkupLine(CreateMarkupMessage(
+            RichConsoleTexts.UserOptionMarkupStart,
+            RichConsoleTexts.EmptyInputReturnsToMainMenu));
+    }
+
+    private static bool SelectFollowUpAction(string continueOption)
+    {
+        string selectedOption = AnsiConsole.Prompt(
+            new SelectionPrompt<string>()
+                .Title(CreateUserOptionTitle(RichConsoleTexts.NextActionTitle))
+                .PageSize(3)
+                .AddChoices(continueOption, CreateBackToMainMenuOption()));
+
+        return selectedOption == continueOption;
+    }
+
+    private sealed class RecipeSelection
+    {
+        public static readonly RecipeSelection BackToMainMenu = new RecipeSelection(
+            null,
+            CreateBackToMainMenuOption());
+
+        public RecipeSelection(Recipe recipe)
+            : this(recipe, CreateRecipeSelectionText(recipe))
+        {
+        }
+
+        private RecipeSelection(Recipe? recipe, string text)
+        {
+            Recipe = recipe;
+            Text = text;
+        }
+
+        public Recipe? Recipe { get; }
+
+        public string Text { get; }
+    }
+
+    private static string CreateUserOptionTitle(string text)
+    {
+        return string.Concat("[bold blue]", Markup.Escape(text), RichConsoleTexts.MarkupEnd);
+    }
+
+    private static string CreateBackToMainMenuOption()
+    {
+        return string.Concat("[bold yellow]", Markup.Escape(RichConsoleTexts.BackToMainMenuOption), RichConsoleTexts.MarkupEnd);
     }
 }
