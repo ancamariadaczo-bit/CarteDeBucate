@@ -4,16 +4,16 @@ public static class MainMenuOptionExtensions
     {
         return option switch
         {
-            MainMenuOption.AddRecipe => AppTexts.MenuAddRecipe,
-            MainMenuOption.ImportRecipeFromUrl => AppTexts.MenuImportRecipeFromUrl,
-            MainMenuOption.ShowRecipes => AppTexts.MenuShowRecipes,
-            MainMenuOption.SearchRecipe => AppTexts.MenuSearchRecipe,
-            MainMenuOption.ViewRecipeDetails => AppTexts.MenuViewRecipeDetails,
-            MainMenuOption.EditRecipe => AppTexts.MenuEditRecipe,
-            MainMenuOption.DeleteRecipe => AppTexts.MenuDeleteRecipe,
-            MainMenuOption.ExportBackup => AppTexts.MenuExportBackup,
-            MainMenuOption.ImportBackup => AppTexts.MenuImportBackup,
-            MainMenuOption.Exit => AppTexts.MenuExit,
+            MainMenuOption.AddRecipe => RichConsoleTexts.MenuAddRecipe,
+            MainMenuOption.ImportRecipeFromUrl => RichConsoleTexts.MenuImportRecipeFromUrl,
+            MainMenuOption.ShowRecipes => RichConsoleTexts.MenuShowRecipes,
+            MainMenuOption.SearchRecipe => RichConsoleTexts.MenuSearchRecipe,
+            MainMenuOption.ViewRecipeDetails => RichConsoleTexts.MenuViewRecipeDetails,
+            MainMenuOption.EditRecipe => RichConsoleTexts.MenuEditRecipe,
+            MainMenuOption.DeleteRecipe => RichConsoleTexts.MenuDeleteRecipe,
+            MainMenuOption.ExportBackup => RichConsoleTexts.MenuExportBackup,
+            MainMenuOption.ImportBackup => RichConsoleTexts.MenuImportBackup,
+            MainMenuOption.Exit => RichConsoleTexts.MenuExit,
             _ => option.ToString()
         };
     }

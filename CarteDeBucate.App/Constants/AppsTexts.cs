@@ -44,9 +44,9 @@ public static class AppTexts
     public const string ImportFailedEmptyUrl = "Link-ul este gol.";
     public const string ImportFailedCouldNotDownloadPage = "Nu am putut descărca pagina.";
     public const string ImportFailedNotRecipePage = "Pagina nu pare să fie o rețetă.";
-    public const string ImportSuccessJsonLd = "Rețeta a fost importată din date structurate JSON-LD.";
-    public const string ImportSuccessVisibleHtml = "Rețeta a fost importată din conținutul vizibil al paginii.";
-    public const string ImportSuccessTitleOnly = "Am importat doar titlul paginii.";
+    public const string ImportSuccessJsonLd = "Rețeta a fost importată cu succes.";
+    public const string ImportSuccessVisibleHtml = "Rețeta a fost importată cu succes.";
+    public const string ImportSuccessTitleOnly = "Am importat numele rețetei. Te rog completează ingredientele și pașii.";
     public const string ImportFailedBlockedPage =
     "Pagina pare blocată de o verificare automată. Programul nu a primit conținutul real al rețetei.";
 

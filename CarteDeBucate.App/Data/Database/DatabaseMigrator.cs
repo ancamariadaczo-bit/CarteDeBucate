@@ -23,6 +23,12 @@ public class DatabaseMigrator
                 continue;
             }
 
+            if (IsMigrationAlreadyPresentInSchema(connection, migration))
+            {
+                SaveMigration(connection, migration);
+                continue;
+            }
+
             ApplyMigration(connection, migration);
         }
     }
@@ -59,6 +65,35 @@ public class DatabaseMigrator
         return count > 0;
     }
 
+    private static bool IsMigrationAlreadyPresentInSchema(SqliteConnection connection, DatabaseMigration migration)
+    {
+        return migration.Version switch
+        {
+            1 => ColumnExists(connection, "Recipes", "Status"),
+            _ => false
+        };
+    }
+
+    private static bool ColumnExists(SqliteConnection connection, string tableName, string columnName)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = $"PRAGMA table_info({tableName});";
+
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            string existingColumnName = reader.GetString(reader.GetOrdinal("name"));
+
+            if (existingColumnName.Equals(columnName, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static void ApplyMigration(SqliteConnection connection, DatabaseMigration migration)
     {
         using SqliteTransaction transaction = connection.BeginTransaction();
@@ -70,18 +105,7 @@ public class DatabaseMigrator
             migrationCommand.CommandText = migration.Sql;
             migrationCommand.ExecuteNonQuery();
 
-            using SqliteCommand saveMigrationCommand = connection.CreateCommand();
-            saveMigrationCommand.Transaction = transaction;
-            saveMigrationCommand.CommandText = """
-                INSERT INTO SchemaMigrations (Version, Name, AppliedAt)
-                VALUES (@Version, @Name, @AppliedAt);
-                """;
-
-            saveMigrationCommand.Parameters.AddWithValue("@Version", migration.Version);
-            saveMigrationCommand.Parameters.AddWithValue("@Name", migration.Name);
-            saveMigrationCommand.Parameters.AddWithValue("@AppliedAt", DateTime.UtcNow.ToString("O"));
-
-            saveMigrationCommand.ExecuteNonQuery();
+            SaveMigration(connection, migration, transaction);
 
             transaction.Commit();
         }
@@ -90,5 +114,24 @@ public class DatabaseMigrator
             transaction.Rollback();
             throw;
         }
+    }
+
+    private static void SaveMigration(
+        SqliteConnection connection,
+        DatabaseMigration migration,
+        SqliteTransaction? transaction = null)
+    {
+        using SqliteCommand saveMigrationCommand = connection.CreateCommand();
+        saveMigrationCommand.Transaction = transaction;
+        saveMigrationCommand.CommandText = """
+            INSERT INTO SchemaMigrations (Version, Name, AppliedAt)
+            VALUES (@Version, @Name, @AppliedAt);
+            """;
+
+        saveMigrationCommand.Parameters.AddWithValue("@Version", migration.Version);
+        saveMigrationCommand.Parameters.AddWithValue("@Name", migration.Name);
+        saveMigrationCommand.Parameters.AddWithValue("@AppliedAt", DateTime.UtcNow.ToString("O"));
+
+        saveMigrationCommand.ExecuteNonQuery();
     }
 }
