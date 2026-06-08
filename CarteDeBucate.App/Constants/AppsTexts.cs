@@ -61,6 +61,10 @@ public static class AppTexts
 
     public const string SeparatorLine = "-----------------";
     public const string ConsolePrompt = "> ";
+    public const string BackToMainMenuInput = "inapoi";
+    public const string BackToMainMenuHint = "Lasă gol și apasă Enter pentru a reveni la meniul principal.";
+    public const string BackToMainMenuIdHint = "Introdu 0 pentru a reveni la meniul principal.";
+    public const string BackToMainMenuEditHint = "Scrie inapoi pentru a reveni la meniul principal fără modificări.";
 
     public const string SourceLabel = "   Sursă: ";
     public const string SavedAtLabel = "   Salvată la: ";

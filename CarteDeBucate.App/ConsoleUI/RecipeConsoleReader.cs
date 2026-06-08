@@ -5,15 +5,26 @@ public class RecipeConsoleReader : IRecipeConsoleReader
         return Console.ReadLine() ?? string.Empty;
     }
 
-    public Recipe ReadRecipeFromConsole()
+    public Recipe? ReadRecipeFromConsole()
     {
         Recipe recipe = new Recipe();
 
+        Console.WriteLine(AppTexts.BackToMainMenuHint);
         Console.Write(AppTexts.EnterRecipeName);
         recipe.Name = Console.ReadLine() ?? "";
 
+        if (string.IsNullOrWhiteSpace(recipe.Name))
+        {
+            return null;
+        }
+
         Console.Write(AppTexts.EnterSourceUrl);
         recipe.SourceUrl = Console.ReadLine() ?? "";
+
+        if (string.IsNullOrWhiteSpace(recipe.SourceUrl))
+        {
+            return null;
+        }
 
         Console.WriteLine();
         Console.WriteLine(AppTexts.EnterIngredientsIntro);
@@ -38,6 +49,7 @@ public class RecipeConsoleReader : IRecipeConsoleReader
 
     public string ReadRecipeUrlToImport()
     {
+        Console.WriteLine(AppTexts.BackToMainMenuHint);
         Console.Write(AppTexts.EnterRecipeUrlToImport);
 
         return Console.ReadLine() ?? "";
@@ -45,6 +57,7 @@ public class RecipeConsoleReader : IRecipeConsoleReader
 
     public string ReadSearchText()
     {
+        Console.WriteLine(AppTexts.BackToMainMenuHint);
         Console.Write(AppTexts.SearchPrompt);
 
         return Console.ReadLine() ?? "";
@@ -91,30 +104,42 @@ public class RecipeConsoleReader : IRecipeConsoleReader
         recipe.SavedAt = DateTime.Now;
     }
 
-    public int ReadRecipeIdToEdit()
+    public int? ReadRecipeIdToEdit()
     {
+        Console.WriteLine(AppTexts.BackToMainMenuIdHint);
         Console.Write(AppTexts.EnterRecipeIdToEdit);
 
         string input = Console.ReadLine() ?? "";
 
+        if (IsBackToMainMenuId(input))
+        {
+            return null;
+        }
+
         if (!int.TryParse(input, out int recipeId))
         {
-            return 0;
+            return -1;
         }
 
         return recipeId;
     }
 
-    public Recipe ReadRecipeEditsFromConsole(Recipe recipe)
+    public Recipe? ReadRecipeEditsFromConsole(Recipe recipe)
     {
         Console.WriteLine();
         Console.WriteLine(AppTexts.EditRecipeTitle);
         Console.WriteLine(AppTexts.KeepCurrentValuePrompt);
+        Console.WriteLine(AppTexts.BackToMainMenuEditHint);
 
         Console.WriteLine();
         Console.WriteLine($"{AppTexts.CurrentValueLabel}{recipe.Name}");
         Console.Write(AppTexts.EnterRecipeName);
         string name = Console.ReadLine() ?? "";
+
+        if (IsBackToMainMenuCommand(name))
+        {
+            return null;
+        }
 
         if (!string.IsNullOrWhiteSpace(name))
         {
@@ -206,29 +231,41 @@ public class RecipeConsoleReader : IRecipeConsoleReader
             .ToList();
     }
 
-    public int ReadRecipeIdToDelete()
+    public int? ReadRecipeIdToDelete()
     {
+        Console.WriteLine(AppTexts.BackToMainMenuIdHint);
         Console.Write(AppTexts.EnterRecipeIdToDelete);
 
         string input = Console.ReadLine() ?? "";
 
+        if (IsBackToMainMenuId(input))
+        {
+            return null;
+        }
+
         if (!int.TryParse(input, out int recipeId))
         {
-            return 0;
+            return -1;
         }
 
         return recipeId;
     }
 
-    public int ReadRecipeIdToView()
+    public int? ReadRecipeIdToView()
     {
+        Console.WriteLine(AppTexts.BackToMainMenuIdHint);
         Console.Write(AppTexts.EnterRecipeIdToView);
 
         string input = Console.ReadLine() ?? "";
 
+        if (IsBackToMainMenuId(input))
+        {
+            return null;
+        }
+
         if (!int.TryParse(input, out int recipeId))
         {
-            return 0;
+            return -1;
         }
 
         return recipeId;
@@ -261,8 +298,19 @@ public class RecipeConsoleReader : IRecipeConsoleReader
 
     public string ReadBackupFilePath()
     {
+        Console.WriteLine(AppTexts.BackToMainMenuHint);
         Console.Write(AppTexts.BackupPrompt);
 
         return Console.ReadLine() ?? "";
+    }
+
+    private static bool IsBackToMainMenuId(string input)
+    {
+        return string.IsNullOrWhiteSpace(input) || input.Trim() == "0";
+    }
+
+    private static bool IsBackToMainMenuCommand(string input)
+    {
+        return input.Trim().Equals(AppTexts.BackToMainMenuInput, StringComparison.OrdinalIgnoreCase);
     }
 }

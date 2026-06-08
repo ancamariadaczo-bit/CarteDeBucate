@@ -102,7 +102,12 @@ public class ClassicConsoleRecipeApp : IRecipeApp
 
     private void AddRecipe()
     {
-        Recipe recipe = _reader.ReadRecipeFromConsole();
+        Recipe? recipe = _reader.ReadRecipeFromConsole();
+
+        if (recipe == null)
+        {
+            return;
+        }
 
         RecipeSaveResult result = _importerService.SaveRecipe(recipe);
 
@@ -115,7 +120,6 @@ public class ClassicConsoleRecipeApp : IRecipeApp
 
         if (string.IsNullOrWhiteSpace(url))
         {
-            _writer.DisplayMessage(AppTexts.EmptyUrl);
             return;
         }
 
@@ -183,7 +187,6 @@ public class ClassicConsoleRecipeApp : IRecipeApp
 
         if (string.IsNullOrWhiteSpace(searchText))
         {
-            _writer.DisplayMessage(AppTexts.InvalidOption);
             return;
         }
 
@@ -204,7 +207,12 @@ public class ClassicConsoleRecipeApp : IRecipeApp
 
         _writer.DisplayRecipeList(recipes);
 
-        int recipeId = _reader.ReadRecipeIdToView();
+        int? recipeId = _reader.ReadRecipeIdToView();
+
+        if (recipeId == null)
+        {
+            return;
+        }
 
         if (recipeId <= 0)
         {
@@ -212,7 +220,7 @@ public class ClassicConsoleRecipeApp : IRecipeApp
             return;
         }
 
-        Recipe? recipe = _importerService.GetRecipeById(recipeId);
+        Recipe? recipe = _importerService.GetRecipeById(recipeId.Value);
 
         if (recipe == null)
         {
@@ -235,7 +243,12 @@ public class ClassicConsoleRecipeApp : IRecipeApp
 
         _writer.DisplayRecipeList(recipes);
 
-        int recipeId = _reader.ReadRecipeIdToEdit();
+        int? recipeId = _reader.ReadRecipeIdToEdit();
+
+        if (recipeId == null)
+        {
+            return;
+        }
 
         if (recipeId <= 0)
         {
@@ -243,7 +256,7 @@ public class ClassicConsoleRecipeApp : IRecipeApp
             return;
         }
 
-        Recipe? recipe = _importerService.GetRecipeById(recipeId);
+        Recipe? recipe = _importerService.GetRecipeById(recipeId.Value);
 
         if (recipe == null)
         {
@@ -253,7 +266,12 @@ public class ClassicConsoleRecipeApp : IRecipeApp
 
         _writer.DisplayRecipeDetails(recipe);
 
-        Recipe editedRecipe = _reader.ReadRecipeEditsFromConsole(recipe);
+        Recipe? editedRecipe = _reader.ReadRecipeEditsFromConsole(recipe);
+
+        if (editedRecipe == null)
+        {
+            return;
+        }
 
         RecipeSaveResult result = _importerService.UpdateRecipe(editedRecipe);
 
@@ -272,7 +290,12 @@ public class ClassicConsoleRecipeApp : IRecipeApp
 
         _writer.DisplayRecipeList(recipes);
 
-        int recipeId = _reader.ReadRecipeIdToDelete();
+        int? recipeId = _reader.ReadRecipeIdToDelete();
+
+        if (recipeId == null)
+        {
+            return;
+        }
 
         if (recipeId <= 0)
         {
@@ -280,7 +303,7 @@ public class ClassicConsoleRecipeApp : IRecipeApp
             return;
         }
 
-        RecipeSaveResult result = _importerService.DeleteRecipe(recipeId);
+        RecipeSaveResult result = _importerService.DeleteRecipe(recipeId.Value);
 
         _writer.DisplayMessage(result.Message);
     }
@@ -290,6 +313,11 @@ public class ClassicConsoleRecipeApp : IRecipeApp
         _writer.DisplayMessage(AppTexts.EnterExportBackupFilePath);
 
         string backupFilePath = _reader.ReadBackupFilePath();
+
+        if (string.IsNullOrWhiteSpace(backupFilePath))
+        {
+            return;
+        }
 
         RecipeBackupResult result = _backupService.ExportToJson(backupFilePath);
 
@@ -301,6 +329,11 @@ public class ClassicConsoleRecipeApp : IRecipeApp
         _writer.DisplayMessage(AppTexts.EnterImportBackupFilePath);
 
         string backupFilePath = _reader.ReadBackupFilePath();
+
+        if (string.IsNullOrWhiteSpace(backupFilePath))
+        {
+            return;
+        }
 
         RecipeBackupResult result = _backupService.ImportFromJson(backupFilePath);
 

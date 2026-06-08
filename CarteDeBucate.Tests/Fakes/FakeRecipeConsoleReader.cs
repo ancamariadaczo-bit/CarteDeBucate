@@ -51,7 +51,7 @@ public class FakeRecipeConsoleReader : IRecipeConsoleReader
         RecipePassedToCompleteImportedRecipe = recipe;
     }
 
-    public Recipe ReadRecipeEditsFromConsole(Recipe recipe)
+    public Recipe? ReadRecipeEditsFromConsole(Recipe recipe)
     {
         ReadRecipeEditsFromConsoleWasCalled = true;
         RecipePassedToReadEdits = recipe;
@@ -59,7 +59,7 @@ public class FakeRecipeConsoleReader : IRecipeConsoleReader
         return RecipeToReturnFromEdit ?? recipe;
     }
 
-    public Recipe ReadRecipeFromConsole()
+    public Recipe? ReadRecipeFromConsole()
     {
         ReadRecipeFromConsoleWasCalled = true;
 
@@ -67,19 +67,19 @@ public class FakeRecipeConsoleReader : IRecipeConsoleReader
             ?? throw new InvalidOperationException("No recipe was configured for ReadRecipeFromConsole.");
     }
 
-    public int ReadRecipeIdToDelete()
+    public int? ReadRecipeIdToDelete()
     {
         ReadRecipeIdToDeleteWasCalled = true;
         return RecipeIdToDelete;
     }
 
-    public int ReadRecipeIdToEdit()
+    public int? ReadRecipeIdToEdit()
     {
         ReadRecipeIdToEditWasCalled = true;
         return RecipeIdToEdit;
     }
 
-    public int ReadRecipeIdToView()
+    public int? ReadRecipeIdToView()
     {
         ReadRecipeIdToViewWasCalled = true;
         return RecipeIdToView;
