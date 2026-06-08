@@ -16,7 +16,12 @@ public class AppSettings
     {
         string? configurationFilePath = FindConfigurationFilePath();
 
-        if (configurationFilePath == null)
+        return Load(configurationFilePath);
+    }
+
+    public static AppSettings Load(string? configurationFilePath)
+    {
+        if (string.IsNullOrWhiteSpace(configurationFilePath) || !File.Exists(configurationFilePath))
         {
             return new AppSettings();
         }
