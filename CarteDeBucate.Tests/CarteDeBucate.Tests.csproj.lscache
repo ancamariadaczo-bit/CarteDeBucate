@@ -65,12 +65,16 @@ Fakes/
  FakeRecipeImporter.cs
  FakeRecipeImporterService.cs
  FakeRecipeRepository.cs
+ FakeRichConsoleDisplay.cs
+ FakeRichConsoleMenu.cs
+ FakeRichConsoleReader.cs
 obj/Debug/net10.0/
  .NETCoreApp,Version=v10.0.AssemblyAttributes.cs
  CarteDeBucate.Tests.AssemblyInfo.cs
  CarteDeBucate.Tests.GlobalUsings.g.cs
 RecipeConsoleAppTests.cs
 RecipeImporterTests.cs
+RichConsoleRecipeAppTests.cs
 Services/
  RecipeBackupServiceTests.cs
  RecipeImporterServiceTests.cs

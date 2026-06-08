@@ -64,10 +64,12 @@ ConsoleUI/
  RecipeConsoleReader.cs
  RecipeConsoleWriter.cs
  RichConsole/
+  IRichConsoleReader.cs
   MainMenuOption.cs
   MainMenuOptionExtensions.cs
   RichConsoleDisplay.cs
   RichConsoleMenu.cs
+  RichConsoleReader.cs
   RichConsoleRecipeApp.cs
 Constants/
  AppsTexts.cs
