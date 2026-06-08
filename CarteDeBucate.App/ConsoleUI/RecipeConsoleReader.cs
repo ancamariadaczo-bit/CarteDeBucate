@@ -178,21 +178,32 @@ public class RecipeConsoleReader : IRecipeConsoleReader
     {
         List<string> values = new List<string>();
 
+        Console.WriteLine(prompt);
+
         while (true)
         {
-            Console.Write(prompt);
-
             string value = Console.ReadLine() ?? "";
 
-            if (string.IsNullOrWhiteSpace(value))
+            if (value.Trim().Equals(
+                AppTexts.FinishMultilineInputCommand,
+                StringComparison.OrdinalIgnoreCase))
             {
                 break;
             }
 
-            values.Add(value);
+            values.AddRange(ParseInputLines(value));
         }
 
         return values;
+    }
+
+    private static List<string> ParseInputLines(string input)
+    {
+        return input
+            .Split(["\r\n", "\n", "\r"], StringSplitOptions.RemoveEmptyEntries)
+            .Select(value => value.Trim())
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .ToList();
     }
 
     public int ReadRecipeIdToDelete()

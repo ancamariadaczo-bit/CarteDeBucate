@@ -19,12 +19,13 @@ public static class AppTexts
     public const string EnterSourceUrl = "Introdu link-ul sursă al rețetei: ";
     public const string EnterNotes = "Adaugă notițe personale, dacă vrei: ";
 
-    public const string EnterIngredientsIntro = "Introdu ingredientele, câte unul pe rând.";
-    public const string EnterStepsIntro = "Introdu pașii rețetei, câte unul pe rând.";
-    public const string EmptyLineToFinish = "Când ai terminat, apasă Enter pe linie goală.";
+    public const string EnterIngredientsIntro = "Introdu ingredientele, câte unul pe rând, sau introdu mai multe rânduri deodată.";
+    public const string EnterStepsIntro = "Introdu pașii rețetei, câte unul pe rând, sau introdu mai multe rânduri deodată.";
+    public const string EmptyLineToFinish = "Când ai terminat, scrie „gata” pe o linie separată și apasă Enter.";
+    public const string FinishMultilineInputCommand = "gata";
 
-    public const string IngredientPrompt = "Ingrediente: ";
-    public const string StepPrompt = "Pași: ";
+    public const string IngredientPrompt = "Ingrediente:";
+    public const string StepPrompt = "Pași:";
 
     public const string SearchPrompt = "Scrie textul căutat: ";
     public const string SearchResults = "Rezultatele căutării:";
