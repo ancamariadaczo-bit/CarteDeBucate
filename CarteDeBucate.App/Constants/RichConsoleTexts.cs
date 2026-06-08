@@ -54,4 +54,8 @@ public static class RichConsoleTexts
     public const string ReturnToMainMenuPrompt = "Apasă Enter pentru a reveni la meniul principal.";
     public const string ReturnedToMainMenu = "Ai revenit la meniul principal.";
     public const string EmptyInputReturnsToMainMenu = "Lasă gol și apasă Enter pentru a reveni la meniul principal.";
+    public const string EnterIngredientsIntro = "Introdu ingredientele, câte unul pe rând, sau introdu mai multe rânduri deodată.";
+    public const string EnterStepsIntro = "Introdu pașii rețetei, câte unul pe rând, sau introdu mai multe rânduri deodată.";
+    public const string FinishMultilineInputCommand = "gata";
+    public const string FinishMultilineInputHint = "Când ai terminat, scrie „gata” pe o linie separată și apasă Enter.";
 }

@@ -55,12 +55,12 @@ public class RichConsoleReader : IRichConsoleReader
 
     public List<string> ReadIngredients()
     {
-        return ReadMultipleLines(AppTexts.EnterIngredientsIntro, AppTexts.IngredientPrompt);
+        return ReadMultipleLines(RichConsoleTexts.EnterIngredientsIntro, AppTexts.IngredientPrompt);
     }
 
     public List<string> ReadSteps()
     {
-        return ReadMultipleLines(AppTexts.EnterStepsIntro, AppTexts.StepPrompt);
+        return ReadMultipleLines(RichConsoleTexts.EnterStepsIntro, AppTexts.StepPrompt);
     }
 
     public string ReadNotes()
@@ -169,21 +169,35 @@ public class RichConsoleReader : IRichConsoleReader
         List<string> values = new();
 
         AnsiConsole.MarkupLine(CreateMarkupMessage(RichConsoleTexts.InfoMarkupStart, intro));
-        AnsiConsole.MarkupLine(CreateMarkupMessage(RichConsoleTexts.UserOptionMarkupStart, AppTexts.EmptyLineToFinish));
+        AnsiConsole.MarkupLine(CreateMarkupMessage(
+            RichConsoleTexts.UserOptionMarkupStart,
+            RichConsoleTexts.FinishMultilineInputHint));
+        AnsiConsole.MarkupLine(Markup.Escape(prompt));
 
         while (true)
         {
-            string value = ReadOptionalText(prompt);
+            string value = Console.ReadLine() ?? string.Empty;
 
-            if (string.IsNullOrWhiteSpace(value))
+            if (value.Trim().Equals(
+                RichConsoleTexts.FinishMultilineInputCommand,
+                StringComparison.OrdinalIgnoreCase))
             {
                 break;
             }
 
-            values.Add(value);
+            values.AddRange(ParseInputLines(value));
         }
 
         return values;
+    }
+
+    private static List<string> ParseInputLines(string input)
+    {
+        return input
+            .Split(["\r\n", "\n", "\r"], StringSplitOptions.RemoveEmptyEntries)
+            .Select(value => value.Trim())
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .ToList();
     }
 
     private static bool Confirm(string prompt, bool defaultValue)

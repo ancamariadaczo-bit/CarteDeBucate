@@ -23,8 +23,8 @@ public static class AppTexts
     public const string EnterStepsIntro = "Introdu pașii rețetei, câte unul pe rând.";
     public const string EmptyLineToFinish = "Când ai terminat, apasă Enter pe linie goală.";
 
-    public const string IngredientPrompt = "Ingredient: ";
-    public const string StepPrompt = "Pas: ";
+    public const string IngredientPrompt = "Ingrediente: ";
+    public const string StepPrompt = "Pași: ";
 
     public const string SearchPrompt = "Scrie textul căutat: ";
     public const string SearchResults = "Rezultatele căutării:";
