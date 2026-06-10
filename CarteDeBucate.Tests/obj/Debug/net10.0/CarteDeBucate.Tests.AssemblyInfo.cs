@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CarteDeBucate.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fa5b926b36037b816e033d6ead4889885d922a06")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+23f295da5cb41d84337125272375e84f1f754a0d")]
 [assembly: System.Reflection.AssemblyProductAttribute("CarteDeBucate.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CarteDeBucate.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
