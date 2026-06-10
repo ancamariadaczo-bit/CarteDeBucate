@@ -27,6 +27,12 @@ public static class RichConsoleTexts
     public const string NextActionTitle = "Ce vrei să faci mai departe?";
     public const string ImportAnotherRecipeOption = "Importă altă rețetă";
     public const string SearchAnotherRecipeOption = "Caută altă rețetă";
+    public const string KeepImportedIngredientsQuestion = "Păstrezi ingredientele importate?";
+    public const string KeepImportedStepsQuestion = "Păstrezi pașii importați?";
+    public const string SaveRecipeQuestion = "Dorești să salvezi această rețetă?";
+    public const string EditIngredientsQuestion = "Vrei să editezi ingredientele?";
+    public const string EditStepsQuestion = "Vrei să editezi pașii?";
+    public const string DeleteRecipeConfirmation = "Sigur ștergi rețeta \"{0}\"?";
 
     public const string NameColumn = "Nume";
     public const string SourceColumn = "Sursă";
@@ -44,6 +50,8 @@ public static class RichConsoleTexts
     public const string ErrorMarkupStart = "[red]";
     public const string InfoMarkupStart = "[green]";
     public const string UserOptionMarkupStart = "[purple]";
+    public const string UserOptionTitleMarkupStart = "[bold blue]";
+    public const string BackToMainMenuMarkupStart = "[bold yellow]";
     public const string SectionTitleMarkupStart = "[bold]";
     public const string MarkupEnd = "[/]";
     public const string SelectionDetailsSeparator = " - ";

@@ -106,22 +106,7 @@ public class RecipeConsoleReader : IRecipeConsoleReader
 
     public int? ReadRecipeIdToEdit()
     {
-        Console.WriteLine(AppTexts.BackToMainMenuIdHint);
-        Console.Write(AppTexts.EnterRecipeIdToEdit);
-
-        string input = Console.ReadLine() ?? "";
-
-        if (IsBackToMainMenuId(input))
-        {
-            return null;
-        }
-
-        if (!int.TryParse(input, out int recipeId))
-        {
-            return -1;
-        }
-
-        return recipeId;
+        return ReadRecipeId(AppTexts.EnterRecipeIdToEdit);
     }
 
     public Recipe? ReadRecipeEditsFromConsole(Recipe recipe)
@@ -233,42 +218,12 @@ public class RecipeConsoleReader : IRecipeConsoleReader
 
     public int? ReadRecipeIdToDelete()
     {
-        Console.WriteLine(AppTexts.BackToMainMenuIdHint);
-        Console.Write(AppTexts.EnterRecipeIdToDelete);
-
-        string input = Console.ReadLine() ?? "";
-
-        if (IsBackToMainMenuId(input))
-        {
-            return null;
-        }
-
-        if (!int.TryParse(input, out int recipeId))
-        {
-            return -1;
-        }
-
-        return recipeId;
+        return ReadRecipeId(AppTexts.EnterRecipeIdToDelete);
     }
 
     public int? ReadRecipeIdToView()
     {
-        Console.WriteLine(AppTexts.BackToMainMenuIdHint);
-        Console.Write(AppTexts.EnterRecipeIdToView);
-
-        string input = Console.ReadLine() ?? "";
-
-        if (IsBackToMainMenuId(input))
-        {
-            return null;
-        }
-
-        if (!int.TryParse(input, out int recipeId))
-        {
-            return -1;
-        }
-
-        return recipeId;
+        return ReadRecipeId(AppTexts.EnterRecipeIdToView);
     }
 
     public bool AskForSaveConfirmation()
@@ -281,12 +236,12 @@ public class RecipeConsoleReader : IRecipeConsoleReader
 
             string? input = Console.ReadLine()?.Trim().ToLower();
 
-            if (input == "y" || input == "yes" || input == "da" || input == "d")
+            if (IsAffirmativeAnswer(input))
             {
                 return true;
             }
 
-            if (input == "n" || input == "no" || input == "nu")
+            if (IsNegativeAnswer(input))
             {
                 return false;
             }
@@ -304,6 +259,26 @@ public class RecipeConsoleReader : IRecipeConsoleReader
         return Console.ReadLine() ?? "";
     }
 
+    private static int? ReadRecipeId(string prompt)
+    {
+        Console.WriteLine(AppTexts.BackToMainMenuIdHint);
+        Console.Write(prompt);
+
+        string input = Console.ReadLine() ?? "";
+
+        if (IsBackToMainMenuId(input))
+        {
+            return null;
+        }
+
+        if (!int.TryParse(input, out int recipeId))
+        {
+            return -1;
+        }
+
+        return recipeId;
+    }
+
     private static bool IsBackToMainMenuId(string input)
     {
         return string.IsNullOrWhiteSpace(input) || input.Trim() == "0";
@@ -312,5 +287,15 @@ public class RecipeConsoleReader : IRecipeConsoleReader
     private static bool IsBackToMainMenuCommand(string input)
     {
         return input.Trim().Equals(AppTexts.BackToMainMenuInput, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsAffirmativeAnswer(string? input)
+    {
+        return input == "y" || input == "yes" || input == "da" || input == "d";
+    }
+
+    private static bool IsNegativeAnswer(string? input)
+    {
+        return input == "n" || input == "no" || input == "nu";
     }
 }

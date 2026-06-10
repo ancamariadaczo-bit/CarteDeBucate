@@ -56,35 +56,15 @@ public class RecipeConsoleWriter : IRecipeConsoleWriter
 
         for (int i = 0; i < foundRecipes.Count; i++)
         {
-            DisplayRecipe(foundRecipes[i], i + 1);
+            DisplayRecipeListItem(foundRecipes[i], i + 1);
         }
     }
 
     public void DisplayRecipe(Recipe recipe, int index)
     {
         Console.WriteLine($"{index}. {recipe.Name} (ID: {recipe.Id})");
-        Console.WriteLine($"{AppTexts.SourceLabel}{recipe.SourceUrl}");
-        Console.WriteLine($"{AppTexts.SavedAtLabel}{recipe.SavedAt}");
-
-        Console.WriteLine(AppTexts.IngredientsLabel);
-
-        foreach (string ingredient in recipe.Ingredients)
-        {
-            Console.WriteLine($"{AppTexts.ListItemPrefix}{ingredient}");
-        }
-
-        Console.WriteLine(AppTexts.StepsLabel);
-
-        for (int stepIndex = 0; stepIndex < recipe.Steps.Count; stepIndex++)
-        {
-            Console.WriteLine($"   {stepIndex + 1}. {recipe.Steps[stepIndex]}");
-        }
-
-        if (!string.IsNullOrWhiteSpace(recipe.Notes))
-        {
-            Console.WriteLine($"{AppTexts.NotesLabel}{recipe.Notes}");
-        }
-
+        WriteRecipeSummary(recipe);
+        WriteSimpleRecipeSections(recipe);
         Console.WriteLine();
     }
 
@@ -94,47 +74,7 @@ public class RecipeConsoleWriter : IRecipeConsoleWriter
         Console.WriteLine(AppTexts.ImportedRecipeTitle);
         Console.WriteLine();
 
-        Console.WriteLine($"{AppTexts.NameLabel}{recipe.Name}");
-        Console.WriteLine($"{AppTexts.SourceLabel}{recipe.SourceUrl}");
-        Console.WriteLine($"{AppTexts.ImportedAtLabel}{recipe.SavedAt}");
-
-        Console.WriteLine();
-        Console.WriteLine(AppTexts.IngredientsTitle);
-
-        if (recipe.Ingredients.Count == 0)
-        {
-            Console.WriteLine(AppTexts.NoIngredientsFound);
-        }
-        else
-        {
-            foreach (string ingredient in recipe.Ingredients)
-            {
-                Console.WriteLine($"{AppTexts.ListItemPrefix}{ingredient}");
-            }
-        }
-
-        Console.WriteLine();
-        Console.WriteLine(AppTexts.StepsTitle);
-
-        if (recipe.Steps.Count == 0)
-        {
-            Console.WriteLine(AppTexts.NoStepsFound);
-        }
-        else
-        {
-            for (int i = 0; i < recipe.Steps.Count; i++)
-            {
-                Console.WriteLine($"{i + 1}. {recipe.Steps[i]}");
-            }
-        }
-
-        if (!string.IsNullOrWhiteSpace(recipe.Notes))
-        {
-            Console.WriteLine();
-            Console.WriteLine($"{AppTexts.NotesTitle}{recipe.Notes}");
-        }
-
-        Console.WriteLine();
+        WriteRecipeDetailsBody(recipe, includeId: false, dateLabel: AppTexts.ImportedAtLabel);
         Console.WriteLine(AppTexts.ImportedRecipeEndLine);
     }
 
@@ -153,10 +93,7 @@ public class RecipeConsoleWriter : IRecipeConsoleWriter
         {
             Recipe recipe = recipesToDisplay[i];
 
-            Console.WriteLine($"{i + 1}. {recipe.Name} ({AppTexts.IdLabel}: {recipe.Id})");
-            Console.WriteLine($"{AppTexts.SourceLabel}{recipe.SourceUrl}");
-            Console.WriteLine($"{AppTexts.SavedAtLabel}{recipe.SavedAt}");
-            Console.WriteLine();
+            DisplayRecipeListItem(recipe, i + 1);
         }
     }
 
@@ -166,40 +103,56 @@ public class RecipeConsoleWriter : IRecipeConsoleWriter
         Console.WriteLine(AppTexts.RecipeDetailsTitle);
         Console.WriteLine();
 
-        Console.WriteLine($"{AppTexts.NameLabel}{recipe.Name}");
-        Console.WriteLine($"{AppTexts.IdLabel}: {recipe.Id}");
+        WriteRecipeDetailsBody(recipe, includeId: true, dateLabel: AppTexts.SavedAtLabel);
+        Console.WriteLine(AppTexts.RecipeDetailsEndLine);
+    }
+
+    private static void WriteRecipeSummary(Recipe recipe)
+    {
         Console.WriteLine($"{AppTexts.SourceLabel}{recipe.SourceUrl}");
         Console.WriteLine($"{AppTexts.SavedAtLabel}{recipe.SavedAt}");
+    }
+
+    private static void DisplayRecipeListItem(Recipe recipe, int index)
+    {
+        Console.WriteLine($"{index}. {recipe.Name} ({AppTexts.IdLabel}: {recipe.Id})");
+        WriteRecipeSummary(recipe);
+        Console.WriteLine();
+    }
+
+    private static void WriteSimpleRecipeSections(Recipe recipe)
+    {
+        Console.WriteLine(AppTexts.IngredientsLabel);
+        WriteBulletedList(recipe.Ingredients);
+
+        Console.WriteLine(AppTexts.StepsLabel);
+        WriteNumberedList(recipe.Steps, "   ");
+
+        if (!string.IsNullOrWhiteSpace(recipe.Notes))
+        {
+            Console.WriteLine($"{AppTexts.NotesLabel}{recipe.Notes}");
+        }
+    }
+
+    private static void WriteRecipeDetailsBody(Recipe recipe, bool includeId, string dateLabel)
+    {
+        Console.WriteLine($"{AppTexts.NameLabel}{recipe.Name}");
+
+        if (includeId)
+        {
+            Console.WriteLine($"{AppTexts.IdLabel}: {recipe.Id}");
+        }
+
+        Console.WriteLine($"{AppTexts.SourceLabel}{recipe.SourceUrl}");
+        Console.WriteLine($"{dateLabel}{recipe.SavedAt}");
 
         Console.WriteLine();
         Console.WriteLine(AppTexts.IngredientsTitle);
-
-        if (recipe.Ingredients.Count == 0)
-        {
-            Console.WriteLine(AppTexts.NoIngredientsFound);
-        }
-        else
-        {
-            foreach (string ingredient in recipe.Ingredients)
-            {
-                Console.WriteLine($"{AppTexts.ListItemPrefix}{ingredient}");
-            }
-        }
+        WriteBulletedListOrEmpty(recipe.Ingredients, AppTexts.NoIngredientsFound);
 
         Console.WriteLine();
         Console.WriteLine(AppTexts.StepsTitle);
-
-        if (recipe.Steps.Count == 0)
-        {
-            Console.WriteLine(AppTexts.NoStepsFound);
-        }
-        else
-        {
-            for (int i = 0; i < recipe.Steps.Count; i++)
-            {
-                Console.WriteLine($"{i + 1}. {recipe.Steps[i]}");
-            }
-        }
+        WriteNumberedListOrEmpty(recipe.Steps, AppTexts.NoStepsFound);
 
         if (!string.IsNullOrWhiteSpace(recipe.Notes))
         {
@@ -208,6 +161,43 @@ public class RecipeConsoleWriter : IRecipeConsoleWriter
         }
 
         Console.WriteLine();
-        Console.WriteLine(AppTexts.RecipeDetailsEndLine);
+    }
+
+    private static void WriteBulletedListOrEmpty(List<string> values, string emptyMessage)
+    {
+        if (values.Count == 0)
+        {
+            Console.WriteLine(emptyMessage);
+            return;
+        }
+
+        WriteBulletedList(values);
+    }
+
+    private static void WriteNumberedListOrEmpty(List<string> values, string emptyMessage)
+    {
+        if (values.Count == 0)
+        {
+            Console.WriteLine(emptyMessage);
+            return;
+        }
+
+        WriteNumberedList(values);
+    }
+
+    private static void WriteBulletedList(List<string> values)
+    {
+        foreach (string value in values)
+        {
+            Console.WriteLine($"{AppTexts.ListItemPrefix}{value}");
+        }
+    }
+
+    private static void WriteNumberedList(List<string> values, string prefix = "")
+    {
+        for (int i = 0; i < values.Count; i++)
+        {
+            Console.WriteLine($"{prefix}{i + 1}. {values[i]}");
+        }
     }
 }

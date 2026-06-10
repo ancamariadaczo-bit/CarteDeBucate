@@ -197,34 +197,9 @@ public class ClassicConsoleRecipeApp : IRecipeApp
 
     private void ViewRecipeDetails()
     {
-        List<Recipe> recipes = _importerService.GetAllRecipes();
-
-        if (recipes.Count == 0)
-        {
-            _writer.DisplayMessage(AppTexts.NoRecipes);
-            return;
-        }
-
-        _writer.DisplayRecipeList(recipes);
-
-        int? recipeId = _reader.ReadRecipeIdToView();
-
-        if (recipeId == null)
-        {
-            return;
-        }
-
-        if (recipeId <= 0)
-        {
-            _writer.DisplayMessage(AppTexts.InvalidRecipeId);
-            return;
-        }
-
-        Recipe? recipe = _importerService.GetRecipeById(recipeId.Value);
-
+        Recipe? recipe = SelectExistingRecipe(_reader.ReadRecipeIdToView);
         if (recipe == null)
         {
-            _writer.DisplayMessage(AppTexts.RecipeNotFound);
             return;
         }
 
@@ -233,34 +208,9 @@ public class ClassicConsoleRecipeApp : IRecipeApp
 
     private void EditRecipe()
     {
-        List<Recipe> recipes = _importerService.GetAllRecipes();
-
-        if (recipes.Count == 0)
-        {
-            _writer.DisplayMessage(AppTexts.NoRecipes);
-            return;
-        }
-
-        _writer.DisplayRecipeList(recipes);
-
-        int? recipeId = _reader.ReadRecipeIdToEdit();
-
-        if (recipeId == null)
-        {
-            return;
-        }
-
-        if (recipeId <= 0)
-        {
-            _writer.DisplayMessage(AppTexts.InvalidRecipeId);
-            return;
-        }
-
-        Recipe? recipe = _importerService.GetRecipeById(recipeId.Value);
-
+        Recipe? recipe = SelectExistingRecipe(_reader.ReadRecipeIdToEdit);
         if (recipe == null)
         {
-            _writer.DisplayMessage(AppTexts.RecipeNotFound);
             return;
         }
 
@@ -280,26 +230,10 @@ public class ClassicConsoleRecipeApp : IRecipeApp
 
     private void DeleteRecipe()
     {
-        List<Recipe> recipes = _importerService.GetAllRecipes();
-
-        if (recipes.Count == 0)
-        {
-            _writer.DisplayMessage(AppTexts.NoRecipes);
-            return;
-        }
-
-        _writer.DisplayRecipeList(recipes);
-
-        int? recipeId = _reader.ReadRecipeIdToDelete();
+        int? recipeId = SelectRecipeId(_reader.ReadRecipeIdToDelete);
 
         if (recipeId == null)
         {
-            return;
-        }
-
-        if (recipeId <= 0)
-        {
-            _writer.DisplayMessage(AppTexts.InvalidRecipeId);
             return;
         }
 
@@ -338,5 +272,52 @@ public class ClassicConsoleRecipeApp : IRecipeApp
         RecipeBackupResult result = _backupService.ImportFromJson(backupFilePath);
 
         _writer.DisplayMessage(result.Message);
+    }
+
+    private Recipe? SelectExistingRecipe(Func<int?> readRecipeId)
+    {
+        int? recipeId = SelectRecipeId(readRecipeId);
+
+        if (recipeId == null)
+        {
+            return null;
+        }
+
+        Recipe? recipe = _importerService.GetRecipeById(recipeId.Value);
+
+        if (recipe == null)
+        {
+            _writer.DisplayMessage(AppTexts.RecipeNotFound);
+        }
+
+        return recipe;
+    }
+
+    private int? SelectRecipeId(Func<int?> readRecipeId)
+    {
+        List<Recipe> recipes = _importerService.GetAllRecipes();
+
+        if (recipes.Count == 0)
+        {
+            _writer.DisplayMessage(AppTexts.NoRecipes);
+            return null;
+        }
+
+        _writer.DisplayRecipeList(recipes);
+
+        int? recipeId = readRecipeId();
+
+        if (recipeId == null)
+        {
+            return null;
+        }
+
+        if (recipeId <= 0)
+        {
+            _writer.DisplayMessage(AppTexts.InvalidRecipeId);
+            return null;
+        }
+
+        return recipeId;
     }
 }

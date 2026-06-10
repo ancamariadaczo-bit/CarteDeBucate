@@ -45,12 +45,12 @@ public class RichConsoleReader : IRichConsoleReader
 
     public bool ConfirmKeepImportedIngredients()
     {
-        return Confirm("Păstrezi ingredientele importate?", true);
+        return Confirm(RichConsoleTexts.KeepImportedIngredientsQuestion, true);
     }
 
     public bool ConfirmKeepImportedSteps()
     {
-        return Confirm("Păstrezi pașii importați?", true);
+        return Confirm(RichConsoleTexts.KeepImportedStepsQuestion, true);
     }
 
     public List<string> ReadIngredients()
@@ -70,7 +70,7 @@ public class RichConsoleReader : IRichConsoleReader
 
     public bool ConfirmSaveRecipe()
     {
-        return Confirm("Dorești să salvezi această rețetă?", true);
+        return Confirm(RichConsoleTexts.SaveRecipeQuestion, true);
     }
 
     public bool ConfirmImportAnotherRecipe()
@@ -121,12 +121,12 @@ public class RichConsoleReader : IRichConsoleReader
             recipe.Notes = notes;
         }
 
-        if (Confirm("Vrei să editezi ingredientele?", false))
+        if (Confirm(RichConsoleTexts.EditIngredientsQuestion, false))
         {
             recipe.Ingredients = ReadIngredients();
         }
 
-        if (Confirm("Vrei să editezi pașii?", false))
+        if (Confirm(RichConsoleTexts.EditStepsQuestion, false))
         {
             recipe.Steps = ReadSteps();
         }
@@ -138,7 +138,7 @@ public class RichConsoleReader : IRichConsoleReader
 
     public bool ConfirmDeleteRecipe(Recipe recipe)
     {
-        return Confirm($"Sigur ștergi rețeta \"{recipe.Name}\"?", false);
+        return Confirm(string.Format(RichConsoleTexts.DeleteRecipeConfirmation, recipe.Name), false);
     }
 
     public string? ReadBackupFilePath()
@@ -269,11 +269,14 @@ public class RichConsoleReader : IRichConsoleReader
 
     private static string CreateUserOptionTitle(string text)
     {
-        return string.Concat("[bold blue]", Markup.Escape(text), RichConsoleTexts.MarkupEnd);
+        return string.Concat(RichConsoleTexts.UserOptionTitleMarkupStart, Markup.Escape(text), RichConsoleTexts.MarkupEnd);
     }
 
     private static string CreateBackToMainMenuOption()
     {
-        return string.Concat("[bold yellow]", Markup.Escape(RichConsoleTexts.BackToMainMenuOption), RichConsoleTexts.MarkupEnd);
+        return string.Concat(
+            RichConsoleTexts.BackToMainMenuMarkupStart,
+            Markup.Escape(RichConsoleTexts.BackToMainMenuOption),
+            RichConsoleTexts.MarkupEnd);
     }
 }
