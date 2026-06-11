@@ -15,6 +15,7 @@ public class AppSettingsTests
             Assert.Equal(InterfaceMode.ClassicConsole, settings.CurrentInterfaceMode);
             Assert.Equal("recipes.json", settings.RecipesFilePath);
             Assert.Equal("recipes.db", settings.DatabasePath);
+            Assert.False(settings.AuthenticationEnabled);
         }
         finally
         {
@@ -37,8 +38,10 @@ public class AppSettingsTests
                 {
                   "StorageMode": "Database",
                   "InterfaceMode": "RichConsole",
-                  "JsonFilePath": "custom-recipes.json",
-                  "DatabasePath": "custom-recipes.db"
+                  "RecipesFilePath": "custom-recipes.json",
+                  "UsersFilePath": "custom-users.json",
+                  "DatabasePath": "custom-recipes.db",
+                  "AuthenticationEnabled": "true"
                 }
                 """);
 
@@ -47,7 +50,9 @@ public class AppSettingsTests
             Assert.Equal(StorageMode.Database, settings.CurrentStorageMode);
             Assert.Equal(InterfaceMode.RichConsole, settings.CurrentInterfaceMode);
             Assert.Equal("custom-recipes.json", settings.RecipesFilePath);
+            Assert.Equal("custom-users.json", settings.UsersFilePath);
             Assert.Equal("custom-recipes.db", settings.DatabasePath);
+            Assert.True(settings.AuthenticationEnabled);
         }
         finally
         {
@@ -70,8 +75,10 @@ public class AppSettingsTests
                 {
                   "StorageMode": "Unknown",
                   "InterfaceMode": "Unknown",
-                  "JsonFilePath": "",
-                  "DatabasePath": ""
+                  "RecipesFilePath": "",
+                  "UsersFilePath": "",
+                  "DatabasePath": "",
+                  "AuthenticationEnabled": "not-a-bool"
                 }
                 """);
 
@@ -80,7 +87,9 @@ public class AppSettingsTests
             Assert.Equal(StorageMode.Json, settings.CurrentStorageMode);
             Assert.Equal(InterfaceMode.ClassicConsole, settings.CurrentInterfaceMode);
             Assert.Equal("recipes.json", settings.RecipesFilePath);
+            Assert.Equal("users.json", settings.UsersFilePath);
             Assert.Equal("recipes.db", settings.DatabasePath);
+            Assert.False(settings.AuthenticationEnabled);
         }
         finally
         {
