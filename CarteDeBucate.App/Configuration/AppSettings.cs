@@ -10,6 +10,8 @@ public class AppSettings
 
     public string DatabasePath { get; private set; } = "recipes.db";
 
+    public bool AuthenticationEnabled { get; set; } = false;
+
     public StorageMode CurrentStorageMode { get; private set; } = StorageMode.Json;
 
     public InterfaceMode CurrentInterfaceMode { get; private set; } = InterfaceMode.ClassicConsole;
@@ -65,9 +67,14 @@ public class AppSettings
             return settings;
         }
 
-        if (!string.IsNullOrWhiteSpace(settingsFile.JsonFilePath))
+        if (!string.IsNullOrWhiteSpace(settingsFile.RecipesFilePath))
         {
-            settings.RecipesFilePath = settingsFile.JsonFilePath;
+            settings.RecipesFilePath = settingsFile.RecipesFilePath;
+        }
+
+        if (!string.IsNullOrWhiteSpace(settingsFile.UsersFilePath))
+        {
+            settings.UsersFilePath = settingsFile.UsersFilePath;
         }
 
         if (!string.IsNullOrWhiteSpace(settingsFile.DatabasePath))
@@ -85,6 +92,11 @@ public class AppSettings
             settings.CurrentInterfaceMode = interfaceMode;
         }
 
+        if (bool.TryParse(settingsFile.AuthenticationEnabled, out bool authenticationEnabled))
+        {
+            settings.AuthenticationEnabled = authenticationEnabled;
+        }
+
         return settings;
     }
 
@@ -94,8 +106,12 @@ public class AppSettings
 
         public string? InterfaceMode { get; set; }
 
-        public string? JsonFilePath { get; set; }
+        public string? RecipesFilePath { get; set; }
+
+        public string? UsersFilePath { get; set; }
 
         public string? DatabasePath { get; set; }
+
+        public string? AuthenticationEnabled { get; set; }
     }
 }

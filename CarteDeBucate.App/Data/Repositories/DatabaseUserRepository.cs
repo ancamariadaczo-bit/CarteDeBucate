@@ -4,9 +4,9 @@ public class DatabaseUserRepository : IUserRepository
 {
     private readonly string _connectionString;
 
-    public DatabaseUserRepository(string connectionString)
+    public DatabaseUserRepository(string databasePath)
     {
-        _connectionString = connectionString;
+        _connectionString = $"Data Source={databasePath}";
     }
 
     public void Add(User user)

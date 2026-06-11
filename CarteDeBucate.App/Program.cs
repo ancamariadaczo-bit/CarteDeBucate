@@ -14,10 +14,23 @@ IRecipeImporterService importerService = new RecipeImporterService(recipeReposit
 IRecipeBackupService backupService = new RecipeBackupService(recipeRepository);
 
 IUserRepository userRepository = CreateUserRepository(appSettings);
-IAuthenticationService authService = new AuthenticationService(userRepository);
+IAuthenticationService authenticationService = new AuthenticationService(userRepository);
 
-IRecipeApp app = RecipeAppFactory.Create(appSettings.CurrentInterfaceMode,
-    recipeReader, recipeWriter, importerService, backupService);
+if (appSettings.AuthenticationEnabled)
+{
+    IAuthenticationPrompt authenticationPrompt = AuthenticationPromptFactory.Create(
+        appSettings.CurrentInterfaceMode, authenticationService);
+
+    AuthenticationResult authenticationResult = authenticationPrompt.Run();
+
+    if (!authenticationResult.IsSuccess)
+    {
+        return;
+    }
+}
+
+IRecipeApp app = RecipeAppFactory.Create(
+    appSettings.CurrentInterfaceMode, recipeReader, recipeWriter, importerService, backupService);
 
 await app.RunAsync();
 
