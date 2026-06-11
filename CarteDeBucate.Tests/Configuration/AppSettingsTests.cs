@@ -13,7 +13,7 @@ public class AppSettingsTests
 
             Assert.Equal(StorageMode.Json, settings.CurrentStorageMode);
             Assert.Equal(InterfaceMode.ClassicConsole, settings.CurrentInterfaceMode);
-            Assert.Equal("recipes.json", settings.JsonFilePath);
+            Assert.Equal("recipes.json", settings.RecipesFilePath);
             Assert.Equal("recipes.db", settings.DatabasePath);
         }
         finally
@@ -46,7 +46,7 @@ public class AppSettingsTests
 
             Assert.Equal(StorageMode.Database, settings.CurrentStorageMode);
             Assert.Equal(InterfaceMode.RichConsole, settings.CurrentInterfaceMode);
-            Assert.Equal("custom-recipes.json", settings.JsonFilePath);
+            Assert.Equal("custom-recipes.json", settings.RecipesFilePath);
             Assert.Equal("custom-recipes.db", settings.DatabasePath);
         }
         finally
@@ -79,7 +79,7 @@ public class AppSettingsTests
 
             Assert.Equal(StorageMode.Json, settings.CurrentStorageMode);
             Assert.Equal(InterfaceMode.ClassicConsole, settings.CurrentInterfaceMode);
-            Assert.Equal("recipes.json", settings.JsonFilePath);
+            Assert.Equal("recipes.json", settings.RecipesFilePath);
             Assert.Equal("recipes.db", settings.DatabasePath);
         }
         finally

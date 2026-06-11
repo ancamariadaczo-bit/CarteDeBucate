@@ -4,7 +4,9 @@ public class AppSettings
 {
     private const string ConfigurationFileName = "appsettings.json";
 
-    public string JsonFilePath { get; private set; } = "recipes.json";
+    public string RecipesFilePath { get; private set; } = "recipes.json";
+
+    public string UsersFilePath { get; private set; } = "users.json";
 
     public string DatabasePath { get; private set; } = "recipes.db";
 
@@ -65,7 +67,7 @@ public class AppSettings
 
         if (!string.IsNullOrWhiteSpace(settingsFile.JsonFilePath))
         {
-            settings.JsonFilePath = settingsFile.JsonFilePath;
+            settings.RecipesFilePath = settingsFile.JsonFilePath;
         }
 
         if (!string.IsNullOrWhiteSpace(settingsFile.DatabasePath))

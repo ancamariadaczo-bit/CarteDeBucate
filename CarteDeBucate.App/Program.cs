@@ -1,6 +1,8 @@
 ﻿
 AppSettings appSettings = AppSettings.Load();
 
+EnsureDatabaseIsUpToDate(appSettings);
+
 IRecipeConsoleReader recipeReader = new RecipeConsoleReader();
 IRecipeConsoleWriter recipeWriter = new RecipeConsoleWriter();
 
@@ -11,28 +13,44 @@ IRecipeImporterService importerService = new RecipeImporterService(recipeReposit
 
 IRecipeBackupService backupService = new RecipeBackupService(recipeRepository);
 
+IUserRepository userRepository = CreateUserRepository(appSettings);
+IAuthenticationService authService = new AuthenticationService(userRepository);
+
 IRecipeApp app = RecipeAppFactory.Create(appSettings.CurrentInterfaceMode,
     recipeReader, recipeWriter, importerService, backupService);
 
 await app.RunAsync();
 
+void EnsureDatabaseIsUpToDate(AppSettings settings)
+{
+    if (settings.CurrentStorageMode != StorageMode.Database)
+    {
+        return;
+    }
+
+    DatabaseInitializer databaseInitializer = new DatabaseInitializer(settings.DatabasePath);
+    databaseInitializer.Initialize();
+
+    DatabaseMigrator migrator = new DatabaseMigrator(settings.DatabasePath);
+    migrator.ApplyMigrations();
+}
+
 IRecipeRepository CreateRecipeRepository(AppSettings settings)
 {
-    if (settings.CurrentStorageMode == StorageMode.Json)
+    return settings.CurrentStorageMode switch
     {
-        return new JsonRecipeRepository(settings.JsonFilePath);
-    }
+        StorageMode.Json => new JsonRecipeRepository(settings.RecipesFilePath),
+        StorageMode.Database => new DatabaseRecipeRepository(settings.DatabasePath),
+        _ => throw new InvalidOperationException(AppTexts.UnknownStorageModeError)
+    };
+}
 
-    if (settings.CurrentStorageMode == StorageMode.Database)
+IUserRepository CreateUserRepository(AppSettings settings)
+{
+    return settings.CurrentStorageMode switch
     {
-        DatabaseInitializer databaseInitializer = new DatabaseInitializer(settings.DatabasePath);
-        databaseInitializer.Initialize();
-
-        DatabaseMigrator migrator = new DatabaseMigrator(settings.DatabasePath);
-        migrator.ApplyMigrations();
-
-        return new DatabaseRecipeRepository(settings.DatabasePath);
-    }
-
-    throw new InvalidOperationException(AppTexts.UnknownStorageModeError);
+        StorageMode.Json => new JsonUserRepository(settings.UsersFilePath),
+        StorageMode.Database => new DatabaseUserRepository(settings.DatabasePath),
+        _ => throw new InvalidOperationException(AppTexts.UnknownStorageModeError)
+    };
 }

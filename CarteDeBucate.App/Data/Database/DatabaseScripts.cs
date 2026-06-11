@@ -4,7 +4,8 @@ public static class DatabaseScripts
     [
         CreateRecipesTable,
         CreateRecipeIngredientsTable,
-        CreateRecipeStepsTable
+        CreateRecipeStepsTable,
+        CreateUsersTable
     ];
 
     public const string CreateRecipesTable = """
@@ -49,5 +50,15 @@ public static class DatabaseScripts
     public const string AddRecipeStatusColumn = """
     ALTER TABLE Recipes
     ADD COLUMN Status INTEGER NOT NULL DEFAULT 0;
+    """;
+
+    public const string CreateUsersTable = """
+    CREATE TABLE IF NOT EXISTS Users (
+        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+        Username TEXT NOT NULL UNIQUE,
+        PasswordHash TEXT NOT NULL,
+        PasswordSalt TEXT NOT NULL,
+        CreatedAt TEXT NOT NULL
+    );
     """;
 }

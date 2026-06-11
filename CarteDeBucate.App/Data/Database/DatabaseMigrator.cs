@@ -37,7 +37,8 @@ public class DatabaseMigrator
     {
         return new List<DatabaseMigration>
         {
-            new DatabaseMigration(1, "Add recipe status column", DatabaseScripts.AddRecipeStatusColumn)
+            new DatabaseMigration(1, "Add recipe status column", DatabaseScripts.AddRecipeStatusColumn),
+            new DatabaseMigration(2, "Create Users table", DatabaseScripts.CreateUsersTable)
         };
     }
 
@@ -70,6 +71,7 @@ public class DatabaseMigrator
         return migration.Version switch
         {
             1 => ColumnExists(connection, "Recipes", "Status"),
+            2 => TableExists(connection, "Users"),
             _ => false
         };
     }
@@ -92,6 +94,24 @@ public class DatabaseMigrator
         }
 
         return false;
+    }
+
+    private static bool TableExists(SqliteConnection connection, string tableName)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+
+        command.CommandText = """
+            SELECT COUNT(*)
+            FROM sqlite_master
+            WHERE type = 'table'
+            AND name = @TableName;
+            """;
+
+        command.Parameters.AddWithValue("@TableName", tableName);
+
+        long count = (long)command.ExecuteScalar()!;
+
+        return count > 0;
     }
 
     private static void ApplyMigration(SqliteConnection connection, DatabaseMigration migration)
