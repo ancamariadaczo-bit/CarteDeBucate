@@ -7,15 +7,20 @@ public class AuthenticationService : IAuthenticationService
     private const int Iterations = 100_000;
 
     private readonly IUserRepository _userRepository;
+    private readonly ICurrentUserContext? _currentUserContext;
 
     public AuthenticationService(IUserRepository userRepository)
+        : this(userRepository, null)
     {
-        _userRepository = userRepository;
     }
 
-    public User? CurrentUser { get; private set; }
+    public AuthenticationService(IUserRepository userRepository, ICurrentUserContext? currentUserContext)
+    {
+        _userRepository = userRepository;
+        _currentUserContext = currentUserContext;
+    }
 
-    public bool IsLoggedIn => CurrentUser is not null;
+    public bool IsLoggedIn => _currentUserContext?.IsAuthenticated == true;
 
     public AuthenticationResult Register(string username, string password)
     {
@@ -69,7 +74,7 @@ public class AuthenticationService : IAuthenticationService
 
         _userRepository.Add(user);
 
-        CurrentUser = user;
+        _currentUserContext?.SetCurrentUser(user);
 
         return new AuthenticationResult
         {
@@ -123,7 +128,7 @@ public class AuthenticationService : IAuthenticationService
             };
         }
 
-        CurrentUser = user;
+        _currentUserContext?.SetCurrentUser(user);
 
         return new AuthenticationResult
         {
@@ -135,7 +140,7 @@ public class AuthenticationService : IAuthenticationService
 
     public void Logout()
     {
-        CurrentUser = null;
+        _currentUserContext?.Clear();
     }
 
     private static bool VerifyPassword(string password, string storedPasswordHash, string storedPasswordSalt)

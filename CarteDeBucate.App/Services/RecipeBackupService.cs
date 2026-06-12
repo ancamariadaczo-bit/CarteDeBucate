@@ -3,10 +3,17 @@ using System.Text.Json;
 public class RecipeBackupService : IRecipeBackupService
 {
     private readonly IRecipeRepository _recipeRepository;
+    private readonly ICurrentUserContext? _currentUserContext;
 
     public RecipeBackupService(IRecipeRepository recipeRepository)
+        : this(recipeRepository, null)
+    {
+    }
+
+    public RecipeBackupService(IRecipeRepository recipeRepository, ICurrentUserContext? currentUserContext)
     {
         _recipeRepository = recipeRepository;
+        _currentUserContext = currentUserContext;
     }
 
     public RecipeBackupResult ExportToJson(string backupFilePath)
@@ -25,7 +32,7 @@ public class RecipeBackupService : IRecipeBackupService
                 };
             }
 
-            List<Recipe> recipes = _recipeRepository.GetAllRecipes();
+            List<Recipe> recipes = GetRecipesForCurrentContext();
 
             JsonSerializerOptions options = new JsonSerializerOptions
             {
@@ -86,7 +93,7 @@ public class RecipeBackupService : IRecipeBackupService
             {
                 bool alreadyExists =
                     !string.IsNullOrWhiteSpace(recipe.SourceUrl)
-                    && _recipeRepository.RecipeExistsBySourceUrl(recipe.SourceUrl);
+                    && RecipeExistsBySourceUrl(recipe.SourceUrl);
 
                 if (alreadyExists)
                 {
@@ -95,6 +102,11 @@ public class RecipeBackupService : IRecipeBackupService
                 }
 
                 recipe.Id = 0;
+                if (CurrentUserId.HasValue)
+                {
+                    recipe.UserId = CurrentUserId.Value;
+                }
+
                 _recipeRepository.AddRecipe(recipe);
                 importedCount++;
 
@@ -116,5 +128,27 @@ public class RecipeBackupService : IRecipeBackupService
                 Message = string.Format(AppTexts.BackupImportFailed, exception.Message)
             };
         }
+    }
+
+    private int? CurrentUserId => _currentUserContext?.UserId;
+
+    private List<Recipe> GetRecipesForCurrentContext()
+    {
+        if (CurrentUserId.HasValue)
+        {
+            return _recipeRepository.GetRecipesByUserId(CurrentUserId.Value);
+        }
+
+        return _recipeRepository.GetAllRecipes();
+    }
+
+    private bool RecipeExistsBySourceUrl(string sourceUrl)
+    {
+        if (CurrentUserId.HasValue)
+        {
+            return _recipeRepository.RecipeExistsBySourceUrlForUser(sourceUrl, CurrentUserId.Value);
+        }
+
+        return _recipeRepository.RecipeExistsBySourceUrl(sourceUrl);
     }
 }

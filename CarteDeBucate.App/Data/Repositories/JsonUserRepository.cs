@@ -13,6 +13,11 @@ public class JsonUserRepository : IUserRepository
     {
         List<User> users = LoadUsers();
 
+        if (user.Id == 0)
+        {
+            user.Id = GetNextUserId(users);
+        }
+
         users.Add(user);
 
         SaveUsers(users);
@@ -53,5 +58,15 @@ public class JsonUserRepository : IUserRepository
         string json = JsonSerializer.Serialize(users, options);
 
         File.WriteAllText(_filePath, json);
+    }
+
+    private static int GetNextUserId(List<User> users)
+    {
+        if (users.Count == 0)
+        {
+            return 1;
+        }
+
+        return users.Max(user => user.Id) + 1;
     }
 }

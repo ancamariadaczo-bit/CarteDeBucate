@@ -4,7 +4,8 @@ public class AuthenticationServiceTests
     public void Register_WithValidCredentials_ShouldAddUserAndLogIn()
     {
         FakeUserRepository userRepository = new FakeUserRepository();
-        AuthenticationService authenticationService = new AuthenticationService(userRepository);
+        CurrentUserContext currentUserContext = new CurrentUserContext();
+        AuthenticationService authenticationService = new AuthenticationService(userRepository, currentUserContext);
 
         AuthenticationResult result = authenticationService.Register("anca", "secret-password");
 
@@ -18,21 +19,25 @@ public class AuthenticationServiceTests
         Assert.False(string.IsNullOrWhiteSpace(userRepository.AddedUser.PasswordSalt));
         Assert.NotEqual("secret-password", userRepository.AddedUser.PasswordHash);
         Assert.True(authenticationService.IsLoggedIn);
-        Assert.Equal(userRepository.AddedUser, authenticationService.CurrentUser);
+        Assert.True(currentUserContext.IsAuthenticated);
+        Assert.Equal(userRepository.AddedUser.Id, currentUserContext.UserId);
+        Assert.Equal("anca", currentUserContext.Username);
     }
 
     [Fact]
     public void Register_WhenUsernameAlreadyExists_ShouldNotAddUser()
     {
         FakeUserRepository userRepository = new FakeUserRepository();
+        CurrentUserContext currentUserContext = new CurrentUserContext();
         userRepository.Users.Add(new User
         {
+            Id = 1,
             Username = "anca",
             PasswordHash = "hash",
             PasswordSalt = "salt"
         });
 
-        AuthenticationService authenticationService = new AuthenticationService(userRepository);
+        AuthenticationService authenticationService = new AuthenticationService(userRepository, currentUserContext);
 
         AuthenticationResult result = authenticationService.Register("Anca", "secret-password");
 
@@ -40,13 +45,15 @@ public class AuthenticationServiceTests
         Assert.Equal("This username already exists.", result.Message);
         Assert.False(userRepository.AddWasCalled);
         Assert.False(authenticationService.IsLoggedIn);
+        Assert.False(currentUserContext.IsAuthenticated);
     }
 
     [Fact]
     public void Login_WithRegisteredCredentials_ShouldLogInUser()
     {
         FakeUserRepository userRepository = new FakeUserRepository();
-        AuthenticationService authenticationService = new AuthenticationService(userRepository);
+        CurrentUserContext currentUserContext = new CurrentUserContext();
+        AuthenticationService authenticationService = new AuthenticationService(userRepository, currentUserContext);
         authenticationService.Register("anca", "secret-password");
         authenticationService.Logout();
 
@@ -55,15 +62,16 @@ public class AuthenticationServiceTests
         Assert.True(result.IsSuccess);
         Assert.Equal("Login successful.", result.Message);
         Assert.True(authenticationService.IsLoggedIn);
-        Assert.NotNull(authenticationService.CurrentUser);
-        Assert.Equal("anca", authenticationService.CurrentUser.Username);
+        Assert.True(currentUserContext.IsAuthenticated);
+        Assert.Equal("anca", currentUserContext.Username);
     }
 
     [Fact]
     public void Login_WithWrongPassword_ShouldFailAndKeepUserLoggedOut()
     {
         FakeUserRepository userRepository = new FakeUserRepository();
-        AuthenticationService authenticationService = new AuthenticationService(userRepository);
+        CurrentUserContext currentUserContext = new CurrentUserContext();
+        AuthenticationService authenticationService = new AuthenticationService(userRepository, currentUserContext);
         authenticationService.Register("anca", "secret-password");
         authenticationService.Logout();
 
@@ -72,6 +80,8 @@ public class AuthenticationServiceTests
         Assert.False(result.IsSuccess);
         Assert.Equal("Invalid username or password.", result.Message);
         Assert.False(authenticationService.IsLoggedIn);
-        Assert.Null(authenticationService.CurrentUser);
+        Assert.False(currentUserContext.IsAuthenticated);
+        Assert.Null(currentUserContext.UserId);
+        Assert.Null(currentUserContext.Username);
     }
 }

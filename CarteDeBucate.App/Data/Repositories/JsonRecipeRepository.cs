@@ -36,6 +36,24 @@ public class JsonRecipeRepository : IRecipeRepository
         return recipes.FirstOrDefault(recipe => recipe.Id == recipeId);
     }
 
+    public List<Recipe> GetRecipesByUserId(int userId)
+    {
+        List<Recipe> recipes = GetAllRecipes();
+
+        return recipes
+            .Where(recipe => recipe.UserId == userId)
+            .ToList();
+    }
+
+    public Recipe? GetRecipeByIdAndUserId(int recipeId, int userId)
+    {
+        List<Recipe> recipes = GetAllRecipes();
+
+        return recipes.FirstOrDefault(recipe =>
+            recipe.Id == recipeId &&
+            recipe.UserId == userId);
+    }
+
     public void AddRecipe(Recipe recipe)
     {
         List<Recipe> recipes = GetAllRecipes();
@@ -66,6 +84,25 @@ public class JsonRecipeRepository : IRecipeRepository
         SaveRecipes(recipes);
     }
 
+    public void UpdateRecipeForUser(Recipe recipe, int userId)
+    {
+        List<Recipe> recipes = GetAllRecipes();
+
+        int recipeIndex = recipes.FindIndex(existingRecipe =>
+            existingRecipe.Id == recipe.Id &&
+            existingRecipe.UserId == userId);
+
+        if (recipeIndex == -1)
+        {
+            return;
+        }
+
+        recipe.UserId = userId;
+        recipes[recipeIndex] = recipe;
+
+        SaveRecipes(recipes);
+    }
+
     public bool RecipeExistsBySourceUrl(string sourceUrl)
     {
         if (string.IsNullOrWhiteSpace(sourceUrl))
@@ -76,6 +113,22 @@ public class JsonRecipeRepository : IRecipeRepository
         List<Recipe> recipes = GetAllRecipes();
 
         return recipes.Any(existingRecipe =>
+            existingRecipe.SourceUrl.Trim().Equals(
+                sourceUrl.Trim(),
+                StringComparison.OrdinalIgnoreCase));
+    }
+
+    public bool RecipeExistsBySourceUrlForUser(string sourceUrl, int userId)
+    {
+        if (string.IsNullOrWhiteSpace(sourceUrl))
+        {
+            return false;
+        }
+
+        List<Recipe> recipes = GetAllRecipes();
+
+        return recipes.Any(existingRecipe =>
+            existingRecipe.UserId == userId &&
             existingRecipe.SourceUrl.Trim().Equals(
                 sourceUrl.Trim(),
                 StringComparison.OrdinalIgnoreCase));
@@ -99,6 +152,25 @@ public class JsonRecipeRepository : IRecipeRepository
 
         Recipe? recipeToDelete = recipes
             .FirstOrDefault(recipe => recipe.Id == recipeId);
+
+        if (recipeToDelete == null)
+        {
+            return;
+        }
+
+        recipes.Remove(recipeToDelete);
+
+        SaveRecipes(recipes);
+    }
+
+    public void DeleteRecipeForUser(int recipeId, int userId)
+    {
+        List<Recipe> recipes = GetAllRecipes();
+
+        Recipe? recipeToDelete = recipes
+            .FirstOrDefault(recipe =>
+                recipe.Id == recipeId &&
+                recipe.UserId == userId);
 
         if (recipeToDelete == null)
         {

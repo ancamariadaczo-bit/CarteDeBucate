@@ -16,6 +16,8 @@ public class DatabaseMigratorTests
             migrator.ApplyMigrations();
 
             Assert.True(MigrationWasRecorded(databasePath, 1));
+            Assert.True(MigrationWasRecorded(databasePath, 2));
+            Assert.True(MigrationWasRecorded(databasePath, 3));
         }
         finally
         {
@@ -36,7 +38,11 @@ public class DatabaseMigratorTests
             migrator.ApplyMigrations();
 
             Assert.True(ColumnExists(databasePath, "Recipes", "Status"));
+            Assert.True(ColumnExists(databasePath, "Recipes", "UserId"));
+            Assert.True(TableExists(databasePath, "Users"));
             Assert.True(MigrationWasRecorded(databasePath, 1));
+            Assert.True(MigrationWasRecorded(databasePath, 2));
+            Assert.True(MigrationWasRecorded(databasePath, 3));
         }
         finally
         {
@@ -110,6 +116,25 @@ public class DatabaseMigratorTests
         }
 
         return false;
+    }
+
+    private static bool TableExists(string databasePath, string tableName)
+    {
+        using SqliteConnection connection = new SqliteConnection($"Data Source={databasePath}");
+        connection.Open();
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT COUNT(*)
+            FROM sqlite_master
+            WHERE type = 'table'
+            AND name = @TableName;
+            """;
+        command.Parameters.AddWithValue("@TableName", tableName);
+
+        long count = (long)(command.ExecuteScalar() ?? 0);
+
+        return count == 1;
     }
 
     private static string CreateTemporaryDatabasePath()

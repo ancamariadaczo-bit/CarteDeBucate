@@ -2,10 +2,10 @@ public static class DatabaseScripts
 {
     public static readonly string[] CreateTables =
     [
+        CreateUsersTable,
         CreateRecipesTable,
         CreateRecipeIngredientsTable,
-        CreateRecipeStepsTable,
-        CreateUsersTable
+        CreateRecipeStepsTable
     ];
 
     public const string CreateRecipesTable = """
@@ -15,7 +15,9 @@ public static class DatabaseScripts
         SourceUrl TEXT NOT NULL,
         SavedAt TEXT NOT NULL,
         Notes TEXT NULL,
-        Status INTEGER NOT NULL DEFAULT 0
+        Status INTEGER NOT NULL DEFAULT 0,
+        UserId INTEGER NULL,
+        FOREIGN KEY (UserId) REFERENCES Users(Id)
     );
     """;
 
@@ -60,5 +62,10 @@ public static class DatabaseScripts
         PasswordSalt TEXT NOT NULL,
         CreatedAt TEXT NOT NULL
     );
+    """;
+
+    public const string AddUserIdToRecipes = """
+    ALTER TABLE Recipes
+        ADD COLUMN UserId INTEGER NULL REFERENCES Users(Id);
     """;
 }

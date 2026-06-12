@@ -38,7 +38,8 @@ public class DatabaseMigrator
         return new List<DatabaseMigration>
         {
             new DatabaseMigration(1, "Add recipe status column", DatabaseScripts.AddRecipeStatusColumn),
-            new DatabaseMigration(2, "Create Users table", DatabaseScripts.CreateUsersTable)
+            new DatabaseMigration(2, "Create Users table", DatabaseScripts.CreateUsersTable),
+            new DatabaseMigration(3, "Add user id to recipes", DatabaseScripts.AddUserIdToRecipes)
         };
     }
 
@@ -72,6 +73,7 @@ public class DatabaseMigrator
         {
             1 => ColumnExists(connection, "Recipes", "Status"),
             2 => TableExists(connection, "Users"),
+            3 => ColumnExists(connection, "Recipes", "UserId"),
             _ => false
         };
     }

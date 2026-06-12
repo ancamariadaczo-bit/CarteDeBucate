@@ -1,3 +1,5 @@
+using Microsoft.Data.Sqlite;
+
 public class DatabaseRecipeRepositoryTests
 {
     [Fact]
@@ -42,6 +44,7 @@ public class DatabaseRecipeRepositoryTests
             Assert.Equal("Test recipe", savedRecipe.Name);
             Assert.Equal("https://example.com/test-recipe", savedRecipe.SourceUrl);
             Assert.Equal("Test notes", savedRecipe.Notes);
+            Assert.Null(savedRecipe.UserId);
 
             Assert.Equal(2, savedRecipe.Ingredients.Count);
             Assert.Equal("200 g flour", savedRecipe.Ingredients[0]);
@@ -77,6 +80,7 @@ public class DatabaseRecipeRepositoryTests
             Assert.Equal("Test recipe", savedRecipe.Name);
             Assert.Equal("https://example.com/test-recipe", savedRecipe.SourceUrl);
             Assert.Equal("Test notes", savedRecipe.Notes);
+            Assert.Null(savedRecipe.UserId);
 
             Assert.Equal(recipe.Ingredients, savedRecipe.Ingredients);
             Assert.Equal(recipe.Steps, savedRecipe.Steps);
@@ -99,6 +103,89 @@ public class DatabaseRecipeRepositoryTests
             Recipe? recipe = repository.GetRecipeById(999);
 
             Assert.Null(recipe);
+        }
+        finally
+        {
+            DeleteDatabaseFile(databasePath);
+        }
+    }
+
+    [Fact]
+    public void GetRecipesByUserId_ShouldReturnOnlyRecipesForUser()
+    {
+        string databasePath = CreateTemporaryDatabasePath();
+
+        try
+        {
+            DatabaseRecipeRepository repository = CreateRepository(databasePath);
+
+            Recipe firstUserRecipe = CreateTestRecipe(userId: 1);
+            Recipe secondUserRecipe = CreateTestRecipe(
+                sourceUrl: "https://example.com/other-user-recipe",
+                userId: 2);
+
+            AddUser(databasePath, 1);
+            AddUser(databasePath, 2);
+            repository.AddRecipe(firstUserRecipe);
+            repository.AddRecipe(secondUserRecipe);
+
+            List<Recipe> recipes = repository.GetRecipesByUserId(1);
+
+            Assert.Single(recipes);
+            Assert.Equal(firstUserRecipe.Id, recipes[0].Id);
+            Assert.Equal(1, recipes[0].UserId);
+            Assert.Equal(firstUserRecipe.Ingredients, recipes[0].Ingredients);
+            Assert.Equal(firstUserRecipe.Steps, recipes[0].Steps);
+        }
+        finally
+        {
+            DeleteDatabaseFile(databasePath);
+        }
+    }
+
+    [Fact]
+    public void GetRecipeByIdAndUserId_WhenRecipeBelongsToUser_ShouldReturnRecipe()
+    {
+        string databasePath = CreateTemporaryDatabasePath();
+
+        try
+        {
+            DatabaseRecipeRepository repository = CreateRepository(databasePath);
+
+            Recipe recipe = CreateTestRecipe(userId: 7);
+            AddUser(databasePath, 7);
+            repository.AddRecipe(recipe);
+
+            Recipe? savedRecipe = repository.GetRecipeByIdAndUserId(recipe.Id, 7);
+
+            Assert.NotNull(savedRecipe);
+            Assert.Equal(recipe.Id, savedRecipe.Id);
+            Assert.Equal(7, savedRecipe.UserId);
+            Assert.Equal(recipe.Ingredients, savedRecipe.Ingredients);
+            Assert.Equal(recipe.Steps, savedRecipe.Steps);
+        }
+        finally
+        {
+            DeleteDatabaseFile(databasePath);
+        }
+    }
+
+    [Fact]
+    public void GetRecipeByIdAndUserId_WhenRecipeBelongsToAnotherUser_ShouldReturnNull()
+    {
+        string databasePath = CreateTemporaryDatabasePath();
+
+        try
+        {
+            DatabaseRecipeRepository repository = CreateRepository(databasePath);
+
+            Recipe recipe = CreateTestRecipe(userId: 7);
+            AddUser(databasePath, 7);
+            repository.AddRecipe(recipe);
+
+            Recipe? savedRecipe = repository.GetRecipeByIdAndUserId(recipe.Id, 8);
+
+            Assert.Null(savedRecipe);
         }
         finally
         {
@@ -172,6 +259,28 @@ public class DatabaseRecipeRepositoryTests
     }
 
     [Fact]
+    public void RecipeExistsBySourceUrlForUser_ShouldMatchOnlyForUser()
+    {
+        string databasePath = CreateTemporaryDatabasePath();
+
+        try
+        {
+            DatabaseRecipeRepository repository = CreateRepository(databasePath);
+
+            AddUser(databasePath, 1);
+            repository.AddRecipe(CreateTestRecipe(userId: 1));
+
+            Assert.True(repository.RecipeExistsBySourceUrlForUser(" HTTPS://EXAMPLE.COM/TEST-RECIPE ", 1));
+            Assert.False(repository.RecipeExistsBySourceUrlForUser("https://example.com/test-recipe", 2));
+            Assert.False(repository.RecipeExistsBySourceUrlForUser("", 1));
+        }
+        finally
+        {
+            DeleteDatabaseFile(databasePath);
+        }
+    }
+
+    [Fact]
     public void UpdateRecipe_ShouldUpdateRecipeMainFieldsIngredientsAndSteps()
     {
         string databasePath = CreateTemporaryDatabasePath();
@@ -220,6 +329,79 @@ public class DatabaseRecipeRepositoryTests
             Assert.Equal(2, updatedRecipe.Steps.Count);
             Assert.Equal("Mix everything.", updatedRecipe.Steps[0]);
             Assert.Equal("Bake until golden.", updatedRecipe.Steps[1]);
+            Assert.Null(updatedRecipe.UserId);
+        }
+        finally
+        {
+            DeleteDatabaseFile(databasePath);
+        }
+    }
+
+    [Fact]
+    public void UpdateRecipeForUser_WhenRecipeBelongsToUser_ShouldUpdateRecipe()
+    {
+        string databasePath = CreateTemporaryDatabasePath();
+
+        try
+        {
+            DatabaseRecipeRepository repository = CreateRepository(databasePath);
+
+            Recipe recipe = CreateTestRecipe(userId: 3);
+            AddUser(databasePath, 3);
+            repository.AddRecipe(recipe);
+
+            recipe.Name = "Updated user recipe";
+            recipe.SourceUrl = "https://example.com/updated-user-recipe";
+            recipe.Notes = "Updated user notes";
+            recipe.Ingredients = new List<string> { "1 cup milk" };
+            recipe.Steps = new List<string> { "Stir." };
+
+            repository.UpdateRecipeForUser(recipe, 3);
+
+            Recipe? updatedRecipe = repository.GetRecipeByIdAndUserId(recipe.Id, 3);
+
+            Assert.NotNull(updatedRecipe);
+            Assert.Equal("Updated user recipe", updatedRecipe.Name);
+            Assert.Equal("https://example.com/updated-user-recipe", updatedRecipe.SourceUrl);
+            Assert.Equal("Updated user notes", updatedRecipe.Notes);
+            Assert.Equal(3, updatedRecipe.UserId);
+            Assert.Equal(recipe.Ingredients, updatedRecipe.Ingredients);
+            Assert.Equal(recipe.Steps, updatedRecipe.Steps);
+        }
+        finally
+        {
+            DeleteDatabaseFile(databasePath);
+        }
+    }
+
+    [Fact]
+    public void UpdateRecipeForUser_WhenRecipeBelongsToAnotherUser_ShouldNotUpdateRecipe()
+    {
+        string databasePath = CreateTemporaryDatabasePath();
+
+        try
+        {
+            DatabaseRecipeRepository repository = CreateRepository(databasePath);
+
+            Recipe recipe = CreateTestRecipe(userId: 3);
+            AddUser(databasePath, 3);
+            repository.AddRecipe(recipe);
+
+            Recipe changedRecipe = CreateTestRecipe(
+                name: "Should not be saved",
+                sourceUrl: "https://example.com/changed",
+                userId: 3);
+            changedRecipe.Id = recipe.Id;
+
+            repository.UpdateRecipeForUser(changedRecipe, 4);
+
+            Recipe? unchangedRecipe = repository.GetRecipeByIdAndUserId(recipe.Id, 3);
+
+            Assert.NotNull(unchangedRecipe);
+            Assert.Equal("Test recipe", unchangedRecipe.Name);
+            Assert.Equal("https://example.com/test-recipe", unchangedRecipe.SourceUrl);
+            Assert.Equal(recipe.Ingredients, unchangedRecipe.Ingredients);
+            Assert.Equal(recipe.Steps, unchangedRecipe.Steps);
         }
         finally
         {
@@ -254,6 +436,54 @@ public class DatabaseRecipeRepositoryTests
         }
     }
 
+    [Fact]
+    public void DeleteRecipeForUser_WhenRecipeBelongsToUser_ShouldDeleteRecipe()
+    {
+        string databasePath = CreateTemporaryDatabasePath();
+
+        try
+        {
+            DatabaseRecipeRepository repository = CreateRepository(databasePath);
+
+            Recipe recipe = CreateTestRecipe(userId: 5);
+            AddUser(databasePath, 5);
+            repository.AddRecipe(recipe);
+
+            repository.DeleteRecipeForUser(recipe.Id, 5);
+
+            Assert.Null(repository.GetRecipeById(recipe.Id));
+            Assert.Empty(repository.GetRecipesByUserId(5));
+        }
+        finally
+        {
+            DeleteDatabaseFile(databasePath);
+        }
+    }
+
+    [Fact]
+    public void DeleteRecipeForUser_WhenRecipeBelongsToAnotherUser_ShouldNotDeleteRecipe()
+    {
+        string databasePath = CreateTemporaryDatabasePath();
+
+        try
+        {
+            DatabaseRecipeRepository repository = CreateRepository(databasePath);
+
+            Recipe recipe = CreateTestRecipe(userId: 5);
+            AddUser(databasePath, 5);
+            repository.AddRecipe(recipe);
+
+            repository.DeleteRecipeForUser(recipe.Id, 6);
+
+            Assert.NotNull(repository.GetRecipeById(recipe.Id));
+            Assert.Single(repository.GetRecipesByUserId(5));
+        }
+        finally
+        {
+            DeleteDatabaseFile(databasePath);
+        }
+    }
+
     private static DatabaseRecipeRepository CreateRepository(string databasePath)
     {
         DatabaseInitializer databaseInitializer = new DatabaseInitializer(databasePath);
@@ -262,14 +492,38 @@ public class DatabaseRecipeRepositoryTests
         return new DatabaseRecipeRepository(databasePath);
     }
 
-    private static Recipe CreateTestRecipe()
+    private static void AddUser(string databasePath, int userId)
+    {
+        using SqliteConnection connection = new SqliteConnection($"Data Source={databasePath}");
+        connection.Open();
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO Users (Id, Username, PasswordHash, PasswordSalt, CreatedAt)
+            VALUES (@Id, @Username, @PasswordHash, @PasswordSalt, @CreatedAt);
+            """;
+
+        command.Parameters.AddWithValue("@Id", userId);
+        command.Parameters.AddWithValue("@Username", $"user-{userId}");
+        command.Parameters.AddWithValue("@PasswordHash", "hash");
+        command.Parameters.AddWithValue("@PasswordSalt", "salt");
+        command.Parameters.AddWithValue("@CreatedAt", DateTime.UtcNow.ToString("O"));
+
+        command.ExecuteNonQuery();
+    }
+
+    private static Recipe CreateTestRecipe(
+        string name = "Test recipe",
+        string sourceUrl = "https://example.com/test-recipe",
+        int? userId = null)
     {
         return new Recipe
         {
-            Name = "Test recipe",
-            SourceUrl = "https://example.com/test-recipe",
+            Name = name,
+            SourceUrl = sourceUrl,
             SavedAt = new DateTime(2026, 5, 19, 10, 0, 0),
             Notes = "Test notes",
+            UserId = userId,
             Ingredients = new List<string>
             {
                 "200 g flour",

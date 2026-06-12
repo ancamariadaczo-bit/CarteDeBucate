@@ -7,6 +7,4 @@ public interface IAuthenticationService
     void Logout();
 
     bool IsLoggedIn { get; }
-
-    User? CurrentUser { get; }
 }

@@ -4,17 +4,32 @@ public class RecipeImporterService : IRecipeImporterService
 {
     private readonly IRecipeRepository _recipeRepository;
     private readonly IRecipeImporter _recipeImporter;
+    private readonly ICurrentUserContext? _currentUserContext;
 
     public RecipeImporterService(
         IRecipeRepository recipeRepository,
         IRecipeImporter recipeImporter)
+        : this(recipeRepository, recipeImporter, null)
+    {
+    }
+
+    public RecipeImporterService(
+        IRecipeRepository recipeRepository,
+        IRecipeImporter recipeImporter,
+        ICurrentUserContext? currentUserContext)
     {
         _recipeRepository = recipeRepository;
         _recipeImporter = recipeImporter;
+        _currentUserContext = currentUserContext;
     }
 
     public List<Recipe> GetAllRecipes()
     {
+        if (CurrentUserId.HasValue)
+        {
+            return _recipeRepository.GetRecipesByUserId(CurrentUserId.Value);
+        }
+
         return _recipeRepository.GetAllRecipes();
     }
 
@@ -23,6 +38,11 @@ public class RecipeImporterService : IRecipeImporterService
         if (recipeId <= 0)
         {
             return null;
+        }
+
+        if (CurrentUserId.HasValue)
+        {
+            return _recipeRepository.GetRecipeByIdAndUserId(recipeId, CurrentUserId.Value);
         }
 
         return _recipeRepository.GetRecipeById(recipeId);
@@ -35,7 +55,7 @@ public class RecipeImporterService : IRecipeImporterService
             return new List<Recipe>();
         }
 
-        List<Recipe> recipes = _recipeRepository.GetAllRecipes();
+        List<Recipe> recipes = GetAllRecipes();
 
         return recipes
             .Where(recipe =>
@@ -91,9 +111,14 @@ public class RecipeImporterService : IRecipeImporterService
         }
 
         if (!string.IsNullOrWhiteSpace(recipe.SourceUrl) &&
-            _recipeRepository.RecipeExistsBySourceUrl(recipe.SourceUrl))
+            RecipeExistsBySourceUrl(recipe.SourceUrl))
         {
             return RecipeSaveResult.Fail(AppTexts.RecipeAlreadyExists);
+        }
+
+        if (CurrentUserId.HasValue)
+        {
+            recipe.UserId = CurrentUserId.Value;
         }
 
         _recipeRepository.AddRecipe(recipe);
@@ -103,7 +128,7 @@ public class RecipeImporterService : IRecipeImporterService
 
     public RecipeSaveResult UpdateRecipe(Recipe recipe)
     {
-        Recipe? existingRecipe = _recipeRepository.GetRecipeById(recipe.Id);
+        Recipe? existingRecipe = GetRecipeById(recipe.Id);
 
         if (existingRecipe == null)
         {
@@ -118,7 +143,14 @@ public class RecipeImporterService : IRecipeImporterService
             return RecipeSaveResult.Fail(message);
         }
 
-        _recipeRepository.UpdateRecipe(recipe);
+        if (CurrentUserId.HasValue)
+        {
+            _recipeRepository.UpdateRecipeForUser(recipe, CurrentUserId.Value);
+        }
+        else
+        {
+            _recipeRepository.UpdateRecipe(recipe);
+        }
 
         return RecipeSaveResult.Success(AppTexts.RecipeUpdated, recipe);
     }
@@ -130,15 +162,34 @@ public class RecipeImporterService : IRecipeImporterService
             return RecipeSaveResult.Fail(AppTexts.InvalidRecipeId);
         }
 
-        Recipe? recipe = _recipeRepository.GetRecipeById(recipeId);
+        Recipe? recipe = GetRecipeById(recipeId);
 
         if (recipe == null)
         {
             return RecipeSaveResult.Fail(AppTexts.RecipeNotFound);
         }
 
-        _recipeRepository.DeleteRecipe(recipeId);
+        if (CurrentUserId.HasValue)
+        {
+            _recipeRepository.DeleteRecipeForUser(recipeId, CurrentUserId.Value);
+        }
+        else
+        {
+            _recipeRepository.DeleteRecipe(recipeId);
+        }
 
         return RecipeSaveResult.Success(AppTexts.RecipeDeleted, recipe);
+    }
+
+    private int? CurrentUserId => _currentUserContext?.UserId;
+
+    private bool RecipeExistsBySourceUrl(string sourceUrl)
+    {
+        if (CurrentUserId.HasValue)
+        {
+            return _recipeRepository.RecipeExistsBySourceUrlForUser(sourceUrl, CurrentUserId.Value);
+        }
+
+        return _recipeRepository.RecipeExistsBySourceUrl(sourceUrl);
     }
 }

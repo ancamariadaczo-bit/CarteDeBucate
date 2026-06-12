@@ -18,10 +18,45 @@ public class DatabaseRecipeRepository : IRecipeRepository
 
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
-            SELECT Id, Name, SourceUrl, SavedAt, Notes, Status
+            SELECT Id, Name, SourceUrl, SavedAt, Notes, Status, UserId
             FROM Recipes
             ORDER BY SavedAt DESC;
             """;
+
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            Recipe recipe = ReadRecipeFromReader(reader);
+
+            recipes.Add(recipe);
+        }
+
+        foreach (Recipe recipe in recipes)
+        {
+            recipe.Ingredients = GetIngredientsForRecipe(connection, recipe.Id);
+            recipe.Steps = GetStepsForRecipe(connection, recipe.Id);
+        }
+
+        return recipes;
+    }
+
+    public List<Recipe> GetRecipesByUserId(int userId)
+    {
+        List<Recipe> recipes = new List<Recipe>();
+
+        using SqliteConnection connection = new SqliteConnection(_connectionString);
+        connection.Open();
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT Id, Name, SourceUrl, SavedAt, Notes, Status, UserId
+            FROM Recipes
+            WHERE UserId = @UserId
+            ORDER BY SavedAt DESC;
+            """;
+
+        command.Parameters.AddWithValue("@UserId", userId);
 
         using SqliteDataReader reader = command.ExecuteReader();
 
@@ -47,6 +82,24 @@ public class DatabaseRecipeRepository : IRecipeRepository
         connection.Open();
 
         Recipe? recipe = GetRecipeMainRecordById(connection, recipeId);
+
+        if (recipe == null)
+        {
+            return null;
+        }
+
+        recipe.Ingredients = GetIngredientsForRecipe(connection, recipe.Id);
+        recipe.Steps = GetStepsForRecipe(connection, recipe.Id);
+
+        return recipe;
+    }
+
+    public Recipe? GetRecipeByIdAndUserId(int recipeId, int userId)
+    {
+        using SqliteConnection connection = new SqliteConnection(_connectionString);
+        connection.Open();
+
+        Recipe? recipe = GetRecipeMainRecordByIdAndUserId(connection, recipeId, userId);
 
         if (recipe == null)
         {
@@ -110,6 +163,39 @@ public class DatabaseRecipeRepository : IRecipeRepository
         }
     }
 
+    public void UpdateRecipeForUser(Recipe recipe, int userId)
+    {
+        if (GetRecipeByIdAndUserId(recipe.Id, userId) == null)
+        {
+            return;
+        }
+
+        recipe.UserId = userId;
+
+        using SqliteConnection connection = new SqliteConnection(_connectionString);
+        connection.Open();
+
+        using SqliteTransaction transaction = connection.BeginTransaction();
+
+        try
+        {
+            UpdateRecipeMainRecordForUser(connection, transaction, recipe, userId);
+
+            DeleteRecipeIngredients(connection, transaction, recipe.Id);
+            InsertIngredients(connection, transaction, recipe.Id, recipe.Ingredients);
+
+            DeleteRecipeSteps(connection, transaction, recipe.Id);
+            InsertSteps(connection, transaction, recipe.Id, recipe.Steps);
+
+            transaction.Commit();
+        }
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
+    }
+
     public bool RecipeExistsBySourceUrl(string sourceUrl)
     {
         if (string.IsNullOrWhiteSpace(sourceUrl))
@@ -134,6 +220,32 @@ public class DatabaseRecipeRepository : IRecipeRepository
         return count > 0;
     }
 
+    public bool RecipeExistsBySourceUrlForUser(string sourceUrl, int userId)
+    {
+        if (string.IsNullOrWhiteSpace(sourceUrl))
+        {
+            return false;
+        }
+
+        using SqliteConnection connection = new SqliteConnection(_connectionString);
+        connection.Open();
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT COUNT(*)
+            FROM Recipes
+            WHERE LOWER(TRIM(SourceUrl)) = LOWER(TRIM(@SourceUrl))
+            AND UserId = @UserId;
+            """;
+
+        command.Parameters.AddWithValue("@SourceUrl", sourceUrl);
+        command.Parameters.AddWithValue("@UserId", userId);
+
+        long count = (long)(command.ExecuteScalar() ?? 0);
+
+        return count > 0;
+    }
+
     private int InsertRecipe(
         SqliteConnection connection,
         SqliteTransaction transaction,
@@ -143,8 +255,8 @@ public class DatabaseRecipeRepository : IRecipeRepository
         command.Transaction = transaction;
 
         command.CommandText = """
-            INSERT INTO Recipes (Name, SourceUrl, SavedAt, Notes, Status)
-            VALUES (@Name, @SourceUrl, @SavedAt, @Notes, @Status);
+            INSERT INTO Recipes (Name, SourceUrl, SavedAt, Notes, Status, UserId)
+            VALUES (@Name, @SourceUrl, @SavedAt, @Notes, @Status, @UserId);
 
             SELECT last_insert_rowid();
             """;
@@ -154,6 +266,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
         command.Parameters.AddWithValue("@SavedAt", recipe.SavedAt.ToString("O"));
         command.Parameters.AddWithValue("@Notes", string.IsNullOrWhiteSpace(recipe.Notes) ? DBNull.Value : recipe.Notes);
         command.Parameters.AddWithValue("@Status", (int)recipe.Status);
+        command.Parameters.AddWithValue("@UserId", recipe.UserId.HasValue ? recipe.UserId.Value : (object)DBNull.Value);
 
         long recipeId = (long)(command.ExecuteScalar() ?? 0);
 
@@ -278,6 +391,16 @@ public class DatabaseRecipeRepository : IRecipeRepository
         }
     }
 
+    public void DeleteRecipeForUser(int recipeId, int userId)
+    {
+        if (GetRecipeByIdAndUserId(recipeId, userId) == null)
+        {
+            return;
+        }
+
+        DeleteRecipe(recipeId);
+    }
+
     private void DeleteRecipeIngredients(
         SqliteConnection connection,
         SqliteTransaction transaction,
@@ -337,7 +460,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
         using SqliteCommand command = connection.CreateCommand();
 
         command.CommandText = """
-            SELECT Id, Name, SourceUrl, SavedAt, Notes, Status
+            SELECT Id, Name, SourceUrl, SavedAt, Notes, Status, UserId
             FROM Recipes
             WHERE Id = @RecipeId;
             """;
@@ -354,18 +477,47 @@ public class DatabaseRecipeRepository : IRecipeRepository
         return ReadRecipeFromReader(reader);
     }
 
+    private Recipe? GetRecipeMainRecordByIdAndUserId(SqliteConnection connection, int recipeId, int userId)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+
+        command.CommandText = """
+            SELECT Id, Name, SourceUrl, SavedAt, Notes, Status, UserId
+            FROM Recipes
+            WHERE Id = @RecipeId
+            AND UserId = @UserId;
+            """;
+
+        command.Parameters.AddWithValue("@RecipeId", recipeId);
+        command.Parameters.AddWithValue("@UserId", userId);
+
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        if (!reader.Read())
+        {
+            return null;
+        }
+
+        return ReadRecipeFromReader(reader);
+    }
+
     private Recipe ReadRecipeFromReader(SqliteDataReader reader)
     {
         return new Recipe
         {
-            Id = reader.GetInt32(0),
-            Name = reader.GetString(1),
-            SourceUrl = reader.GetString(2),
-            SavedAt = DateTime.Parse(reader.GetString(3)),
-            Notes = reader.IsDBNull(4) ? "" : reader.GetString(4),
+            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+            Name = reader.GetString(reader.GetOrdinal("Name")),
+            SourceUrl = reader.GetString(reader.GetOrdinal("SourceUrl")),
+            SavedAt = DateTime.Parse(reader.GetString(reader.GetOrdinal("SavedAt"))),
+            Notes = reader.IsDBNull(reader.GetOrdinal("Notes"))
+                ? ""
+                : reader.GetString(reader.GetOrdinal("Notes")),
             Status = (RecipeStatus)reader.GetInt32(reader.GetOrdinal("Status")),
             Ingredients = new List<string>(),
-            Steps = new List<string>()
+            Steps = new List<string>(),
+            UserId = reader.IsDBNull(reader.GetOrdinal("UserId"))
+                ? null
+                : reader.GetInt32(reader.GetOrdinal("UserId"))
         };
     }
 
@@ -383,11 +535,45 @@ public class DatabaseRecipeRepository : IRecipeRepository
                 SourceUrl = @SourceUrl,
                 SavedAt = @SavedAt,
                 Notes = @Notes,
-                Status = @Status
+                Status = @Status,
+                UserId = @UserId
             WHERE Id = @RecipeId;
             """;
 
         command.Parameters.AddWithValue("@RecipeId", recipe.Id);
+        command.Parameters.AddWithValue("@Name", recipe.Name);
+        command.Parameters.AddWithValue("@SourceUrl", recipe.SourceUrl);
+        command.Parameters.AddWithValue("@SavedAt", recipe.SavedAt.ToString("O"));
+        command.Parameters.AddWithValue("@Notes", string.IsNullOrWhiteSpace(recipe.Notes) ? DBNull.Value : recipe.Notes);
+        command.Parameters.AddWithValue("@Status", (int)recipe.Status);
+        command.Parameters.AddWithValue("@UserId", recipe.UserId.HasValue ? recipe.UserId.Value : (object)DBNull.Value);
+
+        command.ExecuteNonQuery();
+    }
+
+    private void UpdateRecipeMainRecordForUser(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        Recipe recipe,
+        int userId)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.Transaction = transaction;
+
+        command.CommandText = """
+            UPDATE Recipes
+            SET Name = @Name,
+                SourceUrl = @SourceUrl,
+                SavedAt = @SavedAt,
+                Notes = @Notes,
+                Status = @Status,
+                UserId = @UserId
+            WHERE Id = @RecipeId
+            AND UserId = @UserId;
+            """;
+
+        command.Parameters.AddWithValue("@RecipeId", recipe.Id);
+        command.Parameters.AddWithValue("@UserId", userId);
         command.Parameters.AddWithValue("@Name", recipe.Name);
         command.Parameters.AddWithValue("@SourceUrl", recipe.SourceUrl);
         command.Parameters.AddWithValue("@SavedAt", recipe.SavedAt.ToString("O"));

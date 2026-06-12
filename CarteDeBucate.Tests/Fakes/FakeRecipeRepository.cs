@@ -22,6 +22,20 @@ public class FakeRecipeRepository : IRecipeRepository
         return Recipes.FirstOrDefault(recipe => recipe.Id == recipeId);
     }
 
+    public List<Recipe> GetRecipesByUserId(int userId)
+    {
+        return Recipes
+            .Where(recipe => recipe.UserId == userId)
+            .ToList();
+    }
+
+    public Recipe? GetRecipeByIdAndUserId(int recipeId, int userId)
+    {
+        return Recipes.FirstOrDefault(recipe =>
+            recipe.Id == recipeId &&
+            recipe.UserId == userId);
+    }
+
     public void AddRecipe(Recipe recipe)
     {
         AddRecipeWasCalled = true;
@@ -44,6 +58,12 @@ public class FakeRecipeRepository : IRecipeRepository
         Recipes.Add(recipe);
     }
 
+    public void UpdateRecipeForUser(Recipe recipe, int userId)
+    {
+        recipe.UserId = userId;
+        UpdateRecipe(recipe);
+    }
+
     public bool RecipeExistsBySourceUrl(string sourceUrl)
     {
         if (SourceUrlExists)
@@ -52,6 +72,18 @@ public class FakeRecipeRepository : IRecipeRepository
         }
 
         return Recipes.Any(recipe => recipe.SourceUrl == sourceUrl);
+    }
+
+    public bool RecipeExistsBySourceUrlForUser(string sourceUrl, int userId)
+    {
+        if (SourceUrlExists)
+        {
+            return true;
+        }
+
+        return Recipes.Any(recipe =>
+            recipe.UserId == userId &&
+            recipe.SourceUrl == sourceUrl);
     }
 
     public void DeleteRecipe(int recipeId)
@@ -64,6 +96,18 @@ public class FakeRecipeRepository : IRecipeRepository
         if (existingRecipe != null)
         {
             Recipes.Remove(existingRecipe);
+        }
+    }
+
+    public void DeleteRecipeForUser(int recipeId, int userId)
+    {
+        Recipe? existingRecipe = Recipes.FirstOrDefault(recipe =>
+            recipe.Id == recipeId &&
+            recipe.UserId == userId);
+
+        if (existingRecipe != null)
+        {
+            DeleteRecipe(existingRecipe.Id);
         }
     }
 }

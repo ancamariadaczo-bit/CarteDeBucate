@@ -8,6 +8,13 @@ public class FakeUserRepository : IUserRepository
 
     public void Add(User user)
     {
+        if (user.Id == 0)
+        {
+            user.Id = Users.Count == 0
+                ? 1
+                : Users.Max(existingUser => existingUser.Id) + 1;
+        }
+
         AddWasCalled = true;
         AddedUser = user;
         Users.Add(user);

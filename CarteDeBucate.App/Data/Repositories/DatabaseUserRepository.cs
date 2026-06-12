@@ -18,6 +18,8 @@ public class DatabaseUserRepository : IUserRepository
         command.CommandText = """
             INSERT INTO Users (Username, PasswordHash, PasswordSalt, CreatedAt)
             VALUES ($username, $hash, $salt, $createdAt);
+
+            SELECT last_insert_rowid();
         """;
 
         command.Parameters.AddWithValue("$username", user.Username);
@@ -25,7 +27,8 @@ public class DatabaseUserRepository : IUserRepository
         command.Parameters.AddWithValue("$salt", user.PasswordSalt);
         command.Parameters.AddWithValue("$createdAt", user.CreatedAt.ToString("O"));
 
-        command.ExecuteNonQuery();
+        long userId = (long)(command.ExecuteScalar() ?? 0);
+        user.Id = (int)userId;
     }
 
     public User? GetByUsername(string username)

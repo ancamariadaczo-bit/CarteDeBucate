@@ -8,13 +8,17 @@ IRecipeConsoleWriter recipeWriter = new RecipeConsoleWriter();
 
 IRecipeRepository recipeRepository = CreateRecipeRepository(appSettings);
 RecipeImporter recipeImporter = new RecipeImporter();
+ICurrentUserContext currentUserContext = new CurrentUserContext();
 
-IRecipeImporterService importerService = new RecipeImporterService(recipeRepository, recipeImporter);
+IRecipeImporterService importerService = new RecipeImporterService(
+    recipeRepository,
+    recipeImporter,
+    currentUserContext);
 
-IRecipeBackupService backupService = new RecipeBackupService(recipeRepository);
+IRecipeBackupService backupService = new RecipeBackupService(recipeRepository, currentUserContext);
 
 IUserRepository userRepository = CreateUserRepository(appSettings);
-IAuthenticationService authenticationService = new AuthenticationService(userRepository);
+IAuthenticationService authenticationService = new AuthenticationService(userRepository, currentUserContext);
 
 if (appSettings.AuthenticationEnabled)
 {
