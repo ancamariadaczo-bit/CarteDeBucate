@@ -297,7 +297,7 @@ public class RichConsoleRecipeApp : IRecipeApp
 
         if (!_reader.ConfirmDeleteRecipe(recipe))
         {
-            _display.ShowInfo(AppTexts.RecipeNotSaved);
+            _display.ShowInfo(AppTexts.RecipeNotDeleted);
             return true;
         }
 

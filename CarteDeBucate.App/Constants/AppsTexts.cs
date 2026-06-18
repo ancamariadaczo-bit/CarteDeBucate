@@ -33,6 +33,7 @@ public static class AppTexts
 
     public const string RecipeAlreadyExists = "Există deja o rețetă salvată cu acest link.";
     public const string RecipeNotSaved = "Rețeta nu a fost salvată.";
+    public const string RecipeNotDeleted = "Rețeta nu a fost ștearsă.";
 
     public const string MenuImportRecipeFromUrl = "Importă rețetă din link";
 

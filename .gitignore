@@ -484,6 +484,7 @@ $RECYCLE.BIN/
 *.db
 *.sqlite
 recipes.json
+users.json
 appsettings.json
 bin/
 obj/

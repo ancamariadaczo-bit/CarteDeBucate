@@ -12,6 +12,8 @@ public class AppSettings
 
     public bool AuthenticationEnabled { get; set; } = false;
 
+    //public bool AiFallbackEnabled { get; private set; } = false;
+
     public StorageMode CurrentStorageMode { get; private set; } = StorageMode.Json;
 
     public InterfaceMode CurrentInterfaceMode { get; private set; } = InterfaceMode.ClassicConsole;
@@ -92,10 +94,8 @@ public class AppSettings
             settings.CurrentInterfaceMode = interfaceMode;
         }
 
-        if (bool.TryParse(settingsFile.AuthenticationEnabled, out bool authenticationEnabled))
-        {
-            settings.AuthenticationEnabled = authenticationEnabled;
-        }
+        settings.AuthenticationEnabled = settingsFile.AuthenticationEnabled;
+        //settings.AiFallbackEnabled = settingsFile.AiFallbackEnabled;
 
         return settings;
     }
@@ -112,6 +112,8 @@ public class AppSettings
 
         public string? DatabasePath { get; set; }
 
-        public string? AuthenticationEnabled { get; set; }
+        public bool AuthenticationEnabled { get; set; }
+
+        //public bool AiFallbackEnabled { get; set; }
     }
 }
