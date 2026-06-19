@@ -41,7 +41,7 @@ public class AppSettingsTests
                   "RecipesFilePath": "custom-recipes.json",
                   "UsersFilePath": "custom-users.json",
                   "DatabasePath": "custom-recipes.db",
-                  "AuthenticationEnabled": "true"
+                  "AuthenticationEnabled": true
                 }
                 """);
 

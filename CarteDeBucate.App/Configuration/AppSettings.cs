@@ -34,9 +34,18 @@ public class AppSettings
 
         string json = File.ReadAllText(configurationFilePath);
 
-        AppSettingsFile? settingsFile = JsonSerializer.Deserialize<AppSettingsFile>(
-            json,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        AppSettingsFile? settingsFile;
+
+        try
+        {
+            settingsFile = JsonSerializer.Deserialize<AppSettingsFile>(
+                json,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        }
+        catch (JsonException)
+        {
+            return new AppSettings();
+        }
 
         return FromFile(settingsFile);
     }
@@ -94,10 +103,46 @@ public class AppSettings
             settings.CurrentInterfaceMode = interfaceMode;
         }
 
-        settings.AuthenticationEnabled = settingsFile.AuthenticationEnabled;
-        //settings.AiFallbackEnabled = settingsFile.AiFallbackEnabled;
+        if (TryReadBoolean(settingsFile.AuthenticationEnabled, out bool authenticationEnabled))
+        {
+            settings.AuthenticationEnabled = authenticationEnabled;
+        }
+
+        // if (TryReadBoolean(settingsFile.AiFallbackEnabled, out bool aiFallbackEnabled))
+        // {
+        //     settings.AiFallbackEnabled = aiFallbackEnabled;
+        // }
 
         return settings;
+    }
+
+    private static bool TryReadBoolean(JsonElement? element, out bool value)
+    {
+        value = false;
+
+        if (element == null)
+        {
+            return false;
+        }
+
+        if (element.Value.ValueKind == JsonValueKind.True)
+        {
+            value = true;
+            return true;
+        }
+
+        if (element.Value.ValueKind == JsonValueKind.False)
+        {
+            value = false;
+            return true;
+        }
+
+        if (element.Value.ValueKind == JsonValueKind.String)
+        {
+            return bool.TryParse(element.Value.GetString(), out value);
+        }
+
+        return false;
     }
 
     private class AppSettingsFile
@@ -112,8 +157,8 @@ public class AppSettings
 
         public string? DatabasePath { get; set; }
 
-        public bool AuthenticationEnabled { get; set; }
+        public JsonElement? AuthenticationEnabled { get; set; }
 
-        //public bool AiFallbackEnabled { get; set; }
+        //public JsonElement? AiFallbackEnabled { get; set; }
     }
 }
