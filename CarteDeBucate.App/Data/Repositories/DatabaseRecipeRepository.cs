@@ -76,6 +76,45 @@ public class DatabaseRecipeRepository : IRecipeRepository
         return recipes;
     }
 
+    public bool HasRecipes()
+    {
+        using SqliteConnection connection = new SqliteConnection(_connectionString);
+        connection.Open();
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT EXISTS (
+                SELECT 1
+                FROM Recipes
+            );
+            """;
+
+        long exists = (long)(command.ExecuteScalar() ?? 0);
+
+        return exists == 1;
+    }
+
+    public bool HasRecipesForUser(int userId)
+    {
+        using SqliteConnection connection = new SqliteConnection(_connectionString);
+        connection.Open();
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT EXISTS (
+                SELECT 1
+                FROM Recipes
+                WHERE UserId = @UserId
+            );
+            """;
+
+        command.Parameters.AddWithValue("@UserId", userId);
+
+        long exists = (long)(command.ExecuteScalar() ?? 0);
+
+        return exists == 1;
+    }
+
     public Recipe? GetRecipeById(int recipeId)
     {
         using SqliteConnection connection = new SqliteConnection(_connectionString);

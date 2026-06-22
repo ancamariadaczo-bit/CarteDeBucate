@@ -144,6 +144,49 @@ public class DatabaseRecipeRepositoryTests
     }
 
     [Fact]
+    public void HasRecipes_ShouldReturnWhetherAnyRecipeExists()
+    {
+        string databasePath = CreateTemporaryDatabasePath();
+
+        try
+        {
+            DatabaseRecipeRepository repository = CreateRepository(databasePath);
+
+            Assert.False(repository.HasRecipes());
+
+            repository.AddRecipe(CreateTestRecipe());
+
+            Assert.True(repository.HasRecipes());
+        }
+        finally
+        {
+            DeleteDatabaseFile(databasePath);
+        }
+    }
+
+    [Fact]
+    public void HasRecipesForUser_ShouldReturnWhetherUserHasRecipes()
+    {
+        string databasePath = CreateTemporaryDatabasePath();
+
+        try
+        {
+            DatabaseRecipeRepository repository = CreateRepository(databasePath);
+
+            AddUser(databasePath, 1);
+            AddUser(databasePath, 2);
+            repository.AddRecipe(CreateTestRecipe(userId: 1));
+
+            Assert.True(repository.HasRecipesForUser(1));
+            Assert.False(repository.HasRecipesForUser(2));
+        }
+        finally
+        {
+            DeleteDatabaseFile(databasePath);
+        }
+    }
+
+    [Fact]
     public void GetRecipeByIdAndUserId_WhenRecipeBelongsToUser_ShouldReturnRecipe()
     {
         string databasePath = CreateTemporaryDatabasePath();

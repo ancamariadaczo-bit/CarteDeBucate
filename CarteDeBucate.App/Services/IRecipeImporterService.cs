@@ -2,6 +2,8 @@ public interface IRecipeImporterService
 {
     List<Recipe> GetAllRecipes();
 
+    bool HasRecipesInCurrentContext();
+
     Recipe? GetRecipeById(int recipeId);
 
     List<Recipe> SearchRecipes(string searchText);

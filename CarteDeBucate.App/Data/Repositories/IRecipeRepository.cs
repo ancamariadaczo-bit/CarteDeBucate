@@ -3,6 +3,9 @@ public interface IRecipeRepository
     List<Recipe> GetAllRecipes();
     List<Recipe> GetRecipesByUserId(int userId);
 
+    bool HasRecipes();
+    bool HasRecipesForUser(int userId);
+
     Recipe? GetRecipeById(int recipeId);
     Recipe? GetRecipeByIdAndUserId(int recipeId, int userId);
 

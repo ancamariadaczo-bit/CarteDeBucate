@@ -131,13 +131,66 @@ public class RecipeServiceTests
         Assert.Equal(recipe, repository.AddedRecipe);
     }
 
+    [Fact]
+    public void HasRecipesInCurrentContext_WhenNoUserIsLoggedIn_ShouldCheckAllRecipes()
+    {
+        FakeRecipeRepository repository = new FakeRecipeRepository
+        {
+            Recipes = new List<Recipe> { CreateValidRecipe() }
+        };
+
+        FakeRecipeImporter importer = new FakeRecipeImporter();
+        RecipeImporterService service = new RecipeImporterService(repository, importer);
+
+        bool hasRecipes = service.HasRecipesInCurrentContext();
+
+        Assert.True(hasRecipes);
+        Assert.True(repository.HasRecipesWasCalled);
+        Assert.False(repository.HasRecipesForUserWasCalled);
+    }
+
+    [Fact]
+    public void HasRecipesInCurrentContext_WhenUserIsLoggedIn_ShouldCheckCurrentUserRecipes()
+    {
+        FakeRecipeRepository repository = new FakeRecipeRepository
+        {
+            Recipes = new List<Recipe>
+            {
+                CreateValidRecipe(userId: 7),
+                CreateValidRecipe(userId: 9)
+            }
+        };
+
+        FakeRecipeImporter importer = new FakeRecipeImporter();
+        CurrentUserContext currentUserContext = new CurrentUserContext();
+        currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
+
+        RecipeImporterService service = new RecipeImporterService(
+            repository,
+            importer,
+            currentUserContext);
+
+        bool hasRecipes = service.HasRecipesInCurrentContext();
+
+        Assert.True(hasRecipes);
+        Assert.False(repository.HasRecipesWasCalled);
+        Assert.True(repository.HasRecipesForUserWasCalled);
+        Assert.Equal(7, repository.UserIdPassedToHasRecipesForUser);
+    }
+
     private static Recipe CreateValidRecipe()
+    {
+        return CreateValidRecipe(userId: null);
+    }
+
+    private static Recipe CreateValidRecipe(int? userId)
     {
         return new Recipe
         {
             Name = "Banana bread",
             SourceUrl = "https://example.com/banana-bread",
             SavedAt = new DateTime(2026, 1, 1),
+            UserId = userId,
             Ingredients = new List<string>
             {
                 "2 bananas",

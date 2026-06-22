@@ -155,6 +155,46 @@ public class JsonRecipeRepositoryTests
     }
 
     [Fact]
+    public void HasRecipes_ShouldReturnWhetherAnyRecipeExists()
+    {
+        string filePath = CreateTemporaryFilePath();
+
+        try
+        {
+            JsonRecipeRepository repository = new JsonRecipeRepository(filePath);
+
+            Assert.False(repository.HasRecipes());
+
+            repository.AddRecipe(CreateRecipe());
+
+            Assert.True(repository.HasRecipes());
+        }
+        finally
+        {
+            DeleteFile(filePath);
+        }
+    }
+
+    [Fact]
+    public void HasRecipesForUser_ShouldReturnWhetherUserHasRecipes()
+    {
+        string filePath = CreateTemporaryFilePath();
+
+        try
+        {
+            JsonRecipeRepository repository = new JsonRecipeRepository(filePath);
+            repository.AddRecipe(CreateRecipe(userId: 2));
+
+            Assert.True(repository.HasRecipesForUser(2));
+            Assert.False(repository.HasRecipesForUser(3));
+        }
+        finally
+        {
+            DeleteFile(filePath);
+        }
+    }
+
+    [Fact]
     public void GetRecipeByIdAndUserId_ShouldReturnRecipeOnlyForOwner()
     {
         string filePath = CreateTemporaryFilePath();

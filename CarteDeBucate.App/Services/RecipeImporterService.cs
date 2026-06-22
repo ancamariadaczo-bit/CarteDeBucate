@@ -33,6 +33,16 @@ public class RecipeImporterService : IRecipeImporterService
         return _recipeRepository.GetAllRecipes();
     }
 
+    public bool HasRecipesInCurrentContext()
+    {
+        if (CurrentUserId.HasValue)
+        {
+            return _recipeRepository.HasRecipesForUser(CurrentUserId.Value);
+        }
+
+        return _recipeRepository.HasRecipes();
+    }
+
     public Recipe? GetRecipeById(int recipeId)
     {
         if (recipeId <= 0)

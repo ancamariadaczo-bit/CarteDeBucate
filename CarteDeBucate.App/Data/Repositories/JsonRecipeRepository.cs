@@ -45,6 +45,20 @@ public class JsonRecipeRepository : IRecipeRepository
             .ToList();
     }
 
+    public bool HasRecipes()
+    {
+        List<Recipe> recipes = GetAllRecipes();
+
+        return recipes.Count > 0;
+    }
+
+    public bool HasRecipesForUser(int userId)
+    {
+        List<Recipe> recipes = GetAllRecipes();
+
+        return recipes.Any(recipe => recipe.UserId == userId);
+    }
+
     public Recipe? GetRecipeByIdAndUserId(int recipeId, int userId)
     {
         List<Recipe> recipes = GetAllRecipes();

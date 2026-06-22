@@ -175,9 +175,7 @@ public class ClassicConsoleRecipeApp : IRecipeApp
 
     private void SearchRecipes()
     {
-        List<Recipe> recipes = _importerService.GetAllRecipes();
-
-        if (recipes.Count == 0)
+        if (!_importerService.HasRecipesInCurrentContext())
         {
             _writer.DisplayMessage(AppTexts.NoRecipes);
             return;

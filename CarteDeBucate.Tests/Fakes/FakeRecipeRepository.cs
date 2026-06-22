@@ -3,10 +3,13 @@ public class FakeRecipeRepository : IRecipeRepository
     public bool AddRecipeWasCalled { get; private set; }
     public bool UpdateRecipeWasCalled { get; private set; }
     public bool DeleteRecipeWasCalled { get; private set; }
+    public bool HasRecipesWasCalled { get; private set; }
+    public bool HasRecipesForUserWasCalled { get; private set; }
 
     public Recipe? AddedRecipe { get; private set; }
     public Recipe? UpdatedRecipe { get; private set; }
     public int? DeletedRecipeId { get; private set; }
+    public int? UserIdPassedToHasRecipesForUser { get; private set; }
 
     public bool SourceUrlExists { get; set; }
 
@@ -27,6 +30,21 @@ public class FakeRecipeRepository : IRecipeRepository
         return Recipes
             .Where(recipe => recipe.UserId == userId)
             .ToList();
+    }
+
+    public bool HasRecipes()
+    {
+        HasRecipesWasCalled = true;
+
+        return Recipes.Count > 0;
+    }
+
+    public bool HasRecipesForUser(int userId)
+    {
+        HasRecipesForUserWasCalled = true;
+        UserIdPassedToHasRecipesForUser = userId;
+
+        return Recipes.Any(recipe => recipe.UserId == userId);
     }
 
     public Recipe? GetRecipeByIdAndUserId(int recipeId, int userId)

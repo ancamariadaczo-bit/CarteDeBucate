@@ -196,9 +196,7 @@ public class RichConsoleRecipeApp : IRecipeApp
     {
         while (true)
         {
-            List<Recipe> recipes = _importerService.GetAllRecipes();
-
-            if (recipes.Count == 0)
+            if (!_importerService.HasRecipesInCurrentContext())
             {
                 _display.ShowInfo(AppTexts.NoRecipes);
                 return true;

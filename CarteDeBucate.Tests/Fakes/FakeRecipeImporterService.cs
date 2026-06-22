@@ -11,6 +11,7 @@ public class FakeRecipeImporterService : IRecipeImporterService
     public RecipeSaveResult DeleteResultToReturn { get; set; } = new();
 
     public bool GetAllRecipesWasCalled { get; private set; }
+    public bool HasRecipesInCurrentContextWasCalled { get; private set; }
     public bool GetRecipeByIdWasCalled { get; private set; }
     public bool SearchRecipesWasCalled { get; private set; }
     public bool ImportRecipeFromUrlAsyncWasCalled { get; private set; }
@@ -33,6 +34,12 @@ public class FakeRecipeImporterService : IRecipeImporterService
     {
         GetAllRecipesWasCalled = true;
         return RecipesToReturn;
+    }
+
+    public bool HasRecipesInCurrentContext()
+    {
+        HasRecipesInCurrentContextWasCalled = true;
+        return RecipesToReturn.Count > 0;
     }
 
     public Recipe? GetRecipeById(int recipeId)
