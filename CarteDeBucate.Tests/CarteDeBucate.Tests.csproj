@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\CarteDeBucate.Core\CarteDeBucate.Core.csproj" />
     <ProjectReference Include="..\CarteDeBucate.App\CarteDeBucate.App.csproj" />
   </ItemGroup>
 
