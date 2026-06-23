@@ -4,6 +4,15 @@ public class RecipeSaveResult
     public string Message { get; set; } = string.Empty;
     public Recipe? Recipe { get; set; }
 
+    public static RecipeSaveResult Success(string message)
+    {
+        return new RecipeSaveResult
+        {
+            IsSuccess = true,
+            Message = message
+        };
+    }
+
     public static RecipeSaveResult Success(string message, Recipe recipe)
     {
         return new RecipeSaveResult

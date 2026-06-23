@@ -1,5 +1,3 @@
-using System.Linq;
-
 public class RecipeImporterService : IRecipeImporterService
 {
     private readonly IRecipeRepository _recipeRepository;
@@ -23,14 +21,14 @@ public class RecipeImporterService : IRecipeImporterService
         _currentUserContext = currentUserContext;
     }
 
-    public List<Recipe> GetAllRecipes()
+    public List<RecipeSummary> GetRecipeSummaries()
     {
         if (CurrentUserId.HasValue)
         {
-            return _recipeRepository.GetRecipesByUserId(CurrentUserId.Value);
+            return _recipeRepository.GetRecipeSummariesByUserId(CurrentUserId.Value);
         }
 
-        return _recipeRepository.GetAllRecipes();
+        return _recipeRepository.GetAllRecipeSummaries();
     }
 
     public bool HasRecipesInCurrentContext()
@@ -58,25 +56,14 @@ public class RecipeImporterService : IRecipeImporterService
         return _recipeRepository.GetRecipeById(recipeId);
     }
 
-    public List<Recipe> SearchRecipes(string searchText)
+    public List<RecipeSummary> SearchRecipes(string searchText)
     {
         if (string.IsNullOrWhiteSpace(searchText))
         {
-            return new List<Recipe>();
+            return new List<RecipeSummary>();
         }
 
-        List<Recipe> recipes = GetAllRecipes();
-
-        return recipes
-            .Where(recipe =>
-                (recipe.Name ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-                (recipe.SourceUrl ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-                (recipe.Notes ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-                recipe.Ingredients.Any(ingredient =>
-                    ingredient.Contains(searchText, StringComparison.OrdinalIgnoreCase)) ||
-                recipe.Steps.Any(step =>
-                    step.Contains(searchText, StringComparison.OrdinalIgnoreCase)))
-            .ToList();
+        return _recipeRepository.SearchRecipes(searchText, CurrentUserId);
     }
 
     public async Task<RecipeImportResult> ImportRecipeFromUrlAsync(string url)
@@ -172,7 +159,8 @@ public class RecipeImporterService : IRecipeImporterService
             return RecipeSaveResult.Fail(AppTexts.InvalidRecipeId);
         }
 
-        Recipe? recipe = GetRecipeById(recipeId);
+        RecipeSummary? recipe = GetRecipeSummaries()
+            .FirstOrDefault(recipe => recipe.Id == recipeId);
 
         if (recipe == null)
         {
@@ -188,7 +176,7 @@ public class RecipeImporterService : IRecipeImporterService
             _recipeRepository.DeleteRecipe(recipeId);
         }
 
-        return RecipeSaveResult.Success(AppTexts.RecipeDeleted, recipe);
+        return RecipeSaveResult.Success(AppTexts.RecipeDeleted);
     }
 
     private int? CurrentUserId => _currentUserContext?.UserId;
@@ -202,4 +190,5 @@ public class RecipeImporterService : IRecipeImporterService
 
         return _recipeRepository.RecipeExistsBySourceUrl(sourceUrl);
     }
+
 }

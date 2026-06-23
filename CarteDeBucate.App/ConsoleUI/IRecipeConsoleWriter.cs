@@ -3,10 +3,10 @@ public interface IRecipeConsoleWriter
     void DisplayEmptyLine();
     void ShowMenu(List<MenuOption> options);
     void DisplayMessage(string message);
-    void DisplayRecipes(List<Recipe> recipesToDisplay);
-    void DisplaySearchResults(List<Recipe> foundRecipes);
-    void DisplayRecipe(Recipe recipe, int index);
+    void DisplayRecipes(List<RecipeSummary> recipesToDisplay);
+    void DisplaySearchResults(List<RecipeSummary> foundRecipes);
+    void DisplayRecipe(RecipeSummary recipe, int index);
     void DisplayImportedRecipe(Recipe recipe);
-    void DisplayRecipeList(List<Recipe> recipesToDisplay);
+    void DisplayRecipeList(List<RecipeSummary> recipesToDisplay);
     void DisplayRecipeDetails(Recipe recipe);
 }

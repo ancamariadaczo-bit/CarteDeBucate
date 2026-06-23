@@ -41,6 +41,26 @@ public class RecipeConsoleWriterTests
         Assert.Contains(AppTexts.NoSearchResults, output);
     }
 
+    [Fact]
+    public void DisplayRecipe_ShouldWriteOnlySummaryFields()
+    {
+        RecipeSummary recipe = new RecipeSummary
+        {
+            Id = 1,
+            Name = "Cake",
+            SourceUrl = "https://example.com/cake",
+            SavedAt = new DateTime(2026, 6, 8, 10, 0, 0)
+        };
+
+        string output = CaptureOutput(writer => writer.DisplayRecipe(recipe, 1));
+
+        Assert.Contains(recipe.Name, output);
+        Assert.Contains(recipe.SourceUrl, output);
+        Assert.Contains(recipe.Id.ToString(), output);
+        Assert.DoesNotContain(AppTexts.IngredientsLabel, output);
+        Assert.DoesNotContain(AppTexts.StepsLabel, output);
+    }
+
     private static string CaptureOutput(Action<RecipeConsoleWriter> action)
     {
         lock (ConsoleLock)

@@ -3,13 +3,13 @@ public class RichConsoleRecipeAppTests
     [Fact]
     public async Task Run_WithShowAllRecipesOption_ShouldRenderRecipes()
     {
-        List<Recipe> recipes =
+        List<RecipeSummary> recipes =
         [
-            new Recipe { Id = 1, Name = "Banana Bread" },
-            new Recipe { Id = 2, Name = "Pancakes" }
+            new RecipeSummary { Id = 1, Name = "Banana Bread" },
+            new RecipeSummary { Id = 2, Name = "Pancakes" }
         ];
 
-        FakeRecipeImporterService importerService = new() { RecipesToReturn = recipes };
+        FakeRecipeImporterService importerService = new() { RecipeSummariesToReturn = recipes };
         FakeRecipeBackupService backupService = new();
         FakeRichConsoleMenu menu = CreateMenu(MainMenuOption.ShowRecipes);
         FakeRichConsoleDisplay display = new();
@@ -19,7 +19,7 @@ public class RichConsoleRecipeAppTests
 
         await app.RunAsync();
 
-        Assert.True(importerService.GetAllRecipesWasCalled);
+        Assert.True(importerService.GetRecipeSummariesWasCalled);
         Assert.True(display.ShowRecipesWasCalled);
         Assert.Equal(recipes, display.RecipesPassedToShowRecipes);
     }
@@ -52,11 +52,11 @@ public class RichConsoleRecipeAppTests
     [Fact]
     public async Task Run_WithSearchRecipeOption_ShouldSearchRecipes()
     {
-        List<Recipe> recipes = [new Recipe { Id = 1, Name = "Cake" }];
-        List<Recipe> searchResults = [new Recipe { Id = 1, Name = "Cake" }];
+        List<RecipeSummary> recipes = [new RecipeSummary { Id = 1, Name = "Cake" }];
+        List<RecipeSummary> searchResults = [new RecipeSummary { Id = 1, Name = "Cake" }];
         FakeRecipeImporterService importerService = new()
         {
-            RecipesToReturn = recipes,
+            RecipeSummariesToReturn = recipes,
             SearchResultsToReturn = searchResults
         };
 
@@ -81,11 +81,12 @@ public class RichConsoleRecipeAppTests
     [Fact]
     public async Task Run_WithViewRecipeDetailsOption_ShouldFetchSelectedRecipe()
     {
-        Recipe selectedRecipe = new Recipe { Id = 7, Name = "Soup" };
+        RecipeSummary selectedRecipe = new RecipeSummary { Id = 7, Name = "Soup" };
+        Recipe recipe = new Recipe { Id = 7, Name = "Soup" };
         FakeRecipeImporterService importerService = new()
         {
-            RecipesToReturn = [selectedRecipe],
-            RecipeToReturn = selectedRecipe
+            RecipeSummariesToReturn = [selectedRecipe],
+            RecipeToReturn = recipe
         };
 
         FakeRichConsoleReader reader = new() { SelectedRecipe = selectedRecipe };
@@ -103,18 +104,19 @@ public class RichConsoleRecipeAppTests
         Assert.True(reader.SelectRecipeWasCalled);
         Assert.True(importerService.GetRecipeByIdWasCalled);
         Assert.Equal(7, importerService.RecipeIdPassedToGetRecipeById);
-        Assert.Equal(selectedRecipe, display.RecipePassedToShowRecipeDetails);
+        Assert.Equal(recipe, display.RecipePassedToShowRecipeDetails);
     }
 
     [Fact]
     public async Task Run_WithEditRecipeOption_ShouldFetchSelectedRecipeAndUpdate()
     {
-        Recipe selectedRecipe = new Recipe { Id = 4, Name = "Old" };
+        RecipeSummary selectedRecipe = new RecipeSummary { Id = 4, Name = "Old" };
+        Recipe recipe = new Recipe { Id = 4, Name = "Old" };
         Recipe editedRecipe = new Recipe { Id = 4, Name = "New" };
         FakeRecipeImporterService importerService = new()
         {
-            RecipesToReturn = [selectedRecipe],
-            RecipeToReturn = selectedRecipe,
+            RecipeSummariesToReturn = [selectedRecipe],
+            RecipeToReturn = recipe,
             UpdateResultToReturn = new RecipeSaveResult { IsSuccess = true, Message = "Updated." }
         };
 
@@ -135,19 +137,18 @@ public class RichConsoleRecipeAppTests
 
         Assert.Equal(4, importerService.RecipeIdPassedToGetRecipeById);
         Assert.True(reader.ReadRecipeEditsWasCalled);
-        Assert.Equal(selectedRecipe, reader.RecipePassedToReadRecipeEdits);
+        Assert.Equal(recipe, reader.RecipePassedToReadRecipeEdits);
         Assert.True(importerService.UpdateRecipeWasCalled);
         Assert.Equal(editedRecipe, importerService.RecipePassedToUpdateRecipe);
     }
 
     [Fact]
-    public async Task Run_WithDeleteRecipeOption_ShouldFetchSelectedRecipeAndDelete()
+    public async Task Run_WithDeleteRecipeOption_ShouldDeleteSelectedRecipe()
     {
-        Recipe selectedRecipe = new Recipe { Id = 9, Name = "Toast" };
+        RecipeSummary selectedRecipe = new RecipeSummary { Id = 9, Name = "Toast" };
         FakeRecipeImporterService importerService = new()
         {
-            RecipesToReturn = [selectedRecipe],
-            RecipeToReturn = selectedRecipe,
+            RecipeSummariesToReturn = [selectedRecipe],
             DeleteResultToReturn = new RecipeSaveResult { IsSuccess = true, Message = "Deleted." }
         };
 
@@ -162,8 +163,8 @@ public class RichConsoleRecipeAppTests
 
         await app.RunAsync();
 
-        Assert.Equal(9, importerService.RecipeIdPassedToGetRecipeById);
         Assert.True(reader.ConfirmDeleteRecipeWasCalled);
+        Assert.Equal(selectedRecipe, reader.RecipePassedToConfirmDeleteRecipe);
         Assert.True(importerService.DeleteRecipeWasCalled);
         Assert.Equal(9, importerService.RecipeIdPassedToDeleteRecipe);
     }

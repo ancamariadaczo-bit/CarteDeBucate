@@ -25,7 +25,7 @@ public class RecipeConsoleWriter : IRecipeConsoleWriter
         Console.WriteLine(message);
     }
 
-    public void DisplayRecipes(List<Recipe> recipesToDisplay)
+    public void DisplayRecipes(List<RecipeSummary> recipesToDisplay)
     {
         if (recipesToDisplay.Count == 0)
         {
@@ -42,7 +42,7 @@ public class RecipeConsoleWriter : IRecipeConsoleWriter
         }
     }
 
-    public void DisplaySearchResults(List<Recipe> foundRecipes)
+    public void DisplaySearchResults(List<RecipeSummary> foundRecipes)
     {
         if (foundRecipes.Count == 0)
         {
@@ -60,11 +60,10 @@ public class RecipeConsoleWriter : IRecipeConsoleWriter
         }
     }
 
-    public void DisplayRecipe(Recipe recipe, int index)
+    public void DisplayRecipe(RecipeSummary recipe, int index)
     {
         Console.WriteLine($"{index}. {recipe.Name} (ID: {recipe.Id})");
         WriteRecipeSummary(recipe);
-        WriteSimpleRecipeSections(recipe);
         Console.WriteLine();
     }
 
@@ -78,7 +77,7 @@ public class RecipeConsoleWriter : IRecipeConsoleWriter
         Console.WriteLine(AppTexts.ImportedRecipeEndLine);
     }
 
-    public void DisplayRecipeList(List<Recipe> recipesToDisplay)
+    public void DisplayRecipeList(List<RecipeSummary> recipesToDisplay)
     {
         if (recipesToDisplay.Count == 0)
         {
@@ -91,7 +90,7 @@ public class RecipeConsoleWriter : IRecipeConsoleWriter
 
         for (int i = 0; i < recipesToDisplay.Count; i++)
         {
-            Recipe recipe = recipesToDisplay[i];
+            RecipeSummary recipe = recipesToDisplay[i];
 
             DisplayRecipeListItem(recipe, i + 1);
         }
@@ -107,31 +106,17 @@ public class RecipeConsoleWriter : IRecipeConsoleWriter
         Console.WriteLine(AppTexts.RecipeDetailsEndLine);
     }
 
-    private static void WriteRecipeSummary(Recipe recipe)
+    private static void WriteRecipeSummary(RecipeSummary recipe)
     {
         Console.WriteLine($"{AppTexts.SourceLabel}{recipe.SourceUrl}");
         Console.WriteLine($"{AppTexts.SavedAtLabel}{recipe.SavedAt}");
     }
 
-    private static void DisplayRecipeListItem(Recipe recipe, int index)
+    private static void DisplayRecipeListItem(RecipeSummary recipe, int index)
     {
         Console.WriteLine($"{index}. {recipe.Name} ({AppTexts.IdLabel}: {recipe.Id})");
         WriteRecipeSummary(recipe);
         Console.WriteLine();
-    }
-
-    private static void WriteSimpleRecipeSections(Recipe recipe)
-    {
-        Console.WriteLine(AppTexts.IngredientsLabel);
-        WriteBulletedList(recipe.Ingredients);
-
-        Console.WriteLine(AppTexts.StepsLabel);
-        WriteNumberedList(recipe.Steps, "   ");
-
-        if (!string.IsNullOrWhiteSpace(recipe.Notes))
-        {
-            Console.WriteLine($"{AppTexts.NotesLabel}{recipe.Notes}");
-        }
     }
 
     private static void WriteRecipeDetailsBody(Recipe recipe, bool includeId, string dateLabel)

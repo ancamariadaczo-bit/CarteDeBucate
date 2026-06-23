@@ -22,11 +22,11 @@ public interface IRichConsoleReader
 
     bool ConfirmSearchAnotherRecipe();
 
-    Recipe? SelectRecipe(List<Recipe> recipes, string title);
+    RecipeSummary? SelectRecipe(List<RecipeSummary> recipes, string title);
 
     Recipe ReadRecipeEdits(Recipe recipe);
 
-    bool ConfirmDeleteRecipe(Recipe recipe);
+    bool ConfirmDeleteRecipe(RecipeSummary recipe);
 
     string? ReadBackupFilePath();
 

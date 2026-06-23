@@ -16,21 +16,21 @@ public class RecipeConsoleAppTests
 
         Assert.True(writer.ShowMenuWasCalled);
         Assert.True(reader.ReadMenuOptionWasCalled);
-        Assert.False(importerService.GetAllRecipesWasCalled);
+        Assert.False(importerService.GetRecipeSummariesWasCalled);
     }
 
     [Fact]
     public async Task Run_WithShowAllRecipesOption_ShouldDisplayAllRecipes()
     {
-        List<Recipe> recipes = new()
+        List<RecipeSummary> recipes = new()
     {
-        new Recipe { Id = 1, Name = "Banana Bread" },
-        new Recipe { Id = 2, Name = "Pancakes" }
+        new RecipeSummary { Id = 1, Name = "Banana Bread" },
+        new RecipeSummary { Id = 2, Name = "Pancakes" }
     };
 
         FakeRecipeImporterService importService = new FakeRecipeImporterService
         {
-            RecipesToReturn = recipes
+            RecipeSummariesToReturn = recipes
         };
 
         FakeRecipeBackupService backupService = new FakeRecipeBackupService();
@@ -45,7 +45,7 @@ public class RecipeConsoleAppTests
 
         await app.RunAsync();
 
-        Assert.True(importService.GetAllRecipesWasCalled);
+        Assert.True(importService.GetRecipeSummariesWasCalled);
         Assert.True(writer.DisplayRecipeListWasCalled);
         Assert.Equal(recipes, writer.RecipesPassedToDisplayRecipeList);
     }
@@ -54,11 +54,11 @@ public class RecipeConsoleAppTests
     public async Task Run_WithViewRecipeOption_ShouldDisplayRecipeDetails()
     {
         Recipe recipe = new Recipe { Id = 3, Name = "Keto Cake" };
-        List<Recipe> recipes = [recipe];
+        List<RecipeSummary> recipes = [new RecipeSummary { Id = 3, Name = "Keto Cake" }];
 
         FakeRecipeImporterService importService = new FakeRecipeImporterService
         {
-            RecipesToReturn = recipes,
+            RecipeSummariesToReturn = recipes,
             RecipeToReturn = recipe
         };
 
@@ -89,15 +89,15 @@ public class RecipeConsoleAppTests
     [Fact]
     public async Task Run_WithViewRecipeOptionAndMissingRecipe_ShouldDisplayMessage()
     {
-        List<Recipe> recipes = new()
+        List<RecipeSummary> recipes = new()
     {
-        new Recipe { Id = 1, Name = "Banana Bread" },
-        new Recipe { Id = 2, Name = "Pancakes" }
+        new RecipeSummary { Id = 1, Name = "Banana Bread" },
+        new RecipeSummary { Id = 2, Name = "Pancakes" }
     };
 
         FakeRecipeImporterService importService = new FakeRecipeImporterService
         {
-            RecipesToReturn = recipes,
+            RecipeSummariesToReturn = recipes,
             RecipeToReturn = null
         };
 
@@ -125,20 +125,20 @@ public class RecipeConsoleAppTests
     [Fact]
     public async Task Run_WithSearchOption_ShouldDisplaySearchResults()
     {
-        List<Recipe> recipes = new()
+        List<RecipeSummary> recipes = new()
     {
-        new Recipe { Id = 1, Name = "Banana Bread" },
-        new Recipe { Id = 2, Name = "Keto Pancakes" }
+        new RecipeSummary { Id = 1, Name = "Banana Bread" },
+        new RecipeSummary { Id = 2, Name = "Keto Pancakes" }
     };
 
-        List<Recipe> searchResults = new()
+        List<RecipeSummary> searchResults = new()
     {
-        new Recipe { Id = 2, Name = "Keto Pancakes" }
+        new RecipeSummary { Id = 2, Name = "Keto Pancakes" }
     };
 
         FakeRecipeImporterService importService = new FakeRecipeImporterService
         {
-            RecipesToReturn = recipes,
+            RecipeSummariesToReturn = recipes,
             SearchResultsToReturn = searchResults
         };
 
@@ -169,10 +169,10 @@ public class RecipeConsoleAppTests
     [Fact]
     public async Task Run_WithDeleteRecipeOption_ShouldDeleteRecipe()
     {
-        List<Recipe> recipes = new()
+        List<RecipeSummary> recipes = new()
         {
-            new Recipe { Id = 1, Name = "Banana Bread" },
-            new Recipe { Id = 2, Name = "Keto Pancakes" }
+            new RecipeSummary { Id = 1, Name = "Banana Bread" },
+            new RecipeSummary { Id = 2, Name = "Keto Pancakes" }
         };
 
         RecipeSaveResult deleteResult = new RecipeSaveResult
@@ -183,7 +183,7 @@ public class RecipeConsoleAppTests
 
         FakeRecipeImporterService importService = new FakeRecipeImporterService
         {
-            RecipesToReturn = recipes,
+            RecipeSummariesToReturn = recipes,
             DeleteResultToReturn = deleteResult
         };
 
@@ -277,7 +277,7 @@ public class RecipeConsoleAppTests
 
         FakeRecipeImporterService importService = new FakeRecipeImporterService
         {
-            RecipesToReturn = [existingRecipe],
+            RecipeSummariesToReturn = [new RecipeSummary { Id = 4, Name = "Old Name" }],
             RecipeToReturn = existingRecipe,
             UpdateResultToReturn = updateResult
         };
@@ -316,15 +316,15 @@ public class RecipeConsoleAppTests
     [Fact]
     public async Task Run_WithEditRecipeOptionAndMissingRecipe_ShouldNotUpdateRecipe()
     {
-        List<Recipe> recipes = new()
+        List<RecipeSummary> recipes = new()
         {
-            new Recipe { Id = 1, Name = "Banana Bread" },
-            new Recipe { Id = 2, Name = "Keto Pancakes" }
+            new RecipeSummary { Id = 1, Name = "Banana Bread" },
+            new RecipeSummary { Id = 2, Name = "Keto Pancakes" }
         };
 
         FakeRecipeImporterService importService = new FakeRecipeImporterService
         {
-            RecipesToReturn = recipes,
+            RecipeSummariesToReturn = recipes,
             RecipeToReturn = null
         };
 
@@ -375,7 +375,7 @@ public class RecipeConsoleAppTests
 
         FakeRecipeImporterService importService = new FakeRecipeImporterService
         {
-            RecipesToReturn = [],
+            RecipeSummariesToReturn = [],
             ImportResultToReturn = importResult,
             SaveResultToReturn = saveResult
         };

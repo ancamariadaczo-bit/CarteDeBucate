@@ -29,6 +29,16 @@ public class JsonRecipeRepository : IRecipeRepository
         return recipes ?? new List<Recipe>();
     }
 
+    public List<RecipeSummary> GetAllRecipeSummaries()
+    {
+        List<Recipe> recipes = GetAllRecipes();
+
+        return recipes
+            .OrderByDescending(recipe => recipe.SavedAt)
+            .Select(ToRecipeSummary)
+            .ToList();
+    }
+
     public Recipe? GetRecipeById(int recipeId)
     {
         List<Recipe> recipes = GetAllRecipes();
@@ -42,6 +52,41 @@ public class JsonRecipeRepository : IRecipeRepository
 
         return recipes
             .Where(recipe => recipe.UserId == userId)
+            .ToList();
+    }
+
+    public List<RecipeSummary> GetRecipeSummariesByUserId(int userId)
+    {
+        List<Recipe> recipes = GetAllRecipes();
+
+        return recipes
+            .Where(recipe => recipe.UserId == userId)
+            .OrderByDescending(recipe => recipe.SavedAt)
+            .Select(ToRecipeSummary)
+            .ToList();
+    }
+
+    public List<RecipeSummary> SearchRecipes(string searchText, int? userId)
+    {
+        if (string.IsNullOrWhiteSpace(searchText))
+        {
+            return new List<RecipeSummary>();
+        }
+
+        List<Recipe> recipes = GetAllRecipes();
+
+        return recipes
+            .Where(recipe =>
+                (!userId.HasValue || recipe.UserId == userId.Value) &&
+                ((recipe.Name ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                (recipe.SourceUrl ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                (recipe.Notes ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                recipe.Ingredients.Any(ingredient =>
+                    ingredient.Contains(searchText, StringComparison.OrdinalIgnoreCase)) ||
+                recipe.Steps.Any(step =>
+                    step.Contains(searchText, StringComparison.OrdinalIgnoreCase))))
+            .OrderByDescending(recipe => recipe.SavedAt)
+            .Select(ToRecipeSummary)
             .ToList();
     }
 
@@ -204,5 +249,18 @@ public class JsonRecipeRepository : IRecipeRepository
         }
 
         return recipes.Max(recipe => recipe.Id) + 1;
+    }
+
+    private RecipeSummary ToRecipeSummary(Recipe recipe)
+    {
+        return new RecipeSummary
+        {
+            Id = recipe.Id,
+            Name = recipe.Name,
+            SourceUrl = recipe.SourceUrl,
+            SavedAt = recipe.SavedAt,
+            Status = recipe.Status,
+            UserId = recipe.UserId
+        };
     }
 }

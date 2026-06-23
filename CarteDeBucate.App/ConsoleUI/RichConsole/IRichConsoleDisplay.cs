@@ -4,7 +4,7 @@ public interface IRichConsoleDisplay
 
     void ShowTitle();
 
-    void ShowRecipes(List<Recipe> recipes, string? title = null, string? emptyMessage = null);
+    void ShowRecipes(List<RecipeSummary> recipes, string? title = null, string? emptyMessage = null);
 
     void ShowRecipeDetails(Recipe recipe, string? title = null);
 

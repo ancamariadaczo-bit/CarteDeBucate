@@ -1,12 +1,12 @@
 public interface IRecipeImporterService
 {
-    List<Recipe> GetAllRecipes();
+    List<RecipeSummary> GetRecipeSummaries();
 
     bool HasRecipesInCurrentContext();
 
     Recipe? GetRecipeById(int recipeId);
 
-    List<Recipe> SearchRecipes(string searchText);
+    List<RecipeSummary> SearchRecipes(string searchText);
 
     Task<RecipeImportResult> ImportRecipeFromUrlAsync(string url);
 

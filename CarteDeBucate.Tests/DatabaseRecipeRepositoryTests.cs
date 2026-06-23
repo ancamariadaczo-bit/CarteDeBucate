@@ -144,6 +144,151 @@ public class DatabaseRecipeRepositoryTests
     }
 
     [Fact]
+    public void GetAllRecipeSummaries_ShouldReturnSummariesWithoutFullRecipeData()
+    {
+        string databasePath = CreateTemporaryDatabasePath();
+
+        try
+        {
+            DatabaseRecipeRepository repository = CreateRepository(databasePath);
+
+            Recipe recipe = CreateTestRecipe();
+
+            repository.AddRecipe(recipe);
+
+            List<RecipeSummary> recipes = repository.GetAllRecipeSummaries();
+
+            Assert.Single(recipes);
+
+            RecipeSummary summary = recipes[0];
+
+            Assert.Equal(recipe.Id, summary.Id);
+            Assert.Equal(recipe.Name, summary.Name);
+            Assert.Equal(recipe.SourceUrl, summary.SourceUrl);
+            Assert.Equal(recipe.SavedAt, summary.SavedAt);
+            Assert.Equal(recipe.Status, summary.Status);
+            Assert.Equal(recipe.UserId, summary.UserId);
+        }
+        finally
+        {
+            DeleteDatabaseFile(databasePath);
+        }
+    }
+
+    [Fact]
+    public void GetRecipeSummariesByUserId_ShouldReturnOnlyCurrentUserSummaries()
+    {
+        string databasePath = CreateTemporaryDatabasePath();
+
+        try
+        {
+            DatabaseRecipeRepository repository = CreateRepository(databasePath);
+
+            Recipe firstUserRecipe = CreateTestRecipe(userId: 1);
+            Recipe secondUserRecipe = CreateTestRecipe(
+                sourceUrl: "https://example.com/other-user-recipe",
+                userId: 2);
+
+            AddUser(databasePath, 1);
+            AddUser(databasePath, 2);
+            repository.AddRecipe(firstUserRecipe);
+            repository.AddRecipe(secondUserRecipe);
+
+            List<RecipeSummary> recipes = repository.GetRecipeSummariesByUserId(1);
+
+            Assert.Single(recipes);
+            Assert.Equal(firstUserRecipe.Id, recipes[0].Id);
+            Assert.Equal(1, recipes[0].UserId);
+        }
+        finally
+        {
+            DeleteDatabaseFile(databasePath);
+        }
+    }
+
+    [Fact]
+    public void SearchRecipes_ShouldSearchInNotesIngredientsAndSteps()
+    {
+        string databasePath = CreateTemporaryDatabasePath();
+
+        try
+        {
+            DatabaseRecipeRepository repository = CreateRepository(databasePath);
+
+            Recipe notesRecipe = CreateTestRecipe(
+                name: "Chocolate cake",
+                sourceUrl: "https://example.com/chocolate-cake");
+            notesRecipe.Notes = "Serve with raspberries.";
+
+            Recipe ingredientRecipe = CreateTestRecipe(
+                name: "Breakfast bowl",
+                sourceUrl: "https://example.com/breakfast-bowl");
+            ingredientRecipe.Ingredients = new List<string> { "Greek yogurt", "Honey" };
+
+            Recipe stepRecipe = CreateTestRecipe(
+                name: "Simple salad",
+                sourceUrl: "https://example.com/simple-salad");
+            stepRecipe.Steps = new List<string> { "Toast the walnuts.", "Mix everything." };
+
+            repository.AddRecipe(notesRecipe);
+            repository.AddRecipe(ingredientRecipe);
+            repository.AddRecipe(stepRecipe);
+
+            List<RecipeSummary> noteResults = repository.SearchRecipes("raspberries", null);
+            List<RecipeSummary> ingredientResults = repository.SearchRecipes("yogurt", null);
+            List<RecipeSummary> stepResults = repository.SearchRecipes("walnuts", null);
+
+            Assert.Single(noteResults);
+            Assert.Equal(notesRecipe.Id, noteResults[0].Id);
+
+            Assert.Single(ingredientResults);
+            Assert.Equal(ingredientRecipe.Id, ingredientResults[0].Id);
+
+            Assert.Single(stepResults);
+            Assert.Equal(stepRecipe.Id, stepResults[0].Id);
+        }
+        finally
+        {
+            DeleteDatabaseFile(databasePath);
+        }
+    }
+
+    [Fact]
+    public void SearchRecipes_WhenUserIdIsProvided_ShouldReturnOnlyCurrentUserSummaries()
+    {
+        string databasePath = CreateTemporaryDatabasePath();
+
+        try
+        {
+            DatabaseRecipeRepository repository = CreateRepository(databasePath);
+
+            Recipe firstUserRecipe = CreateTestRecipe(
+                name: "Banana bread",
+                sourceUrl: "https://example.com/banana-bread",
+                userId: 1);
+            Recipe secondUserRecipe = CreateTestRecipe(
+                name: "Banana pancakes",
+                sourceUrl: "https://example.com/banana-pancakes",
+                userId: 2);
+
+            AddUser(databasePath, 1);
+            AddUser(databasePath, 2);
+            repository.AddRecipe(firstUserRecipe);
+            repository.AddRecipe(secondUserRecipe);
+
+            List<RecipeSummary> recipes = repository.SearchRecipes("banana", 1);
+
+            Assert.Single(recipes);
+            Assert.Equal(firstUserRecipe.Id, recipes[0].Id);
+            Assert.Equal(1, recipes[0].UserId);
+        }
+        finally
+        {
+            DeleteDatabaseFile(databasePath);
+        }
+    }
+
+    [Fact]
     public void HasRecipes_ShouldReturnWhetherAnyRecipeExists()
     {
         string databasePath = CreateTemporaryDatabasePath();

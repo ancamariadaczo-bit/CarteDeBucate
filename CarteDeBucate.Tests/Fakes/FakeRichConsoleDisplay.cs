@@ -10,7 +10,7 @@ public class FakeRichConsoleDisplay : IRichConsoleDisplay
     public bool ShowErrorWasCalled { get; private set; }
     public bool ShowInfoWasCalled { get; private set; }
 
-    public List<Recipe>? RecipesPassedToShowRecipes { get; private set; }
+    public List<RecipeSummary>? RecipesPassedToShowRecipes { get; private set; }
     public Recipe? RecipePassedToShowRecipeDetails { get; private set; }
     public Recipe? RecipePassedToShowImportedRecipe { get; private set; }
     public List<string> Messages { get; } = new();
@@ -25,7 +25,7 @@ public class FakeRichConsoleDisplay : IRichConsoleDisplay
         ShowTitleWasCalled = true;
     }
 
-    public void ShowRecipes(List<Recipe> recipes, string? title = null, string? emptyMessage = null)
+    public void ShowRecipes(List<RecipeSummary> recipes, string? title = null, string? emptyMessage = null)
     {
         ShowRecipesWasCalled = true;
         RecipesPassedToShowRecipes = recipes;

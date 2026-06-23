@@ -15,11 +15,11 @@ public class FakeRecipeConsoleWriter : IRecipeConsoleWriter
 
     public List<string> DisplayedMessages { get; } = new();
 
-    public List<Recipe>? RecipesPassedToDisplayRecipes { get; private set; }
-    public List<Recipe>? RecipesPassedToDisplaySearchResults { get; private set; }
-    public List<Recipe>? RecipesPassedToDisplayRecipeList { get; private set; }
+    public List<RecipeSummary>? RecipesPassedToDisplayRecipes { get; private set; }
+    public List<RecipeSummary>? RecipesPassedToDisplaySearchResults { get; private set; }
+    public List<RecipeSummary>? RecipesPassedToDisplayRecipeList { get; private set; }
 
-    public Recipe? RecipePassedToDisplayRecipe { get; private set; }
+    public RecipeSummary? RecipePassedToDisplayRecipe { get; private set; }
     public int? IndexPassedToDisplayRecipe { get; private set; }
 
     public Recipe? RecipePassedToDisplayImportedRecipe { get; private set; }
@@ -43,19 +43,19 @@ public class FakeRecipeConsoleWriter : IRecipeConsoleWriter
         DisplayedMessages.Add(message);
     }
 
-    public void DisplayRecipes(List<Recipe> recipesToDisplay)
+    public void DisplayRecipes(List<RecipeSummary> recipesToDisplay)
     {
         DisplayRecipesWasCalled = true;
         RecipesPassedToDisplayRecipes = recipesToDisplay;
     }
 
-    public void DisplaySearchResults(List<Recipe> foundRecipes)
+    public void DisplaySearchResults(List<RecipeSummary> foundRecipes)
     {
         DisplaySearchResultsWasCalled = true;
         RecipesPassedToDisplaySearchResults = foundRecipes;
     }
 
-    public void DisplayRecipe(Recipe recipe, int index)
+    public void DisplayRecipe(RecipeSummary recipe, int index)
     {
         DisplayRecipeWasCalled = true;
         RecipePassedToDisplayRecipe = recipe;
@@ -68,7 +68,7 @@ public class FakeRecipeConsoleWriter : IRecipeConsoleWriter
         RecipePassedToDisplayImportedRecipe = recipe;
     }
 
-    public void DisplayRecipeList(List<Recipe> recipesToDisplay)
+    public void DisplayRecipeList(List<RecipeSummary> recipesToDisplay)
     {
         DisplayRecipeListWasCalled = true;
         RecipesPassedToDisplayRecipeList = recipesToDisplay;

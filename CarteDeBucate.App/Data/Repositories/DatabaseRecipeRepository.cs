@@ -9,6 +9,61 @@ public class DatabaseRecipeRepository : IRecipeRepository
         _connectionString = $"Data Source={databasePath}";
     }
 
+    public List<RecipeSummary> GetAllRecipeSummaries()
+    {
+        List<RecipeSummary> recipes = new List<RecipeSummary>();
+
+        using SqliteConnection connection = new SqliteConnection(_connectionString);
+        connection.Open();
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT Id, Name, SourceUrl, SavedAt, Status, UserId
+            FROM Recipes
+            ORDER BY SavedAt DESC;
+            """;
+
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            RecipeSummary recipe = ReadRecipeSummaryFromReader(reader);
+
+            recipes.Add(recipe);
+        }
+
+        return recipes;
+    }
+
+    public List<RecipeSummary> GetRecipeSummariesByUserId(int userId)
+    {
+        List<RecipeSummary> recipes = new List<RecipeSummary>();
+
+        using SqliteConnection connection = new SqliteConnection(_connectionString);
+        connection.Open();
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT Id, Name, SourceUrl, SavedAt, Status, UserId
+            FROM Recipes
+            WHERE UserId = @UserId
+            ORDER BY SavedAt DESC;
+            """;
+
+        command.Parameters.AddWithValue("@UserId", userId);
+
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            RecipeSummary recipe = ReadRecipeSummaryFromReader(reader);
+
+            recipes.Add(recipe);
+        }
+
+        return recipes;
+    }
+
     public List<Recipe> GetAllRecipes()
     {
         List<Recipe> recipes = new List<Recipe>();
@@ -71,6 +126,45 @@ public class DatabaseRecipeRepository : IRecipeRepository
         {
             recipe.Ingredients = GetIngredientsForRecipe(connection, recipe.Id);
             recipe.Steps = GetStepsForRecipe(connection, recipe.Id);
+        }
+
+        return recipes;
+    }
+
+    public List<RecipeSummary> SearchRecipes(string searchText, int? userId)
+    {
+        List<RecipeSummary> recipes = new List<RecipeSummary>();
+
+        using SqliteConnection connection = new SqliteConnection(_connectionString);
+        connection.Open();
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT DISTINCT r.Id, r.Name, r.SourceUrl, r.SavedAt, r.Status, r.UserId
+            FROM Recipes r
+            LEFT JOIN RecipeIngredients i ON i.RecipeId = r.Id
+            LEFT JOIN RecipeSteps s ON s.RecipeId = r.Id
+            WHERE (
+                LOWER(r.Name) LIKE @SearchText
+                OR LOWER(r.SourceUrl) LIKE @SearchText
+                OR LOWER(COALESCE(r.Notes, '')) LIKE @SearchText
+                OR LOWER(COALESCE(i.IngredientText, '')) LIKE @SearchText
+                OR LOWER(COALESCE(s.StepText, '')) LIKE @SearchText
+            )
+            AND (@UserId IS NULL OR r.UserId = @UserId)
+            ORDER BY r.SavedAt DESC;
+            """;
+
+        command.Parameters.AddWithValue("@SearchText", $"%{searchText.Trim().ToLowerInvariant()}%");
+        command.Parameters.AddWithValue("@UserId", userId.HasValue ? userId.Value : (object)DBNull.Value);
+
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            RecipeSummary recipe = ReadRecipeSummaryFromReader(reader);
+
+            recipes.Add(recipe);
         }
 
         return recipes;
@@ -432,18 +526,35 @@ public class DatabaseRecipeRepository : IRecipeRepository
 
     public void DeleteRecipeForUser(int recipeId, int userId)
     {
-        if (GetRecipeByIdAndUserId(recipeId, userId) == null)
+        using SqliteConnection connection = new SqliteConnection(_connectionString);
+        connection.Open();
+
+        if (!RecipeBelongsToUser(connection, recipeId, userId))
         {
             return;
         }
 
-        DeleteRecipe(recipeId);
+        using SqliteTransaction transaction = connection.BeginTransaction();
+
+        try
+        {
+            DeleteRecipeIngredients(connection, transaction, recipeId);
+            DeleteRecipeSteps(connection, transaction, recipeId);
+            DeleteRecipeMainRecord(connection, transaction, recipeId);
+
+            transaction.Commit();
+        }
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
     }
 
     private void DeleteRecipeIngredients(
         SqliteConnection connection,
         SqliteTransaction transaction,
-    int recipeId)
+        int recipeId)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.Transaction = transaction;
@@ -474,6 +585,30 @@ public class DatabaseRecipeRepository : IRecipeRepository
         command.Parameters.AddWithValue("@RecipeId", recipeId);
 
         command.ExecuteNonQuery();
+    }
+
+    private bool RecipeBelongsToUser(
+        SqliteConnection connection,
+        int recipeId,
+        int userId)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+
+        command.CommandText = """
+            SELECT EXISTS (
+                SELECT 1
+                FROM Recipes
+                WHERE Id = @RecipeId
+                    AND UserId = @UserId
+            );
+            """;
+
+        command.Parameters.AddWithValue("@RecipeId", recipeId);
+        command.Parameters.AddWithValue("@UserId", userId);
+
+        long exists = (long)(command.ExecuteScalar() ?? 0);
+
+        return exists == 1;
     }
 
     private void DeleteRecipeMainRecord(
@@ -554,6 +689,21 @@ public class DatabaseRecipeRepository : IRecipeRepository
             Status = (RecipeStatus)reader.GetInt32(reader.GetOrdinal("Status")),
             Ingredients = new List<string>(),
             Steps = new List<string>(),
+            UserId = reader.IsDBNull(reader.GetOrdinal("UserId"))
+                ? null
+                : reader.GetInt32(reader.GetOrdinal("UserId"))
+        };
+    }
+
+    private RecipeSummary ReadRecipeSummaryFromReader(SqliteDataReader reader)
+    {
+        return new RecipeSummary
+        {
+            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+            Name = reader.GetString(reader.GetOrdinal("Name")),
+            SourceUrl = reader.GetString(reader.GetOrdinal("SourceUrl")),
+            SavedAt = DateTime.Parse(reader.GetString(reader.GetOrdinal("SavedAt"))),
+            Status = (RecipeStatus)reader.GetInt32(reader.GetOrdinal("Status")),
             UserId = reader.IsDBNull(reader.GetOrdinal("UserId"))
                 ? null
                 : reader.GetInt32(reader.GetOrdinal("UserId"))

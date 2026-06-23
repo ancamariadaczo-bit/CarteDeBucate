@@ -155,6 +155,141 @@ public class JsonRecipeRepositoryTests
     }
 
     [Fact]
+    public void GetAllRecipeSummaries_ShouldReturnSummaries()
+    {
+        string filePath = CreateTemporaryFilePath();
+
+        try
+        {
+            JsonRecipeRepository repository = new JsonRecipeRepository(filePath);
+            Recipe recipe = CreateRecipe();
+
+            repository.AddRecipe(recipe);
+
+            List<RecipeSummary> recipes = repository.GetAllRecipeSummaries();
+
+            Assert.Single(recipes);
+            Assert.Equal(recipe.Id, recipes[0].Id);
+            Assert.Equal(recipe.Name, recipes[0].Name);
+            Assert.Equal(recipe.SourceUrl, recipes[0].SourceUrl);
+            Assert.Equal(recipe.SavedAt, recipes[0].SavedAt);
+            Assert.Equal(recipe.Status, recipes[0].Status);
+            Assert.Equal(recipe.UserId, recipes[0].UserId);
+        }
+        finally
+        {
+            DeleteFile(filePath);
+        }
+    }
+
+    [Fact]
+    public void GetRecipeSummariesByUserId_ShouldReturnOnlyRecipesForUser()
+    {
+        string filePath = CreateTemporaryFilePath();
+
+        try
+        {
+            JsonRecipeRepository repository = new JsonRecipeRepository(filePath);
+            Recipe firstUserRecipe = CreateRecipe(userId: 1);
+            Recipe secondUserRecipe = CreateRecipe(
+                sourceUrl: "https://example.com/other-recipe",
+                userId: 2);
+
+            repository.AddRecipe(firstUserRecipe);
+            repository.AddRecipe(secondUserRecipe);
+
+            List<RecipeSummary> recipes = repository.GetRecipeSummariesByUserId(1);
+
+            Assert.Single(recipes);
+            Assert.Equal(firstUserRecipe.Id, recipes[0].Id);
+            Assert.Equal(1, recipes[0].UserId);
+        }
+        finally
+        {
+            DeleteFile(filePath);
+        }
+    }
+
+    [Fact]
+    public void SearchRecipes_ShouldSearchInNotesIngredientsAndSteps()
+    {
+        string filePath = CreateTemporaryFilePath();
+
+        try
+        {
+            JsonRecipeRepository repository = new JsonRecipeRepository(filePath);
+
+            Recipe notesRecipe = CreateRecipe(
+                name: "Cake",
+                sourceUrl: "https://example.com/cake");
+            notesRecipe.Notes = "Serve with raspberries.";
+
+            Recipe ingredientRecipe = CreateRecipe(
+                name: "Bowl",
+                sourceUrl: "https://example.com/bowl");
+            ingredientRecipe.Ingredients = ["Greek yogurt"];
+
+            Recipe stepRecipe = CreateRecipe(
+                name: "Salad",
+                sourceUrl: "https://example.com/salad");
+            stepRecipe.Steps = ["Toast the walnuts."];
+
+            repository.AddRecipe(notesRecipe);
+            repository.AddRecipe(ingredientRecipe);
+            repository.AddRecipe(stepRecipe);
+
+            List<RecipeSummary> noteResults = repository.SearchRecipes("raspberries", null);
+            List<RecipeSummary> ingredientResults = repository.SearchRecipes("yogurt", null);
+            List<RecipeSummary> stepResults = repository.SearchRecipes("walnuts", null);
+
+            Assert.Single(noteResults);
+            Assert.Equal(notesRecipe.Id, noteResults[0].Id);
+
+            Assert.Single(ingredientResults);
+            Assert.Equal(ingredientRecipe.Id, ingredientResults[0].Id);
+
+            Assert.Single(stepResults);
+            Assert.Equal(stepRecipe.Id, stepResults[0].Id);
+        }
+        finally
+        {
+            DeleteFile(filePath);
+        }
+    }
+
+    [Fact]
+    public void SearchRecipes_WhenUserIdIsProvided_ShouldReturnOnlyCurrentUserRecipes()
+    {
+        string filePath = CreateTemporaryFilePath();
+
+        try
+        {
+            JsonRecipeRepository repository = new JsonRecipeRepository(filePath);
+            Recipe firstUserRecipe = CreateRecipe(
+                name: "Banana bread",
+                sourceUrl: "https://example.com/banana-bread",
+                userId: 1);
+            Recipe secondUserRecipe = CreateRecipe(
+                name: "Banana pancakes",
+                sourceUrl: "https://example.com/banana-pancakes",
+                userId: 2);
+
+            repository.AddRecipe(firstUserRecipe);
+            repository.AddRecipe(secondUserRecipe);
+
+            List<RecipeSummary> recipes = repository.SearchRecipes("banana", 1);
+
+            Assert.Single(recipes);
+            Assert.Equal(firstUserRecipe.Id, recipes[0].Id);
+            Assert.Equal(1, recipes[0].UserId);
+        }
+        finally
+        {
+            DeleteFile(filePath);
+        }
+    }
+
+    [Fact]
     public void HasRecipes_ShouldReturnWhetherAnyRecipeExists()
     {
         string filePath = CreateTemporaryFilePath();

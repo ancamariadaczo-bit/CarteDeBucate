@@ -162,7 +162,7 @@ public class ClassicConsoleRecipeApp : IRecipeApp
 
     private void ShowRecipes()
     {
-        List<Recipe> recipes = _importerService.GetAllRecipes();
+        List<RecipeSummary> recipes = _importerService.GetRecipeSummaries();
 
         if (recipes.Count == 0)
         {
@@ -188,7 +188,7 @@ public class ClassicConsoleRecipeApp : IRecipeApp
             return;
         }
 
-        List<Recipe> foundRecipes = _importerService.SearchRecipes(searchText);
+        List<RecipeSummary> foundRecipes = _importerService.SearchRecipes(searchText);
 
         _writer.DisplaySearchResults(foundRecipes);
     }
@@ -293,7 +293,7 @@ public class ClassicConsoleRecipeApp : IRecipeApp
 
     private int? SelectRecipeId(Func<int?> readRecipeId)
     {
-        List<Recipe> recipes = _importerService.GetAllRecipes();
+        List<RecipeSummary> recipes = _importerService.GetRecipeSummaries();
 
         if (recipes.Count == 0)
         {

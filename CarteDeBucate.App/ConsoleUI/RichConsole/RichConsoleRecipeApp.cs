@@ -187,7 +187,7 @@ public class RichConsoleRecipeApp : IRecipeApp
 
     private void ShowAllRecipes()
     {
-        List<Recipe> recipes = _importerService.GetAllRecipes();
+        List<RecipeSummary> recipes = _importerService.GetRecipeSummaries();
 
         _display.ShowRecipes(recipes);
     }
@@ -209,7 +209,7 @@ public class RichConsoleRecipeApp : IRecipeApp
                 return false;
             }
 
-            List<Recipe> foundRecipes = _importerService.SearchRecipes(searchText);
+            List<RecipeSummary> foundRecipes = _importerService.SearchRecipes(searchText);
 
             _display.ShowRecipes(foundRecipes, AppTexts.SearchResults, AppTexts.NoSearchResults);
 
@@ -224,7 +224,7 @@ public class RichConsoleRecipeApp : IRecipeApp
 
     private bool ViewRecipeDetails()
     {
-        Recipe? selectedRecipe = SelectExistingRecipe(RichConsoleTexts.SelectRecipeToView, out bool returnedToMainMenu);
+        RecipeSummary? selectedRecipe = SelectExistingRecipe(RichConsoleTexts.SelectRecipeToView, out bool returnedToMainMenu);
 
         if (selectedRecipe == null)
         {
@@ -245,7 +245,7 @@ public class RichConsoleRecipeApp : IRecipeApp
 
     private bool EditRecipe()
     {
-        Recipe? selectedRecipe = SelectExistingRecipe(RichConsoleTexts.SelectRecipeToEdit, out bool returnedToMainMenu);
+        RecipeSummary? selectedRecipe = SelectExistingRecipe(RichConsoleTexts.SelectRecipeToEdit, out bool returnedToMainMenu);
 
         if (selectedRecipe == null)
         {
@@ -278,14 +278,15 @@ public class RichConsoleRecipeApp : IRecipeApp
 
     private bool DeleteRecipe()
     {
-        Recipe? selectedRecipe = SelectExistingRecipe(RichConsoleTexts.SelectRecipeToDelete, out bool returnedToMainMenu);
+        RecipeSummary? selectedRecipe = SelectExistingRecipe(RichConsoleTexts.SelectRecipeToDelete, out bool returnedToMainMenu);
 
         if (selectedRecipe == null)
         {
             return !returnedToMainMenu;
         }
 
-        Recipe? recipe = _importerService.GetRecipeById(selectedRecipe.Id);
+        RecipeSummary? recipe = _importerService.GetRecipeSummaries()
+            .FirstOrDefault(recipe => recipe.Id == selectedRecipe.Id);
 
         if (recipe == null)
         {
@@ -339,10 +340,10 @@ public class RichConsoleRecipeApp : IRecipeApp
         return true;
     }
 
-    private Recipe? SelectExistingRecipe(string title, out bool returnedToMainMenu)
+    private RecipeSummary? SelectExistingRecipe(string title, out bool returnedToMainMenu)
     {
         returnedToMainMenu = false;
-        List<Recipe> recipes = _importerService.GetAllRecipes();
+        List<RecipeSummary> recipes = _importerService.GetRecipeSummaries();
 
         if (recipes.Count == 0)
         {
@@ -350,7 +351,7 @@ public class RichConsoleRecipeApp : IRecipeApp
             return null;
         }
 
-        Recipe? selectedRecipe = _reader.SelectRecipe(recipes, title);
+        RecipeSummary? selectedRecipe = _reader.SelectRecipe(recipes, title);
 
         if (selectedRecipe == null)
         {

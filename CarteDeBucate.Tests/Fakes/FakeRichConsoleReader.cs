@@ -11,7 +11,7 @@ public class FakeRichConsoleReader : IRichConsoleReader
     public bool SaveRecipeConfirmation { get; set; } = true;
     public bool ImportAnotherRecipeConfirmation { get; set; }
     public bool SearchAnotherRecipeConfirmation { get; set; }
-    public Recipe? SelectedRecipe { get; set; }
+    public RecipeSummary? SelectedRecipe { get; set; }
     public Recipe? EditedRecipe { get; set; }
     public bool DeleteRecipeConfirmation { get; set; } = true;
     public string BackupFilePath { get; set; } = "";
@@ -31,7 +31,7 @@ public class FakeRichConsoleReader : IRichConsoleReader
     public bool WaitForContinueWasCalled { get; private set; }
 
     public Recipe? RecipePassedToReadRecipeEdits { get; private set; }
-    public Recipe? RecipePassedToConfirmDeleteRecipe { get; private set; }
+    public RecipeSummary? RecipePassedToConfirmDeleteRecipe { get; private set; }
 
     public Recipe? ReadRecipe()
     {
@@ -96,7 +96,7 @@ public class FakeRichConsoleReader : IRichConsoleReader
         return SearchAnotherRecipeConfirmation;
     }
 
-    public Recipe? SelectRecipe(List<Recipe> recipes, string title)
+    public RecipeSummary? SelectRecipe(List<RecipeSummary> recipes, string title)
     {
         SelectRecipeWasCalled = true;
         return SelectedRecipe ?? recipes[0];
@@ -109,7 +109,7 @@ public class FakeRichConsoleReader : IRichConsoleReader
         return EditedRecipe ?? recipe;
     }
 
-    public bool ConfirmDeleteRecipe(Recipe recipe)
+    public bool ConfirmDeleteRecipe(RecipeSummary recipe)
     {
         ConfirmDeleteRecipeWasCalled = true;
         RecipePassedToConfirmDeleteRecipe = recipe;

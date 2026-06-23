@@ -83,7 +83,7 @@ public class RichConsoleReader : IRichConsoleReader
         return SelectFollowUpAction(RichConsoleTexts.SearchAnotherRecipeOption);
     }
 
-    public Recipe? SelectRecipe(List<Recipe> recipes, string title)
+    public RecipeSummary? SelectRecipe(List<RecipeSummary> recipes, string title)
     {
         List<RecipeSelection> choices = recipes
             .Select(recipe => new RecipeSelection(recipe))
@@ -136,7 +136,7 @@ public class RichConsoleReader : IRichConsoleReader
         return recipe;
     }
 
-    public bool ConfirmDeleteRecipe(Recipe recipe)
+    public bool ConfirmDeleteRecipe(RecipeSummary recipe)
     {
         return Confirm(string.Format(RichConsoleTexts.DeleteRecipeConfirmation, recipe.Name), false);
     }
@@ -209,7 +209,7 @@ public class RichConsoleReader : IRichConsoleReader
             });
     }
 
-    private static string CreateRecipeSelectionText(Recipe recipe)
+    private static string CreateRecipeSelectionText(RecipeSummary recipe)
     {
         if (string.IsNullOrWhiteSpace(recipe.SourceUrl))
         {
@@ -251,18 +251,18 @@ public class RichConsoleReader : IRichConsoleReader
             null,
             CreateBackToMainMenuOption());
 
-        public RecipeSelection(Recipe recipe)
+        public RecipeSelection(RecipeSummary recipe)
             : this(recipe, CreateRecipeSelectionText(recipe))
         {
         }
 
-        private RecipeSelection(Recipe? recipe, string text)
+        private RecipeSelection(RecipeSummary? recipe, string text)
         {
             Recipe = recipe;
             Text = text;
         }
 
-        public Recipe? Recipe { get; }
+        public RecipeSummary? Recipe { get; }
 
         public string Text { get; }
     }

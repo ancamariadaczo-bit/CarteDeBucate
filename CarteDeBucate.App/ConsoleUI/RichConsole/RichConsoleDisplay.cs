@@ -19,7 +19,7 @@ public class RichConsoleDisplay : IRichConsoleDisplay
         AnsiConsole.WriteLine();
     }
 
-    public void ShowRecipes(List<Recipe> recipes, string? title = null, string? emptyMessage = null)
+    public void ShowRecipes(List<RecipeSummary> recipes, string? title = null, string? emptyMessage = null)
     {
         if (recipes.Count == 0)
         {
@@ -37,7 +37,7 @@ public class RichConsoleDisplay : IRichConsoleDisplay
 
         for (int index = 0; index < recipes.Count; index++)
         {
-            Recipe recipe = recipes[index];
+            RecipeSummary recipe = recipes[index];
 
             table.AddRow(
                 Markup.Escape(recipe.Name ?? RichConsoleTexts.EmptyValue),

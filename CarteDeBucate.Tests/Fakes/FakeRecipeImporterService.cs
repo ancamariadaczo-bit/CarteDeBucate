@@ -1,8 +1,8 @@
 public class FakeRecipeImporterService : IRecipeImporterService
 {
-    public List<Recipe> RecipesToReturn { get; set; } = new();
     public Recipe? RecipeToReturn { get; set; }
-    public List<Recipe> SearchResultsToReturn { get; set; } = new();
+    public List<RecipeSummary> RecipeSummariesToReturn { get; set; } = new();
+    public List<RecipeSummary> SearchResultsToReturn { get; set; } = new();
 
     public RecipeImportResult ImportResultToReturn { get; set; } = new();
     public RecipeSaveResult ImportAndSaveResultToReturn { get; set; } = new();
@@ -10,7 +10,7 @@ public class FakeRecipeImporterService : IRecipeImporterService
     public RecipeSaveResult UpdateResultToReturn { get; set; } = new();
     public RecipeSaveResult DeleteResultToReturn { get; set; } = new();
 
-    public bool GetAllRecipesWasCalled { get; private set; }
+    public bool GetRecipeSummariesWasCalled { get; private set; }
     public bool HasRecipesInCurrentContextWasCalled { get; private set; }
     public bool GetRecipeByIdWasCalled { get; private set; }
     public bool SearchRecipesWasCalled { get; private set; }
@@ -30,16 +30,16 @@ public class FakeRecipeImporterService : IRecipeImporterService
     public Recipe? RecipePassedToSaveRecipe { get; private set; }
     public Recipe? RecipePassedToUpdateRecipe { get; private set; }
 
-    public List<Recipe> GetAllRecipes()
+    public List<RecipeSummary> GetRecipeSummaries()
     {
-        GetAllRecipesWasCalled = true;
-        return RecipesToReturn;
+        GetRecipeSummariesWasCalled = true;
+        return RecipeSummariesToReturn;
     }
 
     public bool HasRecipesInCurrentContext()
     {
         HasRecipesInCurrentContextWasCalled = true;
-        return RecipesToReturn.Count > 0;
+        return RecipeSummariesToReturn.Count > 0;
     }
 
     public Recipe? GetRecipeById(int recipeId)
@@ -49,7 +49,7 @@ public class FakeRecipeImporterService : IRecipeImporterService
         return RecipeToReturn;
     }
 
-    public List<Recipe> SearchRecipes(string searchText)
+    public List<RecipeSummary> SearchRecipes(string searchText)
     {
         SearchRecipesWasCalled = true;
         SearchTextPassedToSearchRecipes = searchText;
