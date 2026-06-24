@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CarteDeBucate.App", "CarteD
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CarteDeBucate.Core", "..\CarteDeBucate.Core\CarteDeBucate.Core.csproj", "{C5B3C8D1-2E54-4BB1-9A4D-9F22D3E913AF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CarteDeBucate.Web", "..\CarteDeBucate.Web\CarteDeBucate.Web.csproj", "{BCB478F2-8F3E-41E9-A857-08CA805D25C5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,6 +22,10 @@ Global
 		{C5B3C8D1-2E54-4BB1-9A4D-9F22D3E913AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C5B3C8D1-2E54-4BB1-9A4D-9F22D3E913AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C5B3C8D1-2E54-4BB1-9A4D-9F22D3E913AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BCB478F2-8F3E-41E9-A857-08CA805D25C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BCB478F2-8F3E-41E9-A857-08CA805D25C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BCB478F2-8F3E-41E9-A857-08CA805D25C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BCB478F2-8F3E-41E9-A857-08CA805D25C5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

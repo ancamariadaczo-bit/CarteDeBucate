@@ -1,0 +1,61 @@
+@model RecipeFormViewModel
+
+@{
+    ViewData["Title"] = "Adauga reteta";
+}
+
+<div class="mb-4">
+    <h1 class="h2">Adauga reteta</h1>
+    <p class="text-muted mb-0">Introdu fiecare ingredient si fiecare pas pe o linie separata.</p>
+</div>
+
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label">Nume</label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="SourceUrl" class="form-label">URL sursa</label>
+        <input asp-for="SourceUrl" class="form-control" type="url" />
+        <span asp-validation-for="SourceUrl" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="IngredientsText" class="form-label">Ingrediente</label>
+        <textarea asp-for="IngredientsText" class="form-control" rows="8"></textarea>
+        <span asp-validation-for="IngredientsText" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="StepsText" class="form-label">Pasi</label>
+        <textarea asp-for="StepsText" class="form-control" rows="10"></textarea>
+        <span asp-validation-for="StepsText" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Notes" class="form-label">Notite</label>
+        <textarea asp-for="Notes" class="form-control" rows="4"></textarea>
+        <span asp-validation-for="Notes" class="text-danger"></span>
+    </div>
+
+    <div class="mb-4">
+        <label asp-for="Status" class="form-label">Status</label>
+        <select asp-for="Status"
+                asp-items="Html.GetEnumSelectList<RecipeStatus>()"
+                class="form-select"></select>
+        <span asp-validation-for="Status" class="text-danger"></span>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Salveaza</button>
+        <a class="btn btn-outline-secondary" asp-action="Index">Renunta</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

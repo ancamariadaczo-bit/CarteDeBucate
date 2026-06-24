@@ -1,0 +1,36 @@
+@model string
+
+@{
+    ViewData["Title"] = "Importa reteta";
+}
+
+<div class="mb-4">
+    <h1 class="h2">Importa reteta din URL</h1>
+    <p class="text-muted mb-0">Introdu adresa paginii care contine reteta.</p>
+</div>
+
+<form asp-action="Import" method="post">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+    <div class="mb-4">
+        <label for="url" class="form-label">URL</label>
+        <input id="url"
+               name="url"
+               type="url"
+               value="@Model"
+               class="form-control"
+               autocomplete="url" />
+        @if (ViewData.ModelState.TryGetValue("url", out var urlEntry))
+        {
+            foreach (var error in urlEntry.Errors)
+            {
+                <span class="text-danger d-block">@error.ErrorMessage</span>
+            }
+        }
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Importa</button>
+        <a class="btn btn-outline-secondary" asp-action="Index">Renunta</a>
+    </div>
+</form>

@@ -1,0 +1,30 @@
+@model Recipe
+
+@{
+    ViewData["Title"] = "Sterge reteta";
+}
+
+<div class="mb-4">
+    <h1 class="h2">Sterge reteta</h1>
+    <p class="text-danger mb-0">Aceasta actiune nu poate fi anulata.</p>
+</div>
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+<dl class="row mb-4">
+    <dt class="col-sm-3">Nume</dt>
+    <dd class="col-sm-9">@Model.Name</dd>
+
+    <dt class="col-sm-3">Status</dt>
+    <dd class="col-sm-9">@Model.Status</dd>
+
+    <dt class="col-sm-3">Data salvarii</dt>
+    <dd class="col-sm-9">@Model.SavedAt.ToString("dd.MM.yyyy")</dd>
+</dl>
+
+<form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+    <button type="submit" class="btn btn-danger">Sterge definitiv</button>
+    <a class="btn btn-outline-secondary"
+       asp-action="Details"
+       asp-route-id="@Model.Id">Renunta</a>
+</form>

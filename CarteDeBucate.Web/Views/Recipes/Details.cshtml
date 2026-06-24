@@ -1,0 +1,58 @@
+@model Recipe
+
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+        <h1 class="h2 mb-1">@Model.Name</h1>
+        <div class="text-muted">
+            @Model.Status · salvata la @Model.SavedAt.ToString("dd.MM.yyyy")
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary"
+           asp-action="Edit"
+           asp-route-id="@Model.Id">Editeaza</a>
+        <a class="btn btn-outline-primary" asp-action="Index">Inapoi la lista</a>
+    </div>
+</div>
+
+<section class="mb-4">
+    <h2 class="h4">Ingrediente</h2>
+    <ul>
+        @foreach (string ingredient in Model.Ingredients)
+        {
+            <li>@ingredient</li>
+        }
+    </ul>
+</section>
+
+<section class="mb-4">
+    <h2 class="h4">Pasi</h2>
+    <ol>
+        @foreach (string step in Model.Steps)
+        {
+            <li class="mb-2">@step</li>
+        }
+    </ol>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.Notes))
+{
+    <section class="mb-4">
+        <h2 class="h4">Notite</h2>
+        <p class="text-pre-line">@Model.Notes</p>
+    </section>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.SourceUrl))
+{
+    <section>
+        <h2 class="h4">Sursa</h2>
+        <a href="@Model.SourceUrl" target="_blank" rel="noopener noreferrer">
+            @Model.SourceUrl
+        </a>
+    </section>
+}
