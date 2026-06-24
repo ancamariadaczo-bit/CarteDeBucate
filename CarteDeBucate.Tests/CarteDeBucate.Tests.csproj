@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\CarteDeBucate.Core\CarteDeBucate.Core.csproj" />
     <ProjectReference Include="..\CarteDeBucate.App\CarteDeBucate.App.csproj" />
+    <ProjectReference Include="..\CarteDeBucate.Web\CarteDeBucate.Web.csproj" />
   </ItemGroup>
 
 </Project>
