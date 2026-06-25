@@ -11,6 +11,17 @@
         "/property:GenerateFullPaths=true"
       ],
       "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "build-web",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/CarteDeBucate.Web/CarteDeBucate.Web.csproj",
+        "/property:GenerateFullPaths=true"
+      ],
+      "problemMatcher": "$msCompile"
     }
   ]
 }

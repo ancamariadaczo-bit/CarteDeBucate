@@ -11,6 +11,24 @@
             "console": "integratedTerminal",
             "stopAtEntry": false,
             "preLaunchTask": "build-app"
+        },
+        {
+            "name": "Debug CarteDeBucate.Web",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/CarteDeBucate.Web/bin/Debug/net10.0/CarteDeBucate.Web.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/CarteDeBucate.Web",
+            "console": "integratedTerminal",
+            "stopAtEntry": false,
+            "preLaunchTask": "build-web",
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+            }
         }
     ]
 }
