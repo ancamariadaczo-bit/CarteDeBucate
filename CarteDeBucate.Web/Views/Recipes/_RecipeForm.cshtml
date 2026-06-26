@@ -2,26 +2,44 @@
 
 <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
+<p class="text-muted small">
+    <span class="text-danger">*</span> Campurile marcate sunt obligatorii.
+</p>
+
 <div class="mb-3">
-    <label asp-for="Name" class="form-label">Nume</label>
+    <label asp-for="Name" class="form-label">
+        Nume <span class="text-danger" aria-hidden="true">*</span>
+    </label>
     <input asp-for="Name" class="form-control" />
     <span asp-validation-for="Name" class="text-danger"></span>
 </div>
 
 <div class="mb-3">
-    <label asp-for="SourceUrl" class="form-label">URL sursa</label>
+    <label asp-for="SourceUrl" class="form-label">
+        URL sursa <span class="text-danger" aria-hidden="true">*</span>
+    </label>
     <input asp-for="SourceUrl" class="form-control" type="url" />
     <span asp-validation-for="SourceUrl" class="text-danger"></span>
 </div>
 
 <div class="mb-3">
-    <label asp-for="IngredientsText" class="form-label">Ingrediente</label>
+    <label asp-for="IngredientsText" class="form-label">
+        Ingrediente <span class="text-danger" aria-hidden="true">*</span>
+    </label>
+    <div class="form-text">
+        Introdu fiecare ingredient pe o linie separata.
+    </div>
     <textarea asp-for="IngredientsText" class="form-control" rows="8"></textarea>
     <span asp-validation-for="IngredientsText" class="text-danger"></span>
 </div>
 
 <div class="mb-3">
-    <label asp-for="StepsText" class="form-label">Pasi</label>
+    <label asp-for="StepsText" class="form-label">
+        Pasi <span class="text-danger" aria-hidden="true">*</span>
+    </label>
+    <div class="form-text">
+        Introdu fiecare pas pe o linie separata.
+    </div>
     <textarea asp-for="StepsText" class="form-control" rows="10"></textarea>
     <span asp-validation-for="StepsText" class="text-danger"></span>
 </div>

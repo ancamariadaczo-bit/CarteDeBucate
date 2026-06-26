@@ -225,6 +225,43 @@ public class RecipesControllerTests
     }
 
     [Fact]
+    public void CreatePost_WhenSaveFails_ShouldKeepBusinessErrorAndEnteredValues()
+    {
+        FakeRecipeImporterService recipeService = new FakeRecipeImporterService
+        {
+            SaveResultToReturn = RecipeSaveResult.Fail("Reteta exista deja.")
+        };
+        RecipesController controller = CreateController(recipeService);
+        RecipeFormViewModel model = CreateValidModel();
+
+        IActionResult result = controller.Create(model);
+
+        ViewResult viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Same(model, viewResult.Model);
+        Assert.True(recipeService.SaveRecipeWasCalled);
+        Assert.Contains(
+            controller.ModelState[string.Empty]!.Errors,
+            error => error.ErrorMessage == "Reteta exista deja.");
+    }
+
+    [Fact]
+    public void CreatePost_WhenModelStateIsInvalid_ShouldNotCallService()
+    {
+        FakeRecipeImporterService recipeService = new FakeRecipeImporterService();
+        RecipesController controller = CreateController(recipeService);
+        RecipeFormViewModel model = new RecipeFormViewModel();
+        controller.ModelState.AddModelError(
+            nameof(RecipeFormViewModel.Name),
+            "Numele este obligatoriu.");
+
+        IActionResult result = controller.Create(model);
+
+        ViewResult viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Same(model, viewResult.Model);
+        Assert.False(recipeService.SaveRecipeWasCalled);
+    }
+
+    [Fact]
     public void EditPost_WhenUpdateSucceeds_ShouldKeepModelId()
     {
         FakeRecipeImporterService recipeService = new FakeRecipeImporterService
@@ -278,7 +315,11 @@ public class RecipesControllerTests
 
         IActionResult result = controller.Edit(23, model);
 
-        Assert.IsType<ViewResult>(result);
+        ViewResult viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Same(model, viewResult.Model);
+        Assert.Contains(
+            controller.ModelState[string.Empty]!.Errors,
+            error => error.ErrorMessage == "Update failed.");
         Assert.False(controller.TempData.ContainsKey("SuccessMessage"));
     }
 

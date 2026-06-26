@@ -10,7 +10,10 @@
     <p class="text-muted mb-0">Introdu fiecare ingredient si fiecare pas pe o linie separata.</p>
 </div>
 
-<form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+<form asp-action="Edit"
+      asp-route-id="@Model.Id"
+      method="post"
+      data-track-unsaved-changes="true">
     <input asp-for="Id" type="hidden" />
     <input asp-for="SavedAt" type="hidden" />
     <input asp-for="UserId" type="hidden" />
@@ -25,13 +28,21 @@
         <button type="submit" class="btn btn-primary">Salveaza modificarile</button>
         @if (cancelAction == "Index")
         {
-            <a class="btn btn-outline-secondary" asp-action="Index">Renunta</a>
+            <a class="btn btn-outline-secondary"
+               asp-action="Index"
+               data-confirm-unsaved-changes="true">Renunta</a>
         }
         else
         {
-            <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.Id">Renunta</a>
+            <a class="btn btn-outline-secondary"
+               asp-action="Details"
+               asp-route-id="@Model.Id"
+               data-confirm-unsaved-changes="true">Renunta</a>
         }
-        <a class="btn btn-outline-danger" asp-action="Delete" asp-route-id="@Model.Id">Sterge reteta</a>
+        <a class="btn btn-outline-danger"
+           asp-action="Delete"
+           asp-route-id="@Model.Id"
+           data-confirm-unsaved-changes="true">Sterge reteta</a>
     </div>
 </form>
 

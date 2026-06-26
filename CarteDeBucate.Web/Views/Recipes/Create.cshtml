@@ -9,12 +9,14 @@
     <p class="text-muted mb-0">Introdu fiecare ingredient si fiecare pas pe o linie separata.</p>
 </div>
 
-<form asp-action="Create" method="post">
+<form asp-action="Create" method="post" data-track-unsaved-changes="true">
     <partial name="_RecipeForm" model="Model" />
 
     <div class="d-flex gap-2">
         <button type="submit" class="btn btn-primary">Salveaza</button>
-        <a class="btn btn-outline-secondary" asp-action="Index">Renunta</a>
+        <a class="btn btn-outline-secondary"
+           asp-action="Index"
+           data-confirm-unsaved-changes="true">Renunta</a>
     </div>
 </form>
 
