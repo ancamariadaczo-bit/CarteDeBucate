@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Sterge reteta";
+    string cancelAction = ViewData["DeleteCancelAction"] as string ?? "Details";
 }
 
 <div class="mb-4">
@@ -16,15 +17,30 @@
     <dd class="col-sm-9">@Model.Name</dd>
 
     <dt class="col-sm-3">Status</dt>
-    <dd class="col-sm-9">@Model.Status</dd>
+    <dd class="col-sm-9">
+        <span class="badge @RecipeStatusPresentation.GetBadgeClass(Model.Status)">
+            @RecipeStatusPresentation.GetLabel(Model.Status)
+        </span>
+    </dd>
 
     <dt class="col-sm-3">Data salvarii</dt>
     <dd class="col-sm-9">@Model.SavedAt.ToString("dd.MM.yyyy")</dd>
 </dl>
 
 <form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+    @if (cancelAction == "Index")
+    {
+        <input type="hidden" name="returnTo" value="Index" />
+    }
     <button type="submit" class="btn btn-danger">Sterge definitiv</button>
-    <a class="btn btn-outline-secondary"
-       asp-action="Details"
-       asp-route-id="@Model.Id">Renunta</a>
+    @if (cancelAction == "Index")
+    {
+        <a class="btn btn-outline-secondary" asp-action="Index">Renunta</a>
+    }
+    else
+    {
+        <a class="btn btn-outline-secondary"
+           asp-action="Details"
+           asp-route-id="@Model.Id">Renunta</a>
+    }
 </form>

@@ -5,6 +5,11 @@ namespace CarteDeBucate.Web.Controllers;
 
 public class RecipesController : Controller
 {
+    private const string SuccessMessageKey = "SuccessMessage";
+    private const string DeleteCancelActionKey = "DeleteCancelAction";
+    private const string EditCancelActionKey = "EditCancelAction";
+    private const string ReturnToIndexValue = "Index";
+
     private readonly IRecipeImporterService _recipeService;
 
     public RecipesController(IRecipeImporterService recipeService)
@@ -12,11 +17,17 @@ public class RecipesController : Controller
         _recipeService = recipeService;
     }
 
-    public IActionResult Index()
+    public IActionResult Index(string? searchText)
     {
-        List<RecipeSummary> recipes = _recipeService.GetRecipeSummaries();
+        List<RecipeSummary> recipes = string.IsNullOrWhiteSpace(searchText)
+            ? _recipeService.GetRecipeSummaries()
+            : _recipeService.SearchRecipes(searchText);
 
-        return View(recipes);
+        return View(new RecipeIndexViewModel
+        {
+            Recipes = recipes,
+            SearchText = searchText ?? ""
+        });
     }
 
     public IActionResult Details(int id)
@@ -54,10 +65,22 @@ public class RecipesController : Controller
             return View(model);
         }
 
-        return RedirectToAction(nameof(Index));
+        if (result.Recipe == null)
+        {
+            TempData[SuccessMessageKey] =
+                "Rețeta a fost salvată, dar pagina de detalii nu a putut fi deschisă. Verifică lista de rețete.";
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        TempData[SuccessMessageKey] = result.Message;
+
+        return RedirectToAction(
+            nameof(Details),
+            new { id = result.Recipe.Id });
     }
 
-    public IActionResult Edit(int id)
+    public IActionResult Edit(int id, string? returnTo = null)
     {
         Recipe? recipe = _recipeService.GetRecipeById(id);
 
@@ -66,12 +89,17 @@ public class RecipesController : Controller
             return NotFound();
         }
 
+        SetEditCancelAction(returnTo);
+
         return View(RecipeFormViewModel.FromRecipe(recipe));
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Edit(int id, RecipeFormViewModel model)
+    public IActionResult Edit(
+        int id,
+        RecipeFormViewModel model,
+        string? returnTo = null)
     {
         if (id != model.Id)
         {
@@ -80,6 +108,8 @@ public class RecipesController : Controller
 
         if (!ModelState.IsValid)
         {
+            SetEditCancelAction(returnTo);
+
             return View(model);
         }
 
@@ -88,14 +118,17 @@ public class RecipesController : Controller
         if (!result.IsSuccess)
         {
             ModelState.AddModelError("", result.Message);
+            SetEditCancelAction(returnTo);
 
             return View(model);
         }
 
+        TempData[SuccessMessageKey] = result.Message;
+
         return RedirectToAction(nameof(Details), new { id = model.Id });
     }
 
-    public IActionResult Delete(int id)
+    public IActionResult Delete(int id, string? returnTo = null)
     {
         Recipe? recipe = _recipeService.GetRecipeById(id);
 
@@ -104,12 +137,14 @@ public class RecipesController : Controller
             return NotFound();
         }
 
+        SetDeleteCancelAction(returnTo);
+
         return View(recipe);
     }
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
-    public IActionResult DeleteConfirmed(int id)
+    public IActionResult DeleteConfirmed(int id, string? returnTo = null)
     {
         RecipeSaveResult result = _recipeService.DeleteRecipe(id);
 
@@ -123,11 +158,36 @@ public class RecipesController : Controller
             }
 
             ModelState.AddModelError("", result.Message);
+            SetDeleteCancelAction(returnTo);
 
             return View(recipe);
         }
 
+        TempData[SuccessMessageKey] = result.Message;
+
         return RedirectToAction(nameof(Index));
+    }
+
+    private void SetEditCancelAction(string? returnTo)
+    {
+        ViewData[EditCancelActionKey] = IsReturnToIndex(returnTo)
+            ? nameof(Index)
+            : nameof(Details);
+    }
+
+    private void SetDeleteCancelAction(string? returnTo)
+    {
+        ViewData[DeleteCancelActionKey] = IsReturnToIndex(returnTo)
+            ? nameof(Index)
+            : nameof(Details);
+    }
+
+    private static bool IsReturnToIndex(string? returnTo)
+    {
+        return string.Equals(
+            returnTo,
+            ReturnToIndexValue,
+            StringComparison.OrdinalIgnoreCase);
     }
 
     public IActionResult Import()
@@ -149,6 +209,19 @@ public class RecipesController : Controller
             return View(model: url);
         }
 
-        return RedirectToAction(nameof(Index));
+        if (result.Recipe == null)
+        {
+            TempData[SuccessMessageKey] =
+                "Rețeta a fost importată, dar pagina de detalii nu a putut fi deschisă. Verifică lista de rețete.";
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        TempData[SuccessMessageKey] =
+            "Rețeta a fost importată. Verifică informațiile și editează-le dacă este nevoie.";
+
+        return RedirectToAction(
+            nameof(Details),
+            new { id = result.Recipe.Id });
     }
 }

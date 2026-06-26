@@ -33,6 +33,13 @@
     </header>
     <div class="container">
         <main role="main" class="pb-3">
+            @if (TempData["SuccessMessage"] is string successMessage)
+            {
+                <div class="alert alert-success" role="status">
+                    @successMessage
+                </div>
+            }
+
             @RenderBody()
         </main>
     </div>

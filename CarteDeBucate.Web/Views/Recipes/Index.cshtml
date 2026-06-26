@@ -1,4 +1,4 @@
-@model List<RecipeSummary>
+@model RecipeIndexViewModel
 
 @{
     ViewData["Title"] = "Retete";
@@ -12,14 +12,69 @@
     </div>
 </div>
 
-@if (Model.Count == 0)
-{
-    <div class="alert alert-info" role="status">
-        Nu exista retete salvate.
+<form asp-action="Index" method="get" class="row g-2 align-items-center mb-4">
+    <div class="col">
+        <label for="searchText" class="visually-hidden">Cauta retete</label>
+        <input id="searchText"
+               name="searchText"
+               value="@Model.SearchText"
+               class="form-control"
+               placeholder="Cauta dupa nume, ingrediente, pasi, notite sau URL" />
     </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Cauta</button>
+    </div>
+    @if (Model.IsSearch)
+    {
+        <div class="col-auto">
+            <a class="btn btn-outline-secondary" asp-action="Index">
+                Sterge cautarea
+            </a>
+        </div>
+    }
+</form>
+
+@if (Model.Recipes.Count == 0)
+{
+    if (Model.IsSearch)
+    {
+        <div class="alert alert-info" role="status">
+            Nu am gasit retete pentru „@Model.SearchText”.
+            <a asp-action="Index" class="alert-link">Sterge cautarea</a>
+        </div>
+    }
+    else
+    {
+        <div class="border rounded p-5 text-center bg-light">
+            <h2 class="h4">Nu exista retete salvate</h2>
+            <p class="text-muted">
+                Adauga prima reteta manual sau importa una dintr-o pagina web.
+            </p>
+            <div class="d-flex justify-content-center gap-2">
+                <a class="btn btn-primary" asp-action="Create">
+                    Adauga prima reteta
+                </a>
+                <a class="btn btn-outline-primary" asp-action="Import">
+                    Importa din URL
+                </a>
+            </div>
+        </div>
+    }
 }
 else
 {
+    <p class="text-muted">
+        @Model.Recipes.Count
+        @if (Model.IsSearch)
+        {
+            @(Model.Recipes.Count == 1 ? "rezultat" : "rezultate")
+        }
+        else
+        {
+            @(Model.Recipes.Count == 1 ? "reteta" : "retete")
+        }
+    </p>
+
     <div class="table-responsive">
         <table class="table table-striped align-middle">
             <thead>
@@ -31,22 +86,28 @@ else
                 </tr>
             </thead>
             <tbody>
-                @foreach (RecipeSummary recipe in Model)
+                @foreach (RecipeSummary recipe in Model.Recipes)
                 {
                     <tr>
-                        <td>@recipe.Name</td>
-                        <td>@recipe.Status</td>
+                        <td>
+                            <a asp-action="Details"
+                               asp-route-id="@recipe.Id">@recipe.Name</a>
+                        </td>
+                        <td>
+                            <span class="badge @RecipeStatusPresentation.GetBadgeClass(recipe.Status)">
+                                @RecipeStatusPresentation.GetLabel(recipe.Status)
+                            </span>
+                        </td>
                         <td>@recipe.SavedAt.ToString("dd.MM.yyyy")</td>
                         <td class="text-end text-nowrap">
-                            <a class="btn btn-sm btn-outline-primary"
-                               asp-action="Details"
-                               asp-route-id="@recipe.Id">Detalii</a>
                             <a class="btn btn-sm btn-outline-secondary"
                                asp-action="Edit"
-                               asp-route-id="@recipe.Id">Editeaza</a>
+                               asp-route-id="@recipe.Id"
+                               asp-route-returnTo="Index">Editeaza</a>
                             <a class="btn btn-sm btn-outline-danger"
                                asp-action="Delete"
-                               asp-route-id="@recipe.Id">Sterge</a>
+                               asp-route-id="@recipe.Id"
+                               asp-route-returnTo="Index">Sterge</a>
                         </td>
                     </tr>
                 }
