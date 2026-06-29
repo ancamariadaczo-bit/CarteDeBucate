@@ -98,16 +98,44 @@ public class RecipesControllerTests
     }
 
     [Fact]
-    public void Details_WhenRecipeDoesNotExist_ShouldReturnNotFound()
+    public void Details_WhenRecipeDoesNotExist_ShouldReturnFriendlyNotFoundView()
     {
         FakeRecipeImporterService recipeService = new FakeRecipeImporterService();
-        RecipesController controller = new RecipesController(recipeService);
+        RecipesController controller = CreateController(recipeService);
 
         IActionResult result = controller.Details(17);
 
-        Assert.IsType<NotFoundResult>(result);
+        ViewResult viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Equal("NotFound", viewResult.ViewName);
+        Assert.Equal(StatusCodes.Status404NotFound, controller.Response.StatusCode);
         Assert.True(recipeService.GetRecipeByIdWasCalled);
         Assert.Equal(17, recipeService.RecipeIdPassedToGetRecipeById);
+    }
+
+    [Fact]
+    public void Edit_WhenRecipeDoesNotExist_ShouldReturnFriendlyNotFoundView()
+    {
+        FakeRecipeImporterService recipeService = new FakeRecipeImporterService();
+        RecipesController controller = CreateController(recipeService);
+
+        IActionResult result = controller.Edit(18);
+
+        ViewResult viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Equal("NotFound", viewResult.ViewName);
+        Assert.Equal(StatusCodes.Status404NotFound, controller.Response.StatusCode);
+    }
+
+    [Fact]
+    public void Delete_WhenRecipeDoesNotExist_ShouldReturnFriendlyNotFoundView()
+    {
+        FakeRecipeImporterService recipeService = new FakeRecipeImporterService();
+        RecipesController controller = CreateController(recipeService);
+
+        IActionResult result = controller.Delete(19);
+
+        ViewResult viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Equal("NotFound", viewResult.ViewName);
+        Assert.Equal(StatusCodes.Status404NotFound, controller.Response.StatusCode);
     }
 
     [Fact]
@@ -427,10 +455,15 @@ public class RecipesControllerTests
     private static RecipesController CreateController(
         IRecipeImporterService recipeService)
     {
+        DefaultHttpContext httpContext = new DefaultHttpContext();
         RecipesController controller = new RecipesController(recipeService)
         {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = httpContext
+            },
             TempData = new TempDataDictionary(
-                new DefaultHttpContext(),
+                httpContext,
                 new TestTempDataProvider())
         };
 

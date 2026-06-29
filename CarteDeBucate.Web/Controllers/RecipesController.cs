@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using CarteDeBucate.Web.Models;
 
@@ -39,7 +40,7 @@ public class RecipesController : Controller
 
         if (recipe == null)
         {
-            return NotFound();
+            return RecipeNotFound();
         }
 
         return View(recipe);
@@ -89,7 +90,7 @@ public class RecipesController : Controller
 
         if (recipe == null)
         {
-            return NotFound();
+            return RecipeNotFound();
         }
 
         SetEditCancelAction(returnTo);
@@ -137,7 +138,7 @@ public class RecipesController : Controller
 
         if (recipe == null)
         {
-            return NotFound();
+            return RecipeNotFound();
         }
 
         SetDeleteCancelAction(returnTo);
@@ -157,7 +158,7 @@ public class RecipesController : Controller
 
             if (recipe == null)
             {
-                return NotFound();
+                return RecipeNotFound();
             }
 
             ModelState.AddModelError("", result.Message);
@@ -191,6 +192,13 @@ public class RecipesController : Controller
             returnTo,
             ReturnToIndexValue,
             StringComparison.OrdinalIgnoreCase);
+    }
+
+    private IActionResult RecipeNotFound()
+    {
+        Response.StatusCode = StatusCodes.Status404NotFound;
+
+        return View("NotFound");
     }
 
     public IActionResult Import()
