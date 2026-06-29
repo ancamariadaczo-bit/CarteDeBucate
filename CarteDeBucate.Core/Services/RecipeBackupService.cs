@@ -32,27 +32,54 @@ public class RecipeBackupService : IRecipeBackupService
                 };
             }
 
-            List<Recipe> recipes = GetRecipesForCurrentContext();
-
-            JsonSerializerOptions options = new JsonSerializerOptions
+            RecipeBackupExportResult exportResult = ExportToJsonContent();
+            if (!exportResult.IsSuccess)
             {
-                WriteIndented = true
-            };
+                return new RecipeBackupResult
+                {
+                    IsSuccess = false,
+                    Message = exportResult.Message,
+                    ExportedCount = exportResult.ExportedCount
+                };
+            }
 
-            string json = JsonSerializer.Serialize(recipes, options);
-
-            File.WriteAllText(backupFilePath, json);
+            File.WriteAllText(backupFilePath, exportResult.Json);
 
             return new RecipeBackupResult
             {
                 IsSuccess = true,
-                Message = string.Format(AppTexts.BackupExportCompleted, recipes.Count),
-                ExportedCount = recipes.Count
+                Message = exportResult.Message,
+                ExportedCount = exportResult.ExportedCount
             };
         }
         catch (Exception exception)
         {
             return new RecipeBackupResult
+            {
+                IsSuccess = false,
+                Message = string.Format(AppTexts.BackupExportFailed, exception.Message)
+            };
+        }
+    }
+
+    public RecipeBackupExportResult ExportToJsonContent()
+    {
+        try
+        {
+            List<Recipe> recipes = GetRecipesForCurrentContext();
+            string json = JsonSerializer.Serialize(recipes, CreateJsonSerializerOptions());
+
+            return new RecipeBackupExportResult
+            {
+                IsSuccess = true,
+                Message = string.Format(AppTexts.BackupExportCompleted, recipes.Count),
+                ExportedCount = recipes.Count,
+                Json = json
+            };
+        }
+        catch (Exception exception)
+        {
+            return new RecipeBackupExportResult
             {
                 IsSuccess = false,
                 Message = string.Format(AppTexts.BackupExportFailed, exception.Message)
@@ -75,6 +102,22 @@ public class RecipeBackupService : IRecipeBackupService
 
             string json = File.ReadAllText(backupFilePath);
 
+            return ImportFromJsonContent(json);
+        }
+        catch (Exception exception)
+        {
+            return new RecipeBackupResult
+            {
+                IsSuccess = false,
+                Message = string.Format(AppTexts.BackupImportFailed, exception.Message)
+            };
+        }
+    }
+
+    public RecipeBackupResult ImportFromJsonContent(string json)
+    {
+        try
+        {
             List<Recipe>? recipes = JsonSerializer.Deserialize<List<Recipe>>(json);
 
             if (recipes == null)
@@ -109,7 +152,6 @@ public class RecipeBackupService : IRecipeBackupService
 
                 _recipeRepository.AddRecipe(recipe);
                 importedCount++;
-
             }
 
             return new RecipeBackupResult
@@ -131,6 +173,14 @@ public class RecipeBackupService : IRecipeBackupService
     }
 
     private int? CurrentUserId => _currentUserContext?.UserId;
+
+    private static JsonSerializerOptions CreateJsonSerializerOptions()
+    {
+        return new JsonSerializerOptions
+        {
+            WriteIndented = true
+        };
+    }
 
     private List<Recipe> GetRecipesForCurrentContext()
     {

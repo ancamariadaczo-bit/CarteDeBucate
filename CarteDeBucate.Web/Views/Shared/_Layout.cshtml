@@ -29,6 +29,9 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Recipes" asp-action="Import">Importă din URL</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="RecipeBackups" asp-action="Index">Backup JSON</a>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -40,6 +43,12 @@
             {
                 <div class="alert alert-success" role="status">
                     @successMessage
+                </div>
+            }
+            @if (TempData["ErrorMessage"] is string errorMessage)
+            {
+                <div class="alert alert-danger" role="alert">
+                    @errorMessage
                 </div>
             }
 

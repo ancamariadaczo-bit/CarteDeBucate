@@ -1,0 +1,46 @@
+@{
+    ViewData["Title"] = "Backup JSON";
+}
+
+<div class="mb-4">
+    <h1 class="h2">Backup JSON</h1>
+    <p class="text-muted mb-0">Exportă rețetele într-un fișier JSON sau importă un backup existent.</p>
+</div>
+
+<div class="row g-4">
+    <section class="col-md-6">
+        <h2 class="h4">Exportă backup</h2>
+        <p class="text-muted">
+            Descarcă rețetele disponibile în contextul curent într-un fișier JSON.
+        </p>
+
+        <form asp-action="Export" method="post">
+            <button type="submit" class="btn btn-primary">
+                Exportă JSON
+            </button>
+        </form>
+    </section>
+
+    <section class="col-md-6">
+        <h2 class="h4">Importă backup</h2>
+        <p class="text-muted">
+            Încarcă un fișier JSON exportat anterior.
+        </p>
+
+        <form asp-action="Import" method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="backupFile" class="form-label">Fișier backup</label>
+                <input id="backupFile"
+                       name="backupFile"
+                       type="file"
+                       accept="application/json,.json"
+                       class="form-control"
+                       required />
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                Importă JSON
+            </button>
+        </form>
+    </section>
+</div>
