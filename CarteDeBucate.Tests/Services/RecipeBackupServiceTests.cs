@@ -150,6 +150,23 @@ public class RecipeBackupServiceTests
     }
 
     [Fact]
+    public void ImportFromJsonContent_WithoutCurrentUser_ShouldClearImportedUserId()
+    {
+        Recipe recipe = CreateValidRecipe(99, "https://example.com/imported-user");
+        string json = JsonSerializer.Serialize(new List<Recipe> { recipe });
+
+        FakeRecipeRepository repository = new FakeRecipeRepository();
+        RecipeBackupService service = new RecipeBackupService(repository);
+
+        RecipeBackupResult result = service.ImportFromJsonContent(json);
+
+        Assert.True(result.IsSuccess);
+
+        Recipe savedRecipe = Assert.Single(repository.Recipes);
+        Assert.Null(savedRecipe.UserId);
+    }
+
+    [Fact]
     public void ImportFromJsonContent_WithExistingRecipe_ShouldSkipRecipe()
     {
         Recipe existingRecipe = CreateValidRecipe();

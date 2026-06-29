@@ -145,10 +145,7 @@ public class RecipeBackupService : IRecipeBackupService
                 }
 
                 recipe.Id = 0;
-                if (CurrentUserId.HasValue)
-                {
-                    recipe.UserId = CurrentUserId.Value;
-                }
+                recipe.UserId = CurrentUserId;
 
                 _recipeRepository.AddRecipe(recipe);
                 importedCount++;
