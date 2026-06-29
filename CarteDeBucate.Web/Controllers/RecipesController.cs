@@ -9,6 +9,9 @@ public class RecipesController : Controller
     private const string DeleteCancelActionKey = "DeleteCancelAction";
     private const string EditCancelActionKey = "EditCancelAction";
     private const string ReturnToIndexValue = "Index";
+    private const string ShowManualAddRecipeLinkKey = "ShowManualAddRecipeLink";
+    private const string ImportMissingRequiredDetailsMessage =
+        "Nu am putut extrage ingredientele sau pașii din această pagină. Te rugăm să adaugi rețeta manual.";
 
     private readonly IRecipeImporterService _recipeService;
 
@@ -204,7 +207,17 @@ public class RecipesController : Controller
 
         if (!result.IsSuccess)
         {
-            ModelState.AddModelError("url", result.Message);
+            if (IsMissingImportedRecipeDetails(result.Message))
+            {
+                ModelState.AddModelError(
+                    "url",
+                    ImportMissingRequiredDetailsMessage);
+                ViewData[ShowManualAddRecipeLinkKey] = true;
+            }
+            else
+            {
+                ModelState.AddModelError("url", result.Message);
+            }
 
             return View(model: url);
         }
@@ -223,5 +236,11 @@ public class RecipesController : Controller
         return RedirectToAction(
             nameof(Details),
             new { id = result.Recipe.Id });
+    }
+
+    private static bool IsMissingImportedRecipeDetails(string message)
+    {
+        return message.Contains(global::AppTexts.RecipeIngredientsRequired)
+            || message.Contains(global::AppTexts.RecipeStepsRequired);
     }
 }

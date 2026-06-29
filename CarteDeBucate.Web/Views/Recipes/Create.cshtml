@@ -1,22 +1,22 @@
 @model RecipeFormViewModel
 
 @{
-    ViewData["Title"] = "Adauga reteta";
+    ViewData["Title"] = "Adaugă rețetă";
 }
 
 <div class="mb-4">
-    <h1 class="h2">Adauga reteta</h1>
-    <p class="text-muted mb-0">Introdu fiecare ingredient si fiecare pas pe o linie separata.</p>
+    <h1 class="h2">Adaugă rețetă</h1>
+    <p class="text-muted mb-0">Introdu fiecare ingredient și fiecare pas pe o linie separată.</p>
 </div>
 
 <form asp-action="Create" method="post" data-track-unsaved-changes="true">
     <partial name="_RecipeForm" model="Model" />
 
     <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-primary">Salveaza</button>
+        <button type="submit" class="btn btn-primary">Salvează</button>
         <a class="btn btn-outline-secondary"
            asp-action="Index"
-           data-confirm-unsaved-changes="true">Renunta</a>
+           data-confirm-unsaved-changes="true">Renunță</a>
     </div>
 </form>
 

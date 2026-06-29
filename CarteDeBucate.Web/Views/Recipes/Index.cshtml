@@ -1,34 +1,34 @@
 @model RecipeIndexViewModel
 
 @{
-    ViewData["Title"] = "Retete";
+    ViewData["Title"] = "Rețete";
 }
 
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
-    <h1 class="h2 mb-0">Retete</h1>
+    <h1 class="h2 mb-0">Rețete</h1>
     <div class="d-flex gap-2">
-        <a class="btn btn-outline-primary" asp-action="Import">Importa din URL</a>
-        <a class="btn btn-primary" asp-action="Create">Adauga reteta</a>
+        <a class="btn btn-outline-primary" asp-action="Import">Importă din URL</a>
+        <a class="btn btn-primary" asp-action="Create">Adaugă rețetă</a>
     </div>
 </div>
 
 <form asp-action="Index" method="get" class="row g-2 align-items-center mb-4">
     <div class="col">
-        <label for="searchText" class="visually-hidden">Cauta retete</label>
+        <label for="searchText" class="visually-hidden">Caută rețete</label>
         <input id="searchText"
                name="searchText"
                value="@Model.SearchText"
                class="form-control"
-               placeholder="Cauta dupa nume, ingrediente, pasi, notite sau URL" />
+               placeholder="Caută după nume, ingrediente, pași, notițe sau URL" />
     </div>
     <div class="col-auto">
-        <button type="submit" class="btn btn-primary">Cauta</button>
+        <button type="submit" class="btn btn-primary">Caută</button>
     </div>
     @if (Model.IsSearch)
     {
         <div class="col-auto">
             <a class="btn btn-outline-secondary" asp-action="Index">
-                Sterge cautarea
+                Șterge căutarea
             </a>
         </div>
     }
@@ -39,23 +39,23 @@
     if (Model.IsSearch)
     {
         <div class="alert alert-info" role="status">
-            Nu am gasit retete pentru „@Model.SearchText”.
-            <a asp-action="Index" class="alert-link">Sterge cautarea</a>
+            Nu am găsit rețete pentru „@Model.SearchText”.
+            <a asp-action="Index" class="alert-link">Șterge căutarea</a>
         </div>
     }
     else
     {
         <div class="border rounded p-5 text-center bg-light">
-            <h2 class="h4">Nu exista retete salvate</h2>
+            <h2 class="h4">Nu există rețete salvate</h2>
             <p class="text-muted">
-                Adauga prima reteta manual sau importa una dintr-o pagina web.
+                Adaugă prima rețetă manual sau importă una dintr-o pagină web.
             </p>
             <div class="d-flex justify-content-center gap-2">
                 <a class="btn btn-primary" asp-action="Create">
-                    Adauga prima reteta
+                    Adaugă prima rețetă
                 </a>
                 <a class="btn btn-outline-primary" asp-action="Import">
-                    Importa din URL
+                    Importă din URL
                 </a>
             </div>
         </div>
@@ -71,7 +71,7 @@ else
         }
         else
         {
-            @(Model.Recipes.Count == 1 ? "reteta" : "retete")
+            @(Model.Recipes.Count == 1 ? "rețetă" : "rețete")
         }
     </p>
 
@@ -103,11 +103,11 @@ else
                             <a class="btn btn-sm btn-outline-secondary"
                                asp-action="Edit"
                                asp-route-id="@recipe.Id"
-                               asp-route-returnTo="Index">Editeaza</a>
+                               asp-route-returnTo="Index">Editează</a>
                             <a class="btn btn-sm btn-outline-danger"
                                asp-action="Delete"
                                asp-route-id="@recipe.Id"
-                               asp-route-returnTo="Index">Sterge</a>
+                               asp-route-returnTo="Index">Șterge</a>
                         </td>
                     </tr>
                 }

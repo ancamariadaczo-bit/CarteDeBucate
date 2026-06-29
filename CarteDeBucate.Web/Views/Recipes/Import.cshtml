@@ -1,15 +1,15 @@
 @model string
 
 @{
-    ViewData["Title"] = "Importa reteta";
+    ViewData["Title"] = "Importă rețetă";
 }
 
 <div class="mb-4">
-    <h1 class="h2">Importa reteta din URL</h1>
-    <p class="text-muted mb-0">Introdu adresa paginii care contine reteta.</p>
+    <h1 class="h2">Importă rețetă din URL</h1>
+    <p class="text-muted mb-0">Introdu adresa paginii care conține rețeta.</p>
 </div>
 
-<form asp-action="Import" method="post">
+<form asp-action="Import" method="post" data-import-recipe-form="true">
     <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
     <div class="mb-4">
@@ -19,7 +19,8 @@
                type="url"
                value="@Model"
                class="form-control"
-               autocomplete="url" />
+               autocomplete="url"
+               required />
         @if (ViewData.ModelState.TryGetValue("url", out var urlEntry))
         {
             foreach (var error in urlEntry.Errors)
@@ -27,10 +28,22 @@
                 <span class="text-danger d-block">@error.ErrorMessage</span>
             }
         }
+        @if (ViewData["ShowManualAddRecipeLink"] is true)
+        {
+            <a class="btn btn-outline-primary mt-2"
+               asp-action="Create">Adaugă rețetă</a>
+        }
     </div>
 
     <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-primary">Importa</button>
-        <a class="btn btn-outline-secondary" asp-action="Index">Renunta</a>
+        <button type="submit"
+                class="btn btn-primary"
+                data-import-submit-button="true">
+            <span class="spinner-border spinner-border-sm d-none"
+                  aria-hidden="true"
+                  data-import-submit-spinner="true"></span>
+            <span data-import-submit-text="true">Importă</span>
+        </button>
+        <a class="btn btn-outline-secondary" asp-action="Index">Renunță</a>
     </div>
 </form>

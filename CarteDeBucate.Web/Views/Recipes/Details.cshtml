@@ -11,17 +11,17 @@
             <span class="badge @RecipeStatusPresentation.GetBadgeClass(Model.Status)">
                 @RecipeStatusPresentation.GetLabel(Model.Status)
             </span>
-            · salvata la @Model.SavedAt.ToString("dd.MM.yyyy")
+            · salvată la @Model.SavedAt.ToString("dd.MM.yyyy")
         </div>
     </div>
     <div class="d-flex gap-2">
         <a class="btn btn-outline-secondary"
            asp-action="Edit"
-           asp-route-id="@Model.Id">Editeaza</a>
+           asp-route-id="@Model.Id">Editează</a>
         <a class="btn btn-outline-danger"
            asp-action="Delete"
-           asp-route-id="@Model.Id">Sterge</a>
-        <a class="btn btn-outline-primary" asp-action="Index">Inapoi la lista</a>
+           asp-route-id="@Model.Id">Șterge</a>
+        <a class="btn btn-outline-primary" asp-action="Index">Înapoi la listă</a>
     </div>
 </div>
 
@@ -36,7 +36,7 @@
 </section>
 
 <section class="mb-4">
-    <h2 class="h4">Pasi</h2>
+    <h2 class="h4">Pași</h2>
     <ol>
         @foreach (string step in Model.Steps)
         {
@@ -48,7 +48,7 @@
 @if (!string.IsNullOrWhiteSpace(Model.Notes))
 {
     <section class="mb-4">
-        <h2 class="h4">Notite</h2>
+        <h2 class="h4">Notițe</h2>
         <p class="text-pre-line">@Model.Notes</p>
     </section>
 }

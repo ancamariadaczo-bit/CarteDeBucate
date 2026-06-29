@@ -1,13 +1,13 @@
 @model Recipe
 
 @{
-    ViewData["Title"] = "Sterge reteta";
+    ViewData["Title"] = "Șterge rețeta";
     string cancelAction = ViewData["DeleteCancelAction"] as string ?? "Details";
 }
 
 <div class="mb-4">
-    <h1 class="h2">Sterge reteta</h1>
-    <p class="text-danger mb-0">Aceasta actiune nu poate fi anulata.</p>
+    <h1 class="h2">Șterge rețeta</h1>
+    <p class="text-danger mb-0">Această acțiune nu poate fi anulată.</p>
 </div>
 
 <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
@@ -32,15 +32,15 @@
     {
         <input type="hidden" name="returnTo" value="Index" />
     }
-    <button type="submit" class="btn btn-danger">Sterge definitiv</button>
+    <button type="submit" class="btn btn-danger">Șterge definitiv</button>
     @if (cancelAction == "Index")
     {
-        <a class="btn btn-outline-secondary" asp-action="Index">Renunta</a>
+        <a class="btn btn-outline-secondary" asp-action="Index">Renunță</a>
     }
     else
     {
         <a class="btn btn-outline-secondary"
            asp-action="Details"
-           asp-route-id="@Model.Id">Renunta</a>
+           asp-route-id="@Model.Id">Renunță</a>
     }
 </form>

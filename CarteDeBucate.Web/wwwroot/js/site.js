@@ -6,6 +6,8 @@
 document.addEventListener("DOMContentLoaded", () => {
     const editableForms = document.querySelectorAll(
         "form[data-track-unsaved-changes='true']");
+    const importRecipeForm = document.querySelector(
+        "form[data-import-recipe-form='true']");
 
     editableForms.forEach((form) => {
         form.dataset.hasUnsavedChanges = "false";
@@ -21,6 +23,10 @@ document.addEventListener("DOMContentLoaded", () => {
             link.addEventListener("click", confirmNavigationWithUnsavedChanges);
         });
     });
+
+    if (importRecipeForm !== null) {
+        importRecipeForm.addEventListener("submit", showImportLoadingState);
+    }
 });
 
 window.addEventListener("beforeunload", (event) => {
@@ -57,10 +63,40 @@ function confirmNavigationWithUnsavedChanges(event) {
     }
 
     const shouldLeave = window.confirm(
-        "Ai modificari nesalvate. Daca parasesti pagina, modificarile se vor pierde.");
+        "Ai modificări nesalvate. Dacă părăsești pagina, modificările se vor pierde.");
 
     if (!shouldLeave) {
         event.preventDefault();
+    }
+}
+
+function showImportLoadingState(event) {
+    const form = event.currentTarget;
+
+    if (!form.checkValidity()) {
+        return;
+    }
+
+    const submitButton = form.querySelector(
+        "button[data-import-submit-button='true']");
+
+    if (submitButton === null) {
+        return;
+    }
+
+    const submitText = submitButton.querySelector(
+        "[data-import-submit-text='true']");
+    const spinner = submitButton.querySelector(
+        "[data-import-submit-spinner='true']");
+
+    submitButton.disabled = true;
+
+    if (submitText !== null) {
+        submitText.textContent = "Se importă...";
+    }
+
+    if (spinner !== null) {
+        spinner.classList.remove("d-none");
     }
 }
 

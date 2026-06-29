@@ -1,13 +1,13 @@
 @model RecipeFormViewModel
 
 @{
-    ViewData["Title"] = "Editeaza reteta";
+    ViewData["Title"] = "Editează rețetă";
     string cancelAction = ViewData["EditCancelAction"] as string ?? "Details";
 }
 
 <div class="mb-4">
-    <h1 class="h2">Editeaza reteta</h1>
-    <p class="text-muted mb-0">Introdu fiecare ingredient si fiecare pas pe o linie separata.</p>
+    <h1 class="h2">Editează rețetă</h1>
+    <p class="text-muted mb-0">Introdu fiecare ingredient și fiecare pas pe o linie separată.</p>
 </div>
 
 <form asp-action="Edit"
@@ -25,24 +25,24 @@
     <partial name="_RecipeForm" model="Model" />
 
     <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-primary">Salveaza modificarile</button>
+        <button type="submit" class="btn btn-primary">Salvează modificările</button>
         @if (cancelAction == "Index")
         {
             <a class="btn btn-outline-secondary"
                asp-action="Index"
-               data-confirm-unsaved-changes="true">Renunta</a>
+               data-confirm-unsaved-changes="true">Renunță</a>
         }
         else
         {
             <a class="btn btn-outline-secondary"
                asp-action="Details"
                asp-route-id="@Model.Id"
-               data-confirm-unsaved-changes="true">Renunta</a>
+               data-confirm-unsaved-changes="true">Renunță</a>
         }
         <a class="btn btn-outline-danger"
            asp-action="Delete"
            asp-route-id="@Model.Id"
-           data-confirm-unsaved-changes="true">Sterge reteta</a>
+           data-confirm-unsaved-changes="true">Șterge rețeta</a>
     </div>
 </form>
 

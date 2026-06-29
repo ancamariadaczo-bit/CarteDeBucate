@@ -28,7 +28,7 @@ public class RecipeFormViewModelTests
         Assert.Contains(
             results,
             result => HasError(result, nameof(RecipeFormViewModel.SourceUrl),
-                "URL-ul sursa este obligatoriu."));
+                "URL-ul sursă este obligatoriu."));
     }
 
     [Fact]
@@ -70,7 +70,7 @@ public class RecipeFormViewModelTests
         Assert.Contains(
             results,
             result => HasError(result, nameof(RecipeFormViewModel.StepsText),
-                "Pasii sunt obligatorii."));
+                "Pașii sunt obligatorii."));
     }
 
     [Fact]

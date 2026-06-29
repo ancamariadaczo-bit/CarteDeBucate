@@ -9,14 +9,14 @@ public class RecipeFormViewModel
     [Required(ErrorMessage = "Numele este obligatoriu.")]
     public string Name { get; set; } = "";
 
-    [Required(ErrorMessage = "URL-ul sursa este obligatoriu.")]
+    [Required(ErrorMessage = "URL-ul sursă este obligatoriu.")]
     [Url(ErrorMessage = "Introdu un URL valid.")]
     public string SourceUrl { get; set; } = "";
 
     [Required(ErrorMessage = "Ingredientele sunt obligatorii.")]
     public string IngredientsText { get; set; } = "";
 
-    [Required(ErrorMessage = "Pasii sunt obligatorii.")]
+    [Required(ErrorMessage = "Pașii sunt obligatorii.")]
     public string StepsText { get; set; } = "";
 
     public string? Notes { get; set; }

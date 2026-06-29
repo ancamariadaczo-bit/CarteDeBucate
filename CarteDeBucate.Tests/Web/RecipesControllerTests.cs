@@ -348,7 +348,7 @@ public class RecipesControllerTests
     }
 
     [Fact]
-    public async Task ImportPost_WhenImportFails_ShouldReturnViewWithEnteredUrl()
+    public async Task ImportPost_WhenImportFails_ShouldReturnViewWithEnteredUrlAndError()
     {
         const string url = "https://example.com/failed-import";
         FakeRecipeImporterService recipeService = new FakeRecipeImporterService
@@ -364,7 +364,32 @@ public class RecipesControllerTests
         Assert.Equal(url, viewResult.Model);
         Assert.True(recipeService.ImportFromUrlAndSaveAsyncWasCalled);
         Assert.True(controller.ModelState.ContainsKey("url"));
+        Assert.Contains(
+            controller.ModelState["url"]!.Errors,
+            error => error.ErrorMessage == "Import failed.");
         Assert.False(controller.TempData.ContainsKey("SuccessMessage"));
+    }
+
+    [Fact]
+    public async Task ImportPost_WhenImportedRecipeMissesDetails_ShouldShowManualAddMessage()
+    {
+        const string url = "https://example.com/incomplete-recipe";
+        FakeRecipeImporterService recipeService = new FakeRecipeImporterService
+        {
+            ImportAndSaveResultToReturn = RecipeSaveResult.Fail(
+                "Ingredientele sunt obligatorii.\nPșii sunt obligatorii.")
+        };
+        RecipesController controller = CreateController(recipeService);
+
+        IActionResult result = await controller.Import(url);
+
+        ViewResult viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Equal(url, viewResult.Model);
+        Assert.Contains(
+            controller.ModelState["url"]!.Errors,
+            error => error.ErrorMessage ==
+                "Nu am putut extrage ingredientele sau pașii din această pagină. Te rugăm să adaugi rețeta manual.");
+        Assert.True(controller.ViewData["ShowManualAddRecipeLink"] is true);
     }
 
     [Fact]
