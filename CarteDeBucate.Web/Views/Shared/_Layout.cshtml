@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@inject CarteDeBucate.Web.Configuration.WebAppSettings WebAppSettings
+<!DOCTYPE html>
 <html lang="ro">
 <head>
     <meta charset="utf-8" />
@@ -33,6 +34,33 @@
                             <a class="nav-link text-dark" asp-area="" asp-controller="RecipeBackups" asp-action="Index">Backup JSON</a>
                         </li>
                     </ul>
+                    @if (WebAppSettings.AuthenticationEnabled)
+                    {
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <ul class="navbar-nav align-items-sm-center">
+                                <li class="nav-item d-flex align-items-center">
+                                    <span class="badge text-bg-light border text-dark">@User.Identity.Name</span>
+                                </li>
+                                <li class="nav-item d-flex align-items-center">
+                                    <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                                        <button type="submit" class="nav-link btn btn-link text-dark py-0">Logout</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        }
+                        else
+                        {
+                            <ul class="navbar-nav">
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Account" asp-action="Login">Login</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Account" asp-action="Register">Register</a>
+                                </li>
+                            </ul>
+                        }
+                    }
                 </div>
             </div>
         </nav>

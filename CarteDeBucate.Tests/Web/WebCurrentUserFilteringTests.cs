@@ -1,0 +1,241 @@
+using System.Security.Claims;
+using System.Text.Json;
+using CarteDeBucate.Web.Services.Authentication;
+using Microsoft.AspNetCore.Http;
+
+public class WebCurrentUserFilteringTests
+{
+    [Fact]
+    public void GetRecipeSummaries_WithoutWebUser_ShouldReturnGlobalRecipes()
+    {
+        FakeRecipeRepository repository = new FakeRecipeRepository
+        {
+            Recipes = new List<Recipe>
+            {
+                CreateRecipe(1, userId: null, "https://example.com/global"),
+                CreateRecipe(2, userId: 7, "https://example.com/current-user")
+            }
+        };
+        RecipeImporterService service = new RecipeImporterService(
+            repository,
+            new FakeRecipeImporter(),
+            CreateAnonymousWebCurrentUserContext());
+
+        List<RecipeSummary> recipes = service.GetRecipeSummaries();
+
+        Assert.Equal(2, recipes.Count);
+        Assert.Contains(recipes, recipe => recipe.UserId == null);
+        Assert.True(repository.GetAllRecipeSummariesWasCalled);
+        Assert.False(repository.GetRecipeSummariesByUserIdWasCalled);
+    }
+
+    [Fact]
+    public void GetRecipeSummaries_WithAuthenticatedWebUser_ShouldReturnOnlyCurrentUserRecipes()
+    {
+        FakeRecipeRepository repository = new FakeRecipeRepository
+        {
+            Recipes = new List<Recipe>
+            {
+                CreateRecipe(1, userId: 7, "https://example.com/current-user"),
+                CreateRecipe(2, userId: 9, "https://example.com/other-user"),
+                CreateRecipe(3, userId: null, "https://example.com/global")
+            }
+        };
+        RecipeImporterService service = CreateRecipeService(repository, userId: 7);
+
+        List<RecipeSummary> recipes = service.GetRecipeSummaries();
+
+        RecipeSummary recipe = Assert.Single(recipes);
+        Assert.Equal(1, recipe.Id);
+        Assert.Equal(7, repository.UserIdPassedToGetRecipeSummariesByUserId);
+        Assert.False(repository.GetAllRecipeSummariesWasCalled);
+    }
+
+    [Fact]
+    public void GetRecipeSummaries_WithAuthenticatedWebUser_ShouldNotReturnGlobalRecipes()
+    {
+        FakeRecipeRepository repository = new FakeRecipeRepository
+        {
+            Recipes = new List<Recipe>
+            {
+                CreateRecipe(1, userId: null, "https://example.com/global"),
+                CreateRecipe(2, userId: 7, "https://example.com/current-user")
+            }
+        };
+        RecipeImporterService service = CreateRecipeService(repository, userId: 7);
+
+        List<RecipeSummary> recipes = service.GetRecipeSummaries();
+
+        RecipeSummary recipe = Assert.Single(recipes);
+        Assert.Equal(2, recipe.Id);
+        Assert.Equal(7, recipe.UserId);
+    }
+
+    [Fact]
+    public void GetRecipeById_WithRecipeFromAnotherUser_ShouldReturnNull()
+    {
+        FakeRecipeRepository repository = new FakeRecipeRepository
+        {
+            Recipes = new List<Recipe>
+            {
+                CreateRecipe(1, userId: 9, "https://example.com/other-user")
+            }
+        };
+        RecipeImporterService service = CreateRecipeService(repository, userId: 7);
+
+        Recipe? recipe = service.GetRecipeById(1);
+
+        Assert.Null(recipe);
+        Assert.True(repository.GetRecipeByIdAndUserIdWasCalled);
+        Assert.False(repository.GetRecipeByIdWasCalled);
+    }
+
+    [Fact]
+    public void UpdateRecipe_WithRecipeFromAnotherUser_ShouldFailWithoutUpdating()
+    {
+        FakeRecipeRepository repository = new FakeRecipeRepository
+        {
+            Recipes = new List<Recipe>
+            {
+                CreateRecipe(1, userId: 9, "https://example.com/other-user")
+            }
+        };
+        RecipeImporterService service = CreateRecipeService(repository, userId: 7);
+        Recipe recipe = CreateRecipe(1, userId: 7, "https://example.com/other-user");
+
+        RecipeSaveResult result = service.UpdateRecipe(recipe);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(AppTexts.RecipeNotFound, result.Message);
+        Assert.False(repository.UpdateRecipeWasCalled);
+    }
+
+    [Fact]
+    public void DeleteRecipe_WithRecipeFromAnotherUser_ShouldFailWithoutDeleting()
+    {
+        FakeRecipeRepository repository = new FakeRecipeRepository
+        {
+            Recipes = new List<Recipe>
+            {
+                CreateRecipe(1, userId: 9, "https://example.com/other-user")
+            }
+        };
+        RecipeImporterService service = CreateRecipeService(repository, userId: 7);
+
+        RecipeSaveResult result = service.DeleteRecipe(1);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(AppTexts.RecipeNotFound, result.Message);
+        Assert.False(repository.DeleteRecipeForUserWasCalled);
+        Assert.Single(repository.Recipes);
+    }
+
+    [Fact]
+    public async Task ImportFromUrlAndSaveAsync_WithAuthenticatedWebUser_ShouldSetCurrentUserId()
+    {
+        Recipe importedRecipe = CreateRecipe(0, userId: null, "https://example.com/imported");
+        FakeRecipeRepository repository = new FakeRecipeRepository();
+        HttpCurrentUserContext currentUserContext = CreateWebCurrentUserContext(userId: 7);
+        FakeRecipeImporter importer = new FakeRecipeImporter
+        {
+            ImportResult = new RecipeImportResult
+            {
+                Success = true,
+                Recipe = importedRecipe,
+                Message = "Import successful."
+            }
+        };
+        RecipeImporterService service = new RecipeImporterService(
+            repository,
+            importer,
+            currentUserContext);
+
+        RecipeSaveResult result =
+            await service.ImportFromUrlAndSaveAsync(importedRecipe.SourceUrl);
+
+        Assert.True(result.IsSuccess);
+        Assert.True(repository.AddRecipeWasCalled);
+        Assert.Equal(7, repository.AddedRecipe?.UserId);
+    }
+
+    [Fact]
+    public void ExportToJsonContent_WithAuthenticatedWebUser_ShouldExportOnlyCurrentUserRecipes()
+    {
+        FakeRecipeRepository repository = new FakeRecipeRepository
+        {
+            Recipes = new List<Recipe>
+            {
+                CreateRecipe(1, userId: 7, "https://example.com/current-user"),
+                CreateRecipe(2, userId: 9, "https://example.com/other-user"),
+                CreateRecipe(3, userId: null, "https://example.com/global")
+            }
+        };
+        RecipeBackupService service = new RecipeBackupService(
+            repository,
+            CreateWebCurrentUserContext(userId: 7));
+
+        RecipeBackupExportResult result = service.ExportToJsonContent();
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(1, result.ExportedCount);
+
+        List<Recipe>? exportedRecipes =
+            JsonSerializer.Deserialize<List<Recipe>>(result.Json);
+
+        Assert.NotNull(exportedRecipes);
+        Recipe exportedRecipe = Assert.Single(exportedRecipes);
+        Assert.Equal(7, exportedRecipe.UserId);
+        Assert.Equal("https://example.com/current-user", exportedRecipe.SourceUrl);
+    }
+
+    private static RecipeImporterService CreateRecipeService(
+        FakeRecipeRepository repository,
+        int userId)
+    {
+        return new RecipeImporterService(
+            repository,
+            new FakeRecipeImporter(),
+            CreateWebCurrentUserContext(userId));
+    }
+
+    private static HttpCurrentUserContext CreateWebCurrentUserContext(int userId)
+    {
+        Claim[] claims =
+        {
+            new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+            new Claim(ClaimTypes.Name, "anca")
+        };
+        DefaultHttpContext httpContext = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity(claims, "Test"))
+        };
+
+        return new HttpCurrentUserContext(new HttpContextAccessor
+        {
+            HttpContext = httpContext
+        });
+    }
+
+    private static HttpCurrentUserContext CreateAnonymousWebCurrentUserContext()
+    {
+        return new HttpCurrentUserContext(new HttpContextAccessor
+        {
+            HttpContext = new DefaultHttpContext()
+        });
+    }
+
+    private static Recipe CreateRecipe(int id, int? userId, string sourceUrl)
+    {
+        return new Recipe
+        {
+            Id = id,
+            Name = "Banana bread",
+            SourceUrl = sourceUrl,
+            Ingredients = new List<string> { "Banana" },
+            Steps = new List<string> { "Bake" },
+            Notes = "",
+            SavedAt = DateTime.Now,
+            UserId = userId
+        };
+    }
+}
