@@ -264,6 +264,8 @@ Generated_Code/
 # because we have git ;-)
 _UpgradeReport_Files/
 Backup*/
+!CarteDeBucate.Core/Services/Backup/
+!CarteDeBucate.Core/Services/Backup/*.cs
 UpgradeLog*.XML
 UpgradeLog*.htm
 ServiceFabricBackup/
