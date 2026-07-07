@@ -10,13 +10,13 @@ public class RecipeConsoleAppTests
 
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
 
-        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importerService, backupService);
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importerService, new FakeRecipeLibraryService(), backupService);
 
         await app.RunAsync();
 
         Assert.True(writer.ShowMenuWasCalled);
         Assert.True(reader.ReadMenuOptionWasCalled);
-        Assert.False(importerService.GetRecipeSummariesWasCalled);
+        Assert.False(importerService.ImportRecipeFromUrlAsyncWasCalled);
     }
 
     [Fact]
@@ -28,7 +28,8 @@ public class RecipeConsoleAppTests
         new RecipeSummary { Id = 2, Name = "Pancakes" }
     };
 
-        FakeRecipeImporterService importService = new FakeRecipeImporterService
+        FakeRecipeImporterService importService = new FakeRecipeImporterService();
+        FakeRecipeLibraryService libraryService = new FakeRecipeLibraryService
         {
             RecipeSummariesToReturn = recipes
         };
@@ -41,11 +42,11 @@ public class RecipeConsoleAppTests
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.ShowRecipes);
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
 
-        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, backupService);
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, libraryService, backupService);
 
         await app.RunAsync();
 
-        Assert.True(importService.GetRecipeSummariesWasCalled);
+        Assert.True(libraryService.GetRecipeSummariesWasCalled);
         Assert.True(writer.DisplayRecipeListWasCalled);
         Assert.Equal(recipes, writer.RecipesPassedToDisplayRecipeList);
     }
@@ -56,7 +57,8 @@ public class RecipeConsoleAppTests
         Recipe recipe = new Recipe { Id = 3, Name = "Keto Cake" };
         List<RecipeSummary> recipes = [new RecipeSummary { Id = 3, Name = "Keto Cake" }];
 
-        FakeRecipeImporterService importService = new FakeRecipeImporterService
+        FakeRecipeImporterService importService = new FakeRecipeImporterService();
+        FakeRecipeLibraryService libraryService = new FakeRecipeLibraryService
         {
             RecipeSummariesToReturn = recipes,
             RecipeToReturn = recipe
@@ -74,13 +76,13 @@ public class RecipeConsoleAppTests
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.ViewRecipeDetails);
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
 
-        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, backupService);
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, libraryService, backupService);
 
         await app.RunAsync();
 
         Assert.True(reader.ReadRecipeIdToViewWasCalled);
-        Assert.True(importService.GetRecipeByIdWasCalled);
-        Assert.Equal(3, importService.RecipeIdPassedToGetRecipeById);
+        Assert.True(libraryService.GetRecipeByIdWasCalled);
+        Assert.Equal(3, libraryService.RecipeIdPassedToGetRecipeById);
 
         Assert.True(writer.DisplayRecipeDetailsWasCalled);
         Assert.Equal(recipe, writer.RecipePassedToDisplayRecipeDetails);
@@ -95,7 +97,8 @@ public class RecipeConsoleAppTests
         new RecipeSummary { Id = 2, Name = "Pancakes" }
     };
 
-        FakeRecipeImporterService importService = new FakeRecipeImporterService
+        FakeRecipeImporterService importService = new FakeRecipeImporterService();
+        FakeRecipeLibraryService libraryService = new FakeRecipeLibraryService
         {
             RecipeSummariesToReturn = recipes,
             RecipeToReturn = null
@@ -113,11 +116,11 @@ public class RecipeConsoleAppTests
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.ViewRecipeDetails);
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
 
-        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, backupService);
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, libraryService, backupService);
 
         await app.RunAsync();
 
-        Assert.True(importService.GetRecipeByIdWasCalled);
+        Assert.True(libraryService.GetRecipeByIdWasCalled);
         Assert.True(writer.DisplayMessageWasCalled);
         Assert.False(writer.DisplayRecipeDetailsWasCalled);
     }
@@ -136,7 +139,8 @@ public class RecipeConsoleAppTests
         new RecipeSummary { Id = 2, Name = "Keto Pancakes" }
     };
 
-        FakeRecipeImporterService importService = new FakeRecipeImporterService
+        FakeRecipeImporterService importService = new FakeRecipeImporterService();
+        FakeRecipeLibraryService libraryService = new FakeRecipeLibraryService
         {
             RecipeSummariesToReturn = recipes,
             SearchResultsToReturn = searchResults
@@ -154,13 +158,13 @@ public class RecipeConsoleAppTests
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.SearchRecipe);
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
 
-        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, backupService);
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, libraryService, backupService);
 
         await app.RunAsync();
 
         Assert.True(reader.ReadSearchTextWasCalled);
-        Assert.True(importService.SearchRecipesWasCalled);
-        Assert.Equal("keto", importService.SearchTextPassedToSearchRecipes);
+        Assert.True(libraryService.SearchRecipesWasCalled);
+        Assert.Equal("keto", libraryService.SearchTextPassedToSearchRecipes);
 
         Assert.True(writer.DisplaySearchResultsWasCalled);
         Assert.Equal(searchResults, writer.RecipesPassedToDisplaySearchResults);
@@ -181,7 +185,8 @@ public class RecipeConsoleAppTests
             Message = "Recipe deleted."
         };
 
-        FakeRecipeImporterService importService = new FakeRecipeImporterService
+        FakeRecipeImporterService importService = new FakeRecipeImporterService();
+        FakeRecipeLibraryService libraryService = new FakeRecipeLibraryService
         {
             RecipeSummariesToReturn = recipes,
             DeleteResultToReturn = deleteResult
@@ -199,13 +204,13 @@ public class RecipeConsoleAppTests
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.DeleteRecipe);
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
 
-        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, backupService);
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, libraryService, backupService);
 
         await app.RunAsync();
 
         Assert.True(reader.ReadRecipeIdToDeleteWasCalled);
-        Assert.True(importService.DeleteRecipeWasCalled);
-        Assert.Equal(5, importService.RecipeIdPassedToDeleteRecipe);
+        Assert.True(libraryService.DeleteRecipeWasCalled);
+        Assert.Equal(5, libraryService.RecipeIdPassedToDeleteRecipe);
 
         Assert.True(writer.DisplayMessageWasCalled);
         Assert.Contains(deleteResult.Message, writer.DisplayedMessages);
@@ -225,7 +230,8 @@ public class RecipeConsoleAppTests
             Message = "Recipe saved."
         };
 
-        FakeRecipeImporterService importService = new FakeRecipeImporterService
+        FakeRecipeImporterService importService = new FakeRecipeImporterService();
+        FakeRecipeLibraryService libraryService = new FakeRecipeLibraryService
         {
             SaveResultToReturn = saveResult
         };
@@ -242,13 +248,13 @@ public class RecipeConsoleAppTests
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.AddRecipe);
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
 
-        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, backupService);
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, libraryService, backupService);
 
         await app.RunAsync();
 
         Assert.True(reader.ReadRecipeFromConsoleWasCalled);
-        Assert.True(importService.SaveRecipeWasCalled);
-        Assert.Equal(recipe, importService.RecipePassedToSaveRecipe);
+        Assert.True(libraryService.SaveRecipeWasCalled);
+        Assert.Equal(recipe, libraryService.RecipePassedToSaveRecipe);
 
         Assert.True(writer.DisplayMessageWasCalled);
         Assert.Contains(saveResult.Message, writer.DisplayedMessages);
@@ -275,7 +281,8 @@ public class RecipeConsoleAppTests
             Message = "Recipe updated."
         };
 
-        FakeRecipeImporterService importService = new FakeRecipeImporterService
+        FakeRecipeImporterService importService = new FakeRecipeImporterService();
+        FakeRecipeLibraryService libraryService = new FakeRecipeLibraryService
         {
             RecipeSummariesToReturn = [new RecipeSummary { Id = 4, Name = "Old Name" }],
             RecipeToReturn = existingRecipe,
@@ -295,19 +302,19 @@ public class RecipeConsoleAppTests
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.EditRecipe);
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
 
-        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, backupService);
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, libraryService, backupService);
 
         await app.RunAsync();
 
         Assert.True(reader.ReadRecipeIdToEditWasCalled);
-        Assert.True(importService.GetRecipeByIdWasCalled);
-        Assert.Equal(4, importService.RecipeIdPassedToGetRecipeById);
+        Assert.True(libraryService.GetRecipeByIdWasCalled);
+        Assert.Equal(4, libraryService.RecipeIdPassedToGetRecipeById);
 
         Assert.True(reader.ReadRecipeEditsFromConsoleWasCalled);
         Assert.Equal(existingRecipe, reader.RecipePassedToReadEdits);
 
-        Assert.True(importService.UpdateRecipeWasCalled);
-        Assert.Equal(editedRecipe, importService.RecipePassedToUpdateRecipe);
+        Assert.True(libraryService.UpdateRecipeWasCalled);
+        Assert.Equal(editedRecipe, libraryService.RecipePassedToUpdateRecipe);
 
         Assert.True(writer.DisplayMessageWasCalled);
         Assert.Contains(updateResult.Message, writer.DisplayedMessages);
@@ -322,7 +329,8 @@ public class RecipeConsoleAppTests
             new RecipeSummary { Id = 2, Name = "Keto Pancakes" }
         };
 
-        FakeRecipeImporterService importService = new FakeRecipeImporterService
+        FakeRecipeImporterService importService = new FakeRecipeImporterService();
+        FakeRecipeLibraryService libraryService = new FakeRecipeLibraryService
         {
             RecipeSummariesToReturn = recipes,
             RecipeToReturn = null
@@ -340,13 +348,13 @@ public class RecipeConsoleAppTests
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.EditRecipe);
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
 
-        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, backupService);
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, libraryService, backupService);
 
         await app.RunAsync();
 
-        Assert.True(importService.GetRecipeByIdWasCalled);
+        Assert.True(libraryService.GetRecipeByIdWasCalled);
         Assert.False(reader.ReadRecipeEditsFromConsoleWasCalled);
-        Assert.False(importService.UpdateRecipeWasCalled);
+        Assert.False(libraryService.UpdateRecipeWasCalled);
 
         Assert.True(writer.DisplayMessageWasCalled);
     }
@@ -375,8 +383,10 @@ public class RecipeConsoleAppTests
 
         FakeRecipeImporterService importService = new FakeRecipeImporterService
         {
-            RecipeSummariesToReturn = [],
-            ImportResultToReturn = importResult,
+            ImportResultToReturn = importResult
+        };
+        FakeRecipeLibraryService libraryService = new FakeRecipeLibraryService
+        {
             SaveResultToReturn = saveResult
         };
 
@@ -393,7 +403,7 @@ public class RecipeConsoleAppTests
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.ImportRecipeFromUrl);
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
 
-        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, backupService);
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, libraryService, backupService);
 
         await app.RunAsync();
 
@@ -409,8 +419,8 @@ public class RecipeConsoleAppTests
 
         Assert.True(reader.AskForSaveConfirmationWasCalled);
 
-        Assert.True(importService.SaveRecipeWasCalled);
-        Assert.Equal(importedRecipe, importService.RecipePassedToSaveRecipe);
+        Assert.True(libraryService.SaveRecipeWasCalled);
+        Assert.Equal(importedRecipe, libraryService.RecipePassedToSaveRecipe);
 
         Assert.True(writer.DisplayMessageWasCalled);
         Assert.Contains(saveResult.Message, writer.DisplayedMessages);
@@ -448,7 +458,8 @@ public class RecipeConsoleAppTests
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.ImportRecipeFromUrl);
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
 
-        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, backupService);
+        FakeRecipeLibraryService libraryService = new FakeRecipeLibraryService();
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, libraryService, backupService);
 
         await app.RunAsync();
 
@@ -456,7 +467,7 @@ public class RecipeConsoleAppTests
         Assert.True(writer.DisplayImportedRecipeWasCalled);
         Assert.True(reader.AskForSaveConfirmationWasCalled);
 
-        Assert.False(importService.SaveRecipeWasCalled);
+        Assert.False(libraryService.SaveRecipeWasCalled);
     }
 
     [Fact]
@@ -484,7 +495,8 @@ public class RecipeConsoleAppTests
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.ImportRecipeFromUrl);
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
 
-        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, backupService);
+        FakeRecipeLibraryService libraryService = new FakeRecipeLibraryService();
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, libraryService, backupService);
 
         await app.RunAsync();
 
@@ -496,7 +508,7 @@ public class RecipeConsoleAppTests
         Assert.False(writer.DisplayImportedRecipeWasCalled);
         Assert.False(reader.CompleteImportedRecipeFromConsoleWasCalled);
         Assert.False(reader.AskForSaveConfirmationWasCalled);
-        Assert.False(importService.SaveRecipeWasCalled);
+        Assert.False(libraryService.SaveRecipeWasCalled);
     }
 
     [Fact]
@@ -510,7 +522,7 @@ public class RecipeConsoleAppTests
         reader.MenuOptionsToReturn.Enqueue("abc");
         reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
 
-        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, backupService);
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, new FakeRecipeLibraryService(), backupService);
 
         await app.RunAsync();
         Assert.True(writer.DisplayMessageWasCalled);

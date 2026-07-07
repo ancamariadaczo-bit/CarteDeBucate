@@ -49,12 +49,18 @@ public static class AppServiceFactory
         return new DatabaseUserRepository(databasePath);
     }
 
-    public static IRecipeImporterService CreateRecipeImporterService(
-        IRecipeRepository recipeRepository, ICurrentUserContext currentUserContext)
+    public static IRecipeImporterService CreateRecipeImporterService()
     {
         RecipeImporter recipeImporter = new RecipeImporter();
 
-        return new RecipeImporterService(recipeRepository, recipeImporter, currentUserContext);
+        return new RecipeImporterService(recipeImporter);
+    }
+
+    public static IRecipeLibraryService CreateRecipeLibraryService(
+        IRecipeRepository recipeRepository,
+        ICurrentUserContext currentUserContext)
+    {
+        return new RecipeLibraryService(recipeRepository, currentUserContext);
     }
 
     public static IRecipeBackupService CreateRecipeBackupService(

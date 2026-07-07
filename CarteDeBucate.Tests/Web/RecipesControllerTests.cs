@@ -13,11 +13,11 @@ public class RecipesControllerTests
         {
             new RecipeSummary { Id = 1, Name = "Recipe" }
         };
-        FakeRecipeImporterService recipeService = new FakeRecipeImporterService
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
             RecipeSummariesToReturn = recipes
         };
-        RecipesController controller = new RecipesController(recipeService);
+        RecipesController controller = CreateController(recipeService);
 
         IActionResult result = controller.Index(null);
 
@@ -38,11 +38,11 @@ public class RecipesControllerTests
         {
             new RecipeSummary { Id = 2, Name = "Supa" }
         };
-        FakeRecipeImporterService recipeService = new FakeRecipeImporterService
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
             SearchResultsToReturn = searchResults
         };
-        RecipesController controller = new RecipesController(recipeService);
+        RecipesController controller = CreateController(recipeService);
 
         IActionResult result = controller.Index("supa");
 
@@ -64,11 +64,11 @@ public class RecipesControllerTests
         {
             new RecipeSummary { Id = 3, Name = "Recipe" }
         };
-        FakeRecipeImporterService recipeService = new FakeRecipeImporterService
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
             RecipeSummariesToReturn = recipes
         };
-        RecipesController controller = new RecipesController(recipeService);
+        RecipesController controller = CreateController(recipeService);
 
         IActionResult result = controller.Index("   ");
 
@@ -84,8 +84,8 @@ public class RecipesControllerTests
     [Fact]
     public void Index_WhenSearchHasNoResults_ShouldReturnEmptySearchModel()
     {
-        FakeRecipeImporterService recipeService = new FakeRecipeImporterService();
-        RecipesController controller = new RecipesController(recipeService);
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService();
+        RecipesController controller = CreateController(recipeService);
 
         IActionResult result = controller.Index("inexistent");
 
@@ -100,7 +100,7 @@ public class RecipesControllerTests
     [Fact]
     public void Details_WhenRecipeDoesNotExist_ShouldReturnFriendlyNotFoundView()
     {
-        FakeRecipeImporterService recipeService = new FakeRecipeImporterService();
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService();
         RecipesController controller = CreateController(recipeService);
 
         IActionResult result = controller.Details(17);
@@ -115,7 +115,7 @@ public class RecipesControllerTests
     [Fact]
     public void Edit_WhenRecipeDoesNotExist_ShouldReturnFriendlyNotFoundView()
     {
-        FakeRecipeImporterService recipeService = new FakeRecipeImporterService();
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService();
         RecipesController controller = CreateController(recipeService);
 
         IActionResult result = controller.Edit(18);
@@ -128,7 +128,7 @@ public class RecipesControllerTests
     [Fact]
     public void Delete_WhenRecipeDoesNotExist_ShouldReturnFriendlyNotFoundView()
     {
-        FakeRecipeImporterService recipeService = new FakeRecipeImporterService();
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService();
         RecipesController controller = CreateController(recipeService);
 
         IActionResult result = controller.Delete(19);
@@ -141,11 +141,11 @@ public class RecipesControllerTests
     [Fact]
     public void Delete_WhenOpenedFromIndex_ShouldCancelBackToIndex()
     {
-        FakeRecipeImporterService recipeService = new FakeRecipeImporterService
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
             RecipeToReturn = new Recipe { Id = 17, Name = "Recipe" }
         };
-        RecipesController controller = new RecipesController(recipeService);
+        RecipesController controller = CreateController(recipeService);
 
         IActionResult result = controller.Delete(17, "Index");
 
@@ -159,11 +159,11 @@ public class RecipesControllerTests
     [Fact]
     public void Delete_WhenOpenedWithoutReturnToIndex_ShouldCancelBackToDetails()
     {
-        FakeRecipeImporterService recipeService = new FakeRecipeImporterService
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
             RecipeToReturn = new Recipe { Id = 17, Name = "Recipe" }
         };
-        RecipesController controller = new RecipesController(recipeService);
+        RecipesController controller = CreateController(recipeService);
 
         IActionResult result = controller.Delete(17);
 
@@ -177,11 +177,11 @@ public class RecipesControllerTests
     [Fact]
     public void Edit_WhenOpenedFromIndex_ShouldCancelBackToIndex()
     {
-        FakeRecipeImporterService recipeService = new FakeRecipeImporterService
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
             RecipeToReturn = new Recipe { Id = 17, Name = "Recipe" }
         };
-        RecipesController controller = new RecipesController(recipeService);
+        RecipesController controller = CreateController(recipeService);
 
         IActionResult result = controller.Edit(17, "Index");
 
@@ -195,11 +195,11 @@ public class RecipesControllerTests
     [Fact]
     public void Edit_WhenOpenedWithoutReturnToIndex_ShouldCancelBackToDetails()
     {
-        FakeRecipeImporterService recipeService = new FakeRecipeImporterService
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
             RecipeToReturn = new Recipe { Id = 17, Name = "Recipe" }
         };
-        RecipesController controller = new RecipesController(recipeService);
+        RecipesController controller = CreateController(recipeService);
 
         IActionResult result = controller.Edit(17);
 
@@ -214,7 +214,7 @@ public class RecipesControllerTests
     public void CreatePost_WhenSaveSucceeds_ShouldRedirectToSavedRecipeDetails()
     {
         Recipe savedRecipe = new Recipe { Id = 41 };
-        FakeRecipeImporterService recipeService = new FakeRecipeImporterService
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
             SaveResultToReturn = RecipeSaveResult.Success("Saved.", savedRecipe)
         };
@@ -234,7 +234,7 @@ public class RecipesControllerTests
     [Fact]
     public void CreatePost_WhenSuccessfulResultHasNoRecipe_ShouldRedirectToIndex()
     {
-        FakeRecipeImporterService recipeService = new FakeRecipeImporterService
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
             SaveResultToReturn = RecipeSaveResult.Success("Saved.")
         };
@@ -255,7 +255,7 @@ public class RecipesControllerTests
     [Fact]
     public void CreatePost_WhenSaveFails_ShouldKeepBusinessErrorAndEnteredValues()
     {
-        FakeRecipeImporterService recipeService = new FakeRecipeImporterService
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
             SaveResultToReturn = RecipeSaveResult.Fail("Reteta exista deja.")
         };
@@ -275,7 +275,7 @@ public class RecipesControllerTests
     [Fact]
     public void CreatePost_WhenModelStateIsInvalid_ShouldNotCallService()
     {
-        FakeRecipeImporterService recipeService = new FakeRecipeImporterService();
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService();
         RecipesController controller = CreateController(recipeService);
         RecipeFormViewModel model = new RecipeFormViewModel();
         controller.ModelState.AddModelError(
@@ -292,7 +292,7 @@ public class RecipesControllerTests
     [Fact]
     public void EditPost_WhenUpdateSucceeds_ShouldKeepModelId()
     {
-        FakeRecipeImporterService recipeService = new FakeRecipeImporterService
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
             UpdateResultToReturn = RecipeSaveResult.Success("Updated.")
         };
@@ -314,7 +314,7 @@ public class RecipesControllerTests
     [Fact]
     public void DeletePost_WhenDeleteSucceeds_ShouldRedirectToIndex()
     {
-        FakeRecipeImporterService recipeService = new FakeRecipeImporterService
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
             DeleteResultToReturn = RecipeSaveResult.Success("Deleted.")
         };
@@ -333,7 +333,7 @@ public class RecipesControllerTests
     [Fact]
     public void EditPost_WhenUpdateFails_ShouldNotSetSuccessMessage()
     {
-        FakeRecipeImporterService recipeService = new FakeRecipeImporterService
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
             UpdateResultToReturn = RecipeSaveResult.Fail("Update failed.")
         };
@@ -355,12 +355,20 @@ public class RecipesControllerTests
     public async Task ImportPost_WhenImportSucceeds_ShouldRedirectToRecipeDetails()
     {
         Recipe importedRecipe = new Recipe { Id = 52 };
-        FakeRecipeImporterService recipeService = new FakeRecipeImporterService
+        FakeRecipeImporterService importerService = new FakeRecipeImporterService
         {
-            ImportAndSaveResultToReturn =
-                RecipeSaveResult.Success("Imported.", importedRecipe)
+            ImportResultToReturn = new RecipeImportResult
+            {
+                Success = true,
+                Recipe = importedRecipe,
+                Message = "Imported."
+            }
         };
-        RecipesController controller = CreateController(recipeService);
+        FakeRecipeLibraryService libraryService = new FakeRecipeLibraryService
+        {
+            SaveResultToReturn = RecipeSaveResult.Success("Imported.", importedRecipe)
+        };
+        RecipesController controller = CreateController(libraryService, importerService);
 
         IActionResult result =
             await controller.Import("https://example.com/imported-recipe");
@@ -369,7 +377,9 @@ public class RecipesControllerTests
             Assert.IsType<RedirectToActionResult>(result);
         Assert.Equal(nameof(RecipesController.Details), redirectResult.ActionName);
         Assert.Equal(52, redirectResult.RouteValues?["id"]);
-        Assert.True(recipeService.ImportFromUrlAndSaveAsyncWasCalled);
+        Assert.True(importerService.ImportRecipeFromUrlAsyncWasCalled);
+        Assert.True(libraryService.SaveRecipeWasCalled);
+        Assert.Equal(importedRecipe, libraryService.RecipePassedToSaveRecipe);
         Assert.Equal(
             "Rețeta a fost importată. Verifică informațiile și editează-le dacă este nevoie.",
             controller.TempData["SuccessMessage"]);
@@ -381,8 +391,11 @@ public class RecipesControllerTests
         const string url = "https://example.com/failed-import";
         FakeRecipeImporterService recipeService = new FakeRecipeImporterService
         {
-            ImportAndSaveResultToReturn =
-                RecipeSaveResult.Fail("Import failed.")
+            ImportResultToReturn = new RecipeImportResult
+            {
+                Success = false,
+                Message = "Import failed."
+            }
         };
         RecipesController controller = CreateController(recipeService);
 
@@ -390,7 +403,7 @@ public class RecipesControllerTests
 
         ViewResult viewResult = Assert.IsType<ViewResult>(result);
         Assert.Equal(url, viewResult.Model);
-        Assert.True(recipeService.ImportFromUrlAndSaveAsyncWasCalled);
+        Assert.True(recipeService.ImportRecipeFromUrlAsyncWasCalled);
         Assert.True(controller.ModelState.ContainsKey("url"));
         Assert.Contains(
             controller.ModelState["url"]!.Errors,
@@ -404,10 +417,19 @@ public class RecipesControllerTests
         const string url = "https://example.com/incomplete-recipe";
         FakeRecipeImporterService recipeService = new FakeRecipeImporterService
         {
-            ImportAndSaveResultToReturn = RecipeSaveResult.Fail(
+            ImportResultToReturn = new RecipeImportResult
+            {
+                Success = true,
+                Recipe = new Recipe { Name = "Incomplete recipe" },
+                Message = "Imported."
+            }
+        };
+        FakeRecipeLibraryService libraryService = new FakeRecipeLibraryService
+        {
+            SaveResultToReturn = RecipeSaveResult.Fail(
                 "Ingredientele sunt obligatorii.\nPșii sunt obligatorii.")
         };
-        RecipesController controller = CreateController(recipeService);
+        RecipesController controller = CreateController(libraryService, recipeService);
 
         IActionResult result = await controller.Import(url);
 
@@ -418,6 +440,7 @@ public class RecipesControllerTests
             error => error.ErrorMessage ==
                 "Nu am putut extrage ingredientele sau pașii din această pagină. Te rugăm să adaugi rețeta manual.");
         Assert.True(controller.ViewData["ShowManualAddRecipeLink"] is true);
+        Assert.True(libraryService.SaveRecipeWasCalled);
     }
 
     [Fact]
@@ -425,7 +448,11 @@ public class RecipesControllerTests
     {
         FakeRecipeImporterService recipeService = new FakeRecipeImporterService
         {
-            ImportAndSaveResultToReturn = RecipeSaveResult.Success("Imported.")
+            ImportResultToReturn = new RecipeImportResult
+            {
+                Success = true,
+                Message = "Imported."
+            }
         };
         RecipesController controller = CreateController(recipeService);
 
@@ -453,10 +480,29 @@ public class RecipesControllerTests
     }
 
     private static RecipesController CreateController(
-        IRecipeImporterService recipeService)
+        IRecipeLibraryService recipeLibraryService)
+    {
+        return CreateController(
+            recipeLibraryService,
+            new FakeRecipeImporterService());
+    }
+
+    private static RecipesController CreateController(
+        IRecipeImporterService recipeImporterService)
+    {
+        return CreateController(
+            new FakeRecipeLibraryService(),
+            recipeImporterService);
+    }
+
+    private static RecipesController CreateController(
+        IRecipeLibraryService recipeLibraryService,
+        IRecipeImporterService recipeImporterService)
     {
         DefaultHttpContext httpContext = new DefaultHttpContext();
-        RecipesController controller = new RecipesController(recipeService)
+        RecipesController controller = new RecipesController(
+            recipeLibraryService,
+            recipeImporterService)
         {
             ControllerContext = new ControllerContext
             {

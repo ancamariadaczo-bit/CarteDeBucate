@@ -16,18 +16,22 @@ public class RecipesController : Controller
     private const string ImportMissingRequiredDetailsMessage =
         "Nu am putut extrage ingredientele sau pașii din această pagină. Te rugăm să adaugi rețeta manual.";
 
-    private readonly IRecipeImporterService _recipeService;
+    private readonly IRecipeLibraryService _recipeLibraryService;
+    private readonly IRecipeImporterService _recipeImporterService;
 
-    public RecipesController(IRecipeImporterService recipeService)
+    public RecipesController(
+        IRecipeLibraryService recipeLibraryService,
+        IRecipeImporterService recipeImporterService)
     {
-        _recipeService = recipeService;
+        _recipeLibraryService = recipeLibraryService;
+        _recipeImporterService = recipeImporterService;
     }
 
     public IActionResult Index(string? searchText)
     {
         List<RecipeSummary> recipes = string.IsNullOrWhiteSpace(searchText)
-            ? _recipeService.GetRecipeSummaries()
-            : _recipeService.SearchRecipes(searchText);
+            ? _recipeLibraryService.GetRecipeSummaries()
+            : _recipeLibraryService.SearchRecipes(searchText);
 
         return View(new RecipeIndexViewModel
         {
@@ -38,7 +42,7 @@ public class RecipesController : Controller
 
     public IActionResult Details(int id)
     {
-        Recipe? recipe = _recipeService.GetRecipeById(id);
+        Recipe? recipe = _recipeLibraryService.GetRecipeById(id);
 
         if (recipe == null)
         {
@@ -62,7 +66,7 @@ public class RecipesController : Controller
             return View(model);
         }
 
-        RecipeSaveResult result = _recipeService.SaveRecipe(model.ToRecipe());
+        RecipeSaveResult result = _recipeLibraryService.SaveRecipe(model.ToRecipe());
 
         if (!result.IsSuccess)
         {
@@ -88,7 +92,7 @@ public class RecipesController : Controller
 
     public IActionResult Edit(int id, string? returnTo = null)
     {
-        Recipe? recipe = _recipeService.GetRecipeById(id);
+        Recipe? recipe = _recipeLibraryService.GetRecipeById(id);
 
         if (recipe == null)
         {
@@ -119,7 +123,7 @@ public class RecipesController : Controller
             return View(model);
         }
 
-        RecipeSaveResult result = _recipeService.UpdateRecipe(model.ToRecipe());
+        RecipeSaveResult result = _recipeLibraryService.UpdateRecipe(model.ToRecipe());
 
         if (!result.IsSuccess)
         {
@@ -136,7 +140,7 @@ public class RecipesController : Controller
 
     public IActionResult Delete(int id, string? returnTo = null)
     {
-        Recipe? recipe = _recipeService.GetRecipeById(id);
+        Recipe? recipe = _recipeLibraryService.GetRecipeById(id);
 
         if (recipe == null)
         {
@@ -152,11 +156,11 @@ public class RecipesController : Controller
     [ValidateAntiForgeryToken]
     public IActionResult DeleteConfirmed(int id, string? returnTo = null)
     {
-        RecipeSaveResult result = _recipeService.DeleteRecipe(id);
+        RecipeSaveResult result = _recipeLibraryService.DeleteRecipe(id);
 
         if (!result.IsSuccess)
         {
-            Recipe? recipe = _recipeService.GetRecipeById(id);
+            Recipe? recipe = _recipeLibraryService.GetRecipeById(id);
 
             if (recipe == null)
             {
@@ -212,8 +216,35 @@ public class RecipesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Import(string? url)
     {
-        RecipeSaveResult result =
-            await _recipeService.ImportFromUrlAndSaveAsync(url ?? "");
+        RecipeImportResult importResult =
+            await _recipeImporterService.ImportRecipeFromUrlAsync(url ?? "");
+
+        if (!importResult.Success)
+        {
+            if (IsMissingImportedRecipeDetails(importResult.Message))
+            {
+                ModelState.AddModelError(
+                    "url",
+                    ImportMissingRequiredDetailsMessage);
+                ViewData[ShowManualAddRecipeLinkKey] = true;
+            }
+            else
+            {
+                ModelState.AddModelError("url", importResult.Message);
+            }
+
+            return View(model: url);
+        }
+
+        if (importResult.Recipe == null)
+        {
+            TempData[SuccessMessageKey] =
+                "Rețeta a fost importată, dar pagina de detalii nu a putut fi deschisă. Verifică lista de rețete.";
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        RecipeSaveResult result = _recipeLibraryService.SaveRecipe(importResult.Recipe);
 
         if (!result.IsSuccess)
         {

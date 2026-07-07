@@ -9,8 +9,11 @@ IRecipeConsoleWriter recipeWriter = new RecipeConsoleWriter();
 ICurrentUserContext currentUserContext = new CurrentUserContext();
 IRecipeRepository recipeRepository = AppServiceFactory.CreateRecipeRepository(appSettings);
 
+IRecipeLibraryService recipeLibraryService =
+    AppServiceFactory.CreateRecipeLibraryService(recipeRepository, currentUserContext);
+
 IRecipeImporterService importerService =
-    AppServiceFactory.CreateRecipeImporterService(recipeRepository, currentUserContext);
+    AppServiceFactory.CreateRecipeImporterService();
 
 IRecipeBackupService backupService =
     AppServiceFactory.CreateRecipeBackupService(recipeRepository, currentUserContext);
@@ -32,6 +35,11 @@ if (appSettings.AuthenticationEnabled)
 }
 
 IRecipeApp app = RecipeAppFactory.Create(
-    appSettings.CurrentInterfaceMode, recipeReader, recipeWriter, importerService, backupService);
+    appSettings.CurrentInterfaceMode,
+    recipeReader,
+    recipeWriter,
+    importerService,
+    recipeLibraryService,
+    backupService);
 
 await app.RunAsync();

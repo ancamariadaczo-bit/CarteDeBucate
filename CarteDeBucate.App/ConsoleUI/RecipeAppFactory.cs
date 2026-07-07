@@ -5,14 +5,20 @@ public static class RecipeAppFactory
         IRecipeConsoleReader recipeReader,
         IRecipeConsoleWriter recipeWriter,
         IRecipeImporterService importerService,
+        IRecipeLibraryService recipeLibraryService,
         IRecipeBackupService backupService)
     {
         return uiMode switch
         {
             InterfaceMode.ClassicConsole =>
-                new ClassicConsoleRecipeApp(recipeReader, recipeWriter, importerService, backupService),
+                new ClassicConsoleRecipeApp(
+                    recipeReader,
+                    recipeWriter,
+                    importerService,
+                    recipeLibraryService,
+                    backupService),
             InterfaceMode.RichConsole =>
-                new RichConsoleRecipeApp(importerService, backupService),
+                new RichConsoleRecipeApp(importerService, recipeLibraryService, backupService),
             _ => throw new InvalidOperationException("Unknown UI mode.")
         };
     }

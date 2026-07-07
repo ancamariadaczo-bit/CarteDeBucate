@@ -3,6 +3,7 @@ using Spectre.Console;
 public class RichConsoleRecipeApp : IRecipeApp
 {
     private readonly IRecipeImporterService _importerService;
+    private readonly IRecipeLibraryService _recipeLibraryService;
     private readonly IRecipeBackupService _backupService;
     private readonly IRichConsoleMenu _menu;
     private readonly IRichConsoleDisplay _display;
@@ -10,9 +11,11 @@ public class RichConsoleRecipeApp : IRecipeApp
 
     public RichConsoleRecipeApp(
         IRecipeImporterService importerService,
+        IRecipeLibraryService recipeLibraryService,
         IRecipeBackupService backupService)
         : this(
             importerService,
+            recipeLibraryService,
             backupService,
             new RichConsoleMenu(),
             new RichConsoleDisplay(),
@@ -22,12 +25,14 @@ public class RichConsoleRecipeApp : IRecipeApp
 
     public RichConsoleRecipeApp(
         IRecipeImporterService importerService,
+        IRecipeLibraryService recipeLibraryService,
         IRecipeBackupService backupService,
         IRichConsoleMenu menu,
         IRichConsoleDisplay display,
         IRichConsoleReader reader)
     {
         _importerService = importerService;
+        _recipeLibraryService = recipeLibraryService;
         _backupService = backupService;
         _menu = menu;
         _display = display;
@@ -108,7 +113,7 @@ public class RichConsoleRecipeApp : IRecipeApp
 
         recipe.SavedAt = DateTime.Now;
 
-        RecipeSaveResult result = _importerService.SaveRecipe(recipe);
+        RecipeSaveResult result = _recipeLibraryService.SaveRecipe(recipe);
 
         ShowSaveResult(result);
         return true;
@@ -171,7 +176,7 @@ public class RichConsoleRecipeApp : IRecipeApp
 
         if (_reader.ConfirmSaveRecipe())
         {
-            RecipeSaveResult saveResult = _importerService.SaveRecipe(importedRecipe);
+            RecipeSaveResult saveResult = _recipeLibraryService.SaveRecipe(importedRecipe);
             ShowSaveResult(saveResult);
 
             if (!saveResult.IsSuccess)
@@ -187,7 +192,7 @@ public class RichConsoleRecipeApp : IRecipeApp
 
     private void ShowAllRecipes()
     {
-        List<RecipeSummary> recipes = _importerService.GetRecipeSummaries();
+        List<RecipeSummary> recipes = _recipeLibraryService.GetRecipeSummaries();
 
         _display.ShowRecipes(recipes);
     }
@@ -196,7 +201,7 @@ public class RichConsoleRecipeApp : IRecipeApp
     {
         while (true)
         {
-            if (!_importerService.HasRecipesInCurrentContext())
+            if (!_recipeLibraryService.HasRecipesInCurrentContext())
             {
                 _display.ShowInfo(AppTexts.NoRecipes);
                 return true;
@@ -209,7 +214,7 @@ public class RichConsoleRecipeApp : IRecipeApp
                 return false;
             }
 
-            List<RecipeSummary> foundRecipes = _importerService.SearchRecipes(searchText);
+            List<RecipeSummary> foundRecipes = _recipeLibraryService.SearchRecipes(searchText);
 
             _display.ShowRecipes(foundRecipes, AppTexts.SearchResults, AppTexts.NoSearchResults);
 
@@ -231,7 +236,7 @@ public class RichConsoleRecipeApp : IRecipeApp
             return !returnedToMainMenu;
         }
 
-        Recipe? recipe = _importerService.GetRecipeById(selectedRecipe.Id);
+        Recipe? recipe = _recipeLibraryService.GetRecipeById(selectedRecipe.Id);
 
         if (recipe == null)
         {
@@ -252,7 +257,7 @@ public class RichConsoleRecipeApp : IRecipeApp
             return !returnedToMainMenu;
         }
 
-        Recipe? recipe = _importerService.GetRecipeById(selectedRecipe.Id);
+        Recipe? recipe = _recipeLibraryService.GetRecipeById(selectedRecipe.Id);
 
         if (recipe == null)
         {
@@ -270,7 +275,7 @@ public class RichConsoleRecipeApp : IRecipeApp
             return true;
         }
 
-        RecipeSaveResult result = _importerService.UpdateRecipe(editedRecipe);
+        RecipeSaveResult result = _recipeLibraryService.UpdateRecipe(editedRecipe);
 
         ShowSaveResult(result);
         return true;
@@ -285,7 +290,7 @@ public class RichConsoleRecipeApp : IRecipeApp
             return !returnedToMainMenu;
         }
 
-        RecipeSummary? recipe = _importerService.GetRecipeSummaries()
+        RecipeSummary? recipe = _recipeLibraryService.GetRecipeSummaries()
             .FirstOrDefault(recipe => recipe.Id == selectedRecipe.Id);
 
         if (recipe == null)
@@ -300,7 +305,7 @@ public class RichConsoleRecipeApp : IRecipeApp
             return true;
         }
 
-        RecipeSaveResult result = _importerService.DeleteRecipe(recipe.Id);
+        RecipeSaveResult result = _recipeLibraryService.DeleteRecipe(recipe.Id);
 
         ShowSaveResult(result);
         return true;
@@ -343,7 +348,7 @@ public class RichConsoleRecipeApp : IRecipeApp
     private RecipeSummary? SelectExistingRecipe(string title, out bool returnedToMainMenu)
     {
         returnedToMainMenu = false;
-        List<RecipeSummary> recipes = _importerService.GetRecipeSummaries();
+        List<RecipeSummary> recipes = _recipeLibraryService.GetRecipeSummaries();
 
         if (recipes.Count == 0)
         {

@@ -41,12 +41,23 @@ public class AppServiceFactoryTests
     }
 
     [Fact]
-    public void CreateRecipeImporterService_ShouldUseProvidedRepository()
+    public async Task CreateRecipeImporterService_WithEmptyUrl_ShouldReturnFailedImport()
+    {
+        IRecipeImporterService service = AppServiceFactory.CreateRecipeImporterService();
+
+        RecipeImportResult result = await service.ImportRecipeFromUrlAsync("");
+
+        Assert.False(result.Success);
+        Assert.Equal(AppTexts.EmptyUrl, result.Message);
+    }
+
+    [Fact]
+    public void CreateRecipeLibraryService_ShouldUseProvidedRepository()
     {
         FakeRecipeRepository repository = new FakeRecipeRepository();
         CurrentUserContext currentUserContext = new CurrentUserContext();
-        IRecipeImporterService service =
-            AppServiceFactory.CreateRecipeImporterService(repository, currentUserContext);
+        IRecipeLibraryService service =
+            AppServiceFactory.CreateRecipeLibraryService(repository, currentUserContext);
         Recipe recipe = CreateValidRecipe();
 
         RecipeSaveResult result = service.SaveRecipe(recipe);

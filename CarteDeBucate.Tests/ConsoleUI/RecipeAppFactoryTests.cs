@@ -8,6 +8,7 @@ public class RecipeAppFactoryTests
             new FakeRecipeConsoleReader(),
             new FakeRecipeConsoleWriter(),
             new FakeRecipeImporterService(),
+            new FakeRecipeLibraryService(),
             new FakeRecipeBackupService());
 
         Assert.IsType<ClassicConsoleRecipeApp>(app);
@@ -21,6 +22,7 @@ public class RecipeAppFactoryTests
             new FakeRecipeConsoleReader(),
             new FakeRecipeConsoleWriter(),
             new FakeRecipeImporterService(),
+            new FakeRecipeLibraryService(),
             new FakeRecipeBackupService());
 
         Assert.IsType<RichConsoleRecipeApp>(app);

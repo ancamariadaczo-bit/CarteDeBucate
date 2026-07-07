@@ -29,17 +29,19 @@ builder.Services.AddScoped<IRecipeRepository>(_ =>
     AppServiceFactory.CreateDatabaseRecipeRepository(databasePath));
 builder.Services.AddScoped<IUserRepository>(_ =>
     AppServiceFactory.CreateDatabaseUserRepository(databasePath));
-builder.Services.AddScoped<IRecipeImporterService>(serviceProvider =>
+builder.Services.AddScoped<IRecipeLibraryService>(serviceProvider =>
 {
     IRecipeRepository recipeRepository =
         serviceProvider.GetRequiredService<IRecipeRepository>();
     ICurrentUserContext currentUserContext =
         serviceProvider.GetRequiredService<ICurrentUserContext>();
 
-    return AppServiceFactory.CreateRecipeImporterService(
+    return AppServiceFactory.CreateRecipeLibraryService(
         recipeRepository,
         currentUserContext);
 });
+builder.Services.AddScoped<IRecipeImporterService>(_ =>
+    AppServiceFactory.CreateRecipeImporterService());
 builder.Services.AddScoped<IRecipeBackupService>(serviceProvider =>
 {
     IRecipeRepository recipeRepository =

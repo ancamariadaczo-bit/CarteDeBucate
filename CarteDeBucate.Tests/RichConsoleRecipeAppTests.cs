@@ -9,17 +9,18 @@ public class RichConsoleRecipeAppTests
             new RecipeSummary { Id = 2, Name = "Pancakes" }
         ];
 
-        FakeRecipeImporterService importerService = new() { RecipeSummariesToReturn = recipes };
+        FakeRecipeImporterService importerService = new();
+        FakeRecipeLibraryService libraryService = new() { RecipeSummariesToReturn = recipes };
         FakeRecipeBackupService backupService = new();
         FakeRichConsoleMenu menu = CreateMenu(MainMenuOption.ShowRecipes);
         FakeRichConsoleDisplay display = new();
         FakeRichConsoleReader reader = new();
 
-        RichConsoleRecipeApp app = CreateApp(importerService, backupService, menu, display, reader);
+        RichConsoleRecipeApp app = CreateApp(importerService, libraryService, backupService, menu, display, reader);
 
         await app.RunAsync();
 
-        Assert.True(importerService.GetRecipeSummariesWasCalled);
+        Assert.True(libraryService.GetRecipeSummariesWasCalled);
         Assert.True(display.ShowRecipesWasCalled);
         Assert.Equal(recipes, display.RecipesPassedToShowRecipes);
     }
@@ -28,15 +29,17 @@ public class RichConsoleRecipeAppTests
     public async Task Run_WithAddRecipeOption_ShouldSaveRecipe()
     {
         Recipe recipe = new Recipe { Name = "New Recipe" };
-        FakeRecipeImporterService importerService = new()
+        FakeRecipeImporterService importerService = new();
+
+        FakeRecipeLibraryService libraryService = new()
         {
             SaveResultToReturn = new RecipeSaveResult { IsSuccess = true, Message = "Saved." }
         };
-
         FakeRichConsoleReader reader = new() { RecipeToReturn = recipe };
 
         RichConsoleRecipeApp app = CreateApp(
             importerService,
+            libraryService,
             new FakeRecipeBackupService(),
             CreateMenu(MainMenuOption.AddRecipe),
             new FakeRichConsoleDisplay(),
@@ -45,8 +48,8 @@ public class RichConsoleRecipeAppTests
         await app.RunAsync();
 
         Assert.True(reader.ReadRecipeWasCalled);
-        Assert.True(importerService.SaveRecipeWasCalled);
-        Assert.Equal(recipe, importerService.RecipePassedToSaveRecipe);
+        Assert.True(libraryService.SaveRecipeWasCalled);
+        Assert.Equal(recipe, libraryService.RecipePassedToSaveRecipe);
     }
 
     [Fact]
@@ -54,7 +57,8 @@ public class RichConsoleRecipeAppTests
     {
         List<RecipeSummary> recipes = [new RecipeSummary { Id = 1, Name = "Cake" }];
         List<RecipeSummary> searchResults = [new RecipeSummary { Id = 1, Name = "Cake" }];
-        FakeRecipeImporterService importerService = new()
+        FakeRecipeImporterService importerService = new();
+        FakeRecipeLibraryService libraryService = new()
         {
             RecipeSummariesToReturn = recipes,
             SearchResultsToReturn = searchResults
@@ -65,6 +69,7 @@ public class RichConsoleRecipeAppTests
 
         RichConsoleRecipeApp app = CreateApp(
             importerService,
+            libraryService,
             new FakeRecipeBackupService(),
             CreateMenu(MainMenuOption.SearchRecipe),
             display,
@@ -73,8 +78,8 @@ public class RichConsoleRecipeAppTests
         await app.RunAsync();
 
         Assert.True(reader.ReadSearchTextWasCalled);
-        Assert.True(importerService.SearchRecipesWasCalled);
-        Assert.Equal("cake", importerService.SearchTextPassedToSearchRecipes);
+        Assert.True(libraryService.SearchRecipesWasCalled);
+        Assert.Equal("cake", libraryService.SearchTextPassedToSearchRecipes);
         Assert.Equal(searchResults, display.RecipesPassedToShowRecipes);
     }
 
@@ -83,7 +88,8 @@ public class RichConsoleRecipeAppTests
     {
         RecipeSummary selectedRecipe = new RecipeSummary { Id = 7, Name = "Soup" };
         Recipe recipe = new Recipe { Id = 7, Name = "Soup" };
-        FakeRecipeImporterService importerService = new()
+        FakeRecipeImporterService importerService = new();
+        FakeRecipeLibraryService libraryService = new()
         {
             RecipeSummariesToReturn = [selectedRecipe],
             RecipeToReturn = recipe
@@ -94,6 +100,7 @@ public class RichConsoleRecipeAppTests
 
         RichConsoleRecipeApp app = CreateApp(
             importerService,
+            libraryService,
             new FakeRecipeBackupService(),
             CreateMenu(MainMenuOption.ViewRecipeDetails),
             display,
@@ -102,8 +109,8 @@ public class RichConsoleRecipeAppTests
         await app.RunAsync();
 
         Assert.True(reader.SelectRecipeWasCalled);
-        Assert.True(importerService.GetRecipeByIdWasCalled);
-        Assert.Equal(7, importerService.RecipeIdPassedToGetRecipeById);
+        Assert.True(libraryService.GetRecipeByIdWasCalled);
+        Assert.Equal(7, libraryService.RecipeIdPassedToGetRecipeById);
         Assert.Equal(recipe, display.RecipePassedToShowRecipeDetails);
     }
 
@@ -113,7 +120,8 @@ public class RichConsoleRecipeAppTests
         RecipeSummary selectedRecipe = new RecipeSummary { Id = 4, Name = "Old" };
         Recipe recipe = new Recipe { Id = 4, Name = "Old" };
         Recipe editedRecipe = new Recipe { Id = 4, Name = "New" };
-        FakeRecipeImporterService importerService = new()
+        FakeRecipeImporterService importerService = new();
+        FakeRecipeLibraryService libraryService = new()
         {
             RecipeSummariesToReturn = [selectedRecipe],
             RecipeToReturn = recipe,
@@ -128,6 +136,7 @@ public class RichConsoleRecipeAppTests
 
         RichConsoleRecipeApp app = CreateApp(
             importerService,
+            libraryService,
             new FakeRecipeBackupService(),
             CreateMenu(MainMenuOption.EditRecipe),
             new FakeRichConsoleDisplay(),
@@ -135,18 +144,19 @@ public class RichConsoleRecipeAppTests
 
         await app.RunAsync();
 
-        Assert.Equal(4, importerService.RecipeIdPassedToGetRecipeById);
+        Assert.Equal(4, libraryService.RecipeIdPassedToGetRecipeById);
         Assert.True(reader.ReadRecipeEditsWasCalled);
         Assert.Equal(recipe, reader.RecipePassedToReadRecipeEdits);
-        Assert.True(importerService.UpdateRecipeWasCalled);
-        Assert.Equal(editedRecipe, importerService.RecipePassedToUpdateRecipe);
+        Assert.True(libraryService.UpdateRecipeWasCalled);
+        Assert.Equal(editedRecipe, libraryService.RecipePassedToUpdateRecipe);
     }
 
     [Fact]
     public async Task Run_WithDeleteRecipeOption_ShouldDeleteSelectedRecipe()
     {
         RecipeSummary selectedRecipe = new RecipeSummary { Id = 9, Name = "Toast" };
-        FakeRecipeImporterService importerService = new()
+        FakeRecipeImporterService importerService = new();
+        FakeRecipeLibraryService libraryService = new()
         {
             RecipeSummariesToReturn = [selectedRecipe],
             DeleteResultToReturn = new RecipeSaveResult { IsSuccess = true, Message = "Deleted." }
@@ -156,6 +166,7 @@ public class RichConsoleRecipeAppTests
 
         RichConsoleRecipeApp app = CreateApp(
             importerService,
+            libraryService,
             new FakeRecipeBackupService(),
             CreateMenu(MainMenuOption.DeleteRecipe),
             new FakeRichConsoleDisplay(),
@@ -165,8 +176,8 @@ public class RichConsoleRecipeAppTests
 
         Assert.True(reader.ConfirmDeleteRecipeWasCalled);
         Assert.Equal(selectedRecipe, reader.RecipePassedToConfirmDeleteRecipe);
-        Assert.True(importerService.DeleteRecipeWasCalled);
-        Assert.Equal(9, importerService.RecipeIdPassedToDeleteRecipe);
+        Assert.True(libraryService.DeleteRecipeWasCalled);
+        Assert.Equal(9, libraryService.RecipeIdPassedToDeleteRecipe);
     }
 
     [Fact]
@@ -180,7 +191,10 @@ public class RichConsoleRecipeAppTests
                 Success = true,
                 Recipe = importedRecipe,
                 Message = "Imported."
-            },
+            }
+        };
+        FakeRecipeLibraryService libraryService = new()
+        {
             SaveResultToReturn = new RecipeSaveResult { IsSuccess = true, Message = "Saved." }
         };
 
@@ -192,6 +206,7 @@ public class RichConsoleRecipeAppTests
 
         RichConsoleRecipeApp app = CreateApp(
             importerService,
+            libraryService,
             new FakeRecipeBackupService(),
             CreateMenu(MainMenuOption.ImportRecipeFromUrl),
             new FakeRichConsoleDisplay(),
@@ -201,8 +216,8 @@ public class RichConsoleRecipeAppTests
 
         Assert.True(importerService.ImportRecipeFromUrlAsyncWasCalled);
         Assert.Equal("https://example.com/recipe", importerService.UrlPassedToImportRecipeFromUrlAsync);
-        Assert.True(importerService.SaveRecipeWasCalled);
-        Assert.Equal(importedRecipe, importerService.RecipePassedToSaveRecipe);
+        Assert.True(libraryService.SaveRecipeWasCalled);
+        Assert.Equal(importedRecipe, libraryService.RecipePassedToSaveRecipe);
     }
 
     [Fact]
@@ -219,9 +234,11 @@ public class RichConsoleRecipeAppTests
         };
 
         FakeRichConsoleReader reader = new() { RecipeUrlToImport = "https://example.com/nope" };
+        FakeRecipeLibraryService libraryService = new();
 
         RichConsoleRecipeApp app = CreateApp(
             importerService,
+            libraryService,
             new FakeRecipeBackupService(),
             CreateMenu(MainMenuOption.ImportRecipeFromUrl),
             new FakeRichConsoleDisplay(),
@@ -230,7 +247,7 @@ public class RichConsoleRecipeAppTests
         await app.RunAsync();
 
         Assert.True(importerService.ImportRecipeFromUrlAsyncWasCalled);
-        Assert.False(importerService.SaveRecipeWasCalled);
+        Assert.False(libraryService.SaveRecipeWasCalled);
     }
 
     [Fact]
@@ -241,6 +258,7 @@ public class RichConsoleRecipeAppTests
 
         RichConsoleRecipeApp app = CreateApp(
             new FakeRecipeImporterService(),
+            new FakeRecipeLibraryService(),
             backupService,
             CreateMenu(MainMenuOption.ExportBackup),
             new FakeRichConsoleDisplay(),
@@ -261,6 +279,7 @@ public class RichConsoleRecipeAppTests
 
         RichConsoleRecipeApp app = CreateApp(
             new FakeRecipeImporterService(),
+            new FakeRecipeLibraryService(),
             backupService,
             CreateMenu(MainMenuOption.ImportBackup),
             new FakeRichConsoleDisplay(),
@@ -284,11 +303,18 @@ public class RichConsoleRecipeAppTests
 
     private static RichConsoleRecipeApp CreateApp(
         IRecipeImporterService importerService,
+        IRecipeLibraryService recipeLibraryService,
         IRecipeBackupService backupService,
         IRichConsoleMenu menu,
         IRichConsoleDisplay display,
         IRichConsoleReader reader)
     {
-        return new RichConsoleRecipeApp(importerService, backupService, menu, display, reader);
+        return new RichConsoleRecipeApp(
+            importerService,
+            recipeLibraryService,
+            backupService,
+            menu,
+            display,
+            reader);
     }
 }

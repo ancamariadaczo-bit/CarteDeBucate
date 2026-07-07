@@ -5,17 +5,20 @@ public class ClassicConsoleRecipeApp : IRecipeApp
     private readonly IRecipeConsoleReader _reader;
     private readonly IRecipeConsoleWriter _writer;
     private readonly IRecipeImporterService _importerService;
+    private readonly IRecipeLibraryService _recipeLibraryService;
     private readonly IRecipeBackupService _backupService;
 
     public ClassicConsoleRecipeApp(
         IRecipeConsoleReader reader,
         IRecipeConsoleWriter writer,
         IRecipeImporterService importerService,
+        IRecipeLibraryService recipeLibraryService,
         IRecipeBackupService backupService)
     {
         _reader = reader;
         _writer = writer;
         _importerService = importerService;
+        _recipeLibraryService = recipeLibraryService;
         _backupService = backupService;
     }
 
@@ -109,7 +112,7 @@ public class ClassicConsoleRecipeApp : IRecipeApp
             return;
         }
 
-        RecipeSaveResult result = _importerService.SaveRecipe(recipe);
+        RecipeSaveResult result = _recipeLibraryService.SaveRecipe(recipe);
 
         _writer.DisplayMessage(result.Message);
     }
@@ -144,7 +147,7 @@ public class ClassicConsoleRecipeApp : IRecipeApp
 
         if (shouldSave)
         {
-            RecipeSaveResult saveResult = _importerService.SaveRecipe(importedRecipe);
+            RecipeSaveResult saveResult = _recipeLibraryService.SaveRecipe(importedRecipe);
 
             _writer.DisplayMessage(saveResult.Message);
 
@@ -162,7 +165,7 @@ public class ClassicConsoleRecipeApp : IRecipeApp
 
     private void ShowRecipes()
     {
-        List<RecipeSummary> recipes = _importerService.GetRecipeSummaries();
+        List<RecipeSummary> recipes = _recipeLibraryService.GetRecipeSummaries();
 
         if (recipes.Count == 0)
         {
@@ -175,7 +178,7 @@ public class ClassicConsoleRecipeApp : IRecipeApp
 
     private void SearchRecipes()
     {
-        if (!_importerService.HasRecipesInCurrentContext())
+        if (!_recipeLibraryService.HasRecipesInCurrentContext())
         {
             _writer.DisplayMessage(AppTexts.NoRecipes);
             return;
@@ -188,7 +191,7 @@ public class ClassicConsoleRecipeApp : IRecipeApp
             return;
         }
 
-        List<RecipeSummary> foundRecipes = _importerService.SearchRecipes(searchText);
+        List<RecipeSummary> foundRecipes = _recipeLibraryService.SearchRecipes(searchText);
 
         _writer.DisplaySearchResults(foundRecipes);
     }
@@ -221,7 +224,7 @@ public class ClassicConsoleRecipeApp : IRecipeApp
             return;
         }
 
-        RecipeSaveResult result = _importerService.UpdateRecipe(editedRecipe);
+        RecipeSaveResult result = _recipeLibraryService.UpdateRecipe(editedRecipe);
 
         _writer.DisplayMessage(result.Message);
     }
@@ -235,7 +238,7 @@ public class ClassicConsoleRecipeApp : IRecipeApp
             return;
         }
 
-        RecipeSaveResult result = _importerService.DeleteRecipe(recipeId.Value);
+        RecipeSaveResult result = _recipeLibraryService.DeleteRecipe(recipeId.Value);
 
         _writer.DisplayMessage(result.Message);
     }
@@ -281,7 +284,7 @@ public class ClassicConsoleRecipeApp : IRecipeApp
             return null;
         }
 
-        Recipe? recipe = _importerService.GetRecipeById(recipeId.Value);
+        Recipe? recipe = _recipeLibraryService.GetRecipeById(recipeId.Value);
 
         if (recipe == null)
         {
@@ -293,7 +296,7 @@ public class ClassicConsoleRecipeApp : IRecipeApp
 
     private int? SelectRecipeId(Func<int?> readRecipeId)
     {
-        List<RecipeSummary> recipes = _importerService.GetRecipeSummaries();
+        List<RecipeSummary> recipes = _recipeLibraryService.GetRecipeSummaries();
 
         if (recipes.Count == 0)
         {

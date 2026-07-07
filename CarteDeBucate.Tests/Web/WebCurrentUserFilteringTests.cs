@@ -16,9 +16,8 @@ public class WebCurrentUserFilteringTests
                 CreateRecipe(2, userId: 7, "https://example.com/current-user")
             }
         };
-        RecipeImporterService service = new RecipeImporterService(
+        RecipeLibraryService service = new RecipeLibraryService(
             repository,
-            new FakeRecipeImporter(),
             CreateAnonymousWebCurrentUserContext());
 
         List<RecipeSummary> recipes = service.GetRecipeSummaries();
@@ -41,7 +40,7 @@ public class WebCurrentUserFilteringTests
                 CreateRecipe(3, userId: null, "https://example.com/global")
             }
         };
-        RecipeImporterService service = CreateRecipeService(repository, userId: 7);
+        RecipeLibraryService service = CreateRecipeLibraryService(repository, userId: 7);
 
         List<RecipeSummary> recipes = service.GetRecipeSummaries();
 
@@ -62,7 +61,7 @@ public class WebCurrentUserFilteringTests
                 CreateRecipe(2, userId: 7, "https://example.com/current-user")
             }
         };
-        RecipeImporterService service = CreateRecipeService(repository, userId: 7);
+        RecipeLibraryService service = CreateRecipeLibraryService(repository, userId: 7);
 
         List<RecipeSummary> recipes = service.GetRecipeSummaries();
 
@@ -72,86 +71,16 @@ public class WebCurrentUserFilteringTests
     }
 
     [Fact]
-    public void GetRecipeById_WithRecipeFromAnotherUser_ShouldReturnNull()
+    public void SaveRecipe_WithAuthenticatedWebUser_ShouldSetCurrentUserId()
     {
-        FakeRecipeRepository repository = new FakeRecipeRepository
-        {
-            Recipes = new List<Recipe>
-            {
-                CreateRecipe(1, userId: 9, "https://example.com/other-user")
-            }
-        };
-        RecipeImporterService service = CreateRecipeService(repository, userId: 7);
-
-        Recipe? recipe = service.GetRecipeById(1);
-
-        Assert.Null(recipe);
-        Assert.True(repository.GetRecipeByIdAndUserIdWasCalled);
-        Assert.False(repository.GetRecipeByIdWasCalled);
-    }
-
-    [Fact]
-    public void UpdateRecipe_WithRecipeFromAnotherUser_ShouldFailWithoutUpdating()
-    {
-        FakeRecipeRepository repository = new FakeRecipeRepository
-        {
-            Recipes = new List<Recipe>
-            {
-                CreateRecipe(1, userId: 9, "https://example.com/other-user")
-            }
-        };
-        RecipeImporterService service = CreateRecipeService(repository, userId: 7);
-        Recipe recipe = CreateRecipe(1, userId: 7, "https://example.com/other-user");
-
-        RecipeSaveResult result = service.UpdateRecipe(recipe);
-
-        Assert.False(result.IsSuccess);
-        Assert.Equal(AppTexts.RecipeNotFound, result.Message);
-        Assert.False(repository.UpdateRecipeWasCalled);
-    }
-
-    [Fact]
-    public void DeleteRecipe_WithRecipeFromAnotherUser_ShouldFailWithoutDeleting()
-    {
-        FakeRecipeRepository repository = new FakeRecipeRepository
-        {
-            Recipes = new List<Recipe>
-            {
-                CreateRecipe(1, userId: 9, "https://example.com/other-user")
-            }
-        };
-        RecipeImporterService service = CreateRecipeService(repository, userId: 7);
-
-        RecipeSaveResult result = service.DeleteRecipe(1);
-
-        Assert.False(result.IsSuccess);
-        Assert.Equal(AppTexts.RecipeNotFound, result.Message);
-        Assert.False(repository.DeleteRecipeForUserWasCalled);
-        Assert.Single(repository.Recipes);
-    }
-
-    [Fact]
-    public async Task ImportFromUrlAndSaveAsync_WithAuthenticatedWebUser_ShouldSetCurrentUserId()
-    {
-        Recipe importedRecipe = CreateRecipe(0, userId: null, "https://example.com/imported");
+        Recipe recipe = CreateRecipe(0, userId: null, "https://example.com/imported");
         FakeRecipeRepository repository = new FakeRecipeRepository();
         HttpCurrentUserContext currentUserContext = CreateWebCurrentUserContext(userId: 7);
-        FakeRecipeImporter importer = new FakeRecipeImporter
-        {
-            ImportResult = new RecipeImportResult
-            {
-                Success = true,
-                Recipe = importedRecipe,
-                Message = "Import successful."
-            }
-        };
-        RecipeImporterService service = new RecipeImporterService(
+        RecipeLibraryService service = new RecipeLibraryService(
             repository,
-            importer,
             currentUserContext);
 
-        RecipeSaveResult result =
-            await service.ImportFromUrlAndSaveAsync(importedRecipe.SourceUrl);
+        RecipeSaveResult result = service.SaveRecipe(recipe);
 
         Assert.True(result.IsSuccess);
         Assert.True(repository.AddRecipeWasCalled);
@@ -188,13 +117,12 @@ public class WebCurrentUserFilteringTests
         Assert.Equal("https://example.com/current-user", exportedRecipe.SourceUrl);
     }
 
-    private static RecipeImporterService CreateRecipeService(
+    private static RecipeLibraryService CreateRecipeLibraryService(
         FakeRecipeRepository repository,
         int userId)
     {
-        return new RecipeImporterService(
+        return new RecipeLibraryService(
             repository,
-            new FakeRecipeImporter(),
             CreateWebCurrentUserContext(userId));
     }
 
