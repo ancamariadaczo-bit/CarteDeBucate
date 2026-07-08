@@ -1,5 +1,7 @@
 public class FakeRecipeConsoleWriter : IRecipeConsoleWriter
 {
+    public bool ClearWasCalled { get; private set; }
+    public int ClearCallCount { get; private set; }
     public bool DisplayEmptyLineWasCalled { get; private set; }
     public int DisplayEmptyLineCallCount { get; private set; }
     public bool ShowMenuWasCalled { get; private set; }
@@ -24,6 +26,12 @@ public class FakeRecipeConsoleWriter : IRecipeConsoleWriter
 
     public Recipe? RecipePassedToDisplayImportedRecipe { get; private set; }
     public Recipe? RecipePassedToDisplayRecipeDetails { get; private set; }
+
+    public void Clear()
+    {
+        ClearWasCalled = true;
+        ClearCallCount++;
+    }
 
     public void DisplayEmptyLine()
     {

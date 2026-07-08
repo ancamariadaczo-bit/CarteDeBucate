@@ -12,6 +12,8 @@ public class FakeRecipeConsoleReader : IRecipeConsoleReader
     public string RecipeUrlToImport { get; set; } = string.Empty;
     public string SearchText { get; set; } = string.Empty;
     public string BackupFilePath { get; set; } = string.Empty;
+    public PaginationAction PaginationActionToReturn { get; set; } = PaginationAction.BackToMenu;
+    public Queue<PaginationAction> PaginationActionsToReturn { get; } = new();
 
     public bool AskForSaveConfirmationWasCalled { get; private set; }
     public bool CompleteImportedRecipeFromConsoleWasCalled { get; private set; }
@@ -20,6 +22,7 @@ public class FakeRecipeConsoleReader : IRecipeConsoleReader
     public bool ReadRecipeIdToDeleteWasCalled { get; private set; }
     public bool ReadRecipeIdToEditWasCalled { get; private set; }
     public bool ReadRecipeIdToViewWasCalled { get; private set; }
+    public bool ReadPaginationActionWasCalled { get; private set; }
     public bool ReadRecipeUrlToImportWasCalled { get; private set; }
     public bool ReadSearchTextWasCalled { get; private set; }
     public bool ReadBackupFilePathWasCalled { get; private set; }
@@ -83,6 +86,15 @@ public class FakeRecipeConsoleReader : IRecipeConsoleReader
     {
         ReadRecipeIdToViewWasCalled = true;
         return RecipeIdToView;
+    }
+
+    public PaginationAction ReadPaginationAction()
+    {
+        ReadPaginationActionWasCalled = true;
+
+        return PaginationActionsToReturn.Count > 0
+            ? PaginationActionsToReturn.Dequeue()
+            : PaginationActionToReturn;
     }
 
     public string ReadRecipeUrlToImport()

@@ -64,14 +64,14 @@
 else
 {
     <p class="text-muted">
-        @Model.Recipes.Count
+        @Model.TotalItems
         @if (Model.IsSearch)
         {
-            @(Model.Recipes.Count == 1 ? "rezultat" : "rezultate")
+            @(Model.TotalItems == 1 ? "rezultat" : "rezultate")
         }
         else
         {
-            @(Model.Recipes.Count == 1 ? "rețetă" : "rețete")
+            @(Model.TotalItems == 1 ? "rețetă" : "rețete")
         }
     </p>
 
@@ -91,7 +91,8 @@ else
                     <tr>
                         <td>
                             <a asp-action="Details"
-                               asp-route-id="@recipe.Id">@recipe.Name</a>
+                               asp-route-id="@recipe.Id"
+                               asp-route-pageNumber="@Model.PageNumber">@recipe.Name</a>
                         </td>
                         <td>
                             <span class="badge @RecipeStatusPresentation.GetBadgeClass(recipe.Status)">
@@ -103,15 +104,54 @@ else
                             <a class="btn btn-sm btn-outline-secondary"
                                asp-action="Edit"
                                asp-route-id="@recipe.Id"
-                               asp-route-returnTo="Index">Editează</a>
+                               asp-route-returnTo="Index"
+                               asp-route-pageNumber="@Model.PageNumber">Editează</a>
                             <a class="btn btn-sm btn-outline-danger"
                                asp-action="Delete"
                                asp-route-id="@recipe.Id"
-                               asp-route-returnTo="Index">Șterge</a>
+                               asp-route-returnTo="Index"
+                               asp-route-pageNumber="@Model.PageNumber">Șterge</a>
                         </td>
                     </tr>
                 }
             </tbody>
         </table>
     </div>
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav aria-label="Paginare rețete">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+                    @if (Model.HasPreviousPage)
+                    {
+                        <a class="page-link"
+                           asp-action="Index"
+                           asp-route-pageNumber="@(Model.PageNumber - 1)">Anterior</a>
+                    }
+                    else
+                    {
+                        <span class="page-link">Anterior</span>
+                    }
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        Pagina @Model.PageNumber din @Model.TotalPages
+                    </span>
+                </li>
+                <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+                    @if (Model.HasNextPage)
+                    {
+                        <a class="page-link"
+                           asp-action="Index"
+                           asp-route-pageNumber="@(Model.PageNumber + 1)">Următor</a>
+                    }
+                    else
+                    {
+                        <span class="page-link">Următor</span>
+                    }
+                </li>
+            </ul>
+        </nav>
+    }
 }

@@ -2,6 +2,13 @@
 
 public class RecipeConsoleWriter : IRecipeConsoleWriter
 {
+    public void Clear()
+    {
+        Console.Clear();
+        Console.Write("\u001b[2J\u001b[3J\u001b[H");
+        Console.Out.Flush();
+    }
+
     public void DisplayEmptyLine()
     {
         Console.WriteLine();

@@ -12,6 +12,8 @@ public class FakeRichConsoleReader : IRichConsoleReader
     public bool ImportAnotherRecipeConfirmation { get; set; }
     public bool SearchAnotherRecipeConfirmation { get; set; }
     public RecipeSummary? SelectedRecipe { get; set; }
+    public PaginationAction PaginationActionToReturn { get; set; } = PaginationAction.BackToMenu;
+    public Queue<PaginationAction> PaginationActionsToReturn { get; } = new();
     public Recipe? EditedRecipe { get; set; }
     public bool DeleteRecipeConfirmation { get; set; } = true;
     public string BackupFilePath { get; set; } = "";
@@ -25,6 +27,7 @@ public class FakeRichConsoleReader : IRichConsoleReader
     public bool ConfirmImportAnotherRecipeWasCalled { get; private set; }
     public bool ConfirmSearchAnotherRecipeWasCalled { get; private set; }
     public bool SelectRecipeWasCalled { get; private set; }
+    public bool ReadPaginationActionWasCalled { get; private set; }
     public bool ReadRecipeEditsWasCalled { get; private set; }
     public bool ConfirmDeleteRecipeWasCalled { get; private set; }
     public bool ReadBackupFilePathWasCalled { get; private set; }
@@ -100,6 +103,15 @@ public class FakeRichConsoleReader : IRichConsoleReader
     {
         SelectRecipeWasCalled = true;
         return SelectedRecipe ?? recipes[0];
+    }
+
+    public PaginationAction ReadPaginationAction()
+    {
+        ReadPaginationActionWasCalled = true;
+
+        return PaginationActionsToReturn.Count > 0
+            ? PaginationActionsToReturn.Dequeue()
+            : PaginationActionToReturn;
     }
 
     public Recipe ReadRecipeEdits(Recipe recipe)

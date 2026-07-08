@@ -5,6 +5,8 @@ public class RichConsoleDisplay : IRichConsoleDisplay
     public void Clear()
     {
         AnsiConsole.Clear();
+        Console.Write("\u001b[2J\u001b[3J\u001b[H");
+        Console.Out.Flush();
     }
 
     public void ShowTitle()

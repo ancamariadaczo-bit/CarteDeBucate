@@ -15,19 +15,29 @@ public class RecipesControllerTests
         };
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
-            RecipeSummariesToReturn = recipes
+            RecipeSummariesPageToReturn =
+                new PagedResult<RecipeSummary>(recipes, 2, 10, 12)
         };
         RecipesController controller = CreateController(recipeService);
 
-        IActionResult result = controller.Index(null);
+        IActionResult result = controller.Index(null, pageNumber: 2);
 
         ViewResult viewResult = Assert.IsType<ViewResult>(result);
         RecipeIndexViewModel model =
             Assert.IsType<RecipeIndexViewModel>(viewResult.Model);
-        Assert.Same(recipes, model.Recipes);
+        Assert.Equal(recipes, model.Recipes);
         Assert.Equal("", model.SearchText);
         Assert.False(model.IsSearch);
-        Assert.True(recipeService.GetRecipeSummariesWasCalled);
+        Assert.Equal(2, model.PageNumber);
+        Assert.Equal(10, model.PageSize);
+        Assert.Equal(12, model.TotalItems);
+        Assert.Equal(2, model.TotalPages);
+        Assert.True(model.HasPreviousPage);
+        Assert.False(model.HasNextPage);
+        Assert.True(recipeService.GetRecipeSummariesPageWasCalled);
+        Assert.Equal(2, recipeService.PageNumberPassedToGetRecipeSummariesPage);
+        Assert.Equal(10, recipeService.PageSizePassedToGetRecipeSummariesPage);
+        Assert.False(recipeService.GetRecipeSummariesWasCalled);
         Assert.False(recipeService.SearchRecipesWasCalled);
     }
 
@@ -55,6 +65,7 @@ public class RecipesControllerTests
         Assert.True(recipeService.SearchRecipesWasCalled);
         Assert.Equal("supa", recipeService.SearchTextPassedToSearchRecipes);
         Assert.False(recipeService.GetRecipeSummariesWasCalled);
+        Assert.False(recipeService.GetRecipeSummariesPageWasCalled);
     }
 
     [Fact]
@@ -66,7 +77,8 @@ public class RecipesControllerTests
         };
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
-            RecipeSummariesToReturn = recipes
+            RecipeSummariesPageToReturn =
+                new PagedResult<RecipeSummary>(recipes, 1, 10, recipes.Count)
         };
         RecipesController controller = CreateController(recipeService);
 
@@ -75,10 +87,58 @@ public class RecipesControllerTests
         ViewResult viewResult = Assert.IsType<ViewResult>(result);
         RecipeIndexViewModel model =
             Assert.IsType<RecipeIndexViewModel>(viewResult.Model);
-        Assert.Same(recipes, model.Recipes);
+        Assert.Equal(recipes, model.Recipes);
         Assert.False(model.IsSearch);
-        Assert.True(recipeService.GetRecipeSummariesWasCalled);
+        Assert.True(recipeService.GetRecipeSummariesPageWasCalled);
+        Assert.False(recipeService.GetRecipeSummariesWasCalled);
         Assert.False(recipeService.SearchRecipesWasCalled);
+    }
+
+    [Fact]
+    public void Index_WithInvalidPageNumber_ShouldReturnNormalizedPageNumber()
+    {
+        List<RecipeSummary> recipes = new List<RecipeSummary>
+        {
+            new RecipeSummary { Id = 4, Name = "Recipe" }
+        };
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
+        {
+            RecipeSummariesPageToReturn =
+                new PagedResult<RecipeSummary>(recipes, 0, 10, recipes.Count)
+        };
+        RecipesController controller = CreateController(recipeService);
+
+        IActionResult result = controller.Index(null, pageNumber: 0);
+
+        ViewResult viewResult = Assert.IsType<ViewResult>(result);
+        RecipeIndexViewModel model =
+            Assert.IsType<RecipeIndexViewModel>(viewResult.Model);
+        Assert.Equal(1, model.PageNumber);
+        Assert.True(recipeService.GetRecipeSummariesPageWasCalled);
+        Assert.Equal(0, recipeService.PageNumberPassedToGetRecipeSummariesPage);
+        Assert.Equal(10, recipeService.PageSizePassedToGetRecipeSummariesPage);
+    }
+
+    [Fact]
+    public void Index_WhenPageNumberIsAfterLastPage_ShouldRedirectToLastPage()
+    {
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
+        {
+            RecipeSummariesPageToReturn =
+                new PagedResult<RecipeSummary>(
+                    new List<RecipeSummary>(),
+                    3,
+                    10,
+                    11)
+        };
+        RecipesController controller = CreateController(recipeService);
+
+        IActionResult result = controller.Index(null, pageNumber: 3);
+
+        RedirectToActionResult redirectResult =
+            Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(nameof(RecipesController.Index), redirectResult.ActionName);
+        Assert.Equal(2, redirectResult.RouteValues?["pageNumber"]);
     }
 
     [Fact]
@@ -110,6 +170,23 @@ public class RecipesControllerTests
         Assert.Equal(StatusCodes.Status404NotFound, controller.Response.StatusCode);
         Assert.True(recipeService.GetRecipeByIdWasCalled);
         Assert.Equal(17, recipeService.RecipeIdPassedToGetRecipeById);
+    }
+
+    [Fact]
+    public void Details_WithPageNumber_ShouldExposePageNumberToView()
+    {
+        Recipe recipe = new Recipe { Id = 17, Name = "Recipe" };
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
+        {
+            RecipeToReturn = recipe
+        };
+        RecipesController controller = CreateController(recipeService);
+
+        IActionResult result = controller.Details(17, pageNumber: 3);
+
+        ViewResult viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Same(recipe, viewResult.Model);
+        Assert.Equal(3, controller.ViewData["PageNumber"]);
     }
 
     [Fact]
@@ -175,6 +252,44 @@ public class RecipesControllerTests
     }
 
     [Fact]
+    public void Delete_WithPageNumber_ShouldExposePageNumberToView()
+    {
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
+        {
+            RecipeToReturn = new Recipe { Id = 17, Name = "Recipe" }
+        };
+        RecipesController controller = CreateController(recipeService);
+
+        IActionResult result = controller.Delete(17, pageNumber: 3);
+
+        ViewResult viewResult = Assert.IsType<ViewResult>(result);
+        Assert.IsType<Recipe>(viewResult.Model);
+        Assert.Equal(3, controller.ViewData["PageNumber"]);
+    }
+
+    [Fact]
+    public void Delete_WhenOpenedFromIndexWithPageNumber_ShouldKeepIndexAndPageNumber()
+    {
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
+        {
+            RecipeToReturn = new Recipe { Id = 17, Name = "Recipe" }
+        };
+        RecipesController controller = CreateController(recipeService);
+
+        IActionResult result = controller.Delete(
+            17,
+            returnTo: "Index",
+            pageNumber: 3);
+
+        ViewResult viewResult = Assert.IsType<ViewResult>(result);
+        Assert.IsType<Recipe>(viewResult.Model);
+        Assert.Equal(
+            nameof(RecipesController.Index),
+            controller.ViewData["DeleteCancelAction"]);
+        Assert.Equal(3, controller.ViewData["PageNumber"]);
+    }
+
+    [Fact]
     public void Edit_WhenOpenedFromIndex_ShouldCancelBackToIndex()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
@@ -190,6 +305,22 @@ public class RecipesControllerTests
         Assert.Equal(
             nameof(RecipesController.Index),
             controller.ViewData["EditCancelAction"]);
+    }
+
+    [Fact]
+    public void Edit_WithPageNumber_ShouldExposePageNumberToView()
+    {
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
+        {
+            RecipeToReturn = new Recipe { Id = 17, Name = "Recipe" }
+        };
+        RecipesController controller = CreateController(recipeService);
+
+        IActionResult result = controller.Edit(17, pageNumber: 3);
+
+        ViewResult viewResult = Assert.IsType<ViewResult>(result);
+        Assert.IsType<RecipeFormViewModel>(viewResult.Model);
+        Assert.Equal(3, controller.ViewData["PageNumber"]);
     }
 
     [Fact]
@@ -312,6 +443,50 @@ public class RecipesControllerTests
     }
 
     [Fact]
+    public void EditPost_WhenUpdateSucceeds_ShouldRedirectToDetailsWithPageNumber()
+    {
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
+        {
+            RecipeToReturn = new Recipe { Id = 23, Name = "Recipe" },
+            UpdateResultToReturn = RecipeSaveResult.Success("Updated.")
+        };
+        RecipesController controller = CreateController(recipeService);
+        RecipeFormViewModel model = CreateValidModel();
+        model.Id = 23;
+
+        IActionResult result = controller.Edit(23, model, pageNumber: 3);
+
+        RedirectToActionResult redirectResult =
+            Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(nameof(RecipesController.Details), redirectResult.ActionName);
+        Assert.Equal(23, redirectResult.RouteValues?["id"]);
+        Assert.Equal(3, redirectResult.RouteValues?["pageNumber"]);
+    }
+
+    [Fact]
+    public void EditPost_WhenOpenedFromIndexAndUpdateSucceeds_ShouldRedirectToIndexWithPageNumber()
+    {
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
+        {
+            UpdateResultToReturn = RecipeSaveResult.Success("Updated.")
+        };
+        RecipesController controller = CreateController(recipeService);
+        RecipeFormViewModel model = CreateValidModel();
+        model.Id = 23;
+
+        IActionResult result = controller.Edit(
+            23,
+            model,
+            returnTo: "Index",
+            pageNumber: 3);
+
+        RedirectToActionResult redirectResult =
+            Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(nameof(RecipesController.Index), redirectResult.ActionName);
+        Assert.Equal(3, redirectResult.RouteValues?["pageNumber"]);
+    }
+
+    [Fact]
     public void DeletePost_WhenDeleteSucceeds_ShouldRedirectToIndex()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
@@ -328,6 +503,26 @@ public class RecipesControllerTests
         Assert.True(recipeService.DeleteRecipeWasCalled);
         Assert.Equal(31, recipeService.RecipeIdPassedToDeleteRecipe);
         Assert.Equal("Deleted.", controller.TempData["SuccessMessage"]);
+    }
+
+    [Fact]
+    public void DeletePost_WhenOpenedFromIndex_ShouldRedirectToIndexWithPageNumber()
+    {
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
+        {
+            DeleteResultToReturn = RecipeSaveResult.Success("Deleted.")
+        };
+        RecipesController controller = CreateController(recipeService);
+
+        IActionResult result = controller.DeleteConfirmed(
+            31,
+            returnTo: "Index",
+            pageNumber: 3);
+
+        RedirectToActionResult redirectResult =
+            Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(nameof(RecipesController.Index), redirectResult.ActionName);
+        Assert.Equal(3, redirectResult.RouteValues?["pageNumber"]);
     }
 
     [Fact]

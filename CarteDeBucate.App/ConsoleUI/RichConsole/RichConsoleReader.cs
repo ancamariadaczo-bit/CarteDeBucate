@@ -101,6 +101,31 @@ public class RichConsoleReader : IRichConsoleReader
         return selection.Recipe;
     }
 
+    public PaginationAction ReadPaginationAction()
+    {
+        string nextPageOption = RichConsoleTexts.NextPageOption;
+        string previousPageOption = RichConsoleTexts.PreviousPageOption;
+        string backToMainMenuOption = CreateBackToMainMenuOption();
+
+        string selectedOption = AnsiConsole.Prompt(
+            new SelectionPrompt<string>()
+                .Title(CreateUserOptionTitle(RichConsoleTexts.PaginationActionTitle))
+                .PageSize(3)
+                .AddChoices(nextPageOption, previousPageOption, backToMainMenuOption));
+
+        if (selectedOption == nextPageOption)
+        {
+            return PaginationAction.NextPage;
+        }
+
+        if (selectedOption == previousPageOption)
+        {
+            return PaginationAction.PreviousPage;
+        }
+
+        return PaginationAction.BackToMenu;
+    }
+
     public Recipe ReadRecipeEdits(Recipe recipe)
     {
         string name = ReadOptionalText($"{AppTexts.EnterRecipeName}({AppTexts.KeepCurrentValuePrompt})");

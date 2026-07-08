@@ -12,6 +12,7 @@
 
 <form asp-action="Edit"
       asp-route-id="@Model.Id"
+      asp-route-pageNumber="@ViewData["PageNumber"]"
       method="post"
       data-track-unsaved-changes="true">
     <input asp-for="Id" type="hidden" />
@@ -30,6 +31,7 @@
         {
             <a class="btn btn-outline-secondary"
                asp-action="Index"
+               asp-route-pageNumber="@ViewData["PageNumber"]"
                data-confirm-unsaved-changes="true">Renunță</a>
         }
         else
@@ -37,11 +39,14 @@
             <a class="btn btn-outline-secondary"
                asp-action="Details"
                asp-route-id="@Model.Id"
+               asp-route-pageNumber="@ViewData["PageNumber"]"
                data-confirm-unsaved-changes="true">Renunță</a>
         }
         <a class="btn btn-outline-danger"
            asp-action="Delete"
            asp-route-id="@Model.Id"
+           asp-route-returnTo="@cancelAction"
+           asp-route-pageNumber="@ViewData["PageNumber"]"
            data-confirm-unsaved-changes="true">Șterge rețeta</a>
     </div>
 </form>

@@ -10,7 +10,11 @@ public class RichConsoleRecipeAppTests
         ];
 
         FakeRecipeImporterService importerService = new();
-        FakeRecipeLibraryService libraryService = new() { RecipeSummariesToReturn = recipes };
+        FakeRecipeLibraryService libraryService = new()
+        {
+            RecipeSummariesPageToReturn =
+                new PagedResult<RecipeSummary>(recipes, 1, 10, recipes.Count)
+        };
         FakeRecipeBackupService backupService = new();
         FakeRichConsoleMenu menu = CreateMenu(MainMenuOption.ShowRecipes);
         FakeRichConsoleDisplay display = new();
@@ -20,9 +24,119 @@ public class RichConsoleRecipeAppTests
 
         await app.RunAsync();
 
-        Assert.True(libraryService.GetRecipeSummariesWasCalled);
+        Assert.True(libraryService.GetRecipeSummariesPageWasCalled);
+        Assert.Equal(1, libraryService.PageNumberPassedToGetRecipeSummariesPage);
+        Assert.Equal(10, libraryService.PageSizePassedToGetRecipeSummariesPage);
+        Assert.False(libraryService.GetRecipeSummariesWasCalled);
+        Assert.True(reader.ReadPaginationActionWasCalled);
         Assert.True(display.ShowRecipesWasCalled);
         Assert.Equal(recipes, display.RecipesPassedToShowRecipes);
+    }
+
+    [Fact]
+    public async Task Run_WithShowAllRecipesOption_ShouldNavigateToNextPage()
+    {
+        List<RecipeSummary> firstPageRecipes =
+        [
+            new RecipeSummary { Id = 1, Name = "Banana Bread" }
+        ];
+        List<RecipeSummary> secondPageRecipes =
+        [
+            new RecipeSummary { Id = 2, Name = "Pancakes" }
+        ];
+
+        FakeRecipeImporterService importerService = new();
+        FakeRecipeLibraryService libraryService = new();
+        libraryService.RecipeSummariesPagesToReturn.Enqueue(
+            new PagedResult<RecipeSummary>(firstPageRecipes, 1, 10, 20));
+        libraryService.RecipeSummariesPagesToReturn.Enqueue(
+            new PagedResult<RecipeSummary>(secondPageRecipes, 2, 10, 20));
+
+        FakeRecipeBackupService backupService = new();
+        FakeRichConsoleMenu menu = CreateMenu(MainMenuOption.ShowRecipes);
+        FakeRichConsoleDisplay display = new();
+        FakeRichConsoleReader reader = new();
+        reader.PaginationActionsToReturn.Enqueue(PaginationAction.NextPage);
+        reader.PaginationActionsToReturn.Enqueue(PaginationAction.BackToMenu);
+
+        RichConsoleRecipeApp app = CreateApp(importerService, libraryService, backupService, menu, display, reader);
+
+        await app.RunAsync();
+
+        Assert.Equal(
+            new List<int> { 1, 2 },
+            libraryService.PageNumbersPassedToGetRecipeSummariesPage);
+        Assert.True(reader.ReadPaginationActionWasCalled);
+        Assert.True(display.ShowRecipesWasCalled);
+        Assert.Equal(2, display.ClearCallCount);
+    }
+
+    [Fact]
+    public async Task Run_WithShowAllRecipesOption_ShouldStayOnCurrentPageWhenPaginationBoundaryIsReached()
+    {
+        List<RecipeSummary> firstPageRecipes =
+        [
+            new RecipeSummary { Id = 1, Name = "Banana Bread" }
+        ];
+        List<RecipeSummary> secondPageRecipes =
+        [
+            new RecipeSummary { Id = 2, Name = "Pancakes" }
+        ];
+
+        FakeRecipeImporterService importerService = new();
+        FakeRecipeLibraryService libraryService = new();
+        libraryService.RecipeSummariesPagesToReturn.Enqueue(
+            new PagedResult<RecipeSummary>(firstPageRecipes, 1, 10, 20));
+        libraryService.RecipeSummariesPagesToReturn.Enqueue(
+            new PagedResult<RecipeSummary>(firstPageRecipes, 1, 10, 20));
+        libraryService.RecipeSummariesPagesToReturn.Enqueue(
+            new PagedResult<RecipeSummary>(secondPageRecipes, 2, 10, 20));
+        libraryService.RecipeSummariesPagesToReturn.Enqueue(
+            new PagedResult<RecipeSummary>(secondPageRecipes, 2, 10, 20));
+
+        FakeRecipeBackupService backupService = new();
+        FakeRichConsoleMenu menu = CreateMenu(MainMenuOption.ShowRecipes);
+        FakeRichConsoleDisplay display = new();
+        FakeRichConsoleReader reader = new();
+        reader.PaginationActionsToReturn.Enqueue(PaginationAction.PreviousPage);
+        reader.PaginationActionsToReturn.Enqueue(PaginationAction.NextPage);
+        reader.PaginationActionsToReturn.Enqueue(PaginationAction.NextPage);
+        reader.PaginationActionsToReturn.Enqueue(PaginationAction.BackToMenu);
+
+        RichConsoleRecipeApp app = CreateApp(importerService, libraryService, backupService, menu, display, reader);
+
+        await app.RunAsync();
+
+        Assert.Equal(
+            new List<int> { 1, 1, 2, 2 },
+            libraryService.PageNumbersPassedToGetRecipeSummariesPage);
+        Assert.Equal(4, display.ClearCallCount);
+    }
+
+    [Fact]
+    public async Task Run_WithShowAllRecipesOptionAndNoRecipes_ShouldShowEmptyListWithoutPaginationPrompt()
+    {
+        FakeRecipeImporterService importerService = new();
+        FakeRecipeLibraryService libraryService = new()
+        {
+            RecipeSummariesPageToReturn =
+                new PagedResult<RecipeSummary>(new List<RecipeSummary>(), 1, 10, 0)
+        };
+
+        FakeRecipeBackupService backupService = new();
+        FakeRichConsoleMenu menu = CreateMenu(MainMenuOption.ShowRecipes);
+        FakeRichConsoleDisplay display = new();
+        FakeRichConsoleReader reader = new();
+
+        RichConsoleRecipeApp app = CreateApp(importerService, libraryService, backupService, menu, display, reader);
+
+        await app.RunAsync();
+
+        Assert.False(display.ShowRecipesWasCalled);
+        Assert.True(display.ShowInfoWasCalled);
+        Assert.Contains(AppTexts.NoRecipes, display.Messages);
+        Assert.False(reader.ReadPaginationActionWasCalled);
+        Assert.True(reader.WaitForContinueWasCalled);
     }
 
     [Fact]

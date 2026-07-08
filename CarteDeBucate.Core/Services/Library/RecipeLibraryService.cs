@@ -26,6 +26,19 @@ public class RecipeLibraryService : IRecipeLibraryService
         return _recipeRepository.GetAllRecipeSummaries();
     }
 
+    public PagedResult<RecipeSummary> GetRecipeSummariesPage(int pageNumber, int pageSize)
+    {
+        if (CurrentUserId.HasValue)
+        {
+            return _recipeRepository.GetRecipeSummariesPageByUserId(
+                CurrentUserId.Value,
+                pageNumber,
+                pageSize);
+        }
+
+        return _recipeRepository.GetRecipeSummariesPage(pageNumber, pageSize);
+    }
+
     public bool HasRecipesInCurrentContext()
     {
         if (CurrentUserId.HasValue)

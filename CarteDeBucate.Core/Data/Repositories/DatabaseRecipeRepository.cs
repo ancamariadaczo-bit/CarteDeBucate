@@ -64,6 +64,46 @@ public class DatabaseRecipeRepository : IRecipeRepository
         return recipes;
     }
 
+    public PagedResult<RecipeSummary> GetRecipeSummariesPage(int pageNumber, int pageSize)
+    {
+        using SqliteConnection connection = new SqliteConnection(_connectionString);
+        connection.Open();
+
+        int totalItems = CountRecipes(connection);
+        List<RecipeSummary> recipes = GetRecipeSummariesPage(
+            connection,
+            pageNumber,
+            pageSize);
+
+        return new PagedResult<RecipeSummary>(
+            recipes,
+            pageNumber,
+            pageSize,
+            totalItems);
+    }
+
+    public PagedResult<RecipeSummary> GetRecipeSummariesPageByUserId(
+        int userId,
+        int pageNumber,
+        int pageSize)
+    {
+        using SqliteConnection connection = new SqliteConnection(_connectionString);
+        connection.Open();
+
+        int totalItems = CountRecipesByUserId(connection, userId);
+        List<RecipeSummary> recipes = GetRecipeSummariesPageByUserId(
+            connection,
+            userId,
+            pageNumber,
+            pageSize);
+
+        return new PagedResult<RecipeSummary>(
+            recipes,
+            pageNumber,
+            pageSize,
+            totalItems);
+    }
+
     public List<Recipe> GetAllRecipes()
     {
         List<Recipe> recipes = new List<Recipe>();
@@ -708,6 +748,103 @@ public class DatabaseRecipeRepository : IRecipeRepository
                 ? null
                 : reader.GetInt32(reader.GetOrdinal("UserId"))
         };
+    }
+
+    private int CountRecipes(SqliteConnection connection)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT COUNT(*)
+            FROM Recipes;
+            """;
+
+        long count = (long)(command.ExecuteScalar() ?? 0);
+
+        return (int)count;
+    }
+
+    private int CountRecipesByUserId(SqliteConnection connection, int userId)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT COUNT(*)
+            FROM Recipes
+            WHERE UserId = @UserId;
+            """;
+
+        command.Parameters.AddWithValue("@UserId", userId);
+
+        long count = (long)(command.ExecuteScalar() ?? 0);
+
+        return (int)count;
+    }
+
+    private List<RecipeSummary> GetRecipeSummariesPage(
+        SqliteConnection connection,
+        int pageNumber,
+        int pageSize)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT Id, Name, SourceUrl, SavedAt, Status, UserId
+            FROM Recipes
+            ORDER BY SavedAt DESC
+            LIMIT @PageSize OFFSET @Offset;
+            """;
+
+        AddPaginationParameters(command, pageNumber, pageSize);
+
+        return ReadRecipeSummaries(command);
+    }
+
+    private List<RecipeSummary> GetRecipeSummariesPageByUserId(
+        SqliteConnection connection,
+        int userId,
+        int pageNumber,
+        int pageSize)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT Id, Name, SourceUrl, SavedAt, Status, UserId
+            FROM Recipes
+            WHERE UserId = @UserId
+            ORDER BY SavedAt DESC
+            LIMIT @PageSize OFFSET @Offset;
+            """;
+
+        command.Parameters.AddWithValue("@UserId", userId);
+        AddPaginationParameters(command, pageNumber, pageSize);
+
+        return ReadRecipeSummaries(command);
+    }
+
+    private void AddPaginationParameters(
+        SqliteCommand command,
+        int pageNumber,
+        int pageSize)
+    {
+        int normalizedPageNumber = Math.Max(1, pageNumber);
+        int normalizedPageSize = Math.Max(1, pageSize);
+        int offset = (normalizedPageNumber - 1) * normalizedPageSize;
+
+        command.Parameters.AddWithValue("@PageSize", normalizedPageSize);
+        command.Parameters.AddWithValue("@Offset", offset);
+    }
+
+    private List<RecipeSummary> ReadRecipeSummaries(SqliteCommand command)
+    {
+        List<RecipeSummary> recipes = new List<RecipeSummary>();
+
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            RecipeSummary recipe = ReadRecipeSummaryFromReader(reader);
+
+            recipes.Add(recipe);
+        }
+
+        return recipes;
     }
 
     private void UpdateRecipeMainRecord(

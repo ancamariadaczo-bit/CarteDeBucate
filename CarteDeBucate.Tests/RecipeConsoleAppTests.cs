@@ -31,7 +31,8 @@ public class RecipeConsoleAppTests
         FakeRecipeImporterService importService = new FakeRecipeImporterService();
         FakeRecipeLibraryService libraryService = new FakeRecipeLibraryService
         {
-            RecipeSummariesToReturn = recipes
+            RecipeSummariesPageToReturn =
+                new PagedResult<RecipeSummary>(recipes, 1, 10, recipes.Count)
         };
 
         FakeRecipeBackupService backupService = new FakeRecipeBackupService();
@@ -46,9 +47,101 @@ public class RecipeConsoleAppTests
 
         await app.RunAsync();
 
-        Assert.True(libraryService.GetRecipeSummariesWasCalled);
+        Assert.True(libraryService.GetRecipeSummariesPageWasCalled);
+        Assert.Equal(1, libraryService.PageNumberPassedToGetRecipeSummariesPage);
+        Assert.Equal(10, libraryService.PageSizePassedToGetRecipeSummariesPage);
+        Assert.False(libraryService.GetRecipeSummariesWasCalled);
+        Assert.True(reader.ReadPaginationActionWasCalled);
         Assert.True(writer.DisplayRecipeListWasCalled);
         Assert.Equal(recipes, writer.RecipesPassedToDisplayRecipeList);
+    }
+
+    [Fact]
+    public async Task Run_WithShowAllRecipesOption_ShouldNavigateBetweenPages()
+    {
+        List<RecipeSummary> firstPageRecipes = new()
+        {
+            new RecipeSummary { Id = 1, Name = "Banana Bread" }
+        };
+        List<RecipeSummary> secondPageRecipes = new()
+        {
+            new RecipeSummary { Id = 2, Name = "Pancakes" }
+        };
+
+        FakeRecipeImporterService importService = new FakeRecipeImporterService();
+        FakeRecipeLibraryService libraryService = new FakeRecipeLibraryService();
+        libraryService.RecipeSummariesPagesToReturn.Enqueue(
+            new PagedResult<RecipeSummary>(firstPageRecipes, 1, 10, 20));
+        libraryService.RecipeSummariesPagesToReturn.Enqueue(
+            new PagedResult<RecipeSummary>(secondPageRecipes, 2, 10, 20));
+        libraryService.RecipeSummariesPagesToReturn.Enqueue(
+            new PagedResult<RecipeSummary>(firstPageRecipes, 1, 10, 20));
+
+        FakeRecipeBackupService backupService = new FakeRecipeBackupService();
+
+        FakeRecipeConsoleReader reader = new FakeRecipeConsoleReader();
+        reader.MenuOptionsToReturn.Enqueue(MenuKeys.ShowRecipes);
+        reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
+        reader.PaginationActionsToReturn.Enqueue(PaginationAction.NextPage);
+        reader.PaginationActionsToReturn.Enqueue(PaginationAction.PreviousPage);
+        reader.PaginationActionsToReturn.Enqueue(PaginationAction.BackToMenu);
+
+        FakeRecipeConsoleWriter writer = new FakeRecipeConsoleWriter();
+
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, libraryService, backupService);
+
+        await app.RunAsync();
+
+        Assert.Equal(
+            new List<int> { 1, 2, 1 },
+            libraryService.PageNumbersPassedToGetRecipeSummariesPage);
+        Assert.True(writer.DisplayRecipeListWasCalled);
+        Assert.Equal(2, writer.ClearCallCount);
+    }
+
+    [Fact]
+    public async Task Run_WithShowAllRecipesOption_ShouldStayOnCurrentPageWhenPaginationBoundaryIsReached()
+    {
+        List<RecipeSummary> firstPageRecipes = new()
+        {
+            new RecipeSummary { Id = 1, Name = "Banana Bread" }
+        };
+        List<RecipeSummary> secondPageRecipes = new()
+        {
+            new RecipeSummary { Id = 2, Name = "Pancakes" }
+        };
+
+        FakeRecipeImporterService importService = new FakeRecipeImporterService();
+        FakeRecipeLibraryService libraryService = new FakeRecipeLibraryService();
+        libraryService.RecipeSummariesPagesToReturn.Enqueue(
+            new PagedResult<RecipeSummary>(firstPageRecipes, 1, 10, 20));
+        libraryService.RecipeSummariesPagesToReturn.Enqueue(
+            new PagedResult<RecipeSummary>(firstPageRecipes, 1, 10, 20));
+        libraryService.RecipeSummariesPagesToReturn.Enqueue(
+            new PagedResult<RecipeSummary>(secondPageRecipes, 2, 10, 20));
+        libraryService.RecipeSummariesPagesToReturn.Enqueue(
+            new PagedResult<RecipeSummary>(secondPageRecipes, 2, 10, 20));
+
+        FakeRecipeBackupService backupService = new FakeRecipeBackupService();
+
+        FakeRecipeConsoleReader reader = new FakeRecipeConsoleReader();
+        reader.MenuOptionsToReturn.Enqueue(MenuKeys.ShowRecipes);
+        reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
+        reader.PaginationActionsToReturn.Enqueue(PaginationAction.PreviousPage);
+        reader.PaginationActionsToReturn.Enqueue(PaginationAction.NextPage);
+        reader.PaginationActionsToReturn.Enqueue(PaginationAction.NextPage);
+        reader.PaginationActionsToReturn.Enqueue(PaginationAction.BackToMenu);
+
+        FakeRecipeConsoleWriter writer = new FakeRecipeConsoleWriter();
+
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, libraryService, backupService);
+
+        await app.RunAsync();
+
+        Assert.Equal(
+            new List<int> { 1, 1, 2, 2 },
+            libraryService.PageNumbersPassedToGetRecipeSummariesPage);
+        Assert.Equal(3, writer.ClearCallCount);
     }
 
     [Fact]

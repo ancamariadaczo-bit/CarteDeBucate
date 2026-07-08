@@ -9,6 +9,7 @@ public class FakeRichConsoleDisplay : IRichConsoleDisplay
     public bool ShowSpacedSuccessWasCalled { get; private set; }
     public bool ShowErrorWasCalled { get; private set; }
     public bool ShowInfoWasCalled { get; private set; }
+    public int ClearCallCount { get; private set; }
 
     public List<RecipeSummary>? RecipesPassedToShowRecipes { get; private set; }
     public Recipe? RecipePassedToShowRecipeDetails { get; private set; }
@@ -18,6 +19,7 @@ public class FakeRichConsoleDisplay : IRichConsoleDisplay
     public void Clear()
     {
         ClearWasCalled = true;
+        ClearCallCount++;
     }
 
     public void ShowTitle()

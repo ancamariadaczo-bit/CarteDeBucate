@@ -27,6 +27,9 @@ public static class RichConsoleTexts
     public const string NextActionTitle = "Ce vrei să faci mai departe?";
     public const string ImportAnotherRecipeOption = "Importă altă rețetă";
     public const string SearchAnotherRecipeOption = "Caută altă rețetă";
+    public const string NextPageOption = "Pagina următoare";
+    public const string PreviousPageOption = "Pagina anterioară";
+    public const string PaginationActionTitle = "Ce vrei să faci cu lista?";
     public const string KeepImportedIngredientsQuestion = "Păstrezi ingredientele importate?";
     public const string KeepImportedStepsQuestion = "Păstrezi pașii importați?";
     public const string SaveRecipeQuestion = "Dorești să salvezi această rețetă?";

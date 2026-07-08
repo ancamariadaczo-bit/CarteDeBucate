@@ -17,11 +17,15 @@
     <div class="d-flex gap-2">
         <a class="btn btn-outline-secondary"
            asp-action="Edit"
-           asp-route-id="@Model.Id">Editează</a>
+           asp-route-id="@Model.Id"
+           asp-route-pageNumber="@ViewData["PageNumber"]">Editează</a>
         <a class="btn btn-outline-danger"
            asp-action="Delete"
-           asp-route-id="@Model.Id">Șterge</a>
-        <a class="btn btn-outline-primary" asp-action="Index">Înapoi la listă</a>
+           asp-route-id="@Model.Id"
+           asp-route-pageNumber="@ViewData["PageNumber"]">Șterge</a>
+        <a class="btn btn-outline-primary"
+           asp-action="Index"
+           asp-route-pageNumber="@ViewData["PageNumber"]">Înapoi la listă</a>
     </div>
 </div>
 

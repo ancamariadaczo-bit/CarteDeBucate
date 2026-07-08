@@ -8,6 +8,7 @@ public interface IRecipeConsoleReader
     int? ReadRecipeIdToDelete();
     int? ReadRecipeIdToEdit();
     int? ReadRecipeIdToView();
+    PaginationAction ReadPaginationAction();
     string ReadRecipeUrlToImport();
     string ReadSearchText();
     string ReadBackupFilePath();

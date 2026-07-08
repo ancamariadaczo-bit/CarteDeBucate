@@ -66,6 +66,11 @@ public static class AppTexts
     public const string BackToMainMenuHint = "Lasă gol și apasă Enter pentru a reveni la meniul principal.";
     public const string BackToMainMenuIdHint = "Introdu 0 pentru a reveni la meniul principal.";
     public const string BackToMainMenuEditHint = "Scrie inapoi pentru a reveni la meniul principal fără modificări.";
+    public const string PaginationNextOption = "n - pagina următoare";
+    public const string PaginationPreviousOption = "p - pagina anterioară";
+    public const string PaginationBackOption = "0 - înapoi la meniul principal";
+    public const string PaginationPrompt = "Alege acțiunea pentru paginare: ";
+    public const string PaginationStatus = "Pagina {0} din {1}";
 
     public const string SourceLabel = "   Sursă: ";
     public const string SavedAtLabel = "   Salvată la: ";

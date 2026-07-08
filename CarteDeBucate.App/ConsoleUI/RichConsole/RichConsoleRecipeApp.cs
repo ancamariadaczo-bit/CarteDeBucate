@@ -2,6 +2,8 @@ using Spectre.Console;
 
 public class RichConsoleRecipeApp : IRecipeApp
 {
+    private const int PageSize = 10;
+
     private readonly IRecipeImporterService _importerService;
     private readonly IRecipeLibraryService _recipeLibraryService;
     private readonly IRecipeBackupService _backupService;
@@ -63,7 +65,7 @@ public class RichConsoleRecipeApp : IRecipeApp
                     break;
 
                 case MainMenuOption.ShowRecipes:
-                    ShowAllRecipes();
+                    shouldWaitForContinue = ShowAllRecipes();
                     break;
 
                 case MainMenuOption.SearchRecipe:
@@ -190,11 +192,56 @@ public class RichConsoleRecipeApp : IRecipeApp
         _display.ShowInfo(AppTexts.RecipeNotSaved);
     }
 
-    private void ShowAllRecipes()
+    private bool ShowAllRecipes()
     {
-        List<RecipeSummary> recipes = _recipeLibraryService.GetRecipeSummaries();
+        int pageNumber = 1;
 
-        _display.ShowRecipes(recipes);
+        while (true)
+        {
+            PagedResult<RecipeSummary> recipesPage =
+                _recipeLibraryService.GetRecipeSummariesPage(pageNumber, PageSize);
+
+            if (recipesPage.Items.Count == 0)
+            {
+                _display.ShowInfo(AppTexts.NoRecipes);
+                return true;
+            }
+
+            _display.ShowRecipes(recipesPage.Items);
+            _display.ShowInfo(string.Format(
+                AppTexts.PaginationStatus,
+                recipesPage.PageNumber,
+                recipesPage.TotalPages));
+
+            PaginationAction paginationAction = _reader.ReadPaginationAction();
+
+            if (paginationAction == PaginationAction.BackToMenu)
+            {
+                return false;
+            }
+
+            if (paginationAction == PaginationAction.NextPage)
+            {
+                if (recipesPage.HasNextPage)
+                {
+                    pageNumber = recipesPage.PageNumber + 1;
+                }
+
+                _display.Clear();
+                continue;
+            }
+
+            if (paginationAction == PaginationAction.PreviousPage)
+            {
+                if (recipesPage.HasPreviousPage)
+                {
+                    pageNumber = recipesPage.PageNumber - 1;
+                }
+
+                _display.Clear();
+                continue;
+            }
+        }
     }
 
     private bool SearchRecipe()

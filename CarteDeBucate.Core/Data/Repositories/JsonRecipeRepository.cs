@@ -66,6 +66,25 @@ public class JsonRecipeRepository : IRecipeRepository
             .ToList();
     }
 
+    public PagedResult<RecipeSummary> GetRecipeSummariesPage(int pageNumber, int pageSize)
+    {
+        List<Recipe> recipes = GetAllRecipes();
+
+        return CreateRecipeSummariesPage(recipes, pageNumber, pageSize);
+    }
+
+    public PagedResult<RecipeSummary> GetRecipeSummariesPageByUserId(
+        int userId,
+        int pageNumber,
+        int pageSize)
+    {
+        List<Recipe> recipes = GetAllRecipes()
+            .Where(recipe => recipe.UserId == userId)
+            .ToList();
+
+        return CreateRecipeSummariesPage(recipes, pageNumber, pageSize);
+    }
+
     public List<RecipeSummary> SearchRecipes(string searchText, int? userId)
     {
         if (string.IsNullOrWhiteSpace(searchText))
@@ -262,5 +281,31 @@ public class JsonRecipeRepository : IRecipeRepository
             Status = recipe.Status,
             UserId = recipe.UserId
         };
+    }
+
+    private PagedResult<RecipeSummary> CreateRecipeSummariesPage(
+        IEnumerable<Recipe> recipes,
+        int pageNumber,
+        int pageSize)
+    {
+        List<Recipe> orderedRecipes = recipes
+            .OrderByDescending(recipe => recipe.SavedAt)
+            .ToList();
+
+        int totalItems = orderedRecipes.Count;
+        int normalizedPageNumber = Math.Max(1, pageNumber);
+        int normalizedPageSize = Math.Max(1, pageSize);
+
+        List<RecipeSummary> items = orderedRecipes
+            .Skip((normalizedPageNumber - 1) * normalizedPageSize)
+            .Take(normalizedPageSize)
+            .Select(ToRecipeSummary)
+            .ToList();
+
+        return new PagedResult<RecipeSummary>(
+            items,
+            pageNumber,
+            pageSize,
+            totalItems);
     }
 }

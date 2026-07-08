@@ -2,6 +2,8 @@ using System.Linq;
 
 public class ClassicConsoleRecipeApp : IRecipeApp
 {
+    private const int PageSize = 10;
+
     private readonly IRecipeConsoleReader _reader;
     private readonly IRecipeConsoleWriter _writer;
     private readonly IRecipeImporterService _importerService;
@@ -165,15 +167,54 @@ public class ClassicConsoleRecipeApp : IRecipeApp
 
     private void ShowRecipes()
     {
-        List<RecipeSummary> recipes = _recipeLibraryService.GetRecipeSummaries();
+        int pageNumber = 1;
 
-        if (recipes.Count == 0)
+        while (true)
         {
-            _writer.DisplayMessage(AppTexts.NoRecipes);
-            return;
-        }
+            PagedResult<RecipeSummary> recipesPage =
+                _recipeLibraryService.GetRecipeSummariesPage(pageNumber, PageSize);
 
-        _writer.DisplayRecipeList(recipes);
+            if (recipesPage.Items.Count == 0)
+            {
+                _writer.DisplayMessage(AppTexts.NoRecipes);
+                return;
+            }
+
+            _writer.DisplayRecipeList(recipesPage.Items);
+            _writer.DisplayMessage(string.Format(
+                AppTexts.PaginationStatus,
+                recipesPage.PageNumber,
+                recipesPage.TotalPages));
+
+            PaginationAction paginationAction = _reader.ReadPaginationAction();
+
+            if (paginationAction == PaginationAction.BackToMenu)
+            {
+                return;
+            }
+
+            if (paginationAction == PaginationAction.NextPage)
+            {
+                if (recipesPage.HasNextPage)
+                {
+                    pageNumber = recipesPage.PageNumber + 1;
+                }
+
+                _writer.Clear();
+                continue;
+            }
+
+            if (paginationAction == PaginationAction.PreviousPage)
+            {
+                if (recipesPage.HasPreviousPage)
+                {
+                    pageNumber = recipesPage.PageNumber - 1;
+                }
+
+                _writer.Clear();
+                continue;
+            }
+        }
     }
 
     private void SearchRecipes()

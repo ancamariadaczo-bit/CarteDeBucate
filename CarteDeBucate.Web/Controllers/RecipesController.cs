@@ -8,9 +8,11 @@ namespace CarteDeBucate.Web.Controllers;
 [ServiceFilter(typeof(OptionalAuthenticationFilter))]
 public class RecipesController : Controller
 {
+    private const int PageSize = 10;
     private const string SuccessMessageKey = "SuccessMessage";
     private const string DeleteCancelActionKey = "DeleteCancelAction";
     private const string EditCancelActionKey = "EditCancelAction";
+    private const string PageNumberKey = "PageNumber";
     private const string ReturnToIndexValue = "Index";
     private const string ShowManualAddRecipeLinkKey = "ShowManualAddRecipeLink";
     private const string ImportMissingRequiredDetailsMessage =
@@ -27,20 +29,44 @@ public class RecipesController : Controller
         _recipeImporterService = recipeImporterService;
     }
 
-    public IActionResult Index(string? searchText)
+    public IActionResult Index(string? searchText, int pageNumber = 1)
     {
-        List<RecipeSummary> recipes = string.IsNullOrWhiteSpace(searchText)
-            ? _recipeLibraryService.GetRecipeSummaries()
-            : _recipeLibraryService.SearchRecipes(searchText);
+        List<RecipeSummary> recipes;
+        PagedResult<RecipeSummary>? pagedResult = null;
+
+        if (string.IsNullOrWhiteSpace(searchText))
+        {
+            pagedResult = _recipeLibraryService.GetRecipeSummariesPage(pageNumber, PageSize);
+
+            if (pagedResult.TotalPages > 0 &&
+                pagedResult.PageNumber > pagedResult.TotalPages)
+            {
+                return RedirectToAction(
+                    nameof(Index),
+                    new { pageNumber = pagedResult.TotalPages });
+            }
+
+            recipes = pagedResult.Items;
+        }
+        else
+        {
+            recipes = _recipeLibraryService.SearchRecipes(searchText);
+        }
 
         return View(new RecipeIndexViewModel
         {
             Recipes = recipes,
-            SearchText = searchText ?? ""
+            SearchText = searchText ?? "",
+            PageNumber = pagedResult?.PageNumber ?? 1,
+            PageSize = pagedResult?.PageSize ?? PageSize,
+            TotalItems = pagedResult?.TotalItems ?? recipes.Count,
+            TotalPages = pagedResult?.TotalPages ?? 0,
+            HasPreviousPage = pagedResult?.HasPreviousPage ?? false,
+            HasNextPage = pagedResult?.HasNextPage ?? false
         });
     }
 
-    public IActionResult Details(int id)
+    public IActionResult Details(int id, int pageNumber = 1)
     {
         Recipe? recipe = _recipeLibraryService.GetRecipeById(id);
 
@@ -48,6 +74,8 @@ public class RecipesController : Controller
         {
             return RecipeNotFound();
         }
+
+        SetPageNumber(pageNumber);
 
         return View(recipe);
     }
@@ -90,7 +118,10 @@ public class RecipesController : Controller
             new { id = result.Recipe.Id });
     }
 
-    public IActionResult Edit(int id, string? returnTo = null)
+    public IActionResult Edit(
+        int id,
+        string? returnTo = null,
+        int pageNumber = 1)
     {
         Recipe? recipe = _recipeLibraryService.GetRecipeById(id);
 
@@ -100,6 +131,7 @@ public class RecipesController : Controller
         }
 
         SetEditCancelAction(returnTo);
+        SetPageNumber(pageNumber);
 
         return View(RecipeFormViewModel.FromRecipe(recipe));
     }
@@ -109,7 +141,8 @@ public class RecipesController : Controller
     public IActionResult Edit(
         int id,
         RecipeFormViewModel model,
-        string? returnTo = null)
+        string? returnTo = null,
+        int pageNumber = 1)
     {
         if (id != model.Id)
         {
@@ -119,6 +152,7 @@ public class RecipesController : Controller
         if (!ModelState.IsValid)
         {
             SetEditCancelAction(returnTo);
+            SetPageNumber(pageNumber);
 
             return View(model);
         }
@@ -129,16 +163,33 @@ public class RecipesController : Controller
         {
             ModelState.AddModelError("", result.Message);
             SetEditCancelAction(returnTo);
+            SetPageNumber(pageNumber);
 
             return View(model);
         }
 
         TempData[SuccessMessageKey] = result.Message;
 
-        return RedirectToAction(nameof(Details), new { id = model.Id });
+        if (IsReturnToIndex(returnTo))
+        {
+            return RedirectToAction(
+                nameof(Index),
+                new { pageNumber });
+        }
+
+        return RedirectToAction(
+            nameof(Details),
+            new
+            {
+                id = model.Id,
+                pageNumber
+            });
     }
 
-    public IActionResult Delete(int id, string? returnTo = null)
+    public IActionResult Delete(
+        int id,
+        string? returnTo = null,
+        int pageNumber = 1)
     {
         Recipe? recipe = _recipeLibraryService.GetRecipeById(id);
 
@@ -148,13 +199,17 @@ public class RecipesController : Controller
         }
 
         SetDeleteCancelAction(returnTo);
+        SetPageNumber(pageNumber);
 
         return View(recipe);
     }
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
-    public IActionResult DeleteConfirmed(int id, string? returnTo = null)
+    public IActionResult DeleteConfirmed(
+        int id,
+        string? returnTo = null,
+        int pageNumber = 1)
     {
         RecipeSaveResult result = _recipeLibraryService.DeleteRecipe(id);
 
@@ -169,11 +224,19 @@ public class RecipesController : Controller
 
             ModelState.AddModelError("", result.Message);
             SetDeleteCancelAction(returnTo);
+            SetPageNumber(pageNumber);
 
             return View(recipe);
         }
 
         TempData[SuccessMessageKey] = result.Message;
+
+        if (IsReturnToIndex(returnTo))
+        {
+            return RedirectToAction(
+                nameof(Index),
+                new { pageNumber });
+        }
 
         return RedirectToAction(nameof(Index));
     }
@@ -190,6 +253,11 @@ public class RecipesController : Controller
         ViewData[DeleteCancelActionKey] = IsReturnToIndex(returnTo)
             ? nameof(Index)
             : nameof(Details);
+    }
+
+    private void SetPageNumber(int pageNumber)
+    {
+        ViewData[PageNumberKey] = Math.Max(1, pageNumber);
     }
 
     private static bool IsReturnToIndex(string? returnTo)

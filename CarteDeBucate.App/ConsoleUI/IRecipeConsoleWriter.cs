@@ -1,5 +1,6 @@
 public interface IRecipeConsoleWriter
 {
+    void Clear();
     void DisplayEmptyLine();
     void ShowMenu(List<MenuOption> options);
     void DisplayMessage(string message);

@@ -2,6 +2,8 @@ public interface IRecipeRepository
 {
     List<RecipeSummary> GetAllRecipeSummaries();
     List<RecipeSummary> GetRecipeSummariesByUserId(int userId);
+    PagedResult<RecipeSummary> GetRecipeSummariesPage(int pageNumber, int pageSize);
+    PagedResult<RecipeSummary> GetRecipeSummariesPageByUserId(int userId, int pageNumber, int pageSize);
 
     List<Recipe> GetAllRecipes();
     List<Recipe> GetRecipesByUserId(int userId);

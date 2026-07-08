@@ -24,6 +24,8 @@ public interface IRichConsoleReader
 
     RecipeSummary? SelectRecipe(List<RecipeSummary> recipes, string title);
 
+    PaginationAction ReadPaginationAction();
+
     Recipe ReadRecipeEdits(Recipe recipe);
 
     bool ConfirmDeleteRecipe(RecipeSummary recipe);

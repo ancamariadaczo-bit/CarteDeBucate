@@ -226,6 +226,23 @@ public class RecipeConsoleReader : IRecipeConsoleReader
         return ReadRecipeId(AppTexts.EnterRecipeIdToView);
     }
 
+    public PaginationAction ReadPaginationAction()
+    {
+        Console.WriteLine(AppTexts.PaginationNextOption);
+        Console.WriteLine(AppTexts.PaginationPreviousOption);
+        Console.WriteLine(AppTexts.PaginationBackOption);
+        Console.Write(AppTexts.PaginationPrompt);
+
+        string input = Console.ReadLine() ?? "";
+
+        return input.Trim().ToLowerInvariant() switch
+        {
+            "n" => PaginationAction.NextPage,
+            "p" => PaginationAction.PreviousPage,
+            _ => PaginationAction.BackToMenu
+        };
+    }
+
     public bool AskForSaveConfirmation()
     {
         while (true)

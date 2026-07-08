@@ -8,6 +8,8 @@ public class FakeRecipeRepository : IRecipeRepository
     public bool HasRecipesForUserWasCalled { get; private set; }
     public bool GetAllRecipeSummariesWasCalled { get; private set; }
     public bool GetRecipeSummariesByUserIdWasCalled { get; private set; }
+    public bool GetRecipeSummariesPageWasCalled { get; private set; }
+    public bool GetRecipeSummariesPageByUserIdWasCalled { get; private set; }
     public bool SearchRecipesWasCalled { get; private set; }
     public bool GetRecipeByIdWasCalled { get; private set; }
     public bool GetRecipeByIdAndUserIdWasCalled { get; private set; }
@@ -18,6 +20,9 @@ public class FakeRecipeRepository : IRecipeRepository
     public int? UserIdPassedToDeleteRecipeForUser { get; private set; }
     public int? UserIdPassedToHasRecipesForUser { get; private set; }
     public int? UserIdPassedToGetRecipeSummariesByUserId { get; private set; }
+    public int? UserIdPassedToGetRecipeSummariesPageByUserId { get; private set; }
+    public int? PageNumberPassedToGetRecipeSummariesPage { get; private set; }
+    public int? PageSizePassedToGetRecipeSummariesPage { get; private set; }
     public int? UserIdPassedToSearchRecipes { get; private set; }
     public string? SearchTextPassedToSearchRecipes { get; private set; }
 
@@ -37,6 +42,15 @@ public class FakeRecipeRepository : IRecipeRepository
     public List<Recipe> GetAllRecipes()
     {
         return Recipes;
+    }
+
+    public PagedResult<RecipeSummary> GetRecipeSummariesPage(int pageNumber, int pageSize)
+    {
+        GetRecipeSummariesPageWasCalled = true;
+        PageNumberPassedToGetRecipeSummariesPage = pageNumber;
+        PageSizePassedToGetRecipeSummariesPage = pageSize;
+
+        return CreateRecipeSummariesPage(Recipes, pageNumber, pageSize);
     }
 
     public Recipe? GetRecipeById(int recipeId)
@@ -62,6 +76,20 @@ public class FakeRecipeRepository : IRecipeRepository
             .Where(recipe => recipe.UserId == userId)
             .Select(ToRecipeSummary)
             .ToList();
+    }
+
+    public PagedResult<RecipeSummary> GetRecipeSummariesPageByUserId(int userId, int pageNumber, int pageSize)
+    {
+        GetRecipeSummariesPageByUserIdWasCalled = true;
+        UserIdPassedToGetRecipeSummariesPageByUserId = userId;
+        PageNumberPassedToGetRecipeSummariesPage = pageNumber;
+        PageSizePassedToGetRecipeSummariesPage = pageSize;
+
+        List<Recipe> recipesForUser = Recipes
+            .Where(recipe => recipe.UserId == userId)
+            .ToList();
+
+        return CreateRecipeSummariesPage(recipesForUser, pageNumber, pageSize);
     }
 
     public List<RecipeSummary> SearchRecipes(string searchText, int? userId)
@@ -198,5 +226,31 @@ public class FakeRecipeRepository : IRecipeRepository
             Status = recipe.Status,
             UserId = recipe.UserId
         };
+    }
+
+    private PagedResult<RecipeSummary> CreateRecipeSummariesPage(
+        IEnumerable<Recipe> recipes,
+        int pageNumber,
+        int pageSize)
+    {
+        List<Recipe> orderedRecipes = recipes
+            .OrderByDescending(recipe => recipe.SavedAt)
+            .ToList();
+
+        int totalItems = orderedRecipes.Count;
+        int normalizedPageNumber = Math.Max(1, pageNumber);
+        int normalizedPageSize = Math.Max(1, pageSize);
+
+        List<RecipeSummary> items = orderedRecipes
+            .Skip((normalizedPageNumber - 1) * normalizedPageSize)
+            .Take(normalizedPageSize)
+            .Select(ToRecipeSummary)
+            .ToList();
+
+        return new PagedResult<RecipeSummary>(
+            items,
+            pageNumber,
+            pageSize,
+            totalItems);
     }
 }
