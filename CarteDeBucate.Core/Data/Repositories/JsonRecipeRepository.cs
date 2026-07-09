@@ -94,19 +94,33 @@ public class JsonRecipeRepository : IRecipeRepository
 
         List<Recipe> recipes = GetAllRecipes();
 
-        return recipes
-            .Where(recipe =>
-                (!userId.HasValue || recipe.UserId == userId.Value) &&
-                ((recipe.Name ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-                (recipe.SourceUrl ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-                (recipe.Notes ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-                recipe.Ingredients.Any(ingredient =>
-                    ingredient.Contains(searchText, StringComparison.OrdinalIgnoreCase)) ||
-                recipe.Steps.Any(step =>
-                    step.Contains(searchText, StringComparison.OrdinalIgnoreCase))))
+        return FilterRecipesBySearchText(recipes, searchText, userId)
             .OrderByDescending(recipe => recipe.SavedAt)
             .Select(ToRecipeSummary)
             .ToList();
+    }
+
+    public PagedResult<RecipeSummary> SearchRecipesPage(
+        string searchText,
+        int? userId,
+        int pageNumber,
+        int pageSize)
+    {
+        if (string.IsNullOrWhiteSpace(searchText))
+        {
+            return new PagedResult<RecipeSummary>(
+                new List<RecipeSummary>(),
+                pageNumber,
+                pageSize,
+                0);
+        }
+
+        List<Recipe> recipes = GetAllRecipes();
+
+        return CreateRecipeSummariesPage(
+            FilterRecipesBySearchText(recipes, searchText, userId),
+            pageNumber,
+            pageSize);
     }
 
     public bool HasRecipes()
@@ -307,5 +321,22 @@ public class JsonRecipeRepository : IRecipeRepository
             pageNumber,
             pageSize,
             totalItems);
+    }
+
+    private IEnumerable<Recipe> FilterRecipesBySearchText(
+        IEnumerable<Recipe> recipes,
+        string searchText,
+        int? userId)
+    {
+        return recipes
+            .Where(recipe =>
+                (!userId.HasValue || recipe.UserId == userId.Value) &&
+                ((recipe.Name ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                (recipe.SourceUrl ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                (recipe.Notes ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                recipe.Ingredients.Any(ingredient =>
+                    ingredient.Contains(searchText, StringComparison.OrdinalIgnoreCase)) ||
+                recipe.Steps.Any(step =>
+                    step.Contains(searchText, StringComparison.OrdinalIgnoreCase))));
     }
 }

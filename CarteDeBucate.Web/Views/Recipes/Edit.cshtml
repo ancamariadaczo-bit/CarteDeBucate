@@ -3,6 +3,11 @@
 @{
     ViewData["Title"] = "Editează rețetă";
     string cancelAction = ViewData["EditCancelAction"] as string ?? "Details";
+    string? routeSearchText = ViewData["SearchText"] as string;
+    if (string.IsNullOrWhiteSpace(routeSearchText))
+    {
+        routeSearchText = null;
+    }
 }
 
 <div class="mb-4">
@@ -12,6 +17,7 @@
 
 <form asp-action="Edit"
       asp-route-id="@Model.Id"
+      asp-route-searchText="@routeSearchText"
       asp-route-pageNumber="@ViewData["PageNumber"]"
       method="post"
       data-track-unsaved-changes="true">
@@ -31,6 +37,7 @@
         {
             <a class="btn btn-outline-secondary"
                asp-action="Index"
+               asp-route-searchText="@routeSearchText"
                asp-route-pageNumber="@ViewData["PageNumber"]"
                data-confirm-unsaved-changes="true">Renunță</a>
         }
@@ -39,6 +46,7 @@
             <a class="btn btn-outline-secondary"
                asp-action="Details"
                asp-route-id="@Model.Id"
+               asp-route-searchText="@routeSearchText"
                asp-route-pageNumber="@ViewData["PageNumber"]"
                data-confirm-unsaved-changes="true">Renunță</a>
         }
@@ -46,6 +54,7 @@
            asp-action="Delete"
            asp-route-id="@Model.Id"
            asp-route-returnTo="@cancelAction"
+           asp-route-searchText="@routeSearchText"
            asp-route-pageNumber="@ViewData["PageNumber"]"
            data-confirm-unsaved-changes="true">Șterge rețeta</a>
     </div>

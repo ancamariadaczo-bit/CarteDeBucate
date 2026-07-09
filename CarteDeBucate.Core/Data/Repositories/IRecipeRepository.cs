@@ -9,6 +9,7 @@ public interface IRecipeRepository
     List<Recipe> GetRecipesByUserId(int userId);
 
     List<RecipeSummary> SearchRecipes(string searchText, int? userId);
+    PagedResult<RecipeSummary> SearchRecipesPage(string searchText, int? userId, int pageNumber, int pageSize);
 
     bool HasRecipes();
     bool HasRecipesForUser(int userId);

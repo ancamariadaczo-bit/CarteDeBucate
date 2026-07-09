@@ -207,6 +207,35 @@ public class DatabaseRecipeRepositoryTests
     }
 
     [Fact]
+    public void GetRecipeSummariesPage_ShouldReturnRequestedPageAndTotal()
+    {
+        string databasePath = CreateTemporaryDatabasePath();
+
+        try
+        {
+            DatabaseRecipeRepository repository = CreateRepository(databasePath);
+            repository.AddRecipe(CreateTestRecipe(name: "First"));
+            repository.AddRecipe(CreateTestRecipe(
+                name: "Second",
+                sourceUrl: "https://example.com/second"));
+            repository.AddRecipe(CreateTestRecipe(
+                name: "Third",
+                sourceUrl: "https://example.com/third"));
+
+            PagedResult<RecipeSummary> result = repository.GetRecipeSummariesPage(2, 2);
+
+            Assert.Single(result.Items);
+            Assert.Equal(3, result.TotalItems);
+            Assert.Equal(2, result.PageNumber);
+            Assert.Equal(2, result.TotalPages);
+        }
+        finally
+        {
+            DeleteDatabaseFile(databasePath);
+        }
+    }
+
+    [Fact]
     public void SearchRecipes_ShouldSearchInNotesIngredientsAndSteps()
     {
         string databasePath = CreateTemporaryDatabasePath();
@@ -281,6 +310,42 @@ public class DatabaseRecipeRepositoryTests
             Assert.Single(recipes);
             Assert.Equal(firstUserRecipe.Id, recipes[0].Id);
             Assert.Equal(1, recipes[0].UserId);
+        }
+        finally
+        {
+            DeleteDatabaseFile(databasePath);
+        }
+    }
+
+    [Fact]
+    public void SearchRecipesPage_ShouldReturnRequestedUserPageAndFilteredTotal()
+    {
+        string databasePath = CreateTemporaryDatabasePath();
+
+        try
+        {
+            DatabaseRecipeRepository repository = CreateRepository(databasePath);
+            AddUser(databasePath, 1);
+            AddUser(databasePath, 2);
+
+            repository.AddRecipe(CreateTestRecipe(name: "Banana bread", userId: 1));
+            repository.AddRecipe(CreateTestRecipe(
+                name: "Banana cake",
+                sourceUrl: "https://example.com/banana-cake",
+                userId: 1));
+            repository.AddRecipe(CreateTestRecipe(
+                name: "Banana pancakes",
+                sourceUrl: "https://example.com/banana-pancakes",
+                userId: 2));
+
+            PagedResult<RecipeSummary> result =
+                repository.SearchRecipesPage("banana", 1, 2, 1);
+
+            Assert.Single(result.Items);
+            Assert.All(result.Items, recipe => Assert.Equal(1, recipe.UserId));
+            Assert.Equal(2, result.TotalItems);
+            Assert.Equal(2, result.PageNumber);
+            Assert.Equal(2, result.TotalPages);
         }
         finally
         {

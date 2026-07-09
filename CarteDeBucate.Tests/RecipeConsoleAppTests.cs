@@ -236,7 +236,8 @@ public class RecipeConsoleAppTests
         FakeRecipeLibraryService libraryService = new FakeRecipeLibraryService
         {
             RecipeSummariesToReturn = recipes,
-            SearchResultsToReturn = searchResults
+            SearchResultsPageToReturn =
+                new PagedResult<RecipeSummary>(searchResults, 1, 10, searchResults.Count)
         };
 
         FakeRecipeBackupService backupService = new FakeRecipeBackupService();
@@ -256,11 +257,118 @@ public class RecipeConsoleAppTests
         await app.RunAsync();
 
         Assert.True(reader.ReadSearchTextWasCalled);
-        Assert.True(libraryService.SearchRecipesWasCalled);
-        Assert.Equal("keto", libraryService.SearchTextPassedToSearchRecipes);
+        Assert.True(libraryService.SearchRecipesPageWasCalled);
+        Assert.Equal("keto", libraryService.SearchTextPassedToSearchRecipesPage);
+        Assert.Equal(1, libraryService.PageNumberPassedToSearchRecipesPage);
+        Assert.Equal(10, libraryService.PageSizePassedToSearchRecipesPage);
+        Assert.False(libraryService.SearchRecipesWasCalled);
 
         Assert.True(writer.DisplaySearchResultsWasCalled);
         Assert.Equal(searchResults, writer.RecipesPassedToDisplaySearchResults);
+        Assert.Contains(
+            string.Format(AppTexts.SearchResultsTotal, searchResults.Count),
+            writer.DisplayedMessages);
+    }
+
+    [Fact]
+    public async Task Run_WithSearchOption_ShouldNavigateToNextSearchPage()
+    {
+        List<RecipeSummary> recipes = new()
+        {
+            new RecipeSummary { Id = 1, Name = "Keto Bread" }
+        };
+        List<RecipeSummary> firstPageResults = new()
+        {
+            new RecipeSummary { Id = 1, Name = "Keto Bread" }
+        };
+        List<RecipeSummary> secondPageResults = new()
+        {
+            new RecipeSummary { Id = 2, Name = "Keto Pancakes" }
+        };
+
+        FakeRecipeImporterService importService = new FakeRecipeImporterService();
+        FakeRecipeLibraryService libraryService = new FakeRecipeLibraryService
+        {
+            RecipeSummariesToReturn = recipes
+        };
+        libraryService.SearchResultsPagesToReturn.Enqueue(
+            new PagedResult<RecipeSummary>(firstPageResults, 1, 10, 20));
+        libraryService.SearchResultsPagesToReturn.Enqueue(
+            new PagedResult<RecipeSummary>(secondPageResults, 2, 10, 20));
+
+        FakeRecipeBackupService backupService = new FakeRecipeBackupService();
+
+        FakeRecipeConsoleReader reader = new FakeRecipeConsoleReader
+        {
+            SearchText = "keto"
+        };
+        reader.MenuOptionsToReturn.Enqueue(MenuKeys.SearchRecipe);
+        reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
+        reader.PaginationActionsToReturn.Enqueue(PaginationAction.NextPage);
+        reader.PaginationActionsToReturn.Enqueue(PaginationAction.BackToMenu);
+
+        FakeRecipeConsoleWriter writer = new FakeRecipeConsoleWriter();
+
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, libraryService, backupService);
+
+        await app.RunAsync();
+
+        Assert.Equal(
+            new List<int> { 1, 2 },
+            libraryService.PageNumbersPassedToSearchRecipesPage);
+        Assert.Equal("keto", libraryService.SearchTextPassedToSearchRecipesPage);
+        Assert.True(writer.DisplaySearchResultsWasCalled);
+    }
+
+    [Fact]
+    public async Task Run_WithSearchOption_ShouldStayOnCurrentPageWhenNextSearchPageDoesNotExist()
+    {
+        List<RecipeSummary> recipes = new()
+        {
+            new RecipeSummary { Id = 1, Name = "Keto Bread" }
+        };
+        List<RecipeSummary> firstPageResults = new()
+        {
+            new RecipeSummary { Id = 1, Name = "Keto Bread" }
+        };
+        List<RecipeSummary> secondPageResults = new()
+        {
+            new RecipeSummary { Id = 2, Name = "Keto Pancakes" }
+        };
+
+        FakeRecipeImporterService importService = new FakeRecipeImporterService();
+        FakeRecipeLibraryService libraryService = new FakeRecipeLibraryService
+        {
+            RecipeSummariesToReturn = recipes
+        };
+        libraryService.SearchResultsPagesToReturn.Enqueue(
+            new PagedResult<RecipeSummary>(firstPageResults, 1, 10, 20));
+        libraryService.SearchResultsPagesToReturn.Enqueue(
+            new PagedResult<RecipeSummary>(secondPageResults, 2, 10, 20));
+        libraryService.SearchResultsPagesToReturn.Enqueue(
+            new PagedResult<RecipeSummary>(secondPageResults, 2, 10, 20));
+
+        FakeRecipeBackupService backupService = new FakeRecipeBackupService();
+
+        FakeRecipeConsoleReader reader = new FakeRecipeConsoleReader
+        {
+            SearchText = "keto"
+        };
+        reader.MenuOptionsToReturn.Enqueue(MenuKeys.SearchRecipe);
+        reader.MenuOptionsToReturn.Enqueue(MenuKeys.Exit);
+        reader.PaginationActionsToReturn.Enqueue(PaginationAction.NextPage);
+        reader.PaginationActionsToReturn.Enqueue(PaginationAction.NextPage);
+        reader.PaginationActionsToReturn.Enqueue(PaginationAction.BackToMenu);
+
+        FakeRecipeConsoleWriter writer = new FakeRecipeConsoleWriter();
+
+        ClassicConsoleRecipeApp app = new ClassicConsoleRecipeApp(reader, writer, importService, libraryService, backupService);
+
+        await app.RunAsync();
+
+        Assert.Equal(
+            new List<int> { 1, 2, 2 },
+            libraryService.PageNumbersPassedToSearchRecipesPage);
     }
 
     [Fact]

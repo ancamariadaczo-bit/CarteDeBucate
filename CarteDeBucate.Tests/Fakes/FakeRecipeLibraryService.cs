@@ -6,6 +6,9 @@ public class FakeRecipeLibraryService : IRecipeLibraryService
         new PagedResult<RecipeSummary>(new List<RecipeSummary>(), 1, 10, 0);
     public Queue<PagedResult<RecipeSummary>> RecipeSummariesPagesToReturn { get; } = new();
     public List<RecipeSummary> SearchResultsToReturn { get; set; } = new();
+    public PagedResult<RecipeSummary> SearchResultsPageToReturn { get; set; } =
+        new PagedResult<RecipeSummary>(new List<RecipeSummary>(), 1, 10, 0);
+    public Queue<PagedResult<RecipeSummary>> SearchResultsPagesToReturn { get; } = new();
 
     public RecipeSaveResult SaveResultToReturn { get; set; } = new();
     public RecipeSaveResult UpdateResultToReturn { get; set; } = new();
@@ -16,6 +19,7 @@ public class FakeRecipeLibraryService : IRecipeLibraryService
     public bool HasRecipesInCurrentContextWasCalled { get; private set; }
     public bool GetRecipeByIdWasCalled { get; private set; }
     public bool SearchRecipesWasCalled { get; private set; }
+    public bool SearchRecipesPageWasCalled { get; private set; }
     public bool SaveRecipeWasCalled { get; private set; }
     public bool UpdateRecipeWasCalled { get; private set; }
     public bool DeleteRecipeWasCalled { get; private set; }
@@ -27,6 +31,10 @@ public class FakeRecipeLibraryService : IRecipeLibraryService
     public List<int> PageNumbersPassedToGetRecipeSummariesPage { get; } = new();
 
     public string? SearchTextPassedToSearchRecipes { get; private set; }
+    public string? SearchTextPassedToSearchRecipesPage { get; private set; }
+    public int? PageNumberPassedToSearchRecipesPage { get; private set; }
+    public int? PageSizePassedToSearchRecipesPage { get; private set; }
+    public List<int> PageNumbersPassedToSearchRecipesPage { get; } = new();
 
     public Recipe? RecipePassedToSaveRecipe { get; private set; }
     public Recipe? RecipePassedToUpdateRecipe { get; private set; }
@@ -67,6 +75,22 @@ public class FakeRecipeLibraryService : IRecipeLibraryService
         SearchRecipesWasCalled = true;
         SearchTextPassedToSearchRecipes = searchText;
         return SearchResultsToReturn;
+    }
+
+    public PagedResult<RecipeSummary> SearchRecipesPage(
+        string searchText,
+        int pageNumber,
+        int pageSize)
+    {
+        SearchRecipesPageWasCalled = true;
+        SearchTextPassedToSearchRecipesPage = searchText;
+        PageNumberPassedToSearchRecipesPage = pageNumber;
+        PageSizePassedToSearchRecipesPage = pageSize;
+        PageNumbersPassedToSearchRecipesPage.Add(pageNumber);
+
+        return SearchResultsPagesToReturn.Count > 0
+            ? SearchResultsPagesToReturn.Dequeue()
+            : SearchResultsPageToReturn;
     }
 
     public RecipeSaveResult SaveRecipe(Recipe recipe)

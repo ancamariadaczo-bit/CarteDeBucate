@@ -11,6 +11,7 @@ public class FakeRecipeRepository : IRecipeRepository
     public bool GetRecipeSummariesPageWasCalled { get; private set; }
     public bool GetRecipeSummariesPageByUserIdWasCalled { get; private set; }
     public bool SearchRecipesWasCalled { get; private set; }
+    public bool SearchRecipesPageWasCalled { get; private set; }
     public bool GetRecipeByIdWasCalled { get; private set; }
     public bool GetRecipeByIdAndUserIdWasCalled { get; private set; }
 
@@ -24,7 +25,11 @@ public class FakeRecipeRepository : IRecipeRepository
     public int? PageNumberPassedToGetRecipeSummariesPage { get; private set; }
     public int? PageSizePassedToGetRecipeSummariesPage { get; private set; }
     public int? UserIdPassedToSearchRecipes { get; private set; }
+    public int? UserIdPassedToSearchRecipesPage { get; private set; }
+    public int? PageNumberPassedToSearchRecipesPage { get; private set; }
+    public int? PageSizePassedToSearchRecipesPage { get; private set; }
     public string? SearchTextPassedToSearchRecipes { get; private set; }
+    public string? SearchTextPassedToSearchRecipesPage { get; private set; }
 
     public bool SourceUrlExists { get; set; }
 
@@ -98,18 +103,27 @@ public class FakeRecipeRepository : IRecipeRepository
         SearchTextPassedToSearchRecipes = searchText;
         UserIdPassedToSearchRecipes = userId;
 
-        return Recipes
-            .Where(recipe =>
-                (!userId.HasValue || recipe.UserId == userId.Value) &&
-                ((recipe.Name ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-                (recipe.SourceUrl ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-                (recipe.Notes ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-                recipe.Ingredients.Any(ingredient =>
-                    ingredient.Contains(searchText, StringComparison.OrdinalIgnoreCase)) ||
-                recipe.Steps.Any(step =>
-                    step.Contains(searchText, StringComparison.OrdinalIgnoreCase))))
+        return FilterRecipesBySearchText(searchText, userId)
             .Select(ToRecipeSummary)
             .ToList();
+    }
+
+    public PagedResult<RecipeSummary> SearchRecipesPage(
+        string searchText,
+        int? userId,
+        int pageNumber,
+        int pageSize)
+    {
+        SearchRecipesPageWasCalled = true;
+        SearchTextPassedToSearchRecipesPage = searchText;
+        UserIdPassedToSearchRecipesPage = userId;
+        PageNumberPassedToSearchRecipesPage = pageNumber;
+        PageSizePassedToSearchRecipesPage = pageSize;
+
+        return CreateRecipeSummariesPage(
+            FilterRecipesBySearchText(searchText, userId),
+            pageNumber,
+            pageSize);
     }
 
     public bool HasRecipes()
@@ -252,5 +266,19 @@ public class FakeRecipeRepository : IRecipeRepository
             pageNumber,
             pageSize,
             totalItems);
+    }
+
+    private IEnumerable<Recipe> FilterRecipesBySearchText(string searchText, int? userId)
+    {
+        return Recipes
+            .Where(recipe =>
+                (!userId.HasValue || recipe.UserId == userId.Value) &&
+                ((recipe.Name ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                (recipe.SourceUrl ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                (recipe.Notes ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                recipe.Ingredients.Any(ingredient =>
+                    ingredient.Contains(searchText, StringComparison.OrdinalIgnoreCase)) ||
+                recipe.Steps.Any(step =>
+                    step.Contains(searchText, StringComparison.OrdinalIgnoreCase))));
     }
 }

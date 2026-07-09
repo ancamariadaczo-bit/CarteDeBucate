@@ -8,6 +8,7 @@ public interface IRecipeLibraryService
     Recipe? GetRecipeById(int recipeId);
 
     List<RecipeSummary> SearchRecipes(string searchText);
+    PagedResult<RecipeSummary> SearchRecipesPage(string searchText, int pageNumber, int pageSize);
 
     RecipeSaveResult SaveRecipe(Recipe recipe);
 

@@ -232,9 +232,57 @@ public class ClassicConsoleRecipeApp : IRecipeApp
             return;
         }
 
-        List<RecipeSummary> foundRecipes = _recipeLibraryService.SearchRecipes(searchText);
+        int pageNumber = 1;
 
-        _writer.DisplaySearchResults(foundRecipes);
+        while (true)
+        {
+            PagedResult<RecipeSummary> searchResultsPage =
+                _recipeLibraryService.SearchRecipesPage(searchText, pageNumber, PageSize);
+
+            _writer.DisplaySearchResults(searchResultsPage.Items);
+            _writer.DisplayMessage(string.Format(
+                AppTexts.SearchResultsTotal,
+                searchResultsPage.TotalItems));
+
+            if (searchResultsPage.TotalItems == 0)
+            {
+                return;
+            }
+
+            _writer.DisplayMessage(string.Format(
+                AppTexts.PaginationStatus,
+                searchResultsPage.PageNumber,
+                searchResultsPage.TotalPages));
+
+            PaginationAction paginationAction = _reader.ReadPaginationAction();
+
+            if (paginationAction == PaginationAction.BackToMenu)
+            {
+                return;
+            }
+
+            if (paginationAction == PaginationAction.NextPage)
+            {
+                if (searchResultsPage.HasNextPage)
+                {
+                    pageNumber = searchResultsPage.PageNumber + 1;
+                }
+
+                _writer.Clear();
+                continue;
+            }
+
+            if (paginationAction == PaginationAction.PreviousPage)
+            {
+                if (searchResultsPage.HasPreviousPage)
+                {
+                    pageNumber = searchResultsPage.PageNumber - 1;
+                }
+
+                _writer.Clear();
+                continue;
+            }
+        }
     }
 
     private void ViewRecipeDetails()

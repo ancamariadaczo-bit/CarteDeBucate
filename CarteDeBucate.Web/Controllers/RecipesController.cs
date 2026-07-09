@@ -13,6 +13,7 @@ public class RecipesController : Controller
     private const string DeleteCancelActionKey = "DeleteCancelAction";
     private const string EditCancelActionKey = "EditCancelAction";
     private const string PageNumberKey = "PageNumber";
+    private const string SearchTextKey = "SearchText";
     private const string ReturnToIndexValue = "Index";
     private const string ShowManualAddRecipeLinkKey = "ShowManualAddRecipeLink";
     private const string ImportMissingRequiredDetailsMessage =
@@ -37,20 +38,24 @@ public class RecipesController : Controller
         if (string.IsNullOrWhiteSpace(searchText))
         {
             pagedResult = _recipeLibraryService.GetRecipeSummariesPage(pageNumber, PageSize);
-
-            if (pagedResult.TotalPages > 0 &&
-                pagedResult.PageNumber > pagedResult.TotalPages)
-            {
-                return RedirectToAction(
-                    nameof(Index),
-                    new { pageNumber = pagedResult.TotalPages });
-            }
-
             recipes = pagedResult.Items;
         }
         else
         {
-            recipes = _recipeLibraryService.SearchRecipes(searchText);
+            pagedResult = _recipeLibraryService.SearchRecipesPage(searchText, pageNumber, PageSize);
+            recipes = pagedResult.Items;
+        }
+
+        if (pagedResult.TotalPages > 0 &&
+            pagedResult.PageNumber > pagedResult.TotalPages)
+        {
+            return RedirectToAction(
+                nameof(Index),
+                new
+                {
+                    pageNumber = pagedResult.TotalPages,
+                    searchText
+                });
         }
 
         return View(new RecipeIndexViewModel
@@ -66,7 +71,10 @@ public class RecipesController : Controller
         });
     }
 
-    public IActionResult Details(int id, int pageNumber = 1)
+    public IActionResult Details(
+        int id,
+        int pageNumber = 1,
+        string? searchText = null)
     {
         Recipe? recipe = _recipeLibraryService.GetRecipeById(id);
 
@@ -76,6 +84,7 @@ public class RecipesController : Controller
         }
 
         SetPageNumber(pageNumber);
+        SetSearchText(searchText);
 
         return View(recipe);
     }
@@ -121,7 +130,8 @@ public class RecipesController : Controller
     public IActionResult Edit(
         int id,
         string? returnTo = null,
-        int pageNumber = 1)
+        int pageNumber = 1,
+        string? searchText = null)
     {
         Recipe? recipe = _recipeLibraryService.GetRecipeById(id);
 
@@ -132,6 +142,7 @@ public class RecipesController : Controller
 
         SetEditCancelAction(returnTo);
         SetPageNumber(pageNumber);
+        SetSearchText(searchText);
 
         return View(RecipeFormViewModel.FromRecipe(recipe));
     }
@@ -142,7 +153,8 @@ public class RecipesController : Controller
         int id,
         RecipeFormViewModel model,
         string? returnTo = null,
-        int pageNumber = 1)
+        int pageNumber = 1,
+        string? searchText = null)
     {
         if (id != model.Id)
         {
@@ -153,6 +165,7 @@ public class RecipesController : Controller
         {
             SetEditCancelAction(returnTo);
             SetPageNumber(pageNumber);
+            SetSearchText(searchText);
 
             return View(model);
         }
@@ -164,6 +177,7 @@ public class RecipesController : Controller
             ModelState.AddModelError("", result.Message);
             SetEditCancelAction(returnTo);
             SetPageNumber(pageNumber);
+            SetSearchText(searchText);
 
             return View(model);
         }
@@ -174,7 +188,7 @@ public class RecipesController : Controller
         {
             return RedirectToAction(
                 nameof(Index),
-                new { pageNumber });
+                new { pageNumber, searchText });
         }
 
         return RedirectToAction(
@@ -182,14 +196,16 @@ public class RecipesController : Controller
             new
             {
                 id = model.Id,
-                pageNumber
+                pageNumber,
+                searchText
             });
     }
 
     public IActionResult Delete(
         int id,
         string? returnTo = null,
-        int pageNumber = 1)
+        int pageNumber = 1,
+        string? searchText = null)
     {
         Recipe? recipe = _recipeLibraryService.GetRecipeById(id);
 
@@ -200,6 +216,7 @@ public class RecipesController : Controller
 
         SetDeleteCancelAction(returnTo);
         SetPageNumber(pageNumber);
+        SetSearchText(searchText);
 
         return View(recipe);
     }
@@ -209,7 +226,8 @@ public class RecipesController : Controller
     public IActionResult DeleteConfirmed(
         int id,
         string? returnTo = null,
-        int pageNumber = 1)
+        int pageNumber = 1,
+        string? searchText = null)
     {
         RecipeSaveResult result = _recipeLibraryService.DeleteRecipe(id);
 
@@ -225,6 +243,7 @@ public class RecipesController : Controller
             ModelState.AddModelError("", result.Message);
             SetDeleteCancelAction(returnTo);
             SetPageNumber(pageNumber);
+            SetSearchText(searchText);
 
             return View(recipe);
         }
@@ -235,10 +254,12 @@ public class RecipesController : Controller
         {
             return RedirectToAction(
                 nameof(Index),
-                new { pageNumber });
+                new { pageNumber, searchText });
         }
 
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(
+            nameof(Index),
+            new { pageNumber, searchText });
     }
 
     private void SetEditCancelAction(string? returnTo)
@@ -258,6 +279,11 @@ public class RecipesController : Controller
     private void SetPageNumber(int pageNumber)
     {
         ViewData[PageNumberKey] = Math.Max(1, pageNumber);
+    }
+
+    private void SetSearchText(string? searchText)
+    {
+        ViewData[SearchTextKey] = searchText ?? "";
     }
 
     private static bool IsReturnToIndex(string? returnTo)

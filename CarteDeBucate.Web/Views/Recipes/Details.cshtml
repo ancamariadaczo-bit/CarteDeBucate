@@ -2,6 +2,11 @@
 
 @{
     ViewData["Title"] = Model.Name;
+    string? routeSearchText = ViewData["SearchText"] as string;
+    if (string.IsNullOrWhiteSpace(routeSearchText))
+    {
+        routeSearchText = null;
+    }
 }
 
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
@@ -18,13 +23,16 @@
         <a class="btn btn-outline-secondary"
            asp-action="Edit"
            asp-route-id="@Model.Id"
+           asp-route-searchText="@routeSearchText"
            asp-route-pageNumber="@ViewData["PageNumber"]">Editează</a>
         <a class="btn btn-outline-danger"
            asp-action="Delete"
            asp-route-id="@Model.Id"
+           asp-route-searchText="@routeSearchText"
            asp-route-pageNumber="@ViewData["PageNumber"]">Șterge</a>
         <a class="btn btn-outline-primary"
            asp-action="Index"
+           asp-route-searchText="@routeSearchText"
            asp-route-pageNumber="@ViewData["PageNumber"]">Înapoi la listă</a>
     </div>
 </div>

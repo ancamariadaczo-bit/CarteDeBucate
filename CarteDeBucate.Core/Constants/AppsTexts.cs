@@ -29,6 +29,7 @@ public static class AppTexts
 
     public const string SearchPrompt = "Scrie textul căutat: ";
     public const string SearchResults = "Rezultatele căutării:";
+    public const string SearchResultsTotal = "Total rețete găsite: {0}";
     public const string NoSearchResults = "Nu am găsit nicio rețetă care să corespundă căutării.";
 
     public const string RecipeAlreadyExists = "Există deja o rețetă salvată cu acest link.";

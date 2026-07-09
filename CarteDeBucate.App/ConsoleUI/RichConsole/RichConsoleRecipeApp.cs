@@ -261,9 +261,7 @@ public class RichConsoleRecipeApp : IRecipeApp
                 return false;
             }
 
-            List<RecipeSummary> foundRecipes = _recipeLibraryService.SearchRecipes(searchText);
-
-            _display.ShowRecipes(foundRecipes, AppTexts.SearchResults, AppTexts.NoSearchResults);
+            ShowSearchResults(searchText);
 
             if (!_reader.ConfirmSearchAnotherRecipe())
             {
@@ -271,6 +269,61 @@ public class RichConsoleRecipeApp : IRecipeApp
             }
 
             _display.Clear();
+        }
+    }
+
+    private void ShowSearchResults(string searchText)
+    {
+        int pageNumber = 1;
+
+        while (true)
+        {
+            PagedResult<RecipeSummary> searchResultsPage =
+                _recipeLibraryService.SearchRecipesPage(searchText, pageNumber, PageSize);
+
+            _display.ShowRecipes(searchResultsPage.Items, AppTexts.SearchResults, AppTexts.NoSearchResults);
+            _display.ShowInfo(string.Format(
+                AppTexts.SearchResultsTotal,
+                searchResultsPage.TotalItems));
+
+            if (searchResultsPage.TotalItems == 0)
+            {
+                return;
+            }
+
+            _display.ShowInfo(string.Format(
+                AppTexts.PaginationStatus,
+                searchResultsPage.PageNumber,
+                searchResultsPage.TotalPages));
+
+            PaginationAction paginationAction = _reader.ReadPaginationAction();
+
+            if (paginationAction == PaginationAction.BackToMenu)
+            {
+                return;
+            }
+
+            if (paginationAction == PaginationAction.NextPage)
+            {
+                if (searchResultsPage.HasNextPage)
+                {
+                    pageNumber = searchResultsPage.PageNumber + 1;
+                }
+
+                _display.Clear();
+                continue;
+            }
+
+            if (paginationAction == PaginationAction.PreviousPage)
+            {
+                if (searchResultsPage.HasPreviousPage)
+                {
+                    pageNumber = searchResultsPage.PageNumber - 1;
+                }
+
+                _display.Clear();
+                continue;
+            }
         }
     }
 

@@ -49,6 +49,55 @@ public class RecipeLibraryServiceTests
     }
 
     [Fact]
+    public void GetRecipeSummariesPage_WhenNoUserIsLoggedIn_ShouldRequestGlobalPage()
+    {
+        FakeRecipeRepository repository = new FakeRecipeRepository
+        {
+            Recipes = new List<Recipe>
+            {
+                CreateValidRecipe(userId: 7),
+                CreateValidRecipe(userId: 9)
+            }
+        };
+
+        RecipeLibraryService service = new RecipeLibraryService(repository);
+
+        PagedResult<RecipeSummary> result = service.GetRecipeSummariesPage(2, 1);
+
+        Assert.Single(result.Items);
+        Assert.Equal(2, result.TotalItems);
+        Assert.True(repository.GetRecipeSummariesPageWasCalled);
+        Assert.False(repository.GetRecipeSummariesPageByUserIdWasCalled);
+        Assert.Equal(2, repository.PageNumberPassedToGetRecipeSummariesPage);
+        Assert.Equal(1, repository.PageSizePassedToGetRecipeSummariesPage);
+    }
+
+    [Fact]
+    public void GetRecipeSummariesPage_WhenUserIsLoggedIn_ShouldRequestCurrentUserPage()
+    {
+        FakeRecipeRepository repository = new FakeRecipeRepository
+        {
+            Recipes = new List<Recipe>
+            {
+                CreateValidRecipe(userId: 7),
+                CreateValidRecipe(userId: 9)
+            }
+        };
+
+        CurrentUserContext currentUserContext = new CurrentUserContext();
+        currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
+
+        RecipeLibraryService service = new RecipeLibraryService(repository, currentUserContext);
+
+        PagedResult<RecipeSummary> result = service.GetRecipeSummariesPage(1, 10);
+
+        Assert.Single(result.Items);
+        Assert.False(repository.GetRecipeSummariesPageWasCalled);
+        Assert.True(repository.GetRecipeSummariesPageByUserIdWasCalled);
+        Assert.Equal(7, repository.UserIdPassedToGetRecipeSummariesPageByUserId);
+    }
+
+    [Fact]
     public void HasRecipesInCurrentContext_WhenNoUserIsLoggedIn_ShouldCheckAllRecipes()
     {
         FakeRecipeRepository repository = new FakeRecipeRepository
@@ -235,6 +284,45 @@ public class RecipeLibraryServiceTests
 
         Assert.True(repository.SearchRecipesWasCalled);
         Assert.Equal("banana", repository.SearchTextPassedToSearchRecipes);
+    }
+
+    [Fact]
+    public void SearchRecipesPage_WhenUserIsLoggedIn_ShouldPassPagingAndCurrentUser()
+    {
+        FakeRecipeRepository repository = new FakeRecipeRepository
+        {
+            Recipes = new List<Recipe>
+            {
+                CreateValidRecipe(userId: 7),
+                CreateValidRecipe(userId: 9)
+            }
+        };
+
+        CurrentUserContext currentUserContext = new CurrentUserContext();
+        currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
+
+        RecipeLibraryService service = new RecipeLibraryService(repository, currentUserContext);
+
+        PagedResult<RecipeSummary> result = service.SearchRecipesPage("banana", 2, 5);
+
+        Assert.True(repository.SearchRecipesPageWasCalled);
+        Assert.Equal("banana", repository.SearchTextPassedToSearchRecipesPage);
+        Assert.Equal(7, repository.UserIdPassedToSearchRecipesPage);
+        Assert.Equal(2, repository.PageNumberPassedToSearchRecipesPage);
+        Assert.Equal(5, repository.PageSizePassedToSearchRecipesPage);
+    }
+
+    [Fact]
+    public void SearchRecipesPage_WithWhitespaceText_ShouldReturnEmptyPageWithoutCallingRepository()
+    {
+        FakeRecipeRepository repository = new FakeRecipeRepository();
+        RecipeLibraryService service = new RecipeLibraryService(repository);
+
+        PagedResult<RecipeSummary> result = service.SearchRecipesPage("   ", 2, 5);
+
+        Assert.Empty(result.Items);
+        Assert.Equal(0, result.TotalItems);
+        Assert.False(repository.SearchRecipesPageWasCalled);
     }
 
     [Fact]

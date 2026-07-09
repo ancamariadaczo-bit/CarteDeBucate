@@ -3,6 +3,7 @@ public class FakeRichConsoleReader : IRichConsoleReader
     public Recipe RecipeToReturn { get; set; } = new();
     public string RecipeUrlToImport { get; set; } = "";
     public string SearchText { get; set; } = "";
+    public Queue<string> SearchTextsToReturn { get; } = new();
     public bool KeepImportedIngredients { get; set; } = true;
     public bool KeepImportedSteps { get; set; } = true;
     public List<string> IngredientsToReturn { get; set; } = new();
@@ -11,6 +12,7 @@ public class FakeRichConsoleReader : IRichConsoleReader
     public bool SaveRecipeConfirmation { get; set; } = true;
     public bool ImportAnotherRecipeConfirmation { get; set; }
     public bool SearchAnotherRecipeConfirmation { get; set; }
+    public Queue<bool> SearchAnotherRecipeConfirmationsToReturn { get; } = new();
     public RecipeSummary? SelectedRecipe { get; set; }
     public PaginationAction PaginationActionToReturn { get; set; } = PaginationAction.BackToMenu;
     public Queue<PaginationAction> PaginationActionsToReturn { get; } = new();
@@ -51,7 +53,10 @@ public class FakeRichConsoleReader : IRichConsoleReader
     public string? ReadSearchText()
     {
         ReadSearchTextWasCalled = true;
-        return SearchText;
+
+        return SearchTextsToReturn.Count > 0
+            ? SearchTextsToReturn.Dequeue()
+            : SearchText;
     }
 
     public bool ConfirmKeepImportedIngredients()
@@ -96,7 +101,10 @@ public class FakeRichConsoleReader : IRichConsoleReader
     public bool ConfirmSearchAnotherRecipe()
     {
         ConfirmSearchAnotherRecipeWasCalled = true;
-        return SearchAnotherRecipeConfirmation;
+
+        return SearchAnotherRecipeConfirmationsToReturn.Count > 0
+            ? SearchAnotherRecipeConfirmationsToReturn.Dequeue()
+            : SearchAnotherRecipeConfirmation;
     }
 
     public RecipeSummary? SelectRecipe(List<RecipeSummary> recipes, string title)

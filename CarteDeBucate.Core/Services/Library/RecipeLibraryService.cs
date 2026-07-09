@@ -74,6 +74,27 @@ public class RecipeLibraryService : IRecipeLibraryService
         return _recipeRepository.SearchRecipes(searchText, CurrentUserId);
     }
 
+    public PagedResult<RecipeSummary> SearchRecipesPage(
+        string searchText,
+        int pageNumber,
+        int pageSize)
+    {
+        if (string.IsNullOrWhiteSpace(searchText))
+        {
+            return new PagedResult<RecipeSummary>(
+                new List<RecipeSummary>(),
+                pageNumber,
+                pageSize,
+                0);
+        }
+
+        return _recipeRepository.SearchRecipesPage(
+            searchText,
+            CurrentUserId,
+            pageNumber,
+            pageSize);
+    }
+
     public RecipeSaveResult SaveRecipe(Recipe recipe)
     {
         RecipeValidationResult validationResult = RecipeValidator.ValidateForSave(recipe);

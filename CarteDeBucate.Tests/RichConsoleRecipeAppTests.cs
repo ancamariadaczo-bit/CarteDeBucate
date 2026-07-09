@@ -175,7 +175,8 @@ public class RichConsoleRecipeAppTests
         FakeRecipeLibraryService libraryService = new()
         {
             RecipeSummariesToReturn = recipes,
-            SearchResultsToReturn = searchResults
+            SearchResultsPageToReturn =
+                new PagedResult<RecipeSummary>(searchResults, 1, 10, searchResults.Count)
         };
 
         FakeRichConsoleReader reader = new() { SearchText = "cake" };
@@ -192,9 +193,96 @@ public class RichConsoleRecipeAppTests
         await app.RunAsync();
 
         Assert.True(reader.ReadSearchTextWasCalled);
-        Assert.True(libraryService.SearchRecipesWasCalled);
-        Assert.Equal("cake", libraryService.SearchTextPassedToSearchRecipes);
+        Assert.True(libraryService.SearchRecipesPageWasCalled);
+        Assert.Equal("cake", libraryService.SearchTextPassedToSearchRecipesPage);
+        Assert.Equal(1, libraryService.PageNumberPassedToSearchRecipesPage);
+        Assert.Equal(10, libraryService.PageSizePassedToSearchRecipesPage);
+        Assert.False(libraryService.SearchRecipesWasCalled);
+        Assert.True(reader.ReadPaginationActionWasCalled);
         Assert.Equal(searchResults, display.RecipesPassedToShowRecipes);
+        Assert.Contains(
+            string.Format(AppTexts.SearchResultsTotal, searchResults.Count),
+            display.Messages);
+    }
+
+    [Fact]
+    public async Task Run_WithSearchRecipeOption_ShouldNavigateToNextSearchPage()
+    {
+        List<RecipeSummary> recipes = [new RecipeSummary { Id = 1, Name = "Cake" }];
+        List<RecipeSummary> firstPageResults = [new RecipeSummary { Id = 1, Name = "Cake" }];
+        List<RecipeSummary> secondPageResults = [new RecipeSummary { Id = 2, Name = "Chocolate Cake" }];
+        FakeRecipeImporterService importerService = new();
+        FakeRecipeLibraryService libraryService = new()
+        {
+            RecipeSummariesToReturn = recipes
+        };
+        libraryService.SearchResultsPagesToReturn.Enqueue(
+            new PagedResult<RecipeSummary>(firstPageResults, 1, 10, 20));
+        libraryService.SearchResultsPagesToReturn.Enqueue(
+            new PagedResult<RecipeSummary>(secondPageResults, 2, 10, 20));
+
+        FakeRichConsoleReader reader = new() { SearchText = "cake" };
+        reader.PaginationActionsToReturn.Enqueue(PaginationAction.NextPage);
+        reader.PaginationActionsToReturn.Enqueue(PaginationAction.BackToMenu);
+        FakeRichConsoleDisplay display = new();
+
+        RichConsoleRecipeApp app = CreateApp(
+            importerService,
+            libraryService,
+            new FakeRecipeBackupService(),
+            CreateMenu(MainMenuOption.SearchRecipe),
+            display,
+            reader);
+
+        await app.RunAsync();
+
+        Assert.Equal(
+            new List<int> { 1, 2 },
+            libraryService.PageNumbersPassedToSearchRecipesPage);
+        Assert.Equal("cake", libraryService.SearchTextPassedToSearchRecipesPage);
+        Assert.True(display.ShowRecipesWasCalled);
+    }
+
+    [Fact]
+    public async Task Run_WithSearchRecipeOption_ShouldAllowAnotherSearchAfterLeavingCurrentResults()
+    {
+        List<RecipeSummary> recipes = [new RecipeSummary { Id = 1, Name = "Cake" }];
+        List<RecipeSummary> cakeResults = [new RecipeSummary { Id = 1, Name = "Cake" }];
+        List<RecipeSummary> soupResults = [new RecipeSummary { Id = 2, Name = "Soup" }];
+        FakeRecipeImporterService importerService = new();
+        FakeRecipeLibraryService libraryService = new()
+        {
+            RecipeSummariesToReturn = recipes
+        };
+        libraryService.SearchResultsPagesToReturn.Enqueue(
+            new PagedResult<RecipeSummary>(cakeResults, 1, 10, 1));
+        libraryService.SearchResultsPagesToReturn.Enqueue(
+            new PagedResult<RecipeSummary>(soupResults, 1, 10, 1));
+
+        FakeRichConsoleReader reader = new();
+        reader.SearchTextsToReturn.Enqueue("cake");
+        reader.SearchTextsToReturn.Enqueue("soup");
+        reader.PaginationActionsToReturn.Enqueue(PaginationAction.BackToMenu);
+        reader.PaginationActionsToReturn.Enqueue(PaginationAction.BackToMenu);
+        reader.SearchAnotherRecipeConfirmationsToReturn.Enqueue(true);
+        reader.SearchAnotherRecipeConfirmationsToReturn.Enqueue(false);
+        FakeRichConsoleDisplay display = new();
+
+        RichConsoleRecipeApp app = CreateApp(
+            importerService,
+            libraryService,
+            new FakeRecipeBackupService(),
+            CreateMenu(MainMenuOption.SearchRecipe),
+            display,
+            reader);
+
+        await app.RunAsync();
+
+        Assert.Equal(
+            new List<int> { 1, 1 },
+            libraryService.PageNumbersPassedToSearchRecipesPage);
+        Assert.Equal("soup", libraryService.SearchTextPassedToSearchRecipesPage);
+        Assert.True(reader.ConfirmSearchAnotherRecipeWasCalled);
     }
 
     [Fact]

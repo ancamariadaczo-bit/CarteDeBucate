@@ -195,8 +195,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
             ORDER BY r.SavedAt DESC;
             """;
 
-        command.Parameters.AddWithValue("@SearchText", $"%{searchText.Trim().ToLowerInvariant()}%");
-        command.Parameters.AddWithValue("@UserId", userId.HasValue ? userId.Value : (object)DBNull.Value);
+        AddSearchParameters(command, searchText, userId);
 
         using SqliteDataReader reader = command.ExecuteReader();
 
@@ -208,6 +207,39 @@ public class DatabaseRecipeRepository : IRecipeRepository
         }
 
         return recipes;
+    }
+
+    public PagedResult<RecipeSummary> SearchRecipesPage(
+        string searchText,
+        int? userId,
+        int pageNumber,
+        int pageSize)
+    {
+        if (string.IsNullOrWhiteSpace(searchText))
+        {
+            return new PagedResult<RecipeSummary>(
+                new List<RecipeSummary>(),
+                pageNumber,
+                pageSize,
+                0);
+        }
+
+        using SqliteConnection connection = new SqliteConnection(_connectionString);
+        connection.Open();
+
+        int totalItems = CountSearchRecipes(connection, searchText, userId);
+        List<RecipeSummary> recipes = GetSearchRecipesPage(
+            connection,
+            searchText,
+            userId,
+            pageNumber,
+            pageSize);
+
+        return new PagedResult<RecipeSummary>(
+            recipes,
+            pageNumber,
+            pageSize,
+            totalItems);
     }
 
     public bool HasRecipes()
@@ -818,6 +850,65 @@ public class DatabaseRecipeRepository : IRecipeRepository
         return ReadRecipeSummaries(command);
     }
 
+    private int CountSearchRecipes(
+        SqliteConnection connection,
+        string searchText,
+        int? userId)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT COUNT(DISTINCT r.Id)
+            FROM Recipes r
+            LEFT JOIN RecipeIngredients i ON i.RecipeId = r.Id
+            LEFT JOIN RecipeSteps s ON s.RecipeId = r.Id
+            WHERE (
+                LOWER(r.Name) LIKE @SearchText
+                OR LOWER(r.SourceUrl) LIKE @SearchText
+                OR LOWER(COALESCE(r.Notes, '')) LIKE @SearchText
+                OR LOWER(COALESCE(i.IngredientText, '')) LIKE @SearchText
+                OR LOWER(COALESCE(s.StepText, '')) LIKE @SearchText
+            )
+            AND (@UserId IS NULL OR r.UserId = @UserId);
+            """;
+
+        AddSearchParameters(command, searchText, userId);
+
+        long count = (long)(command.ExecuteScalar() ?? 0);
+
+        return (int)count;
+    }
+
+    private List<RecipeSummary> GetSearchRecipesPage(
+        SqliteConnection connection,
+        string searchText,
+        int? userId,
+        int pageNumber,
+        int pageSize)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT DISTINCT r.Id, r.Name, r.SourceUrl, r.SavedAt, r.Status, r.UserId
+            FROM Recipes r
+            LEFT JOIN RecipeIngredients i ON i.RecipeId = r.Id
+            LEFT JOIN RecipeSteps s ON s.RecipeId = r.Id
+            WHERE (
+                LOWER(r.Name) LIKE @SearchText
+                OR LOWER(r.SourceUrl) LIKE @SearchText
+                OR LOWER(COALESCE(r.Notes, '')) LIKE @SearchText
+                OR LOWER(COALESCE(i.IngredientText, '')) LIKE @SearchText
+                OR LOWER(COALESCE(s.StepText, '')) LIKE @SearchText
+            )
+            AND (@UserId IS NULL OR r.UserId = @UserId)
+            ORDER BY r.SavedAt DESC
+            LIMIT @PageSize OFFSET @Offset;
+            """;
+
+        AddSearchParameters(command, searchText, userId);
+        AddPaginationParameters(command, pageNumber, pageSize);
+
+        return ReadRecipeSummaries(command);
+    }
+
     private void AddPaginationParameters(
         SqliteCommand command,
         int pageNumber,
@@ -829,6 +920,15 @@ public class DatabaseRecipeRepository : IRecipeRepository
 
         command.Parameters.AddWithValue("@PageSize", normalizedPageSize);
         command.Parameters.AddWithValue("@Offset", offset);
+    }
+
+    private void AddSearchParameters(
+        SqliteCommand command,
+        string searchText,
+        int? userId)
+    {
+        command.Parameters.AddWithValue("@SearchText", $"%{searchText.Trim().ToLowerInvariant()}%");
+        command.Parameters.AddWithValue("@UserId", userId.HasValue ? userId.Value : (object)DBNull.Value);
     }
 
     private List<RecipeSummary> ReadRecipeSummaries(SqliteCommand command)
