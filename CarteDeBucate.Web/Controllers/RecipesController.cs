@@ -21,13 +21,16 @@ public class RecipesController : Controller
 
     private readonly IRecipeLibraryService _recipeLibraryService;
     private readonly IRecipeImporterService _recipeImporterService;
+    private readonly ILogger<RecipesController> _logger;
 
     public RecipesController(
         IRecipeLibraryService recipeLibraryService,
-        IRecipeImporterService recipeImporterService)
+        IRecipeImporterService recipeImporterService,
+        ILogger<RecipesController> logger)
     {
         _recipeLibraryService = recipeLibraryService;
         _recipeImporterService = recipeImporterService;
+        _logger = logger;
     }
 
     public IActionResult Index(string? searchText, int pageNumber = 1)
@@ -310,11 +313,17 @@ public class RecipesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Import(string? url)
     {
+        _logger.LogInformation("Recipe URL import started");
+
         RecipeImportResult importResult =
             await _recipeImporterService.ImportRecipeFromUrlAsync(url ?? "");
 
         if (!importResult.Success)
         {
+            _logger.LogWarning(
+                "Recipe URL import failed. Reason: {FailureReason}",
+                importResult.Message);
+
             if (IsMissingImportedRecipeDetails(importResult.Message))
             {
                 ModelState.AddModelError(
@@ -332,6 +341,9 @@ public class RecipesController : Controller
 
         if (importResult.Recipe == null)
         {
+            _logger.LogWarning(
+                "Recipe URL import reported success without returning a recipe");
+
             TempData[SuccessMessageKey] =
                 "Rețeta a fost importată, dar pagina de detalii nu a putut fi deschisă. Verifică lista de rețete.";
 
@@ -342,6 +354,10 @@ public class RecipesController : Controller
 
         if (!result.IsSuccess)
         {
+            _logger.LogWarning(
+                "Imported recipe could not be saved. Reason: {FailureReason}",
+                result.Message);
+
             if (IsMissingImportedRecipeDetails(result.Message))
             {
                 ModelState.AddModelError(
@@ -359,6 +375,9 @@ public class RecipesController : Controller
 
         if (result.Recipe == null)
         {
+            _logger.LogWarning(
+                "Imported recipe save reported success without returning the saved recipe");
+
             TempData[SuccessMessageKey] =
                 "Rețeta a fost importată, dar pagina de detalii nu a putut fi deschisă. Verifică lista de rețete.";
 
@@ -367,6 +386,10 @@ public class RecipesController : Controller
 
         TempData[SuccessMessageKey] =
             "Rețeta a fost importată. Verifică informațiile și editează-le dacă este nevoie.";
+
+        _logger.LogInformation(
+            "Recipe URL import completed successfully. Recipe identifier: {RecipeId}",
+            result.Recipe.Id);
 
         return RedirectToAction(
             nameof(Details),

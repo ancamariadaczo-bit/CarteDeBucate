@@ -3,6 +3,7 @@ using CarteDeBucate.Web.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.Extensions.Logging.Abstractions;
 
 public class RecipesControllerTests
 {
@@ -748,7 +749,8 @@ public class RecipesControllerTests
         DefaultHttpContext httpContext = new DefaultHttpContext();
         RecipesController controller = new RecipesController(
             recipeLibraryService,
-            recipeImporterService)
+            recipeImporterService,
+            NullLogger<RecipesController>.Instance)
         {
             ControllerContext = new ControllerContext
             {

@@ -3,6 +3,7 @@ using CarteDeBucate.Web.Controllers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.Extensions.Logging.Abstractions;
 
 public class RecipeBackupsControllerTests
 {
@@ -153,7 +154,9 @@ public class RecipeBackupsControllerTests
         IRecipeBackupService backupService)
     {
         DefaultHttpContext httpContext = new DefaultHttpContext();
-        RecipeBackupsController controller = new RecipeBackupsController(backupService)
+        RecipeBackupsController controller = new RecipeBackupsController(
+            backupService,
+            NullLogger<RecipeBackupsController>.Instance)
         {
             ControllerContext = new ControllerContext
             {

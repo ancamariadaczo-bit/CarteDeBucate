@@ -68,7 +68,7 @@ public class RichConsoleRecipeAppTests
             libraryService.PageNumbersPassedToGetRecipeSummariesPage);
         Assert.True(reader.ReadPaginationActionWasCalled);
         Assert.True(display.ShowRecipesWasCalled);
-        Assert.Equal(2, display.ClearCallCount);
+        Assert.Equal(3, display.ClearCallCount);
     }
 
     [Fact]
@@ -110,7 +110,7 @@ public class RichConsoleRecipeAppTests
         Assert.Equal(
             new List<int> { 1, 1, 2, 2 },
             libraryService.PageNumbersPassedToGetRecipeSummariesPage);
-        Assert.Equal(4, display.ClearCallCount);
+        Assert.Equal(5, display.ClearCallCount);
     }
 
     [Fact]

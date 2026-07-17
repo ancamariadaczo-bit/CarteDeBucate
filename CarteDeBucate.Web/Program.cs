@@ -10,8 +10,6 @@ string databasePath = builder.Configuration["DatabasePath"]
 WebAppSettings webAppSettings = builder.Configuration.Get<WebAppSettings>()
     ?? new WebAppSettings();
 
-AppServiceFactory.EnsureDatabaseIsUpToDate(databasePath);
-
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -25,8 +23,10 @@ builder.Services.AddSingleton(webAppSettings);
 builder.Services.AddScoped<OptionalAuthenticationFilter>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserContext, HttpCurrentUserContext>();
-builder.Services.AddScoped<IRecipeRepository>(_ =>
-    AppServiceFactory.CreateDatabaseRecipeRepository(databasePath));
+builder.Services.AddScoped<IRecipeRepository>(serviceProvider =>
+    AppServiceFactory.CreateDatabaseRecipeRepository(
+        databasePath,
+        serviceProvider.GetRequiredService<ILogger<DatabaseRecipeRepository>>()));
 builder.Services.AddScoped<IUserRepository>(_ =>
     AppServiceFactory.CreateDatabaseUserRepository(databasePath));
 builder.Services.AddScoped<IRecipeLibraryService>(serviceProvider =>
@@ -67,10 +67,36 @@ builder.Services.AddScoped<IAuthenticationService>(serviceProvider =>
 
 var app = builder.Build();
 
+app.Logger.LogInformation(
+    "Application starting in {EnvironmentName} environment. Authentication enabled: {AuthenticationEnabled}",
+    app.Environment.EnvironmentName,
+    webAppSettings.AuthenticationEnabled);
+
+try
+{
+    app.Logger.LogInformation("Database initialization and migrations started");
+
+    AppServiceFactory.EnsureDatabaseIsUpToDate(databasePath);
+
+    app.Logger.LogInformation("Database initialization and migrations completed successfully");
+}
+catch (Exception exception)
+{
+    app.Logger.LogCritical(
+        exception,
+        "Application startup failed while initializing or migrating the database");
+
+    throw;
+}
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
+    app.UseExceptionHandler(new ExceptionHandlerOptions
+    {
+        ExceptionHandlingPath = "/Home/Error",
+        SuppressDiagnosticsCallback = _ => true
+    });
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }

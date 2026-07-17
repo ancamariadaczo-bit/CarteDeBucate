@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging.Abstractions;
+
 public class AppServiceFactoryTests
 {
     [Fact]
@@ -5,7 +7,9 @@ public class AppServiceFactoryTests
     {
         AppSettings settings = LoadSettings(StorageMode.Json);
 
-        IRecipeRepository repository = AppServiceFactory.CreateRecipeRepository(settings);
+        IRecipeRepository repository = AppServiceFactory.CreateRecipeRepository(
+            settings,
+            NullLogger<DatabaseRecipeRepository>.Instance);
 
         Assert.IsType<JsonRecipeRepository>(repository);
     }
@@ -15,7 +19,9 @@ public class AppServiceFactoryTests
     {
         AppSettings settings = LoadSettings(StorageMode.Database);
 
-        IRecipeRepository repository = AppServiceFactory.CreateRecipeRepository(settings);
+        IRecipeRepository repository = AppServiceFactory.CreateRecipeRepository(
+            settings,
+            NullLogger<DatabaseRecipeRepository>.Instance);
 
         Assert.IsType<DatabaseRecipeRepository>(repository);
     }

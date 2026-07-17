@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+
 public static class AppServiceFactory
 {
     public static void EnsureDatabaseIsUpToDate(AppSettings settings)
@@ -19,19 +21,23 @@ public static class AppServiceFactory
         migrator.ApplyMigrations();
     }
 
-    public static IRecipeRepository CreateRecipeRepository(AppSettings settings)
+    public static IRecipeRepository CreateRecipeRepository(
+        AppSettings settings,
+        ILogger<DatabaseRecipeRepository> logger)
     {
         return settings.CurrentStorageMode switch
         {
             StorageMode.Json => new JsonRecipeRepository(settings.RecipesFilePath),
-            StorageMode.Database => new DatabaseRecipeRepository(settings.DatabasePath),
+            StorageMode.Database => new DatabaseRecipeRepository(settings.DatabasePath, logger),
             _ => throw new InvalidOperationException(AppTexts.UnknownStorageModeError)
         };
     }
 
-    public static IRecipeRepository CreateDatabaseRecipeRepository(string databasePath)
+    public static IRecipeRepository CreateDatabaseRecipeRepository(
+        string databasePath,
+        ILogger<DatabaseRecipeRepository> logger)
     {
-        return new DatabaseRecipeRepository(databasePath);
+        return new DatabaseRecipeRepository(databasePath, logger);
     }
 
     public static IUserRepository CreateUserRepository(AppSettings settings)

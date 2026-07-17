@@ -1,4 +1,5 @@
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging.Abstractions;
 
 public class DatabaseRecipeRepositoryTests
 {
@@ -742,7 +743,9 @@ public class DatabaseRecipeRepositoryTests
         DatabaseInitializer databaseInitializer = new DatabaseInitializer(databasePath);
         databaseInitializer.Initialize();
 
-        return new DatabaseRecipeRepository(databasePath);
+        return new DatabaseRecipeRepository(
+            databasePath,
+            NullLogger<DatabaseRecipeRepository>.Instance);
     }
 
     private static void AddUser(string databasePath, int userId)

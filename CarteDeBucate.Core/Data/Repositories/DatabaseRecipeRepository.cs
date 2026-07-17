@@ -1,12 +1,18 @@
+using System.Diagnostics;
 using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Logging;
 
 public class DatabaseRecipeRepository : IRecipeRepository
 {
     private readonly string _connectionString;
+    private readonly ILogger<DatabaseRecipeRepository> _logger;
 
-    public DatabaseRecipeRepository(string databasePath)
+    public DatabaseRecipeRepository(
+        string databasePath,
+        ILogger<DatabaseRecipeRepository> logger)
     {
         _connectionString = $"Data Source={databasePath}";
+        _logger = logger;
     }
 
     public List<RecipeSummary> GetAllRecipeSummaries()
@@ -323,6 +329,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
         connection.Open();
 
         using SqliteTransaction transaction = connection.BeginTransaction();
+        long startedAt = LogTransactionStarted(nameof(AddRecipe), null);
 
         try
         {
@@ -334,10 +341,12 @@ public class DatabaseRecipeRepository : IRecipeRepository
             transaction.Commit();
 
             recipe.Id = recipeId;
+            LogTransactionCommitted(nameof(AddRecipe), recipeId, startedAt);
         }
-        catch
+        catch (Exception exception)
         {
             transaction.Rollback();
+            LogTransactionRolledBack(nameof(AddRecipe), recipe.Id, startedAt, exception);
             throw;
         }
     }
@@ -348,6 +357,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
         connection.Open();
 
         using SqliteTransaction transaction = connection.BeginTransaction();
+        long startedAt = LogTransactionStarted(nameof(UpdateRecipe), recipe.Id);
 
         try
         {
@@ -360,10 +370,12 @@ public class DatabaseRecipeRepository : IRecipeRepository
             InsertSteps(connection, transaction, recipe.Id, recipe.Steps);
 
             transaction.Commit();
+            LogTransactionCommitted(nameof(UpdateRecipe), recipe.Id, startedAt);
         }
-        catch
+        catch (Exception exception)
         {
             transaction.Rollback();
+            LogTransactionRolledBack(nameof(UpdateRecipe), recipe.Id, startedAt, exception);
             throw;
         }
     }
@@ -381,6 +393,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
         connection.Open();
 
         using SqliteTransaction transaction = connection.BeginTransaction();
+        long startedAt = LogTransactionStarted(nameof(UpdateRecipeForUser), recipe.Id);
 
         try
         {
@@ -393,10 +406,12 @@ public class DatabaseRecipeRepository : IRecipeRepository
             InsertSteps(connection, transaction, recipe.Id, recipe.Steps);
 
             transaction.Commit();
+            LogTransactionCommitted(nameof(UpdateRecipeForUser), recipe.Id, startedAt);
         }
-        catch
+        catch (Exception exception)
         {
             transaction.Rollback();
+            LogTransactionRolledBack(nameof(UpdateRecipeForUser), recipe.Id, startedAt, exception);
             throw;
         }
     }
@@ -580,6 +595,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
         connection.Open();
 
         using SqliteTransaction transaction = connection.BeginTransaction();
+        long startedAt = LogTransactionStarted(nameof(DeleteRecipe), recipeId);
 
         try
         {
@@ -588,10 +604,12 @@ public class DatabaseRecipeRepository : IRecipeRepository
             DeleteRecipeMainRecord(connection, transaction, recipeId);
 
             transaction.Commit();
+            LogTransactionCommitted(nameof(DeleteRecipe), recipeId, startedAt);
         }
-        catch
+        catch (Exception exception)
         {
             transaction.Rollback();
+            LogTransactionRolledBack(nameof(DeleteRecipe), recipeId, startedAt, exception);
             throw;
         }
     }
@@ -607,6 +625,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
         }
 
         using SqliteTransaction transaction = connection.BeginTransaction();
+        long startedAt = LogTransactionStarted(nameof(DeleteRecipeForUser), recipeId);
 
         try
         {
@@ -615,10 +634,12 @@ public class DatabaseRecipeRepository : IRecipeRepository
             DeleteRecipeMainRecord(connection, transaction, recipeId);
 
             transaction.Commit();
+            LogTransactionCommitted(nameof(DeleteRecipeForUser), recipeId, startedAt);
         }
-        catch
+        catch (Exception exception)
         {
             transaction.Rollback();
+            LogTransactionRolledBack(nameof(DeleteRecipeForUser), recipeId, startedAt, exception);
             throw;
         }
     }
@@ -1007,5 +1028,38 @@ public class DatabaseRecipeRepository : IRecipeRepository
         command.Parameters.AddWithValue("@Status", (int)recipe.Status);
 
         command.ExecuteNonQuery();
+    }
+
+    private long LogTransactionStarted(string operation, int? recipeId)
+    {
+        _logger.LogDebug(
+            "SQLite transaction started for {Operation}. Recipe identifier: {RecipeId}",
+            operation,
+            recipeId);
+
+        return Stopwatch.GetTimestamp();
+    }
+
+    private void LogTransactionCommitted(string operation, int recipeId, long startedAt)
+    {
+        _logger.LogInformation(
+            "SQLite transaction committed for {Operation}. Recipe identifier: {RecipeId}. Duration: {ElapsedMilliseconds} ms",
+            operation,
+            recipeId,
+            Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds);
+    }
+
+    private void LogTransactionRolledBack(
+        string operation,
+        int recipeId,
+        long startedAt,
+        Exception exception)
+    {
+        _logger.LogWarning(
+            "SQLite transaction rolled back for {Operation}. Recipe identifier: {RecipeId}. Duration: {ElapsedMilliseconds} ms. Exception type: {ExceptionType}",
+            operation,
+            recipeId,
+            Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds,
+            exception.GetType().Name);
     }
 }

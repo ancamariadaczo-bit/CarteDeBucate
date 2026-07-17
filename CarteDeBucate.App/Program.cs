@@ -1,4 +1,5 @@
-﻿
+﻿using Microsoft.Extensions.Logging.Abstractions;
+
 AppSettings appSettings = AppSettings.Load();
 
 AppServiceFactory.EnsureDatabaseIsUpToDate(appSettings);
@@ -7,7 +8,9 @@ IRecipeConsoleReader recipeReader = new RecipeConsoleReader();
 IRecipeConsoleWriter recipeWriter = new RecipeConsoleWriter();
 
 ICurrentUserContext currentUserContext = new CurrentUserContext();
-IRecipeRepository recipeRepository = AppServiceFactory.CreateRecipeRepository(appSettings);
+IRecipeRepository recipeRepository = AppServiceFactory.CreateRecipeRepository(
+    appSettings,
+    NullLogger<DatabaseRecipeRepository>.Instance);
 
 IRecipeLibraryService recipeLibraryService =
     AppServiceFactory.CreateRecipeLibraryService(recipeRepository, currentUserContext);

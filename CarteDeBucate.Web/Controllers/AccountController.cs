@@ -11,13 +11,16 @@ public class AccountController : Controller
 {
     private readonly IAuthenticationService _authenticationService;
     private readonly WebAppSettings _settings;
+    private readonly ILogger<AccountController> _logger;
 
     public AccountController(
         IAuthenticationService authenticationService,
-        WebAppSettings settings)
+        WebAppSettings settings,
+        ILogger<AccountController> logger)
     {
         _authenticationService = authenticationService;
         _settings = settings;
+        _logger = logger;
     }
 
     public IActionResult Login(string? returnUrl = null)
@@ -42,12 +45,18 @@ public class AccountController : Controller
 
         if (!result.IsSuccess || result.User == null)
         {
+            _logger.LogWarning("User login failed");
+
             ModelState.AddModelError("", result.Message);
 
             return View(model);
         }
 
         await SignInUser(result.User);
+
+        _logger.LogInformation(
+            "User login succeeded. User identifier: {UserId}",
+            result.User.Id);
 
         return RedirectAfterAuthentication(model.ReturnUrl);
     }
@@ -71,12 +80,18 @@ public class AccountController : Controller
 
         if (!result.IsSuccess || result.User == null)
         {
+            _logger.LogWarning("User registration failed");
+
             ModelState.AddModelError("", result.Message);
 
             return View(model);
         }
 
         await SignInUser(result.User);
+
+        _logger.LogInformation(
+            "User registration succeeded. User identifier: {UserId}",
+            result.User.Id);
 
         return RedirectToAction(
             nameof(RecipesController.Index),
@@ -87,8 +102,14 @@ public class AccountController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
+        string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
         _authenticationService.Logout();
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+        _logger.LogInformation(
+            "User logout succeeded. User identifier: {UserId}",
+            userId);
 
         if (_settings.AuthenticationEnabled)
         {
@@ -102,6 +123,10 @@ public class AccountController : Controller
 
     public IActionResult AccessDenied()
     {
+        _logger.LogWarning(
+            "Access denied for user {UserId}",
+            User.FindFirstValue(ClaimTypes.NameIdentifier));
+
         return View();
     }
 

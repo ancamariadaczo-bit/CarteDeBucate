@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 
 public class AccountControllerTests
 {
@@ -210,7 +211,8 @@ public class AccountControllerTests
         };
         AccountController controller = new AccountController(
             authenticationService,
-            settings ?? new WebAppSettings())
+            settings ?? new WebAppSettings(),
+            NullLogger<AccountController>.Instance)
         {
             ControllerContext = new ControllerContext
             {
