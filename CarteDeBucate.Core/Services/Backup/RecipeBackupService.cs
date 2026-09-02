@@ -67,7 +67,14 @@ public class RecipeBackupService : IRecipeBackupService
         try
         {
             List<Recipe> recipes = GetRecipesForCurrentContext();
-            string json = JsonSerializer.Serialize(recipes, CreateJsonSerializerOptions());
+            RecipeBackupDocument backupDocument = new RecipeBackupDocument
+            {
+                ExportedAtUtc = DateTime.UtcNow,
+                Recipes = recipes.Select(RecipeBackupMapper.ToBackupItem).ToList()
+            };
+            string json = JsonSerializer.Serialize(
+                backupDocument,
+                RecipeBackupJson.SerializerOptions);
 
             return new RecipeBackupExportResult
             {
@@ -118,7 +125,31 @@ public class RecipeBackupService : IRecipeBackupService
     {
         try
         {
-            List<Recipe>? recipes = JsonSerializer.Deserialize<List<Recipe>>(json);
+            int version = RecipeBackupDocumentReader.DetectVersion(json);
+            List<Recipe>? recipes;
+
+            if (version == RecipeBackupVersions.Current)
+            {
+                RecipeBackupDocument backupDocument =
+                    RecipeBackupDocumentReader.ReadCurrentDocument(json);
+                recipes = backupDocument.Recipes
+                    .Select(RecipeBackupMapper.ToRecipe)
+                    .ToList();
+            }
+            else
+            {
+                List<Recipe>? legacyRecipes = JsonSerializer.Deserialize<List<Recipe>>(json);
+
+                if (legacyRecipes?.Any(recipe => recipe is null) == true)
+                {
+                    throw new JsonException();
+                }
+
+                recipes = legacyRecipes?
+                    .Select(RecipeBackupMapper.ToBackupItem)
+                    .Select(RecipeBackupMapper.ToRecipe)
+                    .ToList();
+            }
 
             if (recipes == null)
             {
@@ -170,14 +201,6 @@ public class RecipeBackupService : IRecipeBackupService
     }
 
     private int? CurrentUserId => _currentUserContext?.UserId;
-
-    private static JsonSerializerOptions CreateJsonSerializerOptions()
-    {
-        return new JsonSerializerOptions
-        {
-            WriteIndented = true
-        };
-    }
 
     private List<Recipe> GetRecipesForCurrentContext()
     {

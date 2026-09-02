@@ -108,13 +108,14 @@ public class WebCurrentUserFilteringTests
         Assert.True(result.IsSuccess);
         Assert.Equal(1, result.ExportedCount);
 
-        List<Recipe>? exportedRecipes =
-            JsonSerializer.Deserialize<List<Recipe>>(result.Json);
+        using JsonDocument jsonDocument = JsonDocument.Parse(result.Json);
+        JsonElement exportedRecipe = Assert.Single(
+            jsonDocument.RootElement.GetProperty("recipes").EnumerateArray());
 
-        Assert.NotNull(exportedRecipes);
-        Recipe exportedRecipe = Assert.Single(exportedRecipes);
-        Assert.Equal(7, exportedRecipe.UserId);
-        Assert.Equal("https://example.com/current-user", exportedRecipe.SourceUrl);
+        Assert.False(exportedRecipe.TryGetProperty("userId", out _));
+        Assert.Equal(
+            "https://example.com/current-user",
+            exportedRecipe.GetProperty("sourceUrl").GetString());
     }
 
     private static RecipeLibraryService CreateRecipeLibraryService(
