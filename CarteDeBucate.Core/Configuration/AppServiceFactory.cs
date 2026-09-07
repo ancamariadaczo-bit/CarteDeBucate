@@ -40,6 +40,12 @@ public static class AppServiceFactory
         return new DatabaseRecipeRepository(databasePath, logger);
     }
 
+    public static IRecipePhotoRepository CreateDatabaseRecipePhotoRepository(
+        string databasePath)
+    {
+        return new DatabaseRecipePhotoRepository(databasePath);
+    }
+
     public static IUserRepository CreateUserRepository(AppSettings settings)
     {
         return settings.CurrentStorageMode switch

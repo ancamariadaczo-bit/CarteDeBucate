@@ -27,6 +27,15 @@ public class AppServiceFactoryTests
     }
 
     [Fact]
+    public void CreateDatabaseRecipePhotoRepository_ShouldCreateDatabaseRepository()
+    {
+        IRecipePhotoRepository repository =
+            AppServiceFactory.CreateDatabaseRecipePhotoRepository("recipes.db");
+
+        Assert.IsType<DatabaseRecipePhotoRepository>(repository);
+    }
+
+    [Fact]
     public void CreateUserRepository_WithJsonStorage_ShouldCreateJsonRepository()
     {
         AppSettings settings = LoadSettings(StorageMode.Json);

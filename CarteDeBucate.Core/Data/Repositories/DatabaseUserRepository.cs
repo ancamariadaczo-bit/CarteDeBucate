@@ -6,7 +6,7 @@ public class DatabaseUserRepository : IUserRepository
 
     public DatabaseUserRepository(string databasePath)
     {
-        _connectionString = $"Data Source={databasePath}";
+        _connectionString = SqliteConnectionStringFactory.Create(databasePath);
     }
 
     public void Add(User user)

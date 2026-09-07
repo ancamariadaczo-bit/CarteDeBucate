@@ -6,7 +6,7 @@ public class DatabaseInitializer
 
     public DatabaseInitializer(string databasePath)
     {
-        _connectionString = $"Data Source={databasePath}";
+        _connectionString = SqliteConnectionStringFactory.Create(databasePath);
     }
 
     public void Initialize()

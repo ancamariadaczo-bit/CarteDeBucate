@@ -11,7 +11,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
         string databasePath,
         ILogger<DatabaseRecipeRepository> logger)
     {
-        _connectionString = $"Data Source={databasePath}";
+        _connectionString = SqliteConnectionStringFactory.Create(databasePath);
         _logger = logger;
     }
 

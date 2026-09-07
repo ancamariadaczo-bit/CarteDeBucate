@@ -4,6 +4,8 @@ public static class DatabaseScripts
     [
         CreateUsersTable,
         CreateRecipesTable,
+        CreateRecipePhotosTable,
+        CreateRecipePhotosIndex,
         CreateRecipeIngredientsTable,
         CreateRecipeStepsTable
     ];
@@ -20,6 +22,36 @@ public static class DatabaseScripts
         FOREIGN KEY (UserId) REFERENCES Users(Id)
     );
     """;
+
+    public const string CreateRecipePhotosTable = """
+    CREATE TABLE IF NOT EXISTS RecipePhotos (
+        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+        RecipeId INTEGER NOT NULL,
+        StorageFileName TEXT NOT NULL UNIQUE
+            CHECK (length(trim(StorageFileName)) BETWEEN 1 AND 128),
+        OriginalFileName TEXT NOT NULL
+            CHECK (length(trim(OriginalFileName)) BETWEEN 1 AND 255),
+        ContentType TEXT NOT NULL
+            CHECK (length(trim(ContentType)) BETWEEN 1 AND 100),
+        FileSize INTEGER NOT NULL
+            CHECK (FileSize > 0),
+        CreatedAtUtc TEXT NOT NULL,
+        DisplayOrder INTEGER NOT NULL DEFAULT 0
+            CHECK (DisplayOrder >= 0),
+        Origin INTEGER NOT NULL DEFAULT 0,
+        FOREIGN KEY (RecipeId)
+            REFERENCES Recipes(Id)
+            ON DELETE CASCADE
+    );
+    """;
+
+    public const string CreateRecipePhotosIndex = """
+    CREATE INDEX IF NOT EXISTS IX_RecipePhotos_RecipeId_DisplayOrder_Id
+    ON RecipePhotos (RecipeId, DisplayOrder, Id);
+    """;
+
+    public const string CreateRecipePhotosSchema =
+        CreateRecipePhotosTable + "\n" + CreateRecipePhotosIndex;
 
     public const string CreateRecipeIngredientsTable = """
     CREATE TABLE IF NOT EXISTS RecipeIngredients (
