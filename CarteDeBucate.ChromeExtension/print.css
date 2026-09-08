@@ -1,0 +1,97 @@
+body {
+    margin: 0;
+    padding: 30px;
+
+    font-family: Arial, sans-serif;
+
+    color: #111;
+}
+
+
+#recipe {
+    max-width: 850px;
+    margin: 0 auto;
+}
+
+
+h1 {
+    margin-top: 0;
+
+    font-size: 30px;
+}
+
+
+h2 {
+    margin-top: 28px;
+    margin-bottom: 12px;
+
+    font-size: 20px;
+}
+
+
+p {
+    line-height: 1.4;
+}
+
+
+a {
+    overflow-wrap: anywhere;
+}
+
+
+img {
+    display: block;
+
+    max-width: 100%;
+    max-height: 450px;
+
+    object-fit: contain;
+
+    margin: 20px auto;
+}
+
+
+li {
+    margin-bottom: 7px;
+
+    line-height: 1.45;
+}
+
+
+@media print {
+
+    body {
+        padding: 0;
+
+        font-size: 11pt;
+    }
+
+
+    #recipe {
+        max-width: none;
+    }
+
+
+    h1 {
+        font-size: 22pt;
+    }
+
+
+    h2 {
+        font-size: 14pt;
+
+        break-after: avoid;
+    }
+
+
+    li {
+        break-inside: avoid;
+    }
+
+
+    img {
+        max-height: 8cm;
+
+        break-inside: avoid;
+    }
+}

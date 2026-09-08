@@ -1,5 +1,8 @@
 const extractButton = document.getElementById("extractButton");
+const printButton = document.getElementById("printButton");
 const result = document.getElementById("result");
+
+let currentRecipe = null;
 
 extractButton.addEventListener("click", async () => {
 
@@ -33,10 +36,33 @@ extractButton.addEventListener("click", async () => {
 
     if (!extractionResult.success) {
         result.textContent = extractionResult.error;
+        extractButton.hidden = false;
+        printButton.hidden = true; return;
+    }
+
+    currentRecipe = extractionResult.recipe;
+    displayRecipe(currentRecipe);
+    extractButton.hidden = true;
+    printButton.hidden = false;
+});
+
+printButton.addEventListener("click", async () => {
+
+    if (!currentRecipe) {
         return;
     }
 
-    displayRecipe(extractionResult.recipe);
+    localStorage.setItem(
+        "recipeToPrint",
+        JSON.stringify(currentRecipe)
+    );
+
+    await chrome.windows.create({
+        url: chrome.runtime.getURL("print.html"),
+        type: "popup",
+        width: 900,
+        height: 700
+    });
 });
 
 function displayRecipe(recipe) {
@@ -49,15 +75,36 @@ function displayRecipe(recipe) {
     result.appendChild(title);
 
     const source = document.createElement("p");
-    source.textContent = recipe.sourceUrl;
+
+    const sourceLabel = document.createElement("strong");
+    sourceLabel.textContent = "Sursă: ";
+
+    const sourceLink = document.createElement("a");
+    sourceLink.href = recipe.sourceUrl;
+    sourceLink.textContent = recipe.sourceUrl;
+    sourceLink.target = "_blank";
+
+    source.appendChild(sourceLabel);
+    source.appendChild(sourceLink);
 
     result.appendChild(source);
 
     if (recipe.imageUrl) {
 
-        const imageLink = document.createElement("p");
-        imageLink.textContent = `Imagine: ${recipe.imageUrl}`;
-        result.appendChild(imageLink);
+        const imageUrl = document.createElement("p");
+
+        const imageLabel = document.createElement("strong");
+        imageLabel.textContent = "Imagine: ";
+
+        const imageLink = document.createElement("a");
+        imageLink.href = recipe.imageUrl;
+        imageLink.textContent = recipe.imageUrl;
+        imageLink.target = "_blank";
+
+        imageUrl.appendChild(imageLabel);
+        imageUrl.appendChild(imageLink);
+
+        result.appendChild(imageUrl);
 
         const image = document.createElement("img");
         image.src = recipe.imageUrl;
@@ -79,7 +126,6 @@ function displayRecipe(recipe) {
     ingredientsTitle.textContent = "Ingrediente";
 
     result.appendChild(ingredientsTitle);
-
 
     const ingredientList = document.createElement("ul");
 
