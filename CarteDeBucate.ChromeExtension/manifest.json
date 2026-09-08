@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Carte de Bucate - Recipe Clipper",
+  "version": "1.0.0",
+  "description": "Extrage rețete din paginile web.",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
