@@ -19,7 +19,7 @@ const recipeJson =
 if (!recipeJson) {
 
     recipeContainer.textContent =
-        "Nu am găsit rețeta pentru print.";
+        "No recipe was found to print.";
 
 } else {
 
@@ -57,7 +57,7 @@ function displayRecipe(recipe) {
             document.createElement("strong");
 
         sourceLabel.textContent =
-            "Sursă: ";
+            "Source: ";
 
         const sourceLink =
             document.createElement("a");
@@ -85,7 +85,7 @@ function displayRecipe(recipe) {
             document.createElement("strong");
 
         imageLabel.textContent =
-            "Imagine: ";
+            "Image: ";
 
         const imageLink =
             document.createElement("a");
@@ -117,7 +117,7 @@ function displayRecipe(recipe) {
                     document.createElement("p");
 
                 message.textContent =
-                    "Imaginea nu poate fi afișată direct.";
+                    "The image cannot be displayed directly.";
 
                 message.className =
                     "image-error";
@@ -145,7 +145,7 @@ function displayRecipe(recipe) {
         document.createElement("h2");
 
     ingredientsTitle.textContent =
-        "Ingrediente";
+        "Ingredients";
 
     recipeSummary.appendChild(
         ingredientsTitle
@@ -175,7 +175,7 @@ function displayRecipe(recipe) {
         document.createElement("h2");
 
     stepsTitle.textContent =
-        "Preparare";
+        "Instructions";
 
     stepsSection.appendChild(
         stepsTitle

@@ -81,7 +81,7 @@ function displayRecipe(recipe) {
     const source = document.createElement("p");
 
     const sourceLabel = document.createElement("strong");
-    sourceLabel.textContent = "Sursă: ";
+    sourceLabel.textContent = "Source: ";
 
     const sourceLink = document.createElement("a");
     sourceLink.href = recipe.sourceUrl;
@@ -98,7 +98,7 @@ function displayRecipe(recipe) {
         const imageUrl = document.createElement("p");
 
         const imageLabel = document.createElement("strong");
-        imageLabel.textContent = "Imagine: ";
+        imageLabel.textContent = "Image: ";
 
         const imageLink = document.createElement("a");
         imageLink.href = recipe.imageUrl;
@@ -118,7 +118,7 @@ function displayRecipe(recipe) {
             image.remove();
 
             const message = document.createElement("p");
-            message.textContent = "Imaginea nu poate fi afișată direct.";
+            message.textContent = "The image cannot be displayed directly.";
 
             imageLink.insertAdjacentElement("afterend", message);
         });
@@ -127,7 +127,7 @@ function displayRecipe(recipe) {
     }
 
     const ingredientsTitle = document.createElement("h4");
-    ingredientsTitle.textContent = "Ingrediente";
+    ingredientsTitle.textContent = "Ingredients";
 
     result.appendChild(ingredientsTitle);
 
@@ -144,7 +144,7 @@ function displayRecipe(recipe) {
     result.appendChild(ingredientList);
 
     const stepsTitle = document.createElement("h4");
-    stepsTitle.textContent = "Pași";
+    stepsTitle.textContent = "Instructions";
 
     result.appendChild(stepsTitle);
 

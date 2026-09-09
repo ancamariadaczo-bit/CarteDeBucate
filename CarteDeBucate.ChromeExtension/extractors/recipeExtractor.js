@@ -29,7 +29,7 @@
 
         return {
             success: false,
-            error: "Nu pare să fie o pagină de rețetă."
+            error: "This page does not appear to contain a recipe."
         };
     };
 

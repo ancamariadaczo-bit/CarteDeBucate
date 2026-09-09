@@ -1,21 +1,18 @@
 {
     "manifest_version": 3,
-    "name": "Carte de Bucate - Recipe Clipper",
+    "name": "Recipe Clipper – Print & Save Recipes",
     "version": "1.0.0",
-    "description": "Extrage rețete din paginile web.",
-    
+    "description": "Extract recipes from web pages and format them for easy printing or saving as PDF.",
     "permissions": [
         "activeTab",
         "scripting"
     ],
-
     "icons": {
         "16": "icons/icon16.png",
         "32": "icons/icon32.png",
         "48": "icons/icon48.png",
         "128": "icons/icon128.png"
     },
-
     "action": {
         "default_popup": "popup.html",
         "default_icon": {
