@@ -1,6 +1,18 @@
 const recipeContainer =
     document.getElementById("recipe");
 
+const recipeSummary =
+    document.getElementById("recipeSummary");
+
+const imageSection =
+    document.getElementById("imageSection");
+
+const stepsSection =
+    document.getElementById("stepsSection");
+
+const imageLoadTimeoutMilliseconds =
+    10000;
+
 const recipeJson =
     localStorage.getItem("recipeToPrint");
 
@@ -29,7 +41,7 @@ function displayRecipe(recipe) {
 
     title.textContent = recipe.name;
 
-    recipeContainer.appendChild(title);
+    recipeSummary.appendChild(title);
 
     // SURSA
 
@@ -37,6 +49,9 @@ function displayRecipe(recipe) {
 
         const source =
             document.createElement("p");
+
+        source.className =
+            "recipe-source";
 
         const sourceLabel =
             document.createElement("strong");
@@ -56,7 +71,7 @@ function displayRecipe(recipe) {
         source.appendChild(sourceLabel);
         source.appendChild(sourceLink);
 
-        recipeContainer.appendChild(source);
+        recipeSummary.appendChild(source);
     }
 
     // IMAGINE URL
@@ -84,10 +99,6 @@ function displayRecipe(recipe) {
         imageSource.appendChild(imageLabel);
         imageSource.appendChild(imageLink);
 
-        recipeContainer.appendChild(
-            imageSource
-        );
-
         // IMAGINEA
 
         const image =
@@ -108,14 +119,24 @@ function displayRecipe(recipe) {
                 message.textContent =
                     "Imaginea nu poate fi afișată direct.";
 
+                message.className =
+                    "image-error";
+
                 imageSource.insertAdjacentElement(
-                    "afterend",
+                    "beforebegin",
                     message
                 );
             }
         );
 
-        recipeContainer.appendChild(image);
+        imageSection.appendChild(image);
+
+        imageSource.className =
+            "image-source";
+
+        imageSection.appendChild(
+            imageSource
+        );
     }
 
     // INGREDIENTE
@@ -126,7 +147,7 @@ function displayRecipe(recipe) {
     ingredientsTitle.textContent =
         "Ingrediente";
 
-    recipeContainer.appendChild(
+    recipeSummary.appendChild(
         ingredientsTitle
     );
 
@@ -144,7 +165,7 @@ function displayRecipe(recipe) {
         ingredientsList.appendChild(item);
     }
 
-    recipeContainer.appendChild(
+    recipeSummary.appendChild(
         ingredientsList
     );
 
@@ -156,7 +177,7 @@ function displayRecipe(recipe) {
     stepsTitle.textContent =
         "Preparare";
 
-    recipeContainer.appendChild(
+    stepsSection.appendChild(
         stepsTitle
     );
 
@@ -174,7 +195,7 @@ function displayRecipe(recipe) {
         stepsList.appendChild(item);
     }
 
-    recipeContainer.appendChild(
+    stepsSection.appendChild(
         stepsList
     );
 }
@@ -200,16 +221,40 @@ function printWhenReady() {
 
             return new Promise(resolve => {
 
+                let timeoutId;
+
+                const finishWaiting = () => {
+
+                    clearTimeout(timeoutId);
+
+                    image.removeEventListener(
+                        "load",
+                        finishWaiting
+                    );
+
+                    image.removeEventListener(
+                        "error",
+                        finishWaiting
+                    );
+
+                    resolve();
+                };
+
                 image.addEventListener(
                     "load",
-                    resolve,
+                    finishWaiting,
                     { once: true }
                 );
 
                 image.addEventListener(
                     "error",
-                    resolve,
+                    finishWaiting,
                     { once: true }
+                );
+
+                timeoutId = setTimeout(
+                    finishWaiting,
+                    imageLoadTimeoutMilliseconds
                 );
             });
         });

@@ -4,21 +4,38 @@
 <head>
     <meta charset="UTF-8">
     <title>Carte de Bucate</title>
+
+    <link rel="stylesheet" href="popup.css">
 </head>
 
 <body>
 
-    <h2>Carte de Bucate</h2>
+    <header class="popup-header">
+        <img
+            class="popup-icon"
+            src="icons/icon48.png"
+            alt="">
 
-    <button id="extractButton">
-        Extrage rețeta
-    </button>
+        <div>
+            <h2>Carte de Bucate</h2>
 
-    <button id="printButton" hidden>
-        Print / Save PDF
-    </button>
+            <p class="popup-description">
+                Extrage rețeta din pagina curentă.
+            </p>
+        </div>
+    </header>
 
-    <hr>
+    <div class="controls">
+        <button id="extractButton">
+            Extrage rețeta
+        </button>
+
+        <button id="printButton" hidden>
+            Print / Save PDF
+        </button>
+    </div>
+
+    <hr id="resultSeparator" hidden>
 
     <div id="result"></div>
 

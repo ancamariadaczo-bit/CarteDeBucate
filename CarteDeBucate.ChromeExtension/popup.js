@@ -1,5 +1,6 @@
 const extractButton = document.getElementById("extractButton");
 const printButton = document.getElementById("printButton");
+const resultSeparator = document.getElementById("resultSeparator");
 const result = document.getElementById("result");
 
 let currentRecipe = null;
@@ -37,13 +38,16 @@ extractButton.addEventListener("click", async () => {
     if (!extractionResult.success) {
         result.textContent = extractionResult.error;
         extractButton.hidden = false;
-        printButton.hidden = true; return;
+        printButton.hidden = true;
+        resultSeparator.hidden = true;
+        return;
     }
 
     currentRecipe = extractionResult.recipe;
     displayRecipe(currentRecipe);
     extractButton.hidden = true;
     printButton.hidden = false;
+    resultSeparator.hidden = false;
 });
 
 printButton.addEventListener("click", async () => {
