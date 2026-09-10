@@ -1,0 +1,185 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #f5f5f5;
+    color: #222;
+    font-family: Arial, sans-serif;
+    line-height: 1.4;
+}
+
+.editor-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 24px;
+    background: #fff;
+    border-bottom: 1px solid #ccc;
+}
+
+.editor-icon {
+    width: 48px;
+    height: 48px;
+    flex: none;
+}
+
+.editor-header h1 {
+    margin: 0;
+    font-size: 22px;
+}
+
+main {
+    width: 100%;
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+#errorMessage {
+    margin-bottom: 20px;
+    padding: 14px 16px;
+    background: #fff0f0;
+    border: 2px solid #a40000;
+    border-radius: 4px;
+}
+
+#errorMessage:focus {
+    outline: 3px solid #222;
+    outline-offset: 2px;
+}
+
+#errorMessage p {
+    margin: 0;
+    font-weight: bold;
+}
+
+#errorMessage ul {
+    margin: 8px 0 0;
+    padding-left: 24px;
+}
+
+form {
+    display: grid;
+    gap: 20px;
+}
+
+form section {
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+form h2 {
+    margin: 0 0 16px;
+    font-size: 20px;
+}
+
+label {
+    display: block;
+    margin: 14px 0 6px;
+    font-weight: bold;
+}
+
+input,
+textarea,
+button {
+    font: inherit;
+}
+
+input,
+textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #777;
+    border-radius: 4px;
+}
+
+textarea {
+    min-height: 88px;
+    resize: vertical;
+}
+
+input:focus,
+textarea:focus,
+button:focus-visible {
+    outline: 3px solid #2457a7;
+    outline-offset: 2px;
+}
+
+.dynamic-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.dynamic-row input,
+.dynamic-row textarea {
+    flex: 1;
+}
+
+button {
+    padding: 9px 14px;
+    border: 1px solid #666;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #eee;
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.remove-button {
+    flex: none;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-bottom: 24px;
+}
+
+#printButton {
+    background: #2457a7;
+    border-color: #2457a7;
+    color: #fff;
+}
+
+#printButton:hover {
+    background: #193f7d;
+}
+
+@media (max-width: 600px) {
+    .editor-header,
+    main {
+        padding: 16px;
+    }
+
+    .editor-header h1 {
+        font-size: 18px;
+    }
+
+    form section {
+        padding: 16px;
+    }
+
+    .dynamic-row,
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .dynamic-row button,
+    .form-actions button {
+        width: 100%;
+    }
+}

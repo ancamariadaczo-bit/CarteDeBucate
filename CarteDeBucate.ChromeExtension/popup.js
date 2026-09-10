@@ -1,4 +1,5 @@
 const extractButton = document.getElementById("extractButton");
+const editButton = document.getElementById("editButton");
 const printButton = document.getElementById("printButton");
 const resultSeparator = document.getElementById("resultSeparator");
 const result = document.getElementById("result");
@@ -36,8 +37,10 @@ extractButton.addEventListener("click", async () => {
     console.log(extractionResult);
 
     if (!extractionResult.success) {
+        currentRecipe = null;
         result.textContent = extractionResult.error;
         extractButton.hidden = false;
+        editButton.hidden = true;
         printButton.hidden = true;
         resultSeparator.hidden = true;
         return;
@@ -46,8 +49,28 @@ extractButton.addEventListener("click", async () => {
     currentRecipe = extractionResult.recipe;
     displayRecipe(currentRecipe);
     extractButton.hidden = true;
+    editButton.hidden = false;
     printButton.hidden = false;
     resultSeparator.hidden = false;
+});
+
+editButton.addEventListener("click", async () => {
+
+    if (!currentRecipe) {
+        return;
+    }
+
+    localStorage.setItem(
+        "recipeToPrint",
+        JSON.stringify(currentRecipe)
+    );
+
+    await chrome.windows.create({
+        url: chrome.runtime.getURL("edit.html"),
+        type: "popup",
+        width: 900,
+        height: 700
+    });
 });
 
 printButton.addEventListener("click", async () => {

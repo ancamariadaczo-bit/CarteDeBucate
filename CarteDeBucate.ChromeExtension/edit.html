@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Recipe</title>
+
+    <link rel="stylesheet" href="edit.css">
+</head>
+
+<body>
+
+    <header class="editor-header">
+        <img
+            class="editor-icon"
+            src="icons/icon48.png"
+            alt="">
+
+        <h1>Recipe Clipper – Print &amp; Save Recipes</h1>
+    </header>
+
+    <main>
+        <div id="errorMessage" tabindex="-1" role="alert" hidden></div>
+
+        <form id="recipeForm" novalidate>
+            <section aria-labelledby="recipeDetailsHeading">
+                <h2 id="recipeDetailsHeading">Edit Recipe</h2>
+
+                <label for="recipeName">Recipe name</label>
+                <input id="recipeName" name="recipeName" type="text" required>
+
+                <label for="sourceUrl">Source URL</label>
+                <input id="sourceUrl" name="sourceUrl" type="url">
+
+                <label for="imageUrl">Image URL</label>
+                <input id="imageUrl" name="imageUrl" type="url">
+            </section>
+
+            <section aria-labelledby="ingredientsHeading">
+                <h2 id="ingredientsHeading">Ingredients</h2>
+
+                <div id="ingredientRows"></div>
+
+                <button id="addIngredientButton" type="button">
+                    Add Ingredient
+                </button>
+            </section>
+
+            <section aria-labelledby="instructionsHeading">
+                <h2 id="instructionsHeading">Instructions</h2>
+
+                <div id="instructionRows"></div>
+
+                <button id="addInstructionButton" type="button">
+                    Add Instruction
+                </button>
+            </section>
+
+            <div class="form-actions">
+                <button id="printButton" type="submit">
+                    Print / Save PDF
+                </button>
+
+                <button id="cancelButton" type="button">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </main>
+
+    <script src="edit.js"></script>
+
+</body>
+
+</html>

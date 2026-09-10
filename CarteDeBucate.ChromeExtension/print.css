@@ -97,6 +97,11 @@ li {
 }
 
 
+#stepsSection li {
+    white-space: pre-line;
+}
+
+
 @media print {
 
     @page {
