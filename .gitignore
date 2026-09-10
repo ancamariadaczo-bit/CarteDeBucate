@@ -487,7 +487,6 @@ $RECYCLE.BIN/
 
 *.db
 *.sqlite
-*.md
 recipes.json
 users.json
 appsettings.json
