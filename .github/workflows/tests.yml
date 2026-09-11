@@ -1,0 +1,48 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      # --------------------
+      # C# TESTS
+      # --------------------
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore .NET dependencies
+        run: dotnet restore
+
+      - name: Build .NET
+        run: dotnet build --no-restore
+
+      - name: Run C# tests
+        run: dotnet test --no-build
+
+      # --------------------
+      # JAVASCRIPT TESTS
+      # --------------------
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+        working-directory: ./CarteDeBucate.ChromeExtension
+
+      - name: Run JavaScript tests
+        run: npm test
+        working-directory: ./CarteDeBucate.ChromeExtension
