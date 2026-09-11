@@ -2,7 +2,8 @@ export function initializePopupController({
     document,
     extractRecipe,
     saveRecipe,
-    openWindow
+    openWindow,
+    reportError = () => {}
 }) {
     const extractButton = document.getElementById("extractButton");
     const editButton = document.getElementById("editButton");
@@ -13,15 +14,21 @@ export function initializePopupController({
     let currentRecipe = null;
 
     extractButton.addEventListener("click", async () => {
-        const extractionResult = await extractRecipe();
+        let extractionResult;
 
-        if (!extractionResult.success) {
-            currentRecipe = null;
-            result.textContent = extractionResult.error;
-            extractButton.hidden = false;
-            editButton.hidden = true;
-            printButton.hidden = true;
-            resultSeparator.hidden = true;
+        try {
+            extractionResult = await extractRecipe();
+        } catch (error) {
+            reportError(error);
+            showExtractionFailure("The recipe could not be extracted from this page.");
+            return;
+        }
+
+        if (!extractionResult?.success) {
+            showExtractionFailure(
+                extractionResult?.error
+                ?? "The recipe could not be extracted from this page."
+            );
             return;
         }
 
@@ -140,4 +147,44 @@ export function initializePopupController({
 
         result.appendChild(stepsList);
     }
+
+    function showExtractionFailure(message) {
+        currentRecipe = null;
+        result.textContent = message;
+        extractButton.hidden = false;
+        editButton.hidden = true;
+        printButton.hidden = true;
+        resultSeparator.hidden = true;
+    }
+}
+
+export async function extractRecipeFromActiveTab({
+    chrome,
+    extractorFiles,
+    reportExtraction = extractionResult => console.log(extractionResult)
+}) {
+    const [tab] = await chrome.tabs.query({
+        active: true,
+        currentWindow: true
+    });
+
+    await chrome.scripting.executeScript({
+        target: {
+            tabId: tab.id
+        },
+        files: extractorFiles
+    });
+
+    const executionResults = await chrome.scripting.executeScript({
+        target: {
+            tabId: tab.id
+        },
+        func: () => globalThis.RecipeClipper.extractRecipe()
+    });
+
+    const extractionResult = executionResults[0].result;
+
+    reportExtraction(extractionResult);
+
+    return extractionResult;
 }

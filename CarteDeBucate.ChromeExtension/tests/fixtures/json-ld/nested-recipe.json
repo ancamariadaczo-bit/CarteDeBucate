@@ -1,0 +1,16 @@
+{
+  "page": {
+    "@graph": [
+      {
+        "@type": "WebPage",
+        "name": "Recipe page"
+      },
+      {
+        "@type": ["Thing", "Recipe"],
+        "name": "Nested Cake",
+        "recipeIngredient": ["Flour"],
+        "recipeInstructions": [{"@type": "HowToStep", "text": "Bake."}]
+      }
+    ]
+  }
+}

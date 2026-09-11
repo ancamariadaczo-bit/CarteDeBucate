@@ -1,0 +1,11 @@
+{
+  "name": "carte-de-bucate-chrome-extension",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "jsdom": "^30.0.1"
+  }
+}

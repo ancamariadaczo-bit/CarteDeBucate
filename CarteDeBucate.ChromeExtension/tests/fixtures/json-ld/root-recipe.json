@@ -1,0 +1,9 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Recipe",
+  "name": "Simple Soup",
+  "author": "Ana",
+  "image": "https://images.example.test/soup.jpg",
+  "recipeIngredient": [" Water ", "Salt"],
+  "recipeInstructions": ["Boil water.", "Add salt."]
+}

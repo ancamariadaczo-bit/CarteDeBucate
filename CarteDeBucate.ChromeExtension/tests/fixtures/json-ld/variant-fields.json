@@ -1,0 +1,14 @@
+{
+  "@type": "Recipe",
+  "name": "Variant Recipe",
+  "author": [{"name": "Ana"}, "Bob"],
+  "image": [{"contentUrl": "https://images.example.test/variant.jpg"}],
+  "recipeIngredient": ["  Flour  ", "", "   ", 17, "Milk"],
+  "recipeInstructions": [
+    "  Mix.  ",
+    {"@type": "HowToSection", "itemListElement": [
+      {"@type": "HowToStep", "text": "  Bake.  "},
+      [" Cool. ", {"text": "Serve."}]
+    ]}
+  ]
+}

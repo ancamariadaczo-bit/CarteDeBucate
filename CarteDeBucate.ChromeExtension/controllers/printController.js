@@ -13,12 +13,12 @@ export function initializePrintController({
     const imageSection = document.getElementById("imageSection");
     const stepsSection = document.getElementById("stepsSection");
 
-    if (!recipePayload) {
+    const recipe = parsePrintableRecipe(recipePayload);
+
+    if (!recipe) {
         recipeContainer.textContent = "No recipe was found to print.";
         return;
     }
-
-    const recipe = JSON.parse(recipePayload);
 
     displayRecipe(recipe);
     document.title = recipe.name;
@@ -141,4 +141,30 @@ export function initializePrintController({
             scheduleTimeout(requestPrint, printDelayMilliseconds);
         });
     }
+}
+
+function parsePrintableRecipe(recipePayload) {
+    if (typeof recipePayload !== "string" || !recipePayload) {
+        return null;
+    }
+
+    let recipe;
+
+    try {
+        recipe = JSON.parse(recipePayload);
+    } catch {
+        return null;
+    }
+
+    if (
+        !recipe ||
+        typeof recipe !== "object" ||
+        Array.isArray(recipe) ||
+        !Array.isArray(recipe.ingredients) ||
+        !Array.isArray(recipe.steps)
+    ) {
+        return null;
+    }
+
+    return recipe;
 }

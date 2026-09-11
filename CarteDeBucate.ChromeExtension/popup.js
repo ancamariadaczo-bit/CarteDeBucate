@@ -4,10 +4,16 @@ const extractorFiles = [
     "extractors/recipeExtractor.js"
 ];
 
-import("./controllers/popupController.js").then(({ initializePopupController }) => {
+import("./controllers/popupController.js").then(({
+    extractRecipeFromActiveTab,
+    initializePopupController
+}) => {
     initializePopupController({
         document,
-        extractRecipe: extractRecipeFromActiveTab,
+        extractRecipe: () => extractRecipeFromActiveTab({
+            chrome,
+            extractorFiles
+        }),
         saveRecipe: recipe => {
             localStorage.setItem("recipeToPrint", JSON.stringify(recipe));
         },
@@ -18,33 +24,9 @@ import("./controllers/popupController.js").then(({ initializePopupController }) 
                 width,
                 height
             });
+        },
+        reportError: error => {
+            console.error(error);
         }
     });
 });
-
-async function extractRecipeFromActiveTab() {
-    const [tab] = await chrome.tabs.query({
-        active: true,
-        currentWindow: true
-    });
-
-    await chrome.scripting.executeScript({
-        target: {
-            tabId: tab.id
-        },
-        files: extractorFiles
-    });
-
-    const executionResults = await chrome.scripting.executeScript({
-        target: {
-            tabId: tab.id
-        },
-        func: () => globalThis.RecipeClipper.extractRecipe()
-    });
-
-    const extractionResult = executionResults[0].result;
-
-    console.log(extractionResult);
-
-    return extractionResult;
-}
