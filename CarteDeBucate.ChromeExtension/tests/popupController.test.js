@@ -262,6 +262,7 @@ test("the real classic popup bootstrap preserves injection and dependency compos
     assert.doesNotMatch(html, /<script[^>]+type="module"[^>]+src="popup\.js"/);
     assert.match(html, /width:\s*468px/);
     assert.match(script, /import\("\.\/controllers\/popupController\.js"\)\.then/);
+    assert.match(script, /import\("\.\/api\/recipeApiClient\.js"\)/);
     assert.match(script, /extractRecipeFromActiveTab/);
     assert.match(script, /initializePopupController\s*\(/);
     assert.match(script, /localStorage\.setItem\("recipeToPrint"/);

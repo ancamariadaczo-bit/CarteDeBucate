@@ -4,39 +4,12 @@ const extractorFiles = [
     "extractors/recipeExtractor.js"
 ];
 
-const API_URL = "https://localhost:7080/api/recipes";
-
-async function saveRecipeToApi(recipe) {
-    const response = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            name: recipe.name,
-            sourceUrl: recipe.sourceUrl,
-            ingredients: recipe.ingredients,
-            steps: recipe.steps
-        })
-    });
-
-    const responseBody = await response.json();
-
-    if (!response.ok) {
-        throw new Error(
-            responseBody.message
-            ?? responseBody.title
-            ?? `API request failed with status ${response.status}`
-        );
-    }
-
-    return responseBody;
-}
-
-import("./controllers/popupController.js").then(({
+import("./controllers/popupController.js").then(async ({
     extractRecipeFromActiveTab,
     initializePopupController
 }) => {
+    const { saveRecipeToApi } = await import("./api/recipeApiClient.js");
+
     initializePopupController({
         document,
         extractRecipe: () => extractRecipeFromActiveTab({
