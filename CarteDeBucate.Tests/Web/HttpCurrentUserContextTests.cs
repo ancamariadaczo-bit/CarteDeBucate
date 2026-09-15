@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using CarteDeBucate.Web.Configuration;
 using CarteDeBucate.Web.Services.Authentication;
 using Microsoft.AspNetCore.Http;
 
@@ -11,7 +12,7 @@ public class HttpCurrentUserContextTests
         {
             HttpContext = new DefaultHttpContext()
         };
-        HttpCurrentUserContext context = new HttpCurrentUserContext(httpContextAccessor);
+        HttpCurrentUserContext context = CreateContext(httpContextAccessor);
 
         Assert.False(context.IsAuthenticated);
         Assert.Null(context.UserId);
@@ -25,7 +26,7 @@ public class HttpCurrentUserContextTests
         {
             HttpContext = CreateHttpContextWithUser("12", "anca")
         };
-        HttpCurrentUserContext context = new HttpCurrentUserContext(httpContextAccessor);
+        HttpCurrentUserContext context = CreateContext(httpContextAccessor);
 
         Assert.True(context.IsAuthenticated);
         Assert.Equal(12, context.UserId);
@@ -39,7 +40,7 @@ public class HttpCurrentUserContextTests
         {
             HttpContext = new DefaultHttpContext()
         };
-        HttpCurrentUserContext context = new HttpCurrentUserContext(httpContextAccessor);
+        HttpCurrentUserContext context = CreateContext(httpContextAccessor);
 
         context.SetCurrentUser(new User
         {
@@ -59,7 +60,7 @@ public class HttpCurrentUserContextTests
         {
             HttpContext = new DefaultHttpContext()
         };
-        HttpCurrentUserContext context = new HttpCurrentUserContext(httpContextAccessor);
+        HttpCurrentUserContext context = CreateContext(httpContextAccessor);
         context.SetCurrentUser(new User
         {
             Id = 21,
@@ -71,6 +72,56 @@ public class HttpCurrentUserContextTests
         Assert.False(context.IsAuthenticated);
         Assert.Null(context.UserId);
         Assert.Null(context.Username);
+    }
+
+    [Fact]
+    public void Context_WhenAuthenticationIsDisabled_ShouldIgnoreAuthenticatedUserClaims()
+    {
+        HttpContextAccessor httpContextAccessor = new HttpContextAccessor
+        {
+            HttpContext = CreateHttpContextWithUser("12", "anca")
+        };
+        HttpCurrentUserContext context = CreateContext(
+            httpContextAccessor,
+            authenticationEnabled: false);
+
+        Assert.False(context.IsAuthenticated);
+        Assert.Null(context.UserId);
+        Assert.Null(context.Username);
+    }
+
+    [Fact]
+    public void SetCurrentUser_WhenAuthenticationIsDisabled_ShouldNotExposeUserIdentity()
+    {
+        HttpContextAccessor httpContextAccessor = new HttpContextAccessor
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+        HttpCurrentUserContext context = CreateContext(
+            httpContextAccessor,
+            authenticationEnabled: false);
+
+        context.SetCurrentUser(new User
+        {
+            Id = 21,
+            Username = "maria"
+        });
+
+        Assert.False(context.IsAuthenticated);
+        Assert.Null(context.UserId);
+        Assert.Null(context.Username);
+    }
+
+    private static HttpCurrentUserContext CreateContext(
+        IHttpContextAccessor httpContextAccessor,
+        bool authenticationEnabled = true)
+    {
+        return new HttpCurrentUserContext(
+            httpContextAccessor,
+            new WebAppSettings
+            {
+                AuthenticationEnabled = authenticationEnabled
+            });
     }
 
     private static HttpContext CreateHttpContextWithUser(string userId, string username)
