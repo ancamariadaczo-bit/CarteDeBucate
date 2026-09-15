@@ -12,6 +12,22 @@ WebAppSettings webAppSettings = builder.Configuration.Get<WebAppSettings>()
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+
+string[] allowedOrigins =
+    builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("ChromeExtension", policy =>
+    {
+        policy
+            .WithOrigins(allowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -103,6 +119,8 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
+
+app.UseCors("ChromeExtension");
 
 app.UseAuthentication();
 app.UseAuthorization();

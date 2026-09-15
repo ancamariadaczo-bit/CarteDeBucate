@@ -84,13 +84,19 @@ export function initializePopupController({
         saveStatus.textContent = "Saving...";
 
         try {
-            const response = await saveRecipeToApi(currentRecipe);
-
+            await saveRecipeToApi(currentRecipe);
             saveStatus.textContent = `Recipe saved successfully.`;
+            //const response = await saveRecipeToApi(currentRecipe);
             //`Recipe saved successfully. ID: ${response.recipeId}`;
         } catch (error) {
+            const reason = error instanceof Error
+                ? error.message
+                : "Unknown error.";
+
+            saveStatus.textContent =
+                `The recipe could not be saved. Reason: ${reason}`;
+
             reportError(error);
-            saveStatus.textContent = "The recipe could not be saved.";
             saveButton.disabled = false;
         }
     });

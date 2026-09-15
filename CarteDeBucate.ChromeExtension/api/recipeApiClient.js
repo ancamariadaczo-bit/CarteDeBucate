@@ -1,4 +1,8 @@
-export const recipeApiUrl = "https://localhost:7080/api/recipes";
+//export const recipeApiUrl = "https://localhost:7080/api/recipes";
+
+import { API_ENDPOINTS } from "../config/apiConfig.js";
+
+export const recipeApiUrl = API_ENDPOINTS.recipes;
 
 export async function saveRecipeToApi(
     recipe,
