@@ -2,14 +2,17 @@ export function initializePopupController({
     document,
     extractRecipe,
     saveRecipe,
+    saveRecipeToApi,
     openWindow,
-    reportError = () => {}
+    reportError = () => { }
 }) {
     const extractButton = document.getElementById("extractButton");
     const editButton = document.getElementById("editButton");
     const printButton = document.getElementById("printButton");
     const resultSeparator = document.getElementById("resultSeparator");
     const result = document.getElementById("result");
+    const saveButton = document.getElementById("saveButton");
+    const saveStatus = document.getElementById("saveStatus");
 
     let currentRecipe = null;
 
@@ -37,6 +40,8 @@ export function initializePopupController({
         extractButton.hidden = true;
         editButton.hidden = false;
         printButton.hidden = false;
+        saveButton.hidden = false;
+        saveStatus.textContent = "";
         resultSeparator.hidden = false;
     });
 
@@ -68,6 +73,26 @@ export function initializePopupController({
             width: 900,
             height: 700
         });
+    });
+
+    saveButton.addEventListener("click", async () => {
+        if (!currentRecipe) {
+            return;
+        }
+
+        saveButton.disabled = true;
+        saveStatus.textContent = "Saving...";
+
+        try {
+            const response = await saveRecipeToApi(currentRecipe);
+
+            saveStatus.textContent = `Recipe saved successfully.`;
+            //`Recipe saved successfully. ID: ${response.recipeId}`;
+        } catch (error) {
+            reportError(error);
+            saveStatus.textContent = "The recipe could not be saved.";
+            saveButton.disabled = false;
+        }
     });
 
     function displayRecipe(recipe) {
@@ -154,6 +179,8 @@ export function initializePopupController({
         extractButton.hidden = false;
         editButton.hidden = true;
         printButton.hidden = true;
+        saveButton.hidden = true;
+        saveStatus.textContent = "";
         resultSeparator.hidden = true;
     }
 }

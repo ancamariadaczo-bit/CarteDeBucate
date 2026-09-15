@@ -103,3 +103,9 @@ img {
 #result a {
     overflow-wrap: anywhere;
 }
+
+.save-status {
+    height: 24px;
+    margin: 8px 0 0;
+    line-height: 24px;
+}
