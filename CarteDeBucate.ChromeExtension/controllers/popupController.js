@@ -3,7 +3,9 @@ export function initializePopupController({
     extractRecipe,
     saveRecipe,
     saveRecipeToApi,
+    login,
     openWindow,
+    initialIsAuthenticated = false,
     reportError = () => { }
 }) {
     const extractButton = document.getElementById("extractButton");
@@ -13,8 +15,13 @@ export function initializePopupController({
     const result = document.getElementById("result");
     const saveButton = document.getElementById("saveButton");
     const saveStatus = document.getElementById("saveStatus");
+    const authSection = document.getElementById("authSection");
+    const authMessage = document.getElementById("authMessage");
+    const loginButton = document.getElementById("loginButton");
+    const signInPrompt = authMessage.textContent.trim();
 
     let currentRecipe = null;
+    let isAuthenticated = initialIsAuthenticated;
 
     extractButton.addEventListener("click", async () => {
         let extractionResult;
@@ -37,12 +44,9 @@ export function initializePopupController({
 
         currentRecipe = extractionResult.recipe;
         displayRecipe(currentRecipe);
-        extractButton.hidden = true;
-        editButton.hidden = false;
-        printButton.hidden = false;
-        saveButton.hidden = false;
+
+        updateUi();
         saveStatus.textContent = "";
-        resultSeparator.hidden = false;
     });
 
     editButton.addEventListener("click", async () => {
@@ -100,6 +104,43 @@ export function initializePopupController({
             saveButton.disabled = false;
         }
     });
+
+    loginButton.addEventListener("click", async () => {
+        authMessage.textContent = signInPrompt;
+
+        try {
+            await login();
+
+            isAuthenticated = true;
+            updateUi();
+        } catch (error) {
+            authMessage.textContent =
+                "Sign in was not completed. Please try again.";
+
+            reportError(error);
+        }
+    });
+
+    // Prepares the UI regarding to the state and permissions.
+    // currentRecipe == null → Extract visible && Edit/Print/Save hidden
+    // currentRecipe != null → Extract hidden && Edit/Print/Save visible
+    // hasRecipe && isAuthenticated == false → Save disabled && Login/Create account visible
+    // !hasRecipe || isAuthenticated == true → Login/Create account hidden
+    function updateUi() {
+        const hasRecipe = currentRecipe !== null;
+
+        extractButton.hidden = hasRecipe;
+
+        editButton.hidden = !hasRecipe;
+        printButton.hidden = !hasRecipe;
+        saveButton.hidden = !hasRecipe;
+
+        saveButton.disabled = !isAuthenticated;
+
+        authSection.hidden = !hasRecipe || isAuthenticated;
+
+        resultSeparator.hidden = !hasRecipe;
+    }
 
     function displayRecipe(recipe) {
         result.textContent = "";
@@ -182,13 +223,12 @@ export function initializePopupController({
     function showExtractionFailure(message) {
         currentRecipe = null;
         result.textContent = message;
-        extractButton.hidden = false;
-        editButton.hidden = true;
-        printButton.hidden = true;
-        saveButton.hidden = true;
+
         saveStatus.textContent = "";
-        resultSeparator.hidden = true;
+        updateUi();
     }
+
+    updateUi();
 }
 
 export async function extractRecipeFromActiveTab({

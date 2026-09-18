@@ -1,8 +1,9 @@
 using CarteDeBucate.Web.Models.Api;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 
-namespace CarteDeBucate.Web.Controllers.Api;
-
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 [ApiController]
 [Route("api/recipes")]
 public class RecipesApiController : ControllerBase

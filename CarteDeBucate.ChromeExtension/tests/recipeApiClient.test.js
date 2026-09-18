@@ -16,6 +16,7 @@ const recipe = {
 
 test("saveRecipeToApi sends the recipe to the recipes API and returns its response", async () => {
     const requests = [];
+    const accessToken = "test-access-token";
     const apiResponse = {
         message: "Recipe saved successfully.",
         id: 42
@@ -30,14 +31,15 @@ test("saveRecipeToApi sends the recipe to the recipes API and returns its respon
         };
     };
 
-    const result = await saveRecipeToApi(recipe, fetchRequest);
+    const result = await saveRecipeToApi(recipe, accessToken, fetchRequest);
 
     assert.deepEqual(requests, [[
         recipeApiUrl,
         {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${accessToken}`
             },
             body: JSON.stringify({
                 name: recipe.name,
@@ -51,6 +53,7 @@ test("saveRecipeToApi sends the recipe to the recipes API and returns its respon
 });
 
 test("saveRecipeToApi uses the API message when the request fails", async () => {
+    const accessToken = "test-access-token";
     const fetchRequest = async () => ({
         ok: false,
         status: 400,
@@ -60,12 +63,13 @@ test("saveRecipeToApi uses the API message when the request fails", async () => 
     });
 
     await assert.rejects(
-        () => saveRecipeToApi(recipe, fetchRequest),
+        () => saveRecipeToApi(recipe, accessToken, fetchRequest),
         new Error("The recipe could not be saved.")
     );
 });
 
 test("saveRecipeToApi uses the problem title when the API does not return a message", async () => {
+    const accessToken = "test-access-token";
     const fetchRequest = async () => ({
         ok: false,
         status: 400,
@@ -75,12 +79,13 @@ test("saveRecipeToApi uses the problem title when the API does not return a mess
     });
 
     await assert.rejects(
-        () => saveRecipeToApi(recipe, fetchRequest),
+        () => saveRecipeToApi(recipe, accessToken, fetchRequest),
         new Error("Validation failed.")
     );
 });
 
 test("saveRecipeToApi includes the HTTP status when the API returns no error details", async () => {
+    const accessToken = "test-access-token";
     const fetchRequest = async () => ({
         ok: false,
         status: 500,
@@ -88,7 +93,14 @@ test("saveRecipeToApi includes the HTTP status when the API returns no error det
     });
 
     await assert.rejects(
-        () => saveRecipeToApi(recipe, fetchRequest),
+        () => saveRecipeToApi(recipe, accessToken, fetchRequest),
         new Error("API request failed with status 500")
+    );
+});
+
+test("saveRecipeToApi rejects the request when the access token is missing", async () => {
+    await assert.rejects(
+        () => saveRecipeToApi(recipe, null),
+        new Error("Authentication is required.")
     );
 });

@@ -5,7 +5,9 @@
     "description": "Extract recipes from web pages and format them for easy printing or saving as PDF.",
     "permissions": [
         "activeTab",
-        "scripting"
+        "scripting",
+        "storage",
+        "identity"
     ],
     "host_permissions": [
         "http://localhost:5080/*",
@@ -24,5 +26,9 @@
             "16": "icons/icon16.png",
             "32": "icons/icon32.png"
         }
+    },
+    "background": {
+        "service_worker": "service-worker.js",
+        "type": "module"
     }
 }

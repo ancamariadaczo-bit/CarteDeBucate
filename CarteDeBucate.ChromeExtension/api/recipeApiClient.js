@@ -1,17 +1,21 @@
-//export const recipeApiUrl = "https://localhost:7080/api/recipes";
-
 import { API_ENDPOINTS } from "../config/apiConfig.js";
 
 export const recipeApiUrl = API_ENDPOINTS.recipes;
 
 export async function saveRecipeToApi(
     recipe,
+    accessToken,
     fetchRequest = globalThis.fetch
 ) {
+    if (!accessToken) {
+        throw new Error("Authentication is required.");
+    }
+
     const response = await fetchRequest(recipeApiUrl, {
         method: "POST",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${accessToken}`
         },
         body: JSON.stringify({
             name: recipe.name,

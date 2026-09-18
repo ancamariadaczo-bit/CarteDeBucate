@@ -10,6 +10,35 @@ import("./controllers/popupController.js").then(async ({
 }) => {
     const { saveRecipeToApi } = await import("./api/recipeApiClient.js");
 
+    const { getCurrentUser } = await import("./api/authenticationApiClient.js");
+
+    const { getAccessToken, removeAccessToken } = await import("./auth/authStorage.js");
+
+    const { resolveAuthenticationState } = await import("./auth/authenticationState.js");
+
+    const reportError = error => {
+        console.error(error);
+    };
+
+    const isAuthenticated = await resolveAuthenticationState({
+        getAccessToken,
+        getCurrentUser,
+        removeAccessToken,
+        reportError
+    });
+
+    async function login() {
+        const response = await chrome.runtime.sendMessage({
+            type: "LOGIN"
+        });
+
+        if (!response?.success) {
+            throw new Error(
+                response?.error ?? "Login failed."
+            );
+        }
+    }
+
     initializePopupController({
         document,
         extractRecipe: () => extractRecipeFromActiveTab({
@@ -19,7 +48,16 @@ import("./controllers/popupController.js").then(async ({
         saveRecipe: recipe => {
             localStorage.setItem("recipeToPrint", JSON.stringify(recipe));
         },
-        saveRecipeToApi,
+        saveRecipeToApi: async recipe => {
+            const accessToken = await getAccessToken();
+
+            return saveRecipeToApi(
+                recipe,
+                accessToken
+            );
+        },
+        initialIsAuthenticated: isAuthenticated,
+        login,
         openWindow: ({ page, type, width, height }) => {
             return chrome.windows.create({
                 url: chrome.runtime.getURL(page),
@@ -28,8 +66,6 @@ import("./controllers/popupController.js").then(async ({
                 height
             });
         },
-        reportError: error => {
-            console.error(error);
-        }
+        reportError
     });
 });

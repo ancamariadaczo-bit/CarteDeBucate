@@ -114,6 +114,104 @@ Tests pass?
 
 This prevents code with failing tests from being automatically deployed.
 
+### Web authentication configuration
+
+The non-secret authentication settings shared by local development and production
+are stored in:
+
+```text
+CarteDeBucate.Web/appsettings.json
+```
+
+The shared settings are:
+
+```text
+Jwt:Issuer
+Jwt:Audience
+Jwt:ExpirationMinutes
+Cors:AllowedOrigins
+ChromeExtension:AuthenticationRedirectUrl
+```
+
+`appsettings.Development.json` and `appsettings.Production.json`, when present,
+should contain only values that are different for that environment. Environment
+variables can override any JSON setting by replacing `:` with `__`, for example
+`Jwt__Issuer`.
+
+#### Local JWT secret
+
+The JWT signing key must not be added to `appsettings.json` or another committed
+file. Configure it locally with User Secrets:
+
+```bash
+dotnet user-secrets set "Jwt:Key" "<local-random-signing-key>" --project CarteDeBucate.Web/CarteDeBucate.Web.csproj
+```
+
+For HS256, use at least 32 random bytes of key material. A longer random value is
+also acceptable. Do not use a password, repository value, or production key for
+local development.
+
+#### Render JWT secret
+
+Configure the production signing key as a secret environment variable in Render:
+
+```text
+Jwt__Key=<production-random-signing-key>
+```
+
+The production key must also contain at least 32 random bytes and must be different
+from the local key. The non-secret values are inherited from `appsettings.json`.
+Add Render overrides only when a production value genuinely differs from the
+shared value.
+
+#### Chrome extension ID
+
+Before local testing or a production release, read the extension ID from
+`chrome://extensions` and verify that the same ID is used by both settings:
+
+```text
+Cors:AllowedOrigins
+ChromeExtension:AuthenticationRedirectUrl
+```
+
+For the currently configured extension ID, the matching values are:
+
+```text
+chrome-extension://klggdhkljgmfaakhchnlblgnkgiajenj
+https://klggdhkljgmfaakhchnlblgnkgiajenj.chromiumapp.org/authentication-callback
+```
+
+If the extension ID changes, update both values together before testing the login
+flow.
+
+### Chrome extension API environment
+
+All extension API endpoints are derived from the single `API_BASE_URL` value in:
+
+```text
+CarteDeBucate.ChromeExtension/config/apiConfig.js
+```
+
+Use this value for local development:
+
+```js
+export const API_BASE_URL = "https://localhost:7080";
+```
+
+Immediately before creating the production extension ZIP, change it to:
+
+```js
+export const API_BASE_URL = "https://cartedebucate.onrender.com";
+```
+
+Create the ZIP while the production value is present, then restore
+`https://localhost:7080` in the source tree for local development. There is no
+automatic environment detection in the extension.
+
+Changing the source files does not update an existing archive. In particular,
+`CarteDeBucate.ChromeExtension/Recipe Clipper 1.0.0.zip` must be recreated before
+uploading a new package.
+
 ---
 
 ## 4. Normal development workflow

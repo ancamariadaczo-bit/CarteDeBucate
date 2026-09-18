@@ -24,7 +24,12 @@ const recipe = {
     steps: ["Boil.", "Serve."]
 };
 
-async function setupPopup(extractRecipe, reportError = () => {}) {
+async function setupPopup(extractRecipe, {
+    saveRecipeToApi = async () => {},
+    login = async () => {},
+    initialIsAuthenticated = false,
+    reportError = () => {}
+} = {}) {
     const context = await createDomFromFile(popupHtmlPath);
     const storage = createStorageMock();
     const browser = createBrowserEffectsMock();
@@ -33,7 +38,10 @@ async function setupPopup(extractRecipe, reportError = () => {}) {
         document: context.document,
         extractRecipe,
         saveRecipe: value => storage.storage.setItem("recipeToPrint", JSON.stringify(value)),
+        saveRecipeToApi,
+        login,
         openWindow: browser.effects.openWindow,
+        initialIsAuthenticated,
         reportError
     });
 
@@ -53,6 +61,8 @@ test("starts with only the Extract action visible", async () => {
         assert.equal(context.document.getElementById("extractButton").hidden, false);
         assert.equal(context.document.getElementById("editButton").hidden, true);
         assert.equal(context.document.getElementById("printButton").hidden, true);
+        assert.equal(context.document.getElementById("saveButton").hidden, true);
+        assert.equal(context.document.getElementById("authSection").hidden, true);
         assert.equal(context.document.getElementById("resultSeparator").hidden, true);
         assert.equal(context.document.getElementById("result").textContent, "");
     } finally {
@@ -83,7 +93,130 @@ test("renders a successful extraction with title, links, image, ingredients, and
         );
         assert.equal(context.document.getElementById("extractButton").hidden, true);
         assert.equal(context.document.getElementById("editButton").hidden, false);
+        assert.equal(context.document.getElementById("editButton").disabled, false);
         assert.equal(context.document.getElementById("printButton").hidden, false);
+        assert.equal(context.document.getElementById("printButton").disabled, false);
+        assert.equal(context.document.getElementById("saveButton").hidden, false);
+        assert.equal(context.document.getElementById("saveButton").disabled, true);
+        assert.equal(context.document.getElementById("authSection").hidden, false);
+    } finally {
+        context.cleanup();
+    }
+});
+
+test("enables all recipe actions after an authenticated extraction", async () => {
+    const context = await setupPopup(
+        async () => ({ success: true, recipe }),
+        { initialIsAuthenticated: true }
+    );
+
+    try {
+        await clickAndFlush(context.document.getElementById("extractButton"));
+
+        assert.equal(context.document.getElementById("editButton").hidden, false);
+        assert.equal(context.document.getElementById("editButton").disabled, false);
+        assert.equal(context.document.getElementById("printButton").hidden, false);
+        assert.equal(context.document.getElementById("printButton").disabled, false);
+        assert.equal(context.document.getElementById("saveButton").hidden, false);
+        assert.equal(context.document.getElementById("saveButton").disabled, false);
+        assert.equal(context.document.getElementById("authSection").hidden, true);
+    } finally {
+        context.cleanup();
+    }
+});
+
+test("a successful login updates the popup to the authenticated state", async () => {
+    let loginCount = 0;
+    const context = await setupPopup(
+        async () => ({ success: true, recipe }),
+        {
+            login: async () => {
+                loginCount += 1;
+            }
+        }
+    );
+
+    try {
+        await clickAndFlush(context.document.getElementById("extractButton"));
+        await clickAndFlush(context.document.getElementById("loginButton"));
+
+        assert.equal(loginCount, 1);
+        assert.equal(context.document.getElementById("saveButton").disabled, false);
+        assert.equal(context.document.getElementById("authSection").hidden, true);
+    } finally {
+        context.cleanup();
+    }
+});
+
+test("a failed login reports the error and displays a user-facing message", async () => {
+    const loginError = new Error("The authentication window was closed.");
+    const reportedErrors = [];
+    const context = await setupPopup(
+        async () => ({ success: true, recipe }),
+        {
+            login: async () => {
+                throw loginError;
+            },
+            reportError: error => reportedErrors.push(error)
+        }
+    );
+
+    try {
+        await clickAndFlush(context.document.getElementById("extractButton"));
+        await clickAndFlush(context.document.getElementById("loginButton"));
+
+        assert.deepEqual(reportedErrors, [loginError]);
+        assert.equal(
+            context.document.getElementById("authMessage").textContent,
+            "Sign in was not completed. Please try again."
+        );
+        assert.equal(context.document.getElementById("authSection").hidden, false);
+        assert.equal(context.document.getElementById("saveButton").disabled, true);
+    } finally {
+        context.cleanup();
+    }
+});
+
+test("a new login attempt clears the previous user-facing error", async () => {
+    let loginAttempt = 0;
+    let completeSecondAttempt;
+    const context = await setupPopup(
+        async () => ({ success: true, recipe }),
+        {
+            login: async () => {
+                loginAttempt += 1;
+
+                if (loginAttempt === 1) {
+                    throw new Error("The first login attempt failed.");
+                }
+
+                await new Promise(resolve => {
+                    completeSecondAttempt = resolve;
+                });
+            }
+        }
+    );
+
+    try {
+        const loginButton = context.document.getElementById("loginButton");
+        const authMessage = context.document.getElementById("authMessage");
+
+        await clickAndFlush(context.document.getElementById("extractButton"));
+        await clickAndFlush(loginButton);
+
+        assert.equal(
+            authMessage.textContent,
+            "Sign in was not completed. Please try again."
+        );
+
+        loginButton.click();
+        await Promise.resolve();
+
+        assert.equal(authMessage.textContent, "Sign in to save recipes.");
+
+        completeSecondAttempt();
+        await Promise.resolve();
+        await Promise.resolve();
     } finally {
         context.cleanup();
     }
@@ -145,6 +278,9 @@ test("shows extraction failure and clears the previously extracted recipe", asyn
         assert.equal(context.document.getElementById("extractButton").hidden, false);
         assert.equal(context.document.getElementById("editButton").hidden, true);
         assert.equal(context.document.getElementById("printButton").hidden, true);
+        assert.equal(context.document.getElementById("saveButton").hidden, true);
+        assert.equal(context.document.getElementById("authSection").hidden, true);
+        assert.equal(context.document.getElementById("resultSeparator").hidden, true);
         assert.equal(context.storage.calls.setItem.length, 0);
         assert.equal(context.browser.calls.openWindow.length, 0);
     } finally {
@@ -157,7 +293,9 @@ test("reports a rejected extraction and restores the failure state", async () =>
     const reportedErrors = [];
     const context = await setupPopup(
         async () => { throw extractionError; },
-        error => reportedErrors.push(error)
+        {
+            reportError: error => reportedErrors.push(error)
+        }
     );
 
     try {
@@ -171,6 +309,8 @@ test("reports a rejected extraction and restores the failure state", async () =>
         assert.equal(context.document.getElementById("extractButton").hidden, false);
         assert.equal(context.document.getElementById("editButton").hidden, true);
         assert.equal(context.document.getElementById("printButton").hidden, true);
+        assert.equal(context.document.getElementById("saveButton").hidden, true);
+        assert.equal(context.document.getElementById("authSection").hidden, true);
         assert.equal(context.document.getElementById("resultSeparator").hidden, true);
         assert.equal(context.storage.calls.setItem.length, 0);
         assert.equal(context.browser.calls.openWindow.length, 0);
@@ -266,7 +406,8 @@ test("the real classic popup bootstrap preserves injection and dependency compos
     assert.match(script, /extractRecipeFromActiveTab/);
     assert.match(script, /initializePopupController\s*\(/);
     assert.match(script, /localStorage\.setItem\("recipeToPrint"/);
-    assert.match(script, /reportError:\s*error\s*=>/);
+    assert.match(script, /const reportError\s*=\s*error\s*=>/);
+    assert.match(script, /resolveAuthenticationState\s*\(/);
     assert.match(script, /url:\s*chrome\.runtime\.getURL\(page\)/);
     assert.match(script, /openWindow:\s*\(\{\s*page,\s*type,\s*width,\s*height\s*}\)\s*=>/);
     assert.match(script, /chrome\.windows\.create\(\{[\s\S]*?type,[\s\S]*?width,[\s\S]*?height/);
