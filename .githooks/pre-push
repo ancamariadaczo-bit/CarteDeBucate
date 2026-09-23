@@ -1,0 +1,159 @@
+#!/bin/sh
+
+REPO_ROOT=$(git rev-parse --show-toplevel)
+ZERO_OID=0000000000000000000000000000000000000000
+PUSH_UPDATE_COUNT=0
+PUSH_LOCAL_REF=
+PUSH_LOCAL_OID=
+PUSH_REMOTE_REF=
+PUSH_REMOTE_OID=
+
+verify_push_source() {
+    if [ "$PUSH_LOCAL_OID" = "$ZERO_OID" ]; then
+        return 0
+    fi
+
+    CURRENT_HEAD=$(git rev-parse HEAD) || return 1
+
+    if [ "$PUSH_LOCAL_OID" != "$CURRENT_HEAD" ]; then
+        echo "The ref being pushed is not the currently checked-out HEAD."
+        echo "Check out $PUSH_LOCAL_REF and push it separately. Push cancelled."
+        return 1
+    fi
+
+    WORKTREE_STATUS=$(git status --porcelain --untracked-files=normal) || return 1
+
+    if [ -n "$WORKTREE_STATUS" ]; then
+        echo "The working tree contains staged, unstaged, or untracked differences from $PUSH_LOCAL_OID."
+        echo "Commit, stash, or remove those changes before pushing. Push cancelled."
+        return 1
+    fi
+}
+
+while read -r local_ref local_oid remote_ref remote_oid; do
+    PUSH_UPDATE_COUNT=$((PUSH_UPDATE_COUNT + 1))
+    PUSH_LOCAL_REF=$local_ref
+    PUSH_LOCAL_OID=$local_oid
+    PUSH_REMOTE_REF=$remote_ref
+    PUSH_REMOTE_OID=$remote_oid
+done
+
+if [ "$PUSH_UPDATE_COUNT" -eq 0 ]; then
+    exit 0
+fi
+
+if [ "$PUSH_UPDATE_COUNT" -ne 1 ]; then
+    echo "Pushes containing multiple ref updates are not supported by the review hook."
+    echo "Push each branch separately. Push cancelled."
+    exit 1
+fi
+
+cd "$REPO_ROOT" || exit 1
+
+verify_push_source || exit 1
+
+if [ "$PUSH_LOCAL_OID" != "$ZERO_OID" ] && [ "$PUSH_REMOTE_OID" != "$ZERO_OID" ]; then
+    if ! git merge-base --is-ancestor "$PUSH_REMOTE_OID" "$PUSH_LOCAL_OID"; then
+        echo "Non-fast-forward pushes are not supported by the review hook."
+        echo "Update the branch without rewriting the remote history. Push cancelled."
+        exit 1
+    fi
+fi
+
+echo "Running C# tests..."
+
+dotnet test
+
+if [ $? -ne 0 ]; then
+    echo "C# tests failed. Push cancelled."
+    exit 1
+fi
+
+
+echo "Running JavaScript tests..."
+
+cd "$REPO_ROOT/CarteDeBucate.ChromeExtension" || exit 1
+
+npm test
+
+if [ $? -ne 0 ]; then
+    echo "JavaScript tests failed. Push cancelled."
+    exit 1
+fi
+
+
+echo "All tests passed."
+
+
+# Go back to the repository root before running Codex
+cd "$REPO_ROOT" || exit 1
+
+verify_push_source || exit 1
+
+if ! command -v codex >/dev/null 2>&1; then
+    echo ""
+    echo "Codex CLI is not installed. Skipping code review."
+    exit 0
+fi
+
+if ! codex login status >/dev/null 2>&1; then
+    echo ""
+    echo "Codex is not logged in. Skipping code review."
+    exit 0
+fi
+
+if [ "$PUSH_LOCAL_OID" = "$ZERO_OID" ]; then
+    echo ""
+    echo "Deleting $PUSH_REMOTE_REF does not require a code review."
+    exit 0
+fi
+
+echo ""
+echo "Running Codex code review..."
+
+if [ "$PUSH_REMOTE_OID" != "$ZERO_OID" ]; then
+    codex review --base "$PUSH_REMOTE_OID"
+else
+    REMOTE_DEFAULT_OID=$(git ls-remote "$2" HEAD 2>/dev/null | awk 'NR == 1 { print $1 }')
+
+    if [ -z "$REMOTE_DEFAULT_OID" ]; then
+        echo "The remote default branch could not be resolved for the new branch review."
+        echo "Push cancelled."
+        exit 1
+    fi
+
+    REVIEW_BASE=$(git merge-base "$PUSH_LOCAL_OID" "$REMOTE_DEFAULT_OID" 2>/dev/null || true)
+
+    if [ -z "$REVIEW_BASE" ]; then
+        echo "A review base could not be determined for the new remote branch."
+        echo "Push cancelled."
+        exit 1
+    fi
+
+    codex review --base "$REVIEW_BASE"
+fi
+
+if [ $? -ne 0 ]; then
+    echo "Codex review could not be completed. Push cancelled."
+    exit 1
+fi
+
+verify_push_source || exit 1
+
+
+echo ""
+printf "Codex review finished. Continue with push? [y/N] "
+read answer </dev/tty
+
+case "$answer" in
+    y|Y|yes|YES|Yes)
+        verify_push_source || exit 1
+        echo "Push continuing..."
+        ;;
+    *)
+        echo "Push cancelled."
+        exit 1
+        ;;
+esac
+
+exit 0

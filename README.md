@@ -70,7 +70,8 @@ The project uses:
 
 ## Testing
 
-The project is checked locally before a push and again on GitHub after the code is uploaded.
+The project is tested and reviewed locally before a push, then tested again on
+GitHub after the code is uploaded.
 
 ### Before push
 
@@ -86,7 +87,28 @@ It also runs the Recipe Clipper JavaScript tests:
 npm test
 ```
 
-If any test fails, the push is cancelled.
+After the tests pass, the hook checks whether Codex CLI is installed and logged
+in. When it is available, the hook runs a code review for the commits that are
+about to be pushed. The hook reads the exact local and remote refs supplied by
+Git and uses the remote object ID as the review base for an existing branch.
+
+If Codex CLI is missing or logged out, the review is skipped and the push
+continues after the tests. If a review starts but cannot be completed, the push
+is cancelled. After a successful review, the hook displays the findings and
+asks for explicit confirmation before continuing with the push.
+
+To prevent a review from covering different code than the push, the hook accepts
+one clean, checked-out branch per push. Pushes containing multiple refs, a
+branch other than the current `HEAD`, uncommitted changes, or a non-fast-forward
+update are rejected. The clean-state check is repeated after the tests, review,
+and final confirmation.
+
+The hook is versioned at `.githooks/pre-push`. After cloning the repository,
+activate the versioned hooks once with:
+
+```bash
+./scripts/setup-git-hooks.sh
+```
 
 ### GitHub Actions
 
@@ -106,9 +128,10 @@ git commit -m "Description of changes"
 git push
 ```
 
-The push automatically triggers the local tests.
-
-If any local test fails, the push is cancelled and the code is not sent to GitHub.
+The push automatically triggers the local tests. When Codex CLI is available and
+logged in, it also runs the code review and asks for confirmation. A failed test,
+an incomplete review that was started, or a rejected confirmation cancels the
+push before the code is sent to GitHub.
 
 After the code reaches GitHub:
 
