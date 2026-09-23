@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using CarteDeBucate.Web.Configuration;
 using CarteDeBucate.Web.Controllers;
 using CarteDeBucate.Web.Models;
@@ -23,6 +24,53 @@ public class AccountControllerTests
         ViewResult viewResult = Assert.IsType<ViewResult>(result);
         LoginViewModel model = Assert.IsType<LoginViewModel>(viewResult.Model);
         Assert.Equal("/Recipes/Create", model.ReturnUrl);
+    }
+
+    [Fact]
+    public void LoginGet_WhenUserIsAuthenticated_ShouldRedirectToLocalReturnUrl()
+    {
+        AccountController controller = CreateController(
+            new FakeAuthenticationService(),
+            user: CreateAuthenticatedUser());
+
+        IActionResult result = controller.Login(
+            "/api/authentication/extension-complete");
+
+        LocalRedirectResult redirectResult =
+            Assert.IsType<LocalRedirectResult>(result);
+        Assert.Equal(
+            "/api/authentication/extension-complete",
+            redirectResult.Url);
+    }
+
+    [Fact]
+    public void LoginGet_WhenUserIsAuthenticatedWithoutReturnUrl_ShouldRedirectToRecipes()
+    {
+        AccountController controller = CreateController(
+            new FakeAuthenticationService(),
+            user: CreateAuthenticatedUser());
+
+        IActionResult result = controller.Login();
+
+        RedirectToActionResult redirectResult =
+            Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(nameof(RecipesController.Index), redirectResult.ActionName);
+        Assert.Equal("Recipes", redirectResult.ControllerName);
+    }
+
+    [Fact]
+    public void LoginGet_WhenUserIsAuthenticatedWithExternalReturnUrl_ShouldRedirectToRecipes()
+    {
+        AccountController controller = CreateController(
+            new FakeAuthenticationService(),
+            user: CreateAuthenticatedUser());
+
+        IActionResult result = controller.Login("https://example.test/steal-cookie");
+
+        RedirectToActionResult redirectResult =
+            Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(nameof(RecipesController.Index), redirectResult.ActionName);
+        Assert.Equal("Recipes", redirectResult.ControllerName);
     }
 
     [Fact]
@@ -195,10 +243,23 @@ public class AccountControllerTests
         };
     }
 
+    private static ClaimsPrincipal CreateAuthenticatedUser()
+    {
+        ClaimsIdentity identity = new ClaimsIdentity(
+            [
+                new Claim(ClaimTypes.NameIdentifier, "12"),
+                new Claim(ClaimTypes.Name, "anca")
+            ],
+            CookieAuthenticationDefaults.AuthenticationScheme);
+
+        return new ClaimsPrincipal(identity);
+    }
+
     private static AccountController CreateController(
         FakeAuthenticationService authenticationService,
         WebAppSettings? settings = null,
-        TestHttpAuthenticationService? httpAuthenticationService = null)
+        TestHttpAuthenticationService? httpAuthenticationService = null,
+        ClaimsPrincipal? user = null)
     {
         ServiceCollection services = new ServiceCollection();
         httpAuthenticationService ??= new TestHttpAuthenticationService();
@@ -207,7 +268,8 @@ public class AccountControllerTests
 
         DefaultHttpContext httpContext = new DefaultHttpContext
         {
-            RequestServices = services.BuildServiceProvider()
+            RequestServices = services.BuildServiceProvider(),
+            User = user ?? new ClaimsPrincipal()
         };
         AccountController controller = new AccountController(
             authenticationService,

@@ -25,6 +25,11 @@ public class AccountController : Controller
 
     public IActionResult Login(string? returnUrl = null)
     {
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            return RedirectAfterAuthentication(returnUrl);
+        }
+
         return View(new LoginViewModel
         {
             ReturnUrl = returnUrl

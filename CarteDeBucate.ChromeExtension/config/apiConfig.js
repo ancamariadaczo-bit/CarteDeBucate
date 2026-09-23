@@ -1,4 +1,8 @@
+// Local
 export const API_BASE_URL = "https://localhost:7080";
+
+// Render
+//export const API_BASE_URL = "https://cartedebucate.onrender.com";
 
 export const API_ENDPOINTS = {
     recipes: `${API_BASE_URL}/api/recipes`,

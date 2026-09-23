@@ -11,6 +11,10 @@ import {
 } from "./auth/authenticationFlow.js";
 
 import {
+    refreshWebLoginTabs
+} from "./auth/webLoginTabs.js";
+
+import {
     API_ENDPOINTS
 } from "./config/apiConfig.js";
 
@@ -33,7 +37,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         saveAccessToken,
         loginUrl
     })
-        .then(() => {
+        .then(async () => {
+            try {
+                await refreshWebLoginTabs({
+                    queryTabs: queryInfo =>
+                        chrome.tabs.query(queryInfo),
+                    reloadTab: tabId =>
+                        chrome.tabs.reload(tabId),
+                    loginPageUrl: API_ENDPOINTS.mvcLogin
+                });
+            } catch (error) {
+                console.error(
+                    "Web login tabs could not be refreshed:",
+                    error
+                );
+            }
+
             sendResponse({
                 success: true
             });
