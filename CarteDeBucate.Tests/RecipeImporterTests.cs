@@ -2,6 +2,20 @@ using System.Net;
 
 public class RecipeImporterTests
 {
+    [Fact]
+    public void Constructor_ShouldRequireProvidedDependencies()
+    {
+        var publicConstructor = Assert.Single(
+            typeof(RecipeImporter).GetConstructors());
+        var parameters = publicConstructor.GetParameters();
+
+        Assert.Equal(2, parameters.Length);
+        Assert.Equal(typeof(HttpClient), parameters[0].ParameterType);
+        Assert.Equal(
+            typeof(RecipeImportDestinationPolicy),
+            parameters[1].ParameterType);
+    }
+
     [Theory]
     [InlineData("abc")]
     [InlineData("www.google.com")]
@@ -36,7 +50,9 @@ public class RecipeImporterTests
     {
         HttpMessageHandler handler = new ThrowingHttpMessageHandler();
         HttpClient httpClient = new HttpClient(handler);
-        RecipeImporter importer = new RecipeImporter(httpClient);
+        RecipeImporter importer = new RecipeImporter(
+            httpClient,
+            CreateDestinationPolicy());
 
         RecipeImportResult result = await importer.ImportFromUrlAsync(
             "https://example.com/recipe");
@@ -44,6 +60,30 @@ public class RecipeImporterTests
         Assert.False(result.Success);
         Assert.Null(result.Recipe);
         Assert.Equal(AppTexts.ImportFailedCouldNotDownloadPage, result.Message);
+    }
+
+    [Fact]
+    public async Task ImportFromUrlAsync_WithRejectedDestination_ShouldFailWithoutSendingRequest()
+    {
+        bool requestWasSent = false;
+        FakeHttpMessageHandler handler = new FakeHttpMessageHandler(_ =>
+        {
+            requestWasSent = true;
+
+            return new HttpResponseMessage(HttpStatusCode.OK);
+        });
+        HttpClient httpClient = new HttpClient(handler);
+        RecipeImporter importer = new RecipeImporter(
+            httpClient,
+            CreateDestinationPolicy("127.0.0.1"));
+
+        RecipeImportResult result = await importer.ImportFromUrlAsync(
+            "https://internal.example/recipe");
+
+        Assert.False(result.Success);
+        Assert.Null(result.Recipe);
+        Assert.Equal(AppTexts.ImportFailedCouldNotDownloadPage, result.Message);
+        Assert.False(requestWasSent);
     }
 
     [Fact]
@@ -353,7 +393,16 @@ public class RecipeImporterTests
 
         HttpClient httpClient = new HttpClient(handler);
 
-        return new RecipeImporter(httpClient);
+        return new RecipeImporter(
+            httpClient,
+            CreateDestinationPolicy());
+    }
+
+    private static RecipeImportDestinationPolicy CreateDestinationPolicy(
+        string address = "8.8.8.8")
+    {
+        return new RecipeImportDestinationPolicy(
+            new FixedHostAddressResolver(address));
     }
 
     private class ThrowingHttpMessageHandler : HttpMessageHandler
@@ -363,6 +412,23 @@ public class RecipeImporterTests
             CancellationToken cancellationToken)
         {
             throw new HttpRequestException("Simulated download error.");
+        }
+    }
+
+    private sealed class FixedHostAddressResolver : IHostAddressResolver
+    {
+        private readonly IPAddress _address;
+
+        public FixedHostAddressResolver(string address)
+        {
+            _address = IPAddress.Parse(address);
+        }
+
+        public Task<IPAddress[]> GetHostAddressesAsync(
+            string host,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult(new[] { _address });
         }
     }
 }

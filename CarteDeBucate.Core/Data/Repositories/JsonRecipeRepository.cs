@@ -160,6 +160,56 @@ public class JsonRecipeRepository : IRecipeRepository
         SaveRecipes(recipes);
     }
 
+    public void AddRecipes(IReadOnlyCollection<Recipe> recipes)
+    {
+        if (recipes.Count == 0)
+        {
+            return;
+        }
+
+        List<Recipe> allRecipes = GetAllRecipes();
+        int nextRecipeId = GetNextRecipeId(allRecipes);
+        List<(Recipe OriginalRecipe, int GeneratedId)> insertedRecipes = new();
+
+        foreach (Recipe recipe in recipes)
+        {
+            int generatedId = nextRecipeId++;
+            Recipe recipeToPersist = CopyRecipeWithId(recipe, generatedId);
+
+            allRecipes.Add(recipeToPersist);
+            insertedRecipes.Add((recipe, generatedId));
+        }
+
+        JsonSerializerOptions options = new JsonSerializerOptions
+        {
+            WriteIndented = true
+        };
+        string json = JsonSerializer.Serialize(allRecipes, options);
+        string targetPath = Path.GetFullPath(_filePath);
+        string directoryPath = Path.GetDirectoryName(targetPath)!;
+        string temporaryFilePath = Path.Combine(
+            directoryPath,
+            $".{Path.GetFileName(targetPath)}.{Guid.NewGuid():N}.tmp");
+
+        try
+        {
+            File.WriteAllText(temporaryFilePath, json);
+            File.Move(temporaryFilePath, targetPath, overwrite: true);
+
+            foreach ((Recipe originalRecipe, int generatedId) in insertedRecipes)
+            {
+                originalRecipe.Id = generatedId;
+            }
+        }
+        finally
+        {
+            if (File.Exists(temporaryFilePath))
+            {
+                File.Delete(temporaryFilePath);
+            }
+        }
+    }
+
     public void UpdateRecipe(Recipe recipe)
     {
         List<Recipe> recipes = GetAllRecipes();
@@ -282,6 +332,22 @@ public class JsonRecipeRepository : IRecipeRepository
         }
 
         return recipes.Max(recipe => recipe.Id) + 1;
+    }
+
+    private static Recipe CopyRecipeWithId(Recipe recipe, int recipeId)
+    {
+        return new Recipe
+        {
+            Id = recipeId,
+            Name = recipe.Name,
+            SourceUrl = recipe.SourceUrl,
+            SavedAt = recipe.SavedAt,
+            Ingredients = new List<string>(recipe.Ingredients),
+            Steps = new List<string>(recipe.Steps),
+            Notes = recipe.Notes,
+            Status = recipe.Status,
+            UserId = recipe.UserId
+        };
     }
 
     private RecipeSummary ToRecipeSummary(Recipe recipe)

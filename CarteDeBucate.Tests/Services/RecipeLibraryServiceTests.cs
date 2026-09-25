@@ -355,6 +355,45 @@ public class RecipeLibraryServiceTests
         Assert.False(repository.AddRecipeWasCalled);
     }
 
+    [Theory]
+    [InlineData("javascript:alert(1)")]
+    [InlineData("ftp://example.com/recipe")]
+    [InlineData("/recipe/relative")]
+    [InlineData("not a url")]
+    public void SaveRecipe_WithInvalidSourceUrl_ShouldNotCallRepository(
+        string sourceUrl)
+    {
+        FakeRecipeRepository repository = new FakeRecipeRepository();
+        RecipeLibraryService service = new RecipeLibraryService(repository);
+        Recipe recipe = CreateValidRecipe(userId: null);
+        recipe.SourceUrl = sourceUrl;
+
+        RecipeSaveResult result = service.SaveRecipe(recipe);
+
+        Assert.False(result.IsSuccess);
+        Assert.False(repository.AddRecipeWasCalled);
+        Assert.Null(repository.SourceUrlPassedToRecipeExists);
+    }
+
+    [Fact]
+    public void SaveRecipe_WithExteriorSourceUrlWhitespace_ShouldNormalizeBeforeRepositoryCalls()
+    {
+        FakeRecipeRepository repository = new FakeRecipeRepository();
+        RecipeLibraryService service = new RecipeLibraryService(repository);
+        Recipe recipe = CreateValidRecipe(userId: null);
+        recipe.SourceUrl = "  https://example.com/banana-bread  ";
+
+        RecipeSaveResult result = service.SaveRecipe(recipe);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(
+            "https://example.com/banana-bread",
+            repository.SourceUrlPassedToRecipeExists);
+        Assert.Equal(
+            "https://example.com/banana-bread",
+            repository.AddedRecipe?.SourceUrl);
+    }
+
     [Fact]
     public void SaveRecipe_WithExistingSourceUrl_ShouldNotSaveRecipe()
     {

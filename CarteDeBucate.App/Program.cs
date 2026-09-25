@@ -15,8 +15,18 @@ IRecipeRepository recipeRepository = AppServiceFactory.CreateRecipeRepository(
 IRecipeLibraryService recipeLibraryService =
     AppServiceFactory.CreateRecipeLibraryService(recipeRepository, currentUserContext);
 
+IHostAddressResolver hostAddressResolver = new DnsHostAddressResolver();
+RecipeImportDestinationPolicy destinationPolicy =
+    new RecipeImportDestinationPolicy(hostAddressResolver);
+RecipeImportHttpMessageHandler httpMessageHandler =
+    new RecipeImportHttpMessageHandler(destinationPolicy);
+using HttpClient recipeImporterHttpClient = new HttpClient(httpMessageHandler);
+RecipeImporterHttpClientConfiguration.Configure(recipeImporterHttpClient);
+
 IRecipeImporterService importerService =
-    AppServiceFactory.CreateRecipeImporterService();
+    AppServiceFactory.CreateRecipeImporterService(
+        recipeImporterHttpClient,
+        destinationPolicy);
 
 IRecipeBackupService backupService =
     AppServiceFactory.CreateRecipeBackupService(recipeRepository, currentUserContext);

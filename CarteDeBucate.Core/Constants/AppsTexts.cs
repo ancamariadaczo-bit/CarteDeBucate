@@ -120,6 +120,8 @@ public static class AppTexts
     public const string EditStepsPrompt = "Vrei să editezi pașii? Scrie da pentru editare sau apasă Enter ca să îi păstrezi.";
     public const string RecipeNameRequired = "Numele rețetei este obligatoriu.";
     public const string RecipeSourceUrlRequired = "URL-ul sursa este obligatoriu.";
+    public const string RecipeSourceUrlInvalid =
+        "URL-ul sursă trebuie să fie un URL absolut HTTP sau HTTPS.";
     public const string RecipeSavedDateRequired = "Data de savare a rețetei este obligatorie.";
     public const string RecipeIngredientsRequired = "Ingredientele sunt obligatorii.";
     public const string RecipeStepsRequired = "Pșii sunt obligatorii.";
@@ -139,5 +141,9 @@ public static class AppTexts
     public const string BackupExportFailed = "Exportul backup-ului a eșuat: {0}";
     public const string BackupImportCompleted =
     "Importul backup-ului JSON a fost finalizat. Importate: {0}. Ignorate (existente): {1}.";
-    public const string BackupImportFailed = "Importul backup-ului a eșuat: {0}";
+    public const string BackupImportFailed = "Importul backup-ului a eșuat.";
+    public const string BackupImportInvalidDocument =
+    "Fișierul de backup nu conține un document valid.";
+    public const string BackupImportInvalidRecipe =
+    "Rețeta de la poziția {0} este invalidă: {1}";
 }

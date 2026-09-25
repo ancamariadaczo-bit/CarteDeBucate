@@ -3,6 +3,7 @@ public static class DatabaseScripts
     public static readonly string[] CreateTables =
     [
         CreateUsersTable,
+        CreateUsersUsernameNoCaseUniqueIndex,
         CreateRecipesTable,
         CreateRecipePhotosTable,
         CreateRecipePhotosIndex,
@@ -89,11 +90,16 @@ public static class DatabaseScripts
     public const string CreateUsersTable = """
     CREATE TABLE IF NOT EXISTS Users (
         Id INTEGER PRIMARY KEY AUTOINCREMENT,
-        Username TEXT NOT NULL UNIQUE,
+        Username TEXT NOT NULL,
         PasswordHash TEXT NOT NULL,
         PasswordSalt TEXT NOT NULL,
         CreatedAt TEXT NOT NULL
     );
+    """;
+
+    public const string CreateUsersUsernameNoCaseUniqueIndex = """
+    CREATE UNIQUE INDEX IF NOT EXISTS IX_Users_Username_NoCase
+        ON Users (Username COLLATE NOCASE);
     """;
 
     public const string AddUserIdToRecipes = """

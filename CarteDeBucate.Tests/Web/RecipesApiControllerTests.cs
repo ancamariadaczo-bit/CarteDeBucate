@@ -1,4 +1,7 @@
 using System.Reflection;
+using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using CarteDeBucate.Web.Controllers.Api;
 using CarteDeBucate.Web.Models.Api;
 using Microsoft.AspNetCore.Http;
@@ -82,6 +85,25 @@ public class RecipesApiControllerTests
         Assert.Equal(
             "Recipe was saved, but the saved recipe could not be returned.",
             GetResponseProperty<string>(objectResult.Value, "message"));
+    }
+
+    [Fact]
+    public async Task Create_WithInvalidSourceUrl_ShouldReturnBadRequest()
+    {
+        using AuthenticationApiWebApplicationFactory factory = new();
+        using HttpClient client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue(
+                "Bearer",
+                factory.CreateToken("42", "chef"));
+        CreateRecipeRequest request = CreateRequest();
+        request.SourceUrl = "javascript:alert(1)";
+
+        HttpResponseMessage response = await client.PostAsJsonAsync(
+            "/api/recipes",
+            request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     private static CreateRecipeRequest CreateRequest()

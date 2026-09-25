@@ -18,6 +18,7 @@ public interface IRecipeRepository
     Recipe? GetRecipeByIdAndUserId(int recipeId, int userId);
 
     void AddRecipe(Recipe recipe);
+    void AddRecipes(IReadOnlyCollection<Recipe> recipes);
 
     void UpdateRecipe(Recipe recipe);
     void UpdateRecipeForUser(Recipe recipe, int userId);

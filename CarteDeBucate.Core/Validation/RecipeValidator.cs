@@ -13,6 +13,10 @@ public static class RecipeValidator
         {
             result.Errors.Add(AppTexts.RecipeSourceUrlRequired);
         }
+        else if (!UrlValidator.IsValidHttpUrl(recipe.SourceUrl))
+        {
+            result.Errors.Add(AppTexts.RecipeSourceUrlInvalid);
+        }
 
         if (recipe.SavedAt == default)
         {

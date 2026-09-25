@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 public class JsonRecipeRepositoryTests
 {
     [Fact]
@@ -33,6 +35,95 @@ public class JsonRecipeRepositoryTests
         finally
         {
             DeleteFile(filePath);
+        }
+    }
+
+    [Fact]
+    public void AddRecipes_ShouldPersistBatchWithSequentialIdsAndRemoveTemporaryFile()
+    {
+        string filePath = CreateTemporaryFilePath();
+
+        try
+        {
+            JsonRecipeRepository repository = new JsonRecipeRepository(filePath);
+            repository.AddRecipe(CreateRecipe());
+            Recipe firstRecipe = CreateRecipe(
+                sourceUrl: "https://example.com/first-batch-recipe");
+            Recipe secondRecipe = CreateRecipe(
+                sourceUrl: "https://example.com/second-batch-recipe");
+
+            repository.AddRecipes(new[] { firstRecipe, secondRecipe });
+
+            List<Recipe> savedRecipes = repository.GetAllRecipes();
+            Assert.Equal(3, savedRecipes.Count);
+            Assert.Equal(2, firstRecipe.Id);
+            Assert.Equal(3, secondRecipe.Id);
+            Assert.Equal(new[] { 1, 2, 3 }, savedRecipes.Select(recipe => recipe.Id));
+            Assert.Empty(GetBatchTemporaryFiles(filePath));
+        }
+        finally
+        {
+            DeleteFile(filePath);
+            DeleteBatchTemporaryFiles(filePath);
+        }
+    }
+
+    [Fact]
+    public void AddRecipes_WhenPreparingBatchFails_ShouldPreserveExistingFile()
+    {
+        string filePath = CreateTemporaryFilePath();
+
+        try
+        {
+            JsonRecipeRepository repository = new JsonRecipeRepository(filePath);
+            repository.AddRecipe(CreateRecipe());
+            string originalJson = File.ReadAllText(filePath);
+            Recipe invalidRecipe = CreateRecipe(
+                sourceUrl: "https://example.com/invalid-batch-recipe");
+            invalidRecipe.Ingredients = null!;
+
+            Assert.Throws<ArgumentNullException>(() =>
+                repository.AddRecipes(new[] { invalidRecipe }));
+
+            Assert.Equal(originalJson, File.ReadAllText(filePath));
+            Assert.Equal(0, invalidRecipe.Id);
+            Assert.Empty(GetBatchTemporaryFiles(filePath));
+        }
+        finally
+        {
+            DeleteFile(filePath);
+            DeleteBatchTemporaryFiles(filePath);
+        }
+    }
+
+    [Fact]
+    public void AddRecipes_WhenAtomicMoveFails_ShouldRemoveTemporaryFile()
+    {
+        string targetPath = Path.Combine(
+            Path.GetTempPath(),
+            $"recipes-target-{Guid.NewGuid()}");
+        Directory.CreateDirectory(targetPath);
+
+        try
+        {
+            JsonRecipeRepository repository = new JsonRecipeRepository(targetPath);
+            Recipe recipe = CreateRecipe();
+
+            Assert.ThrowsAny<IOException>(() =>
+                repository.AddRecipes(new[] { recipe }));
+
+            Assert.True(Directory.Exists(targetPath));
+            Assert.Equal(0, recipe.Id);
+            Assert.Empty(GetBatchTemporaryFiles(targetPath));
+        }
+        finally
+        {
+            DeleteBatchTemporaryFiles(targetPath);
+
+            if (Directory.Exists(targetPath))
+            {
+                Directory.Delete(targetPath, recursive: true);
+            }
         }
     }
 
@@ -546,6 +637,23 @@ public class JsonRecipeRepositoryTests
         if (File.Exists(filePath))
         {
             File.Delete(filePath);
+        }
+    }
+
+    private static string[] GetBatchTemporaryFiles(string filePath)
+    {
+        string targetPath = Path.GetFullPath(filePath);
+        string directoryPath = Path.GetDirectoryName(targetPath)!;
+        string searchPattern = $".{Path.GetFileName(targetPath)}.*.tmp";
+
+        return Directory.GetFiles(directoryPath, searchPattern);
+    }
+
+    private static void DeleteBatchTemporaryFiles(string filePath)
+    {
+        foreach (string temporaryFilePath in GetBatchTemporaryFiles(filePath))
+        {
+            File.Delete(temporaryFilePath);
         }
     }
 }

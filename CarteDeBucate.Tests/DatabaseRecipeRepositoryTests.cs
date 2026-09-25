@@ -62,6 +62,33 @@ public class DatabaseRecipeRepositoryTests
     }
 
     [Fact]
+    public void AddRecipes_WhenSecondRecipeViolatesConstraint_ShouldRollBackEntireBatch()
+    {
+        string databasePath = CreateTemporaryDatabasePath();
+
+        try
+        {
+            DatabaseRecipeRepository repository = CreateRepository(databasePath);
+            Recipe firstRecipe = CreateTestRecipe(
+                sourceUrl: "https://example.com/first-batch-recipe");
+            Recipe invalidSecondRecipe = CreateTestRecipe(
+                sourceUrl: "https://example.com/invalid-batch-recipe",
+                userId: 999);
+
+            Assert.Throws<SqliteException>(() =>
+                repository.AddRecipes(new[] { firstRecipe, invalidSecondRecipe }));
+
+            Assert.Empty(repository.GetAllRecipes());
+            Assert.Equal(0, firstRecipe.Id);
+            Assert.Equal(0, invalidSecondRecipe.Id);
+        }
+        finally
+        {
+            DeleteDatabaseFile(databasePath);
+        }
+    }
+
+    [Fact]
     public void GetRecipeById_WhenRecipeExists_ShouldReturnRecipeWithIngredientsAndSteps()
     {
         string databasePath = CreateTemporaryDatabasePath();

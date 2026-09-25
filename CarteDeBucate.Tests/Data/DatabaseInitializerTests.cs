@@ -26,6 +26,21 @@ public class DatabaseInitializerTests
     }
 
     [Fact]
+    public void Initialize_ShouldEnforceCaseInsensitiveUniqueUsername()
+    {
+        WithInitializedDatabase(databasePath =>
+        {
+            using SqliteConnection connection = OpenConnection(databasePath);
+
+            Assert.True(IndexExists(connection, "IX_Users_Username_NoCase"));
+
+            InsertUser(connection, "anca");
+
+            Assert.Throws<SqliteException>(() => InsertUser(connection, "Anca"));
+        });
+    }
+
+    [Fact]
     public void Initialize_ShouldCreateExpectedRecipePhotosColumns()
     {
         WithInitializedDatabase(databasePath =>
@@ -253,6 +268,36 @@ public class DatabaseInitializerTests
         command.Parameters.AddWithValue("@SavedAt", DateTime.UtcNow.ToString("O"));
 
         return Convert.ToInt32(command.ExecuteScalar());
+    }
+
+    private static void InsertUser(SqliteConnection connection, string username)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO Users (Username, PasswordHash, PasswordSalt, CreatedAt)
+            VALUES (@Username, @PasswordHash, @PasswordSalt, @CreatedAt);
+            """;
+
+        command.Parameters.AddWithValue("@Username", username);
+        command.Parameters.AddWithValue("@PasswordHash", "hash");
+        command.Parameters.AddWithValue("@PasswordSalt", "salt");
+        command.Parameters.AddWithValue("@CreatedAt", DateTime.UtcNow.ToString("O"));
+
+        command.ExecuteNonQuery();
+    }
+
+    private static bool IndexExists(SqliteConnection connection, string indexName)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT COUNT(*)
+            FROM sqlite_master
+            WHERE type = 'index'
+            AND name = @IndexName;
+            """;
+        command.Parameters.AddWithValue("@IndexName", indexName);
+
+        return (long)(command.ExecuteScalar() ?? 0) == 1;
     }
 
     private static void InsertRecipePhoto(

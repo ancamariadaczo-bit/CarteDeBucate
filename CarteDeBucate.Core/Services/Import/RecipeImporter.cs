@@ -1,31 +1,28 @@
 public class RecipeImporter : IRecipeImporter
 {
-    private readonly HttpClient _httpClient;
+    private readonly RecipePageDownloader _pageDownloader;
     private readonly RecipeJsonLdImporter _jsonLdImporter;
     private readonly RecipeHtmlImporter _htmlImporter;
     private readonly RecipePageDetector _pageDetector;
 
-    public RecipeImporter()
-        : this(CreateDefaultHttpClient())
-    {
-    }
-
-    public RecipeImporter(HttpClient httpClient)
+    public RecipeImporter(
+        HttpClient httpClient,
+        RecipeImportDestinationPolicy destinationPolicy)
         : this(
-            httpClient,
+            new RecipePageDownloader(httpClient, destinationPolicy),
             new RecipeJsonLdImporter(),
             new RecipeHtmlImporter(),
             new RecipePageDetector())
     {
     }
 
-    public RecipeImporter(
-        HttpClient httpClient,
+    private RecipeImporter(
+        RecipePageDownloader pageDownloader,
         RecipeJsonLdImporter jsonLdImporter,
         RecipeHtmlImporter htmlImporter,
         RecipePageDetector pageDetector)
     {
-        _httpClient = httpClient;
+        _pageDownloader = pageDownloader;
         _jsonLdImporter = jsonLdImporter;
         _htmlImporter = htmlImporter;
         _pageDetector = pageDetector;
@@ -47,7 +44,7 @@ public class RecipeImporter : IRecipeImporter
 
         try
         {
-            string html = await _httpClient.GetStringAsync(url);
+            string html = await _pageDownloader.DownloadAsync(new Uri(url));
 
             if (_pageDetector.LooksLikeBlockedPage(html))
             {
@@ -81,16 +78,6 @@ public class RecipeImporter : IRecipeImporter
         {
             return Fail(AppTexts.ImportFailedCouldNotDownloadPage);
         }
-    }
-
-    private static HttpClient CreateDefaultHttpClient()
-    {
-        HttpClient httpClient = new HttpClient();
-
-        httpClient.DefaultRequestHeaders.UserAgent.ParseAdd(
-            "Mozilla/5.0 (compatible; CarteDeBucateApp/1.0)");
-
-        return httpClient;
     }
 
     private static Recipe CreateTitleOnlyRecipe(string html, string url)

@@ -56,14 +56,37 @@ public class AppServiceFactoryTests
     }
 
     [Fact]
-    public async Task CreateRecipeImporterService_WithEmptyUrl_ShouldReturnFailedImport()
+    public void CreateRecipeImporterService_ShouldRequireProvidedDependencies()
     {
-        IRecipeImporterService service = AppServiceFactory.CreateRecipeImporterService();
+        var factoryMethods = typeof(AppServiceFactory)
+            .GetMethods()
+            .Where(method =>
+                method.Name == nameof(AppServiceFactory.CreateRecipeImporterService))
+            .ToArray();
 
-        RecipeImportResult result = await service.ImportRecipeFromUrlAsync("");
+        var factoryMethod = Assert.Single(factoryMethods);
+        var parameters = factoryMethod.GetParameters();
 
-        Assert.False(result.Success);
-        Assert.Equal(AppTexts.EmptyUrl, result.Message);
+        Assert.Equal(2, parameters.Length);
+        Assert.Equal(typeof(HttpClient), parameters[0].ParameterType);
+        Assert.Equal(
+            typeof(RecipeImportDestinationPolicy),
+            parameters[1].ParameterType);
+    }
+
+    [Fact]
+    public void CreateRecipeImporterService_WithProvidedDependencies_ShouldCreateService()
+    {
+        using HttpClient httpClient = new HttpClient();
+        RecipeImportDestinationPolicy destinationPolicy =
+            new RecipeImportDestinationPolicy(new DnsHostAddressResolver());
+
+        IRecipeImporterService service =
+            AppServiceFactory.CreateRecipeImporterService(
+                httpClient,
+                destinationPolicy);
+
+        Assert.IsType<RecipeImporterService>(service);
     }
 
     [Fact]

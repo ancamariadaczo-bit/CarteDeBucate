@@ -95,7 +95,31 @@ public class DatabaseMigratorTests
     }
 
     [Fact]
-    public void ApplyMigrations_WhenRunTwice_ShouldRecordMigration4Once()
+    public void ApplyMigrations_WhenOldUsersTableExists_ShouldEnforceCaseInsensitiveUniqueUsername()
+    {
+        string databasePath = CreateTemporaryDatabasePath();
+
+        try
+        {
+            CreateOldRecipesTable(databasePath);
+            CreateOldUsersTable(databasePath);
+            InsertUser(databasePath, "anca");
+
+            DatabaseMigrator migrator = new DatabaseMigrator(databasePath);
+            migrator.ApplyMigrations();
+
+            Assert.True(IndexExists(databasePath, "IX_Users_Username_NoCase"));
+            Assert.True(MigrationWasRecorded(databasePath, 5));
+            Assert.Throws<SqliteException>(() => InsertUser(databasePath, "Anca"));
+        }
+        finally
+        {
+            DeleteDatabaseFile(databasePath);
+        }
+    }
+
+    [Fact]
+    public void ApplyMigrations_WhenRunTwice_ShouldRecordSchemaMigrationsOnce()
     {
         string databasePath = CreateTemporaryDatabasePath();
 
@@ -108,6 +132,7 @@ public class DatabaseMigratorTests
             migrator.ApplyMigrations();
 
             Assert.Equal(1L, MigrationRecordCount(databasePath, 4));
+            Assert.Equal(1L, MigrationRecordCount(databasePath, 5));
         }
         finally
         {
@@ -161,6 +186,44 @@ public class DatabaseMigratorTests
                 Notes TEXT NULL
             );
             """;
+
+        command.ExecuteNonQuery();
+    }
+
+    private static void CreateOldUsersTable(string databasePath)
+    {
+        using SqliteConnection connection = new SqliteConnection($"Data Source={databasePath}");
+        connection.Open();
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            CREATE TABLE Users (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Username TEXT NOT NULL UNIQUE,
+                PasswordHash TEXT NOT NULL,
+                PasswordSalt TEXT NOT NULL,
+                CreatedAt TEXT NOT NULL
+            );
+            """;
+
+        command.ExecuteNonQuery();
+    }
+
+    private static void InsertUser(string databasePath, string username)
+    {
+        using SqliteConnection connection = new SqliteConnection($"Data Source={databasePath}");
+        connection.Open();
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO Users (Username, PasswordHash, PasswordSalt, CreatedAt)
+            VALUES (@Username, @PasswordHash, @PasswordSalt, @CreatedAt);
+            """;
+
+        command.Parameters.AddWithValue("@Username", username);
+        command.Parameters.AddWithValue("@PasswordHash", "hash");
+        command.Parameters.AddWithValue("@PasswordSalt", "salt");
+        command.Parameters.AddWithValue("@CreatedAt", DateTime.UtcNow.ToString("O"));
 
         command.ExecuteNonQuery();
     }

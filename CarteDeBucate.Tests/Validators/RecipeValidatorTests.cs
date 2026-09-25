@@ -43,6 +43,36 @@ public class RecipeValidatorTests
         Assert.False(result.IsValid);
     }
 
+    [Theory]
+    [InlineData("javascript:alert(1)")]
+    [InlineData("ftp://example.com/recipe")]
+    [InlineData("/recipe/relative")]
+    [InlineData("not a url")]
+    public void ValidateForSave_WithInvalidSourceUrl_ShouldReturnInvalidResult(
+        string sourceUrl)
+    {
+        Recipe recipe = CreateValidRecipe();
+        recipe.SourceUrl = sourceUrl;
+
+        RecipeValidationResult result = RecipeValidator.ValidateForSave(recipe);
+
+        Assert.False(result.IsValid);
+    }
+
+    [Theory]
+    [InlineData("http://example.com/recipe")]
+    [InlineData("https://example.com/recipe")]
+    public void ValidateForSave_WithValidHttpSourceUrl_ShouldReturnValidResult(
+        string sourceUrl)
+    {
+        Recipe recipe = CreateValidRecipe();
+        recipe.SourceUrl = sourceUrl;
+
+        RecipeValidationResult result = RecipeValidator.ValidateForSave(recipe);
+
+        Assert.True(result.IsValid);
+    }
+
     [Fact]
     public void ValidateForSave_WithMissingSavedAt_ShouldReturnInvalidResult()
     {

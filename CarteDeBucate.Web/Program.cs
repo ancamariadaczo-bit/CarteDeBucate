@@ -90,8 +90,15 @@ builder.Services.AddScoped<IRecipeLibraryService>(serviceProvider =>
         recipeRepository,
         currentUserContext);
 });
-builder.Services.AddScoped<IRecipeImporterService>(_ =>
-    AppServiceFactory.CreateRecipeImporterService());
+builder.Services.AddSingleton<IHostAddressResolver, DnsHostAddressResolver>();
+builder.Services.AddSingleton<RecipeImportDestinationPolicy>();
+builder.Services
+    .AddHttpClient<IRecipeImporter, RecipeImporter>(
+        RecipeImporterHttpClientConfiguration.Configure)
+    .ConfigurePrimaryHttpMessageHandler(serviceProvider =>
+        new RecipeImportHttpMessageHandler(
+            serviceProvider.GetRequiredService<RecipeImportDestinationPolicy>()));
+builder.Services.AddScoped<IRecipeImporterService, RecipeImporterService>();
 builder.Services.AddScoped<IRecipeBackupService>(serviceProvider =>
 {
     IRecipeRepository recipeRepository =

@@ -40,7 +40,7 @@ public class DatabaseUserRepository : IUserRepository
         command.CommandText = """
             SELECT Id, Username, PasswordHash, PasswordSalt, CreatedAt
             FROM Users
-            WHERE Username = $username;
+            WHERE Username COLLATE NOCASE = $username;
         """;
 
         command.Parameters.AddWithValue("$username", username);

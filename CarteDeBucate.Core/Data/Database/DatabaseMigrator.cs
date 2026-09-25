@@ -40,7 +40,8 @@ public class DatabaseMigrator
             new DatabaseMigration(1, "Add recipe status column", DatabaseScripts.AddRecipeStatusColumn),
             new DatabaseMigration(2, "Create Users table", DatabaseScripts.CreateUsersTable),
             new DatabaseMigration(3, "Add user id to recipes", DatabaseScripts.AddUserIdToRecipes),
-            new DatabaseMigration(4, "Create RecipePhotos table", DatabaseScripts.CreateRecipePhotosSchema)
+            new DatabaseMigration(4, "Create RecipePhotos table", DatabaseScripts.CreateRecipePhotosSchema),
+            new DatabaseMigration(5, "Make usernames case-insensitively unique", DatabaseScripts.CreateUsersUsernameNoCaseUniqueIndex)
         };
     }
 
@@ -76,8 +77,27 @@ public class DatabaseMigrator
             2 => TableExists(connection, "Users"),
             3 => ColumnExists(connection, "Recipes", "UserId"),
             4 => TableExists(connection, "RecipePhotos"),
+            5 => IndexExists(connection, "IX_Users_Username_NoCase"),
             _ => false
         };
+    }
+
+    private static bool IndexExists(SqliteConnection connection, string indexName)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+
+        command.CommandText = """
+            SELECT COUNT(*)
+            FROM sqlite_master
+            WHERE type = 'index'
+            AND name = @IndexName;
+            """;
+
+        command.Parameters.AddWithValue("@IndexName", indexName);
+
+        long count = (long)command.ExecuteScalar()!;
+
+        return count > 0;
     }
 
     private static bool ColumnExists(SqliteConnection connection, string tableName, string columnName)

@@ -61,9 +61,13 @@ public static class AppServiceFactory
         return new DatabaseUserRepository(databasePath);
     }
 
-    public static IRecipeImporterService CreateRecipeImporterService()
+    public static IRecipeImporterService CreateRecipeImporterService(
+        HttpClient httpClient,
+        RecipeImportDestinationPolicy destinationPolicy)
     {
-        RecipeImporter recipeImporter = new RecipeImporter();
+        RecipeImporter recipeImporter = new RecipeImporter(
+            httpClient,
+            destinationPolicy);
 
         return new RecipeImporterService(recipeImporter);
     }

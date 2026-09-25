@@ -1,6 +1,7 @@
 public class FakeRecipeRepository : IRecipeRepository
 {
     public bool AddRecipeWasCalled { get; private set; }
+    public int AddRecipesCallCount { get; private set; }
     public bool UpdateRecipeWasCalled { get; private set; }
     public bool DeleteRecipeWasCalled { get; private set; }
     public bool DeleteRecipeForUserWasCalled { get; private set; }
@@ -16,6 +17,7 @@ public class FakeRecipeRepository : IRecipeRepository
     public bool GetRecipeByIdAndUserIdWasCalled { get; private set; }
 
     public Recipe? AddedRecipe { get; private set; }
+    public IReadOnlyList<Recipe>? AddedRecipes { get; private set; }
     public Recipe? UpdatedRecipe { get; private set; }
     public int? DeletedRecipeId { get; private set; }
     public int? UserIdPassedToDeleteRecipeForUser { get; private set; }
@@ -30,8 +32,10 @@ public class FakeRecipeRepository : IRecipeRepository
     public int? PageSizePassedToSearchRecipesPage { get; private set; }
     public string? SearchTextPassedToSearchRecipes { get; private set; }
     public string? SearchTextPassedToSearchRecipesPage { get; private set; }
+    public string? SourceUrlPassedToRecipeExists { get; private set; }
 
     public bool SourceUrlExists { get; set; }
+    public Exception? ExceptionToThrowOnAddRecipes { get; set; }
 
     public List<Recipe> Recipes { get; set; } = new List<Recipe>();
 
@@ -157,6 +161,19 @@ public class FakeRecipeRepository : IRecipeRepository
         Recipes.Add(recipe);
     }
 
+    public void AddRecipes(IReadOnlyCollection<Recipe> recipes)
+    {
+        AddRecipesCallCount++;
+        AddedRecipes = recipes.ToList();
+
+        if (ExceptionToThrowOnAddRecipes is not null)
+        {
+            throw ExceptionToThrowOnAddRecipes;
+        }
+
+        Recipes.AddRange(recipes);
+    }
+
     public void UpdateRecipe(Recipe recipe)
     {
         UpdateRecipeWasCalled = true;
@@ -180,6 +197,8 @@ public class FakeRecipeRepository : IRecipeRepository
 
     public bool RecipeExistsBySourceUrl(string sourceUrl)
     {
+        SourceUrlPassedToRecipeExists = sourceUrl;
+
         if (SourceUrlExists)
         {
             return true;
@@ -190,6 +209,8 @@ public class FakeRecipeRepository : IRecipeRepository
 
     public bool RecipeExistsBySourceUrlForUser(string sourceUrl, int userId)
     {
+        SourceUrlPassedToRecipeExists = sourceUrl;
+
         if (SourceUrlExists)
         {
             return true;

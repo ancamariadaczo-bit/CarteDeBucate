@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace CarteDeBucate.Web.Models.Api;
 
-public class CreateRecipeRequest
+public class CreateRecipeRequest : IValidatableObject
 {
     [Required]
     public string Name { get; set; } = string.Empty;
@@ -15,4 +15,16 @@ public class CreateRecipeRequest
 
     [Required]
     public List<string> Steps { get; set; } = [];
+
+    public IEnumerable<ValidationResult> Validate(
+        ValidationContext validationContext)
+    {
+        if (!string.IsNullOrWhiteSpace(SourceUrl) &&
+            !UrlValidator.IsValidHttpUrl(SourceUrl))
+        {
+            yield return new ValidationResult(
+                AppTexts.RecipeSourceUrlInvalid,
+                new[] { nameof(SourceUrl) });
+        }
+    }
 }

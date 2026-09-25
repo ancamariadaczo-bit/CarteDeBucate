@@ -172,6 +172,8 @@ public class RecipeBackupServiceTests
         Assert.Equal(0, savedRecipe.Id);
         Assert.Equal(recipe.Name, savedRecipe.Name);
         Assert.Equal(recipe.SourceUrl, savedRecipe.SourceUrl);
+        Assert.False(repository.AddRecipeWasCalled);
+        Assert.Equal(1, repository.AddRecipesCallCount);
     }
 
     [Fact]
@@ -193,6 +195,7 @@ public class RecipeBackupServiceTests
         Assert.Equal(0, savedRecipe.Id);
         Assert.Equal(7, savedRecipe.UserId);
         Assert.Equal(legacyRecipe.SourceUrl, savedRecipe.SourceUrl);
+        Assert.Equal(1, repository.AddRecipesCallCount);
     }
 
     [Fact]
@@ -207,6 +210,7 @@ public class RecipeBackupServiceTests
         Assert.Equal(0, result.ImportedCount);
         Assert.Equal(0, result.SkippedCount);
         Assert.Empty(repository.Recipes);
+        Assert.Equal(0, repository.AddRecipesCallCount);
     }
 
     [Fact]
@@ -257,6 +261,7 @@ public class RecipeBackupServiceTests
         Assert.Equal(0, savedRecipe.Id);
         Assert.Equal(7, savedRecipe.UserId);
         Assert.Equal("https://example.com/version-two", savedRecipe.SourceUrl);
+        Assert.Equal(1, repository.AddRecipesCallCount);
     }
 
     [Fact]
@@ -274,6 +279,7 @@ public class RecipeBackupServiceTests
 
         Recipe savedRecipe = Assert.Single(repository.Recipes);
         Assert.Null(savedRecipe.UserId);
+        Assert.Equal(1, repository.AddRecipesCallCount);
     }
 
     [Fact]
@@ -295,6 +301,164 @@ public class RecipeBackupServiceTests
         Recipe savedRecipe = Assert.Single(repository.Recipes);
         Assert.Equal(existingRecipe.Name, savedRecipe.Name);
         Assert.Equal(existingRecipe.SourceUrl, savedRecipe.SourceUrl);
+        Assert.Equal(0, repository.AddRecipesCallCount);
+    }
+
+    [Fact]
+    public void ImportFromJsonContent_WithValidThenInvalidRecipe_ShouldFailWithoutPersisting()
+    {
+        Recipe validRecipe = CreateValidRecipe(null, "https://example.com/valid");
+        Recipe invalidRecipe = CreateValidRecipe(null, "https://example.com/invalid");
+        invalidRecipe.Name = "";
+        string json = JsonSerializer.Serialize(new[] { validRecipe, invalidRecipe });
+        FakeRecipeRepository repository = new FakeRecipeRepository();
+        RecipeBackupService service = new RecipeBackupService(repository);
+
+        RecipeBackupResult result = service.ImportFromJsonContent(json);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(0, result.ImportedCount);
+        Assert.Equal(0, result.SkippedCount);
+        Assert.Empty(repository.Recipes);
+        Assert.False(repository.AddRecipeWasCalled);
+        Assert.Equal(0, repository.AddRecipesCallCount);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ImportFromJsonContent_WithInvalidUrl_ShouldRejectV1AndV2WithoutPersisting(
+        bool useVersionTwo)
+    {
+        Recipe invalidRecipe = CreateValidRecipe();
+        invalidRecipe.SourceUrl = "javascript:alert(1)";
+        string json = SerializeBackup(new[] { invalidRecipe }, useVersionTwo);
+        FakeRecipeRepository repository = new FakeRecipeRepository();
+        RecipeBackupService service = new RecipeBackupService(repository);
+
+        RecipeBackupResult result = service.ImportFromJsonContent(json);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(0, result.ImportedCount);
+        Assert.Empty(repository.Recipes);
+        Assert.False(repository.AddRecipeWasCalled);
+        Assert.Equal(0, repository.AddRecipesCallCount);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ImportFromJsonContent_WithEmptyIngredientsOrSteps_ShouldFailWithoutPersisting(
+        bool emptyIngredients)
+    {
+        Recipe invalidRecipe = CreateValidRecipe();
+
+        if (emptyIngredients)
+        {
+            invalidRecipe.Ingredients.Clear();
+        }
+        else
+        {
+            invalidRecipe.Steps.Clear();
+        }
+
+        string json = JsonSerializer.Serialize(new[] { invalidRecipe });
+        FakeRecipeRepository repository = new FakeRecipeRepository();
+        RecipeBackupService service = new RecipeBackupService(repository);
+
+        RecipeBackupResult result = service.ImportFromJsonContent(json);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(0, result.ImportedCount);
+        Assert.Empty(repository.Recipes);
+        Assert.False(repository.AddRecipeWasCalled);
+        Assert.Equal(0, repository.AddRecipesCallCount);
+    }
+
+    [Fact]
+    public void ImportFromJsonContent_WithDefaultSavedAt_ShouldFailWithoutPersisting()
+    {
+        Recipe invalidRecipe = CreateValidRecipe();
+        invalidRecipe.SavedAt = default;
+        string json = JsonSerializer.Serialize(new[] { invalidRecipe });
+        FakeRecipeRepository repository = new FakeRecipeRepository();
+        RecipeBackupService service = new RecipeBackupService(repository);
+
+        RecipeBackupResult result = service.ImportFromJsonContent(json);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(0, result.ImportedCount);
+        Assert.Empty(repository.Recipes);
+        Assert.False(repository.AddRecipeWasCalled);
+        Assert.Equal(0, repository.AddRecipesCallCount);
+    }
+
+    [Fact]
+    public void ImportFromJsonContent_WithValidDocument_ShouldUseSingleBatch()
+    {
+        Recipe firstRecipe = CreateValidRecipe(null, "https://example.com/first");
+        Recipe secondRecipe = CreateValidRecipe(null, "https://example.com/second");
+        string json = SerializeBackup(new[] { firstRecipe, secondRecipe }, useVersionTwo: true);
+        FakeRecipeRepository repository = new FakeRecipeRepository();
+        RecipeBackupService service = new RecipeBackupService(repository);
+
+        RecipeBackupResult result = service.ImportFromJsonContent(json);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.ImportedCount);
+        Assert.Equal(0, result.SkippedCount);
+        Assert.False(repository.AddRecipeWasCalled);
+        Assert.Equal(1, repository.AddRecipesCallCount);
+        Assert.Equal(2, repository.AddedRecipes?.Count);
+    }
+
+    [Fact]
+    public void ImportFromJsonContent_WithDuplicateInsideDocument_ShouldBatchOnlyOneRecipe()
+    {
+        Recipe firstRecipe = CreateValidRecipe(null, "https://example.com/duplicate");
+        Recipe duplicateRecipe = CreateValidRecipe(null, "https://example.com/duplicate");
+        duplicateRecipe.Name = "Duplicate copy";
+        string json = JsonSerializer.Serialize(new[] { firstRecipe, duplicateRecipe });
+        FakeRecipeRepository repository = new FakeRecipeRepository();
+        RecipeBackupService service = new RecipeBackupService(repository);
+
+        RecipeBackupResult result = service.ImportFromJsonContent(json);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(1, result.ImportedCount);
+        Assert.Equal(1, result.SkippedCount);
+        Assert.False(repository.AddRecipeWasCalled);
+        Assert.Equal(1, repository.AddRecipesCallCount);
+        Assert.Single(Assert.IsAssignableFrom<IReadOnlyList<Recipe>>(repository.AddedRecipes));
+    }
+
+    [Fact]
+    public void ImportFromJsonContent_WhenBatchFails_ShouldPreserveStateAndReportFailure()
+    {
+        Recipe existingRecipe = CreateValidRecipe(
+            null,
+            "https://example.com/existing-before-failed-batch");
+        Recipe importedRecipe = CreateValidRecipe(
+            null,
+            "https://example.com/failed-batch");
+        string json = JsonSerializer.Serialize(new[] { importedRecipe });
+        FakeRecipeRepository repository = new FakeRecipeRepository();
+        repository.Recipes.Add(existingRecipe);
+        repository.ExceptionToThrowOnAddRecipes =
+            new InvalidOperationException("sensitive infrastructure details");
+        RecipeBackupService service = new RecipeBackupService(repository);
+
+        RecipeBackupResult result = service.ImportFromJsonContent(json);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(AppTexts.BackupImportFailed, result.Message);
+        Assert.DoesNotContain("sensitive infrastructure details", result.Message);
+        Assert.Equal(0, result.ImportedCount);
+        Assert.Equal(0, result.SkippedCount);
+        Assert.Same(existingRecipe, Assert.Single(repository.Recipes));
+        Assert.False(repository.AddRecipeWasCalled);
+        Assert.Equal(1, repository.AddRecipesCallCount);
+        Assert.Single(Assert.IsAssignableFrom<IReadOnlyList<Recipe>>(repository.AddedRecipes));
     }
 
     [Fact]
@@ -422,8 +586,33 @@ public class RecipeBackupServiceTests
             Name = "Banana bread",
             SourceUrl = sourceUrl,
             SavedAt = DateTime.Now,
+            Ingredients = new List<string> { "Banane" },
+            Steps = new List<string> { "Coace" },
             Notes = "Test notes",
             UserId = userId
         };
+    }
+
+    private static string SerializeBackup(
+        IReadOnlyCollection<Recipe> recipes,
+        bool useVersionTwo)
+    {
+        if (!useVersionTwo)
+        {
+            return JsonSerializer.Serialize(recipes);
+        }
+
+        RecipeBackupDocument document = new RecipeBackupDocument
+        {
+            ExportedAtUtc = DateTime.UtcNow,
+            Recipes = recipes
+                .Select(RecipeBackupMapper.ToBackupItem)
+                .ToList()
+        };
+
+        return JsonSerializer.Serialize(document, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        });
     }
 }

@@ -351,6 +351,49 @@ public class DatabaseRecipeRepository : IRecipeRepository
         }
     }
 
+    public void AddRecipes(IReadOnlyCollection<Recipe> recipes)
+    {
+        if (recipes.Count == 0)
+        {
+            return;
+        }
+
+        using SqliteConnection connection = new SqliteConnection(_connectionString);
+        connection.Open();
+
+        using SqliteTransaction transaction = connection.BeginTransaction();
+        long startedAt = LogTransactionStarted(nameof(AddRecipes), null);
+        List<(Recipe Recipe, int GeneratedId)> insertedRecipes = new();
+
+        try
+        {
+            foreach (Recipe recipe in recipes)
+            {
+                int recipeId = InsertRecipe(connection, transaction, recipe);
+
+                InsertIngredients(connection, transaction, recipeId, recipe.Ingredients);
+                InsertSteps(connection, transaction, recipeId, recipe.Steps);
+
+                insertedRecipes.Add((recipe, recipeId));
+            }
+
+            transaction.Commit();
+
+            foreach ((Recipe recipe, int generatedId) in insertedRecipes)
+            {
+                recipe.Id = generatedId;
+            }
+
+            LogTransactionCommitted(nameof(AddRecipes), null, startedAt);
+        }
+        catch (Exception exception)
+        {
+            transaction.Rollback();
+            LogTransactionRolledBack(nameof(AddRecipes), null, startedAt, exception);
+            throw;
+        }
+    }
+
     public void UpdateRecipe(Recipe recipe)
     {
         using SqliteConnection connection = new SqliteConnection(_connectionString);
@@ -1040,7 +1083,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
         return Stopwatch.GetTimestamp();
     }
 
-    private void LogTransactionCommitted(string operation, int recipeId, long startedAt)
+    private void LogTransactionCommitted(string operation, int? recipeId, long startedAt)
     {
         _logger.LogInformation(
             "SQLite transaction committed for {Operation}. Recipe identifier: {RecipeId}. Duration: {ElapsedMilliseconds} ms",
@@ -1051,7 +1094,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
 
     private void LogTransactionRolledBack(
         string operation,
-        int recipeId,
+        int? recipeId,
         long startedAt,
         Exception exception)
     {

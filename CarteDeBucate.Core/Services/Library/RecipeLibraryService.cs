@@ -97,6 +97,8 @@ public class RecipeLibraryService : IRecipeLibraryService
 
     public RecipeSaveResult SaveRecipe(Recipe recipe)
     {
+        NormalizeSourceUrl(recipe);
+
         RecipeValidationResult validationResult = RecipeValidator.ValidateForSave(recipe);
 
         if (!validationResult.IsValid)
@@ -123,6 +125,8 @@ public class RecipeLibraryService : IRecipeLibraryService
 
     public RecipeSaveResult UpdateRecipe(Recipe recipe)
     {
+        NormalizeSourceUrl(recipe);
+
         Recipe? existingRecipe = GetRecipeById(recipe.Id);
 
         if (existingRecipe == null)
@@ -178,6 +182,11 @@ public class RecipeLibraryService : IRecipeLibraryService
     }
 
     private int? CurrentUserId => _currentUserContext?.UserId;
+
+    private static void NormalizeSourceUrl(Recipe recipe)
+    {
+        recipe.SourceUrl = recipe.SourceUrl?.Trim() ?? string.Empty;
+    }
 
     private bool RecipeExistsBySourceUrl(string sourceUrl)
     {
