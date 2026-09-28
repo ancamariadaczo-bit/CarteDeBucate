@@ -46,7 +46,7 @@ export function initializePopupController({
         displayRecipe(currentRecipe);
 
         updateUi();
-        saveStatus.textContent = "";
+        showSaveStatus("");
     });
 
     editButton.addEventListener("click", async () => {
@@ -85,11 +85,11 @@ export function initializePopupController({
         }
 
         saveButton.disabled = true;
-        saveStatus.textContent = "Saving...";
+        showSaveStatus("Saving...");
 
         try {
             await saveRecipeToApi(currentRecipe);
-            saveStatus.textContent = `Recipe saved successfully.`;
+            showSaveStatus("Recipe saved successfully.", "success");
             //const response = await saveRecipeToApi(currentRecipe);
             //`Recipe saved successfully. ID: ${response.recipeId}`;
         } catch (error) {
@@ -97,8 +97,10 @@ export function initializePopupController({
                 ? error.message
                 : "Unknown error.";
 
-            saveStatus.textContent =
-                `The recipe could not be saved. Reason: ${reason}`;
+            showSaveStatus(
+                `The recipe could not be saved. Reason: ${reason}`,
+                "error"
+            );
 
             reportError(error);
             saveButton.disabled = false;
@@ -140,6 +142,12 @@ export function initializePopupController({
         authSection.hidden = !hasRecipe || isAuthenticated;
 
         resultSeparator.hidden = !hasRecipe;
+    }
+
+    function showSaveStatus(message, state = null) {
+        saveStatus.textContent = message;
+        saveStatus.classList.toggle("success", state === "success");
+        saveStatus.classList.toggle("error", state === "error");
     }
 
     function displayRecipe(recipe) {
@@ -224,7 +232,7 @@ export function initializePopupController({
         currentRecipe = null;
         result.textContent = message;
 
-        saveStatus.textContent = "";
+        showSaveStatus("");
         updateUi();
     }
 

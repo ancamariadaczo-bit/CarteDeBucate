@@ -33,6 +33,50 @@ body {
     margin-bottom: 16px;
 }
 
+button {
+    font: inherit;
+    font-size: 14px;
+    padding: 7px 11px;
+    border: 1px solid #666;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #eee;
+}
+
+button:focus-visible {
+    outline: 3px solid #2457a7;
+    outline-offset: 2px;
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+#printButton {
+    background: #2457a7;
+    border-color: #2457a7;
+    color: #fff;
+}
+
+#printButton:hover {
+    background: #193f7d;
+}
+
+#saveButton {
+    background: #28713d;
+    border-color: #28713d;
+    color: #fff;
+}
+
+#saveButton:hover:not(:disabled) {
+    background: #1d552d;
+}
+
 img {
     max-width: 100%;
     height: auto;
@@ -105,9 +149,27 @@ img {
 }
 
 .save-status {
-    height: 24px;
-    margin: 8px 0 0;
-    line-height: 24px;
+    margin: 12px 0 0;
+    padding: 12px 14px;
+    background: #eef4ff;
+    border: 1px solid #2457a7;
+    border-radius: 4px;
+}
+
+.save-status:empty {
+    display: none;
+}
+
+.save-status.success {
+    background: #edf8f0;
+    border-color: #28713d;
+    color: #174524;
+}
+
+.save-status.error {
+    background: #fff0f0;
+    border-color: #a40000;
+    color: #710000;
 }
 
 .auth-section {
@@ -115,6 +177,10 @@ img {
     align-items: center;
     gap: 8px;
     margin-top: 10px;
+    padding: 12px 14px;
+    background: #fff8e1;
+    border: 1px solid #b8860b;
+    border-radius: 6px;
 }
 
 .auth-section[hidden] {

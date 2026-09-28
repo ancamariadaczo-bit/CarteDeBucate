@@ -125,6 +125,59 @@ test("enables all recipe actions after an authenticated extraction", async () =>
     }
 });
 
+test("shows a green status panel after a successful Cookbook save", async () => {
+    const context = await setupPopup(
+        async () => ({ success: true, recipe }),
+        { initialIsAuthenticated: true }
+    );
+
+    try {
+        await clickAndFlush(context.document.getElementById("extractButton"));
+        await clickAndFlush(context.document.getElementById("saveButton"));
+
+        const saveStatus = context.document.getElementById("saveStatus");
+
+        assert.equal(saveStatus.textContent, "Recipe saved successfully.");
+        assert.equal(saveStatus.classList.contains("success"), true);
+        assert.equal(saveStatus.classList.contains("error"), false);
+    } finally {
+        context.cleanup();
+    }
+});
+
+test("shows a red status panel after a failed Cookbook save", async () => {
+    const saveError = new Error("The recipe already exists.");
+    const reportedErrors = [];
+    const context = await setupPopup(
+        async () => ({ success: true, recipe }),
+        {
+            initialIsAuthenticated: true,
+            saveRecipeToApi: async () => {
+                throw saveError;
+            },
+            reportError: error => reportedErrors.push(error)
+        }
+    );
+
+    try {
+        await clickAndFlush(context.document.getElementById("extractButton"));
+        await clickAndFlush(context.document.getElementById("saveButton"));
+
+        const saveStatus = context.document.getElementById("saveStatus");
+
+        assert.equal(
+            saveStatus.textContent,
+            "The recipe could not be saved. Reason: The recipe already exists."
+        );
+        assert.equal(saveStatus.classList.contains("error"), true);
+        assert.equal(saveStatus.classList.contains("success"), false);
+        assert.equal(context.document.getElementById("saveButton").disabled, false);
+        assert.deepEqual(reportedErrors, [saveError]);
+    } finally {
+        context.cleanup();
+    }
+});
+
 test("a successful login updates the popup to the authenticated state", async () => {
     let loginCount = 0;
     const context = await setupPopup(

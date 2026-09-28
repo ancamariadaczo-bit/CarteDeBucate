@@ -56,15 +56,31 @@
                 </button>
             </section>
 
+            <div id="authSection" class="auth-section">
+                <span id="authMessage">
+                    Sign in to save this recipe to your cookbook.
+                </span>
+
+                <button id="loginButton" type="button">
+                    Log in
+                </button>
+            </div>
+
             <div class="form-actions">
                 <button id="printButton" type="submit">
                     Print / Save PDF
+                </button>
+
+                <button id="saveButton" type="button" disabled>
+                    Save to Cookbook
                 </button>
 
                 <button id="cancelButton" type="button">
                     Cancel
                 </button>
             </div>
+
+            <p id="saveStatus" class="save-status" role="status" aria-live="polite"></p>
         </form>
     </main>
 

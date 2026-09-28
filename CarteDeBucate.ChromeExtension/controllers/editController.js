@@ -8,6 +8,9 @@ export function initializeEditController({
     recipePayload,
     payloadReadError = null,
     saveRecipe,
+    saveRecipeToApi,
+    login,
+    initialIsAuthenticated = false,
     navigateToPrint,
     closeWindow,
     reportError = () => {}
@@ -21,10 +24,19 @@ export function initializeEditController({
     const addIngredientButton = document.getElementById("addIngredientButton");
     const addInstructionButton = document.getElementById("addInstructionButton");
     const printButton = document.getElementById("printButton");
+    const saveButton = document.getElementById("saveButton");
     const cancelButton = document.getElementById("cancelButton");
+    const saveStatus = document.getElementById("saveStatus");
+    const authSection = document.getElementById("authSection");
+    const authMessage = document.getElementById("authMessage");
+    const loginButton = document.getElementById("loginButton");
     const errorMessage = document.getElementById("errorMessage");
+    const signInPrompt = authMessage.textContent.trim();
 
     let originalRecipe = null;
+    let isAuthenticated = initialIsAuthenticated;
+    let isSaving = false;
+    let isSaved = false;
 
     addIngredientButton.addEventListener("click", () => {
         const input = appendIngredientRow("");
@@ -39,9 +51,86 @@ export function initializeEditController({
     recipeForm.addEventListener("submit", event => {
         event.preventDefault();
 
+        const editedRecipe = buildEditedRecipe();
+
+        if (!editedRecipe) {
+            return;
+        }
+
+        try {
+            saveRecipe(editedRecipe);
+            navigateToPrint();
+        } catch (error) {
+            reportError(error);
+            showError("The edited recipe could not be prepared for printing.");
+        }
+    });
+
+    saveButton.addEventListener("click", async () => {
+        if (!originalRecipe || !isAuthenticated || isSaving || isSaved) {
+            return;
+        }
+
+        const editedRecipe = buildEditedRecipe();
+
+        if (!editedRecipe) {
+            return;
+        }
+
+        isSaving = true;
+        updateUi();
+        showSaveStatus("Saving...");
+
+        try {
+            await saveRecipeToApi(editedRecipe);
+
+            isSaved = true;
+            showSaveStatus("Recipe saved successfully.", "success");
+        } catch (error) {
+            const reason = error instanceof Error
+                ? error.message
+                : "Unknown error.";
+
+            showSaveStatus(
+                `The recipe could not be saved. Reason: ${reason}`,
+                "error"
+            );
+            reportError(error);
+        } finally {
+            isSaving = false;
+            updateUi();
+        }
+    });
+
+    loginButton.addEventListener("click", async () => {
+        authMessage.textContent = signInPrompt;
+
+        try {
+            await login();
+            setAuthenticationState(true);
+        } catch (error) {
+            isAuthenticated = false;
+            authMessage.textContent =
+                "Sign in was not completed. Please try again.";
+            updateUi();
+            reportError(error);
+        }
+    });
+
+    cancelButton.addEventListener("click", () => {
+        closeWindow();
+    });
+
+    initializeEditor();
+
+    return {
+        setAuthenticationState
+    };
+
+    function buildEditedRecipe() {
         if (!originalRecipe) {
             showPayloadError();
-            return;
+            return null;
         }
 
         const formValues = {
@@ -59,23 +148,13 @@ export function initializeEditController({
 
         if (!validationResult.success) {
             showValidationErrors(validationResult.errors);
-            return;
+            return null;
         }
 
-        try {
-            saveRecipe(validationResult.recipe);
-            navigateToPrint();
-        } catch (error) {
-            reportError(error);
-            showError("The edited recipe could not be prepared for printing.");
-        }
-    });
+        clearErrorMessage();
 
-    cancelButton.addEventListener("click", () => {
-        closeWindow();
-    });
-
-    initializeEditor();
+        return validationResult.recipe;
+    }
 
     function initializeEditor() {
         if (payloadReadError) {
@@ -113,6 +192,8 @@ export function initializeEditController({
             for (const step of steps) {
                 appendInstructionRow(toEditableText(step));
             }
+
+            updateUi();
         } catch (error) {
             reportError(error);
             originalRecipe = null;
@@ -209,6 +290,28 @@ export function initializeEditController({
         }
 
         printButton.disabled = true;
+        authSection.hidden = true;
+    }
+
+    function setAuthenticationState(value) {
+        isAuthenticated = Boolean(value);
+        updateUi();
+    }
+
+    function updateUi() {
+        const hasEditableRecipe = originalRecipe !== null;
+
+        authSection.hidden = !hasEditableRecipe || isAuthenticated;
+
+        if (hasEditableRecipe) {
+            saveButton.disabled = !isAuthenticated || isSaving || isSaved;
+        }
+    }
+
+    function showSaveStatus(message, state = null) {
+        saveStatus.textContent = message;
+        saveStatus.classList.toggle("success", state === "success");
+        saveStatus.classList.toggle("error", state === "error");
     }
 
     function showValidationErrors(errors) {
@@ -233,6 +336,11 @@ export function initializeEditController({
     function showError(message) {
         errorMessage.textContent = message;
         revealErrorMessage();
+    }
+
+    function clearErrorMessage() {
+        errorMessage.textContent = "";
+        errorMessage.hidden = true;
     }
 
     function revealErrorMessage() {

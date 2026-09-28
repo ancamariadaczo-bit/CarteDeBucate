@@ -1,7 +1,15 @@
+import { saveRecipeToApi } from "./api/recipeApiClient.js";
+import { getCurrentUser } from "./api/authenticationApiClient.js";
+import { getAccessToken, removeAccessToken } from "./auth/authStorage.js";
+import { resolveAuthenticationState } from "./auth/authenticationState.js";
 import { initializeEditController } from "./controllers/editController.js";
 
 let recipePayload = null;
 let payloadReadError = null;
+
+const reportError = error => {
+    console.error(error);
+};
 
 try {
     recipePayload = localStorage.getItem("recipeToPrint");
@@ -10,7 +18,19 @@ try {
     payloadReadError = error;
 }
 
-initializeEditController({
+async function login() {
+    const response = await chrome.runtime.sendMessage({
+        type: "LOGIN"
+    });
+
+    if (!response?.success) {
+        throw new Error(
+            response?.error ?? "Login failed."
+        );
+    }
+}
+
+const editorController = initializeEditController({
     document,
     recipePayload,
     payloadReadError,
@@ -20,10 +40,26 @@ initializeEditController({
     navigateToPrint: () => {
         window.location.href = chrome.runtime.getURL("print.html");
     },
+    saveRecipeToApi: async recipe => {
+        const accessToken = await getAccessToken();
+
+        return saveRecipeToApi(
+            recipe,
+            accessToken
+        );
+    },
+    login,
     closeWindow: () => {
         window.close();
     },
-    reportError: error => {
-        console.error(error);
-    }
+    reportError
+});
+
+resolveAuthenticationState({
+    getAccessToken,
+    getCurrentUser,
+    removeAccessToken,
+    reportError
+}).then(isAuthenticated => {
+    editorController.setAuthenticationState(isAuthenticated);
 });
