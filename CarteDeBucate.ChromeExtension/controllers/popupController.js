@@ -126,8 +126,8 @@ export function initializePopupController({
     // Prepares the UI regarding to the state and permissions.
     // currentRecipe == null → Extract visible && Edit/Print/Save hidden
     // currentRecipe != null → Extract hidden && Edit/Print/Save visible
-    // hasRecipe && isAuthenticated == false → Save disabled && Login/Create account visible
-    // !hasRecipe || isAuthenticated == true → Login/Create account hidden
+    // hasRecipe && isAuthenticated == false → Save disabled && Login visible
+    // !hasRecipe || isAuthenticated == true → Login hidden
     function updateUi() {
         const hasRecipe = currentRecipe !== null;
 

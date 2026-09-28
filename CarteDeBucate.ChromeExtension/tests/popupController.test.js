@@ -63,6 +63,7 @@ test("starts with only the Extract action visible", async () => {
         assert.equal(context.document.getElementById("printButton").hidden, true);
         assert.equal(context.document.getElementById("saveButton").hidden, true);
         assert.equal(context.document.getElementById("authSection").hidden, true);
+        assert.equal(context.document.getElementById("registerButton"), null);
         assert.equal(context.document.getElementById("resultSeparator").hidden, true);
         assert.equal(context.document.getElementById("result").textContent, "");
     } finally {
