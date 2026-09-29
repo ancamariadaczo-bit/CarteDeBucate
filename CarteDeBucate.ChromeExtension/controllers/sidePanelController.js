@@ -58,6 +58,10 @@ export function initializeSidePanelController({
             return;
         }
 
+        currentRecipe = null;
+        isSaved = false;
+        result.textContent = "";
+        showSaveStatus("");
         isExtracting = true;
         showExtractionStatus("Extracting recipe...");
         updateUi();
@@ -76,11 +80,9 @@ export function initializeSidePanelController({
             }
 
             currentRecipe = extractionResult.recipe;
-            isSaved = false;
             displayRecipe(currentRecipe);
 
             showExtractionStatus("");
-            showSaveStatus("");
         } catch (error) {
             reportError(error);
             showExtractionFailure(

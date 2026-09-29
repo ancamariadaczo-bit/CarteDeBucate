@@ -648,21 +648,48 @@ test("removes an image that fails and displays the existing message", async () =
     }
 });
 
-test("shows extraction failure while preserving the previously extracted recipe", async () => {
-    const results = [
-        { success: true, recipe },
-        { success: false, error: "No recipe here." }
-    ];
-    const context = await setupSidePanel(async () => results.shift());
+test("clears the previous recipe as soon as a new extraction starts and keeps it cleared on failure", async () => {
+    let extractionCount = 0;
+    let completeSecondExtraction;
+    const context = await setupSidePanel(async () => {
+        extractionCount += 1;
+
+        if (extractionCount === 1) {
+            return { success: true, recipe };
+        }
+
+        return new Promise(resolve => {
+            completeSecondExtraction = resolve;
+        });
+    });
 
     try {
         await requestExtraction(context, { requestId: "request-1" });
-        await requestExtraction(context, { requestId: "request-2" });
+
+        const secondExtraction = context.controller.handleExtractionRequest({
+            requestId: "request-2",
+            tabId: 102
+        });
+
+        assert.equal(context.document.getElementById("result").textContent, "");
+        assert.equal(
+            context.document.getElementById("extractionStatus").textContent,
+            "Extracting recipe..."
+        );
+        assert.equal(context.document.getElementById("editButton").hidden, true);
+        assert.equal(context.document.getElementById("printButton").hidden, true);
+        assert.equal(context.document.getElementById("saveButton").hidden, true);
+        assert.equal(context.document.getElementById("authSection").hidden, true);
+        assert.equal(context.document.getElementById("resultSeparator").hidden, true);
+
+        completeSecondExtraction({ success: false, error: "No recipe here." });
+        await secondExtraction;
+
         await clickAndFlush(context.document.getElementById("editButton"));
 
         const extractionStatus = context.document.getElementById("extractionStatus");
 
-        assert.match(context.document.getElementById("result").textContent, /Soup/);
+        assert.equal(context.document.getElementById("result").textContent, "");
         assert.equal(
             extractionStatus.textContent,
             "No recipe here. Click the extension icon to try again."
@@ -670,17 +697,13 @@ test("shows extraction failure while preserving the previously extracted recipe"
         assert.equal(extractionStatus.classList.contains("error"), true);
         assert.equal(context.document.getElementById("saveStatus").textContent, "");
         assert.equal(context.document.getElementById("extractButton"), null);
-        assert.equal(context.document.getElementById("editButton").hidden, false);
-        assert.equal(context.document.getElementById("printButton").hidden, false);
-        assert.equal(context.document.getElementById("saveButton").hidden, false);
-        assert.equal(context.document.getElementById("authSection").hidden, false);
-        assert.equal(context.document.getElementById("resultSeparator").hidden, false);
-        assert.deepEqual(context.storage.calls.setItem, [
-            ["recipeToPrint", JSON.stringify(recipe)]
-        ]);
-        assert.deepEqual(context.browser.calls.openWindow, [
-            { page: "edit.html", type: "popup", width: 900, height: 700 }
-        ]);
+        assert.equal(context.document.getElementById("editButton").hidden, true);
+        assert.equal(context.document.getElementById("printButton").hidden, true);
+        assert.equal(context.document.getElementById("saveButton").hidden, true);
+        assert.equal(context.document.getElementById("authSection").hidden, true);
+        assert.equal(context.document.getElementById("resultSeparator").hidden, true);
+        assert.deepEqual(context.storage.calls.setItem, []);
+        assert.deepEqual(context.browser.calls.openWindow, []);
     } finally {
         context.cleanup();
     }

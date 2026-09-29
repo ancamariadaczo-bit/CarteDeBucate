@@ -21,7 +21,7 @@ Suprafata principala este un Side Panel fluid, fara latime fixa si fara buton Ex
 | `editLogic.js` | `editLogic.test.js` verifica toate functiile publice si contractele de validare/normalizare. |
 | `api/authenticationApiClient.js` | `authenticationApiClient.test.js` verifica requesturile de autentificare, raspunsurile HTTP de eroare, corpurile non-JSON si validarea stricta a tokenului primit. |
 | `controllers/editController.js` | `editController.test.js` foloseste `edit.html` real si dependente injectate, inclusiv asteptarea rezolvarii autentificarii initiale, blocarea loginurilor paralele si recuperarea dupa expirarea autentificarii la salvare. |
-| `controllers/sidePanelController.js` | `sidePanelController.test.js` foloseste `sidepanel.html` real si dependente injectate. Acopera extragerea automata, lipsa butonului Extract, deduplicarea, blocarea operatiilor paralele si a loginurilor concurente, pastrarea ultimului rezultat bun, resetarea Save pentru reteta noua, login, expirarea autentificarii si ferestrele Edit/Print. |
+| `controllers/sidePanelController.js` | `sidePanelController.test.js` foloseste `sidepanel.html` real si dependente injectate. Acopera extragerea automata, lipsa butonului Extract, deduplicarea, blocarea operatiilor paralele si a loginurilor concurente, curatarea imediata a retetei vechi la o cerere noua, starea goala dupa esec, resetarea Save, login, expirarea autentificarii si ferestrele Edit/Print. |
 | `sidepanel/extractionRequestStore.js` | `extractionRequestStore.test.js` verifica izolarea per fereastra si per cerere, metadatele permise, expirarea la 60 de secunde, consumarea unica fara stergerea unei cereri publicate concurent, deduplicarea si erorile `storage.session`. |
 | `sidepanel/sidePanelLauncher.js` | `sidePanelLauncher.test.js` verifica listenerul action click, validarea identificatorilor, ordinea deschidere-publicare, request ID-urile distincte si raportarea separata a erorilor. |
 | `controllers/printController.js` | `printController.test.js` foloseste `print.html` real, efecte mock si timere controlate. |
@@ -33,7 +33,7 @@ Suita automata nu inlocuieste reincarcarea extensiei unpacked in Chrome 116+ si 
 - un action click acorda efectiv `activeTab`, deschide sau focalizeaza Side Panel-ul si porneste extragerea;
 - deschiderea din selectorul Chrome nu extrage fara action click;
 - paginile restrictionate (`chrome://`, Chrome Web Store si New Tab) produc mesajul accesibil stabilit;
-- panelul ramane deschis la click, scroll si schimbarea tabului, iar ultimul rezultat bun ramane vizibil;
+- panelul ramane deschis la click, scroll si schimbarea tabului; rezultatul ramane vizibil pana la urmatorul action click, care il curata inaintea noii extrageri;
 - panelurile din doua ferestre Chrome nu isi consuma reciproc cererile;
 - redimensionarea si mutarea panelului stanga/dreapta pastreaza layout-ul fara overflow;
 - loginul real, ferestrele Edit/Print, imaginile si dialogul de printare functioneaza cu API-urile Chrome reale.
