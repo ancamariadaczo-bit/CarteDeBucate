@@ -248,6 +248,104 @@ test("uses OG, Twitter, itemprop, then article image priority", async t => {
     }
 });
 
+test("resolves relative image URLs and skips unsafe metadata", async t => {
+    const scenarios = [
+        {
+            name: "relative OG image",
+            images: '<meta property="og:image" content="/images/og.jpg">',
+            expected: "https://recipes.example.test/images/og.jpg"
+        },
+        {
+            name: "protocol-relative Twitter image",
+            images: '<meta name="twitter:image" content="//cdn.example.test/twitter.jpg">',
+            expected: "https://cdn.example.test/twitter.jpg"
+        },
+        {
+            name: "unsafe OG falls back to Twitter",
+            images: '<meta property="og:image" content="javascript:alert(1)"><meta name="twitter:image" content="/images/twitter.jpg">',
+            expected: "https://recipes.example.test/images/twitter.jpg"
+        },
+        {
+            name: "relative itemprop metadata",
+            images: '<meta itemprop="image" content="/images/item.jpg">',
+            expected: "https://recipes.example.test/images/item.jpg"
+        }
+    ];
+
+    for (const scenario of scenarios) {
+        await t.test(scenario.name, async () => {
+            const context = await extractFromHtml(`
+                <h1>Recipe</h1>${scenario.images}
+                <span itemprop="recipeIngredient">Water</span>
+                <span itemprop="recipeInstructions">Boil.</span>
+            `);
+
+            try {
+                assert.equal(context.result.imageUrl, scenario.expected);
+            } finally {
+                context.cleanup();
+            }
+        });
+    }
+});
+
+test("uses the next valid image from the same metadata category", async t => {
+    const scenarios = [
+        {
+            name: "Open Graph",
+            images: '<meta property="og:image" content="javascript:alert(1)"><meta property="og:image" content="/images/og-safe.jpg">',
+            expected: "https://recipes.example.test/images/og-safe.jpg"
+        },
+        {
+            name: "Twitter",
+            images: '<meta name="twitter:image" content="data:image/png;base64,AA=="><meta name="twitter:image" content="/images/twitter-safe.jpg">',
+            expected: "https://recipes.example.test/images/twitter-safe.jpg"
+        },
+        {
+            name: "itemprop",
+            images: '<meta itemprop="image" content="javascript:alert(1)"><link itemprop="image" href="/images/item-safe.jpg">',
+            expected: "https://recipes.example.test/images/item-safe.jpg"
+        },
+        {
+            name: "article",
+            images: '<article><img src="data:image/png;base64,AA=="><img src="/images/article-safe.jpg"></article>',
+            expected: "https://recipes.example.test/images/article-safe.jpg"
+        }
+    ];
+
+    for (const scenario of scenarios) {
+        await t.test(scenario.name, async () => {
+            const context = await extractFromHtml(`
+                <h1>Recipe</h1>${scenario.images}
+                <span itemprop="recipeIngredient">Water</span>
+                <span itemprop="recipeInstructions">Boil.</span>
+            `);
+
+            try {
+                assert.equal(context.result.imageUrl, scenario.expected);
+            } finally {
+                context.cleanup();
+            }
+        });
+    }
+});
+
+test("rejects HTML image candidates that do not use HTTP or HTTPS", async () => {
+    const context = await extractFromHtml(`
+        <h1>Recipe</h1>
+        <meta property="og:image" content="javascript:alert(1)">
+        <meta name="twitter:image" content="data:image/png;base64,AA==">
+        <span itemprop="recipeIngredient">Water</span>
+        <span itemprop="recipeInstructions">Boil.</span>
+    `);
+
+    try {
+        assert.equal(context.result.imageUrl, null);
+    } finally {
+        context.cleanup();
+    }
+});
+
 test("returns null when any required recipe data is missing", async t => {
     const scenarios = [
         '<span itemprop="recipeIngredient">Water</span><span itemprop="recipeInstructions">Boil.</span>',

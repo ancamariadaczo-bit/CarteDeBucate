@@ -115,6 +115,64 @@ test("finds recipes in arrays, nested objects, and @graph with array @type", asy
     }
 });
 
+test("skips incomplete recipes and returns the first complete JSON-LD candidate", async t => {
+    const incompleteRecipe = {
+        "@type": "Recipe",
+        name: "Incomplete recipe"
+    };
+    const completeRecipe = {
+        "@type": "Recipe",
+        name: "Complete recipe",
+        recipeIngredient: ["Water"],
+        recipeInstructions: ["Boil."]
+    };
+    const scenarios = [
+        {
+            name: "same @graph",
+            values: [{
+                "@context": "https://schema.org",
+                "@graph": [incompleteRecipe, completeRecipe]
+            }]
+        },
+        {
+            name: "later JSON-LD script",
+            values: [incompleteRecipe, completeRecipe]
+        }
+    ];
+
+    for (const scenario of scenarios) {
+        await t.test(scenario.name, async () => {
+            const { result, cleanup } = await extractFromValues(scenario.values);
+
+            try {
+                assert.equal(result.name, "Complete recipe");
+                assert.deepEqual(result.ingredients, ["Water"]);
+                assert.deepEqual(result.steps, ["Boil."]);
+            } finally {
+                cleanup();
+            }
+        });
+    }
+});
+
+test("keeps the first incomplete JSON-LD candidate when no complete recipe exists", async () => {
+    const { result, cleanup } = await extractFromValues([{
+        "@type": "Recipe",
+        name: "Incomplete recipe"
+    }, {
+        "@type": "Recipe",
+        recipeIngredient: ["Water"]
+    }]);
+
+    try {
+        assert.equal(result.name, "Incomplete recipe");
+        assert.deepEqual(result.ingredients, []);
+        assert.deepEqual(result.steps, []);
+    } finally {
+        cleanup();
+    }
+});
+
 test("normalizes string, object, and array author values", async t => {
     const scenarios = [
         { author: "Ana", expected: "Ana" },
@@ -162,6 +220,68 @@ test("normalizes string, object, and array image values", async t => {
                 cleanup();
             }
         });
+    }
+});
+
+test("resolves relative images and skips unsafe image candidates", async t => {
+    const scenarios = [
+        {
+            name: "relative path",
+            image: "/images/recipe.jpg",
+            expected: "https://recipes.example.test/images/recipe.jpg"
+        },
+        {
+            name: "protocol-relative path",
+            image: "//cdn.example.test/recipe.jpg",
+            expected: "https://cdn.example.test/recipe.jpg"
+        },
+        {
+            name: "unsafe array entries",
+            image: [
+                "javascript:alert(1)",
+                { url: "data:image/png;base64,AA==" },
+                { contentUrl: "/images/safe.jpg" }
+            ],
+            expected: "https://recipes.example.test/images/safe.jpg"
+        },
+        {
+            name: "unsafe object URL",
+            image: {
+                url: "javascript:alert(1)",
+                contentUrl: "/images/object-safe.jpg"
+            },
+            expected: "https://recipes.example.test/images/object-safe.jpg"
+        }
+    ];
+
+    for (const scenario of scenarios) {
+        await t.test(scenario.name, async () => {
+            const { result, cleanup } = await extractFromValues([{
+                "@type": "Recipe",
+                name: "Recipe",
+                image: scenario.image
+            }]);
+
+            try {
+                assert.equal(result.imageUrl, scenario.expected);
+            } finally {
+                cleanup();
+            }
+        });
+    }
+});
+
+test("rejects JSON-LD images that do not use HTTP or HTTPS", async () => {
+    const { result, cleanup } = await extractFromValues([{
+        "@type": "Recipe",
+        name: "Recipe",
+        image: ["javascript:alert(1)", "data:image/png;base64,AA=="]
+    }]);
+
+    try {
+        assert.equal(result.imageUrl, null);
+    } finally {
+        cleanup();
     }
 });
 

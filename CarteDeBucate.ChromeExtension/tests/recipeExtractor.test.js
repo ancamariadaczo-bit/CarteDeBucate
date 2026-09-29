@@ -8,6 +8,18 @@ const extractorPath = new URL(
     import.meta.url
 );
 
+const jsonLdRecipe = {
+    name: "JSON-LD Recipe",
+    ingredients: ["Ingredient"],
+    steps: ["Prepare the recipe."]
+};
+
+const htmlRecipe = {
+    name: "HTML Recipe",
+    ingredients: ["HTML ingredient"],
+    steps: ["Prepare the HTML recipe."]
+};
+
 async function createExtractor({ jsonLdResult, htmlResult }) {
     const context = createDom({ runScripts: true });
     const calls = { jsonLd: 0, html: 0 };
@@ -33,17 +45,16 @@ function toPlain(value) {
 }
 
 test("prefers JSON-LD, reports its method, and does not call HTML", async () => {
-    const recipe = { name: "JSON-LD Recipe" };
     const context = await createExtractor({
-        jsonLdResult: recipe,
-        htmlResult: { name: "HTML Recipe" }
+        jsonLdResult: jsonLdRecipe,
+        htmlResult: htmlRecipe
     });
 
     try {
         assert.deepEqual(toPlain(context.window.RecipeClipper.extractRecipe()), {
             success: true,
             method: "json-ld",
-            recipe
+            recipe: jsonLdRecipe
         });
         assert.deepEqual(context.calls, { jsonLd: 1, html: 0 });
     } finally {
@@ -52,21 +63,67 @@ test("prefers JSON-LD, reports its method, and does not call HTML", async () => 
 });
 
 test("falls back to HTML and reports its method", async () => {
-    const recipe = { name: "HTML Recipe" };
     const context = await createExtractor({
         jsonLdResult: null,
-        htmlResult: recipe
+        htmlResult: htmlRecipe
     });
 
     try {
         assert.deepEqual(toPlain(context.window.RecipeClipper.extractRecipe()), {
             success: true,
             method: "html",
-            recipe
+            recipe: htmlRecipe
         });
         assert.deepEqual(context.calls, { jsonLd: 1, html: 1 });
     } finally {
         context.cleanup();
+    }
+});
+
+test("falls back to HTML when JSON-LD is incomplete", async t => {
+    const incompleteRecipes = [
+        { name: "empty object", value: {} },
+        { name: "array", value: [] },
+        {
+            name: "missing name",
+            value: { ingredients: ["Ingredient"], steps: ["Step"] }
+        },
+        {
+            name: "missing ingredients",
+            value: { name: "Recipe", steps: ["Step"] }
+        },
+        {
+            name: "empty ingredients",
+            value: { name: "Recipe", ingredients: [], steps: ["Step"] }
+        },
+        {
+            name: "missing steps",
+            value: { name: "Recipe", ingredients: ["Ingredient"] }
+        },
+        {
+            name: "blank step",
+            value: { name: "Recipe", ingredients: ["Ingredient"], steps: [" "] }
+        }
+    ];
+
+    for (const scenario of incompleteRecipes) {
+        await t.test(scenario.name, async () => {
+            const context = await createExtractor({
+                jsonLdResult: scenario.value,
+                htmlResult: htmlRecipe
+            });
+
+            try {
+                assert.deepEqual(toPlain(context.window.RecipeClipper.extractRecipe()), {
+                    success: true,
+                    method: "html",
+                    recipe: htmlRecipe
+                });
+                assert.deepEqual(context.calls, { jsonLd: 1, html: 1 });
+            } finally {
+                context.cleanup();
+            }
+        });
     }
 });
 

@@ -8,6 +8,7 @@
         const scripts = document.querySelectorAll(
             'script[type="application/ld+json"]'
         );
+        let firstIncompleteRecipe = null;
 
         for (const script of scripts) {
 
@@ -15,10 +16,17 @@
 
                 const data = JSON.parse(script.textContent);
 
-                const recipeObject = findRecipe(data);
+                const recipeObjects = [];
+                collectRecipes(data, recipeObjects);
 
-                if (recipeObject !== null) {
-                    return convertRecipe(recipeObject);
+                for (const recipeObject of recipeObjects) {
+                    const recipe = convertRecipe(recipeObject);
+
+                    if (isCompleteRecipe(recipe)) {
+                        return recipe;
+                    }
+
+                    firstIncompleteRecipe ??= recipe;
                 }
 
             } catch (error) {
@@ -31,43 +39,31 @@
             }
         }
 
-        return null;
+        return firstIncompleteRecipe;
     };
 
-    function findRecipe(value) {
+    function collectRecipes(value, recipes) {
 
         if (value === null || typeof value !== "object") {
-            return null;
+            return;
         }
 
         if (isRecipe(value)) {
-            return value;
+            recipes.push(value);
         }
 
         if (Array.isArray(value)) {
 
             for (const item of value) {
-
-                const found = findRecipe(item);
-
-                if (found !== null) {
-                    return found;
-                }
+                collectRecipes(item, recipes);
             }
 
-            return null;
+            return;
         }
 
         for (const property of Object.values(value)) {
-
-            const found = findRecipe(property);
-
-            if (found !== null) {
-                return found;
-            }
+            collectRecipes(property, recipes);
         }
-
-        return null;
     }
 
     function isRecipe(value) {
@@ -95,6 +91,26 @@
             ingredients: getIngredients(recipe.recipeIngredient),
             steps: getSteps(recipe.recipeInstructions)
         };
+    }
+
+    function isCompleteRecipe(recipe) {
+
+        return isNonEmptyText(recipe.name) &&
+            isNonEmptyTextArray(recipe.ingredients) &&
+            isNonEmptyTextArray(recipe.steps);
+    }
+
+    function isNonEmptyText(value) {
+
+        return typeof value === "string" &&
+            value.trim().length > 0;
+    }
+
+    function isNonEmptyTextArray(values) {
+
+        return Array.isArray(values) &&
+            values.length > 0 &&
+            values.every(isNonEmptyText);
     }
 
     function getIngredients(value) {
@@ -142,23 +158,50 @@
         }
 
         if (typeof image === "string") {
-            return image;
+            return normalizeImageUrl(image);
         }
 
         if (Array.isArray(image)) {
 
-            if (image.length === 0) {
-                return null;
+            for (const item of image) {
+
+                const imageUrl = getImageUrl(item);
+
+                if (imageUrl) {
+                    return imageUrl;
+                }
             }
 
-            return getImageUrl(image[0]);
+            return null;
         }
 
         if (typeof image === "object") {
-            return image.url ?? image.contentUrl ?? null;
+            return getImageUrl(image.url) ??
+                getImageUrl(image.contentUrl);
         }
 
         return null;
+    }
+
+    function normalizeImageUrl(value) {
+
+        if (typeof value !== "string" || !value.trim()) {
+            return null;
+        }
+
+        try {
+
+            const url = new URL(value.trim(), document.baseURI);
+
+            if (url.protocol !== "http:" && url.protocol !== "https:") {
+                return null;
+            }
+
+            return url.href;
+
+        } catch {
+            return null;
+        }
     }
 
     function getSteps(instructions) {

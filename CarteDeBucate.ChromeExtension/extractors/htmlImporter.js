@@ -294,42 +294,77 @@
 
     function getHtmlImage() {
 
-        const ogImage = document.querySelector(
-            'meta[property="og:image"]'
-        );
+        const sources = [
+            {
+                selector: 'meta[property="og:image"]',
+                attributes: ["content"]
+            },
+            {
+                selector: 'meta[name="twitter:image"]',
+                attributes: ["content"]
+            },
+            {
+                selector: "[itemprop='image']",
+                attributes: ["src", "content", "href"]
+            },
+            {
+                selector: "article img",
+                attributes: ["src"]
+            }
+        ];
 
-        if (ogImage?.content) {
-            return ogImage.content;
-        }
+        for (const source of sources) {
+            const imageUrl = getFirstValidImageUrl(
+                source.selector,
+                source.attributes
+            );
 
-        const twitterImage = document.querySelector(
-            'meta[name="twitter:image"]'
-        );
-
-        if (twitterImage?.content) {
-            return twitterImage.content;
-        }
-
-        const recipeImage = document.querySelector(
-            "[itemprop='image']"
-        );
-
-        if (recipeImage) {
-
-            return recipeImage.src
-                ?? recipeImage.content
-                ?? null;
-        }
-
-        const articleImage = document.querySelector(
-            "article img"
-        );
-
-        if (articleImage?.src) {
-            return articleImage.src;
+            if (imageUrl) {
+                return imageUrl;
+            }
         }
 
         return null;
+    }
+
+    function getFirstValidImageUrl(selector, attributes) {
+
+        const elements = document.querySelectorAll(selector);
+
+        for (const element of elements) {
+            for (const attribute of attributes) {
+                const imageUrl = normalizeImageUrl(
+                    element.getAttribute(attribute)
+                );
+
+                if (imageUrl) {
+                    return imageUrl;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    function normalizeImageUrl(value) {
+
+        if (typeof value !== "string" || !value.trim()) {
+            return null;
+        }
+
+        try {
+
+            const url = new URL(value.trim(), document.baseURI);
+
+            if (url.protocol !== "http:" && url.protocol !== "https:") {
+                return null;
+            }
+
+            return url.href;
+
+        } catch {
+            return null;
+        }
     }
 
     function isIngredientsHeading(element) {

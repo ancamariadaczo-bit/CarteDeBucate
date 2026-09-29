@@ -98,9 +98,48 @@ test("saveRecipeToApi includes the HTTP status when the API returns no error det
     );
 });
 
+test("saveRecipeToApi preserves an unauthorized status without parsing an empty body", async () => {
+    let jsonReadCount = 0;
+    const fetchRequest = async () => ({
+        ok: false,
+        status: 401,
+        json: async () => {
+            jsonReadCount += 1;
+            throw new Error("The empty response body cannot be parsed.");
+        }
+    });
+
+    await assert.rejects(
+        () => saveRecipeToApi(recipe, "expired-access-token", fetchRequest),
+        error => error instanceof Error
+            && error.status === 401
+            && error.message === "Authentication has expired. Sign in again."
+    );
+    assert.equal(jsonReadCount, 0);
+});
+
+test("saveRecipeToApi uses the HTTP status when an error body is not JSON", async () => {
+    const fetchRequest = async () => ({
+        ok: false,
+        status: 503,
+        json: async () => {
+            throw new SyntaxError("Unexpected token '<'.");
+        }
+    });
+
+    await assert.rejects(
+        () => saveRecipeToApi(recipe, "test-access-token", fetchRequest),
+        error => error instanceof Error
+            && error.status === 503
+            && error.message === "API request failed with status 503"
+    );
+});
+
 test("saveRecipeToApi rejects the request when the access token is missing", async () => {
     await assert.rejects(
         () => saveRecipeToApi(recipe, null),
-        new Error("Authentication is required.")
+        error => error instanceof Error
+            && error.status === 401
+            && error.message === "Authentication is required."
     );
 });

@@ -53,14 +53,34 @@ export async function exchangeAuthenticationCode(
         }
     );
 
-    const responseBody = await response.json();
+    let responseBody;
+
+    try {
+        responseBody = await response.json();
+    } catch {
+        if (!response.ok) {
+            throw new Error(
+                `Authentication code exchange failed with status ${response.status}.`
+            );
+        }
+
+        throw new Error("The authentication response was not valid JSON.");
+    }
 
     if (!response.ok) {
         throw new Error(
-            responseBody.message
+            responseBody?.message
             ?? `Authentication code exchange failed with status ${response.status}.`
         );
     }
 
-    return responseBody.accessToken;
+    const accessToken = responseBody?.accessToken;
+
+    if (typeof accessToken !== "string" || !accessToken.trim()) {
+        throw new Error(
+            "The authentication response did not contain a valid access token."
+        );
+    }
+
+    return accessToken.trim();
 }

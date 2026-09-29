@@ -141,3 +141,69 @@ test("exchangeAuthenticationCode uses the error returned by the API", async () =
         new Error("The authentication code is invalid or expired.")
     );
 });
+
+test("exchangeAuthenticationCode rejects successful responses without a valid access token", async t => {
+    const scenarios = [
+        { name: "missing token", responseBody: {} },
+        { name: "null token", responseBody: { accessToken: null } },
+        { name: "numeric token", responseBody: { accessToken: 42 } },
+        { name: "empty token", responseBody: { accessToken: "" } },
+        { name: "blank token", responseBody: { accessToken: "   " } }
+    ];
+
+    for (const scenario of scenarios) {
+        await t.test(scenario.name, async () => {
+            const fetchRequest = async () => ({
+                ok: true,
+                status: 200,
+                json: async () => scenario.responseBody
+            });
+
+            await assert.rejects(
+                () => exchangeAuthenticationCode(
+                    "temporary-authentication-code",
+                    fetchRequest
+                ),
+                new Error(
+                    "The authentication response did not contain a valid access token."
+                )
+            );
+        });
+    }
+});
+
+test("exchangeAuthenticationCode rejects a successful non-JSON response", async () => {
+    const fetchRequest = async () => ({
+        ok: true,
+        status: 200,
+        json: async () => {
+            throw new SyntaxError("Unexpected end of JSON input.");
+        }
+    });
+
+    await assert.rejects(
+        () => exchangeAuthenticationCode(
+            "temporary-authentication-code",
+            fetchRequest
+        ),
+        new Error("The authentication response was not valid JSON.")
+    );
+});
+
+test("exchangeAuthenticationCode preserves the HTTP status for a non-JSON error response", async () => {
+    const fetchRequest = async () => ({
+        ok: false,
+        status: 502,
+        json: async () => {
+            throw new SyntaxError("Unexpected token '<'.");
+        }
+    });
+
+    await assert.rejects(
+        () => exchangeAuthenticationCode(
+            "temporary-authentication-code",
+            fetchRequest
+        ),
+        new Error("Authentication code exchange failed with status 502.")
+    );
+});

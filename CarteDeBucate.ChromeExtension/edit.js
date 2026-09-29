@@ -48,7 +48,9 @@ const editorController = initializeEditController({
             accessToken
         );
     },
+    removeAccessToken,
     login,
+    initialIsAuthenticationResolved: false,
     closeWindow: () => {
         window.close();
     },

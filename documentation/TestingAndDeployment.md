@@ -20,10 +20,10 @@ It executes, in order:
 
 * C# tests using `dotnet test`
 * JavaScript tests from `CarteDeBucate.ChromeExtension` using `npm test`
-* when Codex CLI is installed and logged in, a code review of the commits that
-  are about to be pushed
+* when Codex CLI is installed and logged in, a C# code review followed by a
+  JavaScript code review of the commits that are about to be pushed
 
-If any test fails, the push is cancelled before the code review starts.
+If any test fails, the push is cancelled before the code reviews start.
 
 ### Activating the versioned hook
 
@@ -47,7 +47,7 @@ After this configuration, Git uses the versioned hook from `.githooks` instead
 of `.git/hooks`. Changes to the hook can therefore be reviewed, committed, and
 distributed through GitHub like the rest of the project.
 
-### Codex code review
+### Codex code reviews
 
 After both test suites pass, the hook returns to the repository root and checks
 whether the `codex` command exists:
@@ -63,8 +63,8 @@ codex login status
 ```
 
 If Codex CLI is missing or the authentication check fails, the hook displays a
-message, skips the code review and final confirmation, and allows the push to
-continue after the successful tests.
+message, skips both code reviews and the final confirmation, and allows the push
+to continue after the successful tests.
 
 Before running the tests, the hook reads the ref updates that Git supplies to a
 `pre-push` hook on standard input:
@@ -87,11 +87,13 @@ review would not describe the exact history rewrite performed by a force-push.
 Together, these checks prevent the review from covering different changes than
 the ones actually sent by Git.
 
-When Codex CLI is installed and logged in, an existing remote branch is reviewed
-relative to the exact remote object ID supplied by Git:
+When Codex CLI is installed and logged in, the C# review runs first and the
+JavaScript review runs second. Both reviews use the exact same base. For an
+existing remote branch, the commands are:
 
 ```bash
-codex review --base <remote-object-id>
+codex review -c 'developer_instructions="Use the $dotnet-code-review skill. Review only C# and .NET changes."' --base <remote-object-id>
+codex review -c 'developer_instructions="Use the $javascript-code-review skill. Review only JavaScript and Chrome Extension changes."' --base <remote-object-id>
 ```
 
 For a new remote branch, Git supplies an all-zero remote object ID. The hook
@@ -101,15 +103,15 @@ when the optional local `refs/remotes/<remote>/HEAD` symbolic ref does not exist
 If the remote `HEAD` or a safe merge base cannot be determined, the push is
 cancelled instead of running an incomplete review.
 
-Remote branch deletions still run the local tests but skip the code review,
+Remote branch deletions still run the local tests but skip the code reviews,
 because they do not introduce new code.
 
-Once started, the push is cancelled if the Codex review command cannot be
-completed. When the review finishes successfully, its findings remain visible
+Once started, the push is cancelled if either Codex review command cannot be
+completed. When both reviews finish successfully, their findings remain visible
 in the terminal and the hook asks:
 
 ```text
-Codex review finished. Continue with push? [y/N]
+Codex reviews finished. Continue with push? [y/N]
 ```
 
 Only `y`, `Y`, `yes`, `YES`, or `Yes` allows the push to continue. Any other
@@ -198,8 +200,10 @@ git push
 Local pre-push tests
     ↓
 Codex installed and logged in?
-    ├── No  → Skip local review
-    └── Yes → Codex code review
+    ├── No  → Skip local reviews
+    └── Yes → Codex C# code review
+                  ↓
+             Codex JavaScript code review
                   ↓
              Manual confirmation
     ↓
@@ -299,15 +303,36 @@ Use this value for local development:
 export const API_BASE_URL = "https://localhost:7080";
 ```
 
+At the same time, `manifest.json` must contain only the matching local host
+permission:
+
+```json
+"host_permissions": [
+    "https://localhost:7080/*"
+]
+```
+
 Immediately before creating the production extension ZIP, change it to:
 
 ```js
 export const API_BASE_URL = "https://cartedebucate.onrender.com";
 ```
 
-Create the ZIP while the production value is present, then restore
-`https://localhost:7080` in the source tree for local development. There is no
-automatic environment detection in the extension.
+Replace the manifest host permission at the same time:
+
+```json
+"host_permissions": [
+    "https://cartedebucate.onrender.com/*"
+]
+```
+
+The manifest must contain exactly one API origin. Do not include localhost and
+production permissions in the same package. The JavaScript integration test
+verifies that this permission matches the origin configured by `API_BASE_URL`.
+
+Create the ZIP while both production values are present, then restore the local
+API URL and local host permission in the source tree for development. There is
+no automatic environment detection in the extension.
 
 Changing the source files does not update an existing archive. In particular,
 `CarteDeBucate.ChromeExtension/Recipe Clipper 1.0.0.zip` must be recreated before
@@ -330,11 +355,12 @@ When `git push` is executed:
 
 1. Local C# tests run.
 2. Local JavaScript tests run.
-3. If Codex is installed and logged in, the local code review runs.
-4. After a successful review, the user confirms whether the push should continue.
-5. If the local checks allow the push, the code is sent to GitHub.
-6. GitHub Actions runs the tests again.
-7. If GitHub Actions passes, Render can deploy the new version.
+3. If Codex is installed and logged in, the local C# code review runs.
+4. The local JavaScript code review runs on the same base.
+5. After both reviews succeed, the user confirms whether the push should continue.
+6. If the local checks allow the push, the code is sent to GitHub.
+7. GitHub Actions runs the tests again.
+8. If GitHub Actions passes, Render can deploy the new version.
 
 ---
 
@@ -394,8 +420,8 @@ Contains general project information and the GitHub Actions test badge.
 
 ## 7. Important distinction
 
-There are two independent test stages, with an optional local code review before
-the push:
+There are two independent test stages, with two optional local code reviews
+before the push:
 
 **Local testing**
 
@@ -404,8 +430,8 @@ pre-push hook
 ```
 
 Runs the local tests on the development computer. When Codex CLI is installed
-and logged in, it also runs the code review and requires manual confirmation
-before the push is allowed.
+and logged in, it also runs the C# review followed by the JavaScript review and
+requires manual confirmation before the push is allowed.
 
 **Continuous Integration**
 

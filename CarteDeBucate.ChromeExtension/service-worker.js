@@ -18,6 +18,29 @@ import {
     API_ENDPOINTS
 } from "./config/apiConfig.js";
 
+import {
+    createExtractionRequestStore
+} from "./sidepanel/extractionRequestStore.js";
+
+import {
+    initializeSidePanelLauncher
+} from "./sidepanel/sidePanelLauncher.js";
+
+const extractionRequestStore = createExtractionRequestStore({
+    storageSession: chrome.storage.session
+});
+
+initializeSidePanelLauncher({
+    addActionClickListener: listener =>
+        chrome.action.onClicked.addListener(listener),
+    openSidePanel: options =>
+        chrome.sidePanel.open(options),
+    publishExtractionRequest: request =>
+        extractionRequestStore.publishExtractionRequest(request),
+    createRequestId: () => crypto.randomUUID(),
+    reportError: error => console.error(error)
+});
+
 const returnUrl =
     "/api/authentication/extension-complete";
 

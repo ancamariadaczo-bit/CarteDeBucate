@@ -9,8 +9,10 @@ export function initializeEditController({
     payloadReadError = null,
     saveRecipe,
     saveRecipeToApi,
+    removeAccessToken = async () => {},
     login,
     initialIsAuthenticated = false,
+    initialIsAuthenticationResolved = true,
     navigateToPrint,
     closeWindow,
     reportError = () => {}
@@ -35,6 +37,8 @@ export function initializeEditController({
 
     let originalRecipe = null;
     let isAuthenticated = initialIsAuthenticated;
+    let isAuthenticationResolved = initialIsAuthenticationResolved;
+    let isAuthenticating = false;
     let isSaving = false;
     let isSaved = false;
 
@@ -87,6 +91,23 @@ export function initializeEditController({
             isSaved = true;
             showSaveStatus("Recipe saved successfully.", "success");
         } catch (error) {
+            if (isAuthenticationRequiredError(error)) {
+                setAuthenticationState(false);
+                showSaveStatus(
+                    "Your session expired. Sign in again.",
+                    "error"
+                );
+
+                try {
+                    await removeAccessToken();
+                } catch (storageError) {
+                    reportError(storageError);
+                }
+
+                reportError(error);
+                return;
+            }
+
             const reason = error instanceof Error
                 ? error.message
                 : "Unknown error.";
@@ -103,7 +124,13 @@ export function initializeEditController({
     });
 
     loginButton.addEventListener("click", async () => {
+        if (!isAuthenticationResolved || isAuthenticating) {
+            return;
+        }
+
+        isAuthenticating = true;
         authMessage.textContent = signInPrompt;
+        updateUi();
 
         try {
             await login();
@@ -112,8 +139,10 @@ export function initializeEditController({
             isAuthenticated = false;
             authMessage.textContent =
                 "Sign in was not completed. Please try again.";
-            updateUi();
             reportError(error);
+        } finally {
+            isAuthenticating = false;
+            updateUi();
         }
     });
 
@@ -295,16 +324,24 @@ export function initializeEditController({
 
     function setAuthenticationState(value) {
         isAuthenticated = Boolean(value);
+        isAuthenticationResolved = true;
         updateUi();
     }
 
     function updateUi() {
         const hasEditableRecipe = originalRecipe !== null;
 
-        authSection.hidden = !hasEditableRecipe || isAuthenticated;
+        authSection.hidden = !hasEditableRecipe
+            || !isAuthenticationResolved
+            || isAuthenticated;
+
+        loginButton.disabled = isAuthenticating;
 
         if (hasEditableRecipe) {
-            saveButton.disabled = !isAuthenticated || isSaving || isSaved;
+            saveButton.disabled = !isAuthenticationResolved
+                || !isAuthenticated
+                || isSaving
+                || isSaved;
         }
     }
 
@@ -347,4 +384,8 @@ export function initializeEditController({
         errorMessage.hidden = false;
         errorMessage.focus();
     }
+}
+
+function isAuthenticationRequiredError(error) {
+    return error instanceof Error && error.status === 401;
 }

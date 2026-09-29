@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
     getAccessToken,
+    getAuthenticationStateFromStorageChange,
     removeAccessToken,
     saveAccessToken
 } from "../auth/authStorage.js";
@@ -115,5 +116,74 @@ test("removeAccessToken removes the accessToken key", async () => {
         );
     } finally {
         storage.restore();
+    }
+});
+
+test("storage changes expose authentication updates from other extension contexts", async t => {
+    const scenarios = [
+        {
+            name: "token added",
+            changes: {
+                accessToken: {
+                    oldValue: undefined,
+                    newValue: "new-access-token"
+                }
+            },
+            areaName: "local",
+            expected: true
+        },
+        {
+            name: "token removed",
+            changes: {
+                accessToken: {
+                    oldValue: "old-access-token",
+                    newValue: undefined
+                }
+            },
+            areaName: "local",
+            expected: false
+        },
+        {
+            name: "blank token",
+            changes: {
+                accessToken: {
+                    newValue: "   "
+                }
+            },
+            areaName: "local",
+            expected: false
+        },
+        {
+            name: "unrelated local change",
+            changes: {
+                preference: {
+                    newValue: true
+                }
+            },
+            areaName: "local",
+            expected: null
+        },
+        {
+            name: "session storage change",
+            changes: {
+                accessToken: {
+                    newValue: "new-access-token"
+                }
+            },
+            areaName: "session",
+            expected: null
+        }
+    ];
+
+    for (const scenario of scenarios) {
+        await t.test(scenario.name, () => {
+            assert.equal(
+                getAuthenticationStateFromStorageChange(
+                    scenario.changes,
+                    scenario.areaName
+                ),
+                scenario.expected
+            );
+        });
     }
 });

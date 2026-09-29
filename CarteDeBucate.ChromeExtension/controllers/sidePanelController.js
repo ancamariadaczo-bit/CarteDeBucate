@@ -1,19 +1,21 @@
-export function initializePopupController({
+export function initializeSidePanelController({
     document,
     extractRecipe,
     saveRecipe,
     saveRecipeToApi,
+    removeAccessToken = async () => { },
     login,
     openWindow,
     initialIsAuthenticated = false,
+    initialIsAuthenticationResolved = true,
     reportError = () => { }
 }) {
-    const extractButton = document.getElementById("extractButton");
     const editButton = document.getElementById("editButton");
     const printButton = document.getElementById("printButton");
     const resultSeparator = document.getElementById("resultSeparator");
     const result = document.getElementById("result");
     const saveButton = document.getElementById("saveButton");
+    const extractionStatus = document.getElementById("extractionStatus");
     const saveStatus = document.getElementById("saveStatus");
     const authSection = document.getElementById("authSection");
     const authMessage = document.getElementById("authMessage");
@@ -21,36 +23,77 @@ export function initializePopupController({
     const signInPrompt = authMessage.textContent.trim();
 
     let currentRecipe = null;
+    let isExtracting = false;
+    let isSaving = false;
+    let isSaved = false;
     let isAuthenticated = initialIsAuthenticated;
+    let isAuthenticationResolved = initialIsAuthenticationResolved;
+    let isAuthenticating = false;
+    const processedRequestIds = new Set();
 
-    extractButton.addEventListener("click", async () => {
-        let extractionResult;
-
-        try {
-            extractionResult = await extractRecipe();
-        } catch (error) {
-            reportError(error);
-            showExtractionFailure("The recipe could not be extracted from this page.");
+    async function handleExtractionRequest({ requestId, tabId } = {}) {
+        if (
+            typeof requestId !== "string"
+            || requestId.trim().length === 0
+            || processedRequestIds.has(requestId)
+        ) {
             return;
         }
 
-        if (!extractionResult?.success) {
-            showExtractionFailure(
-                extractionResult?.error
-                ?? "The recipe could not be extracted from this page."
+        processedRequestIds.add(requestId);
+
+        if (isSaving) {
+            showExtractionStatus(
+                "Wait for the current save to finish, then click the extension icon again.",
+                "error"
             );
             return;
         }
 
-        currentRecipe = extractionResult.recipe;
-        displayRecipe(currentRecipe);
+        if (isExtracting) {
+            showExtractionStatus(
+                "Recipe extraction is already in progress. Please wait, then click the extension icon again.",
+                "error"
+            );
+            return;
+        }
 
+        isExtracting = true;
+        showExtractionStatus("Extracting recipe...");
         updateUi();
-        showSaveStatus("");
-    });
+
+        try {
+            const extractionResult = await extractRecipe(tabId);
+
+            if (!extractionResult?.success) {
+                const reason = extractionResult?.error
+                    ?? "No recipe was found on this page.";
+
+                showExtractionFailure(
+                    `${reason} Click the extension icon to try again.`
+                );
+                return;
+            }
+
+            currentRecipe = extractionResult.recipe;
+            isSaved = false;
+            displayRecipe(currentRecipe);
+
+            showExtractionStatus("");
+            showSaveStatus("");
+        } catch (error) {
+            reportError(error);
+            showExtractionFailure(
+                "This page cannot be accessed. Open a regular web page and click the extension icon."
+            );
+        } finally {
+            isExtracting = false;
+            updateUi();
+        }
+    }
 
     editButton.addEventListener("click", async () => {
-        if (!currentRecipe) {
+        if (!currentRecipe || isExtracting || isSaving) {
             return;
         }
 
@@ -65,7 +108,7 @@ export function initializePopupController({
     });
 
     printButton.addEventListener("click", async () => {
-        if (!currentRecipe) {
+        if (!currentRecipe || isExtracting || isSaving) {
             return;
         }
 
@@ -80,19 +123,43 @@ export function initializePopupController({
     });
 
     saveButton.addEventListener("click", async () => {
-        if (!currentRecipe) {
+        if (
+            !currentRecipe
+            || !isAuthenticated
+            || isExtracting
+            || isSaving
+            || isSaved
+        ) {
             return;
         }
 
-        saveButton.disabled = true;
+        isSaving = true;
+        updateUi();
         showSaveStatus("Saving...");
 
         try {
             await saveRecipeToApi(currentRecipe);
+            isSaved = true;
             showSaveStatus("Recipe saved successfully.", "success");
-            //const response = await saveRecipeToApi(currentRecipe);
-            //`Recipe saved successfully. ID: ${response.recipeId}`;
         } catch (error) {
+            if (isAuthenticationRequiredError(error)) {
+                setAuthenticationState(false);
+                showSaveStatus(
+                    "Your session expired. Sign in again.",
+                    "error"
+                );
+
+                try {
+                    await removeAccessToken();
+                } catch (storageError) {
+                    reportError(storageError);
+                }
+
+                reportError(error);
+                isSaved = false;
+                return;
+            }
+
             const reason = error instanceof Error
                 ? error.message
                 : "Unknown error.";
@@ -103,43 +170,56 @@ export function initializePopupController({
             );
 
             reportError(error);
-            saveButton.disabled = false;
+            isSaved = false;
+        } finally {
+            isSaving = false;
+            updateUi();
         }
     });
 
     loginButton.addEventListener("click", async () => {
+        if (!isAuthenticationResolved || isAuthenticating) {
+            return;
+        }
+
+        isAuthenticating = true;
         authMessage.textContent = signInPrompt;
+        updateUi();
 
         try {
             await login();
-
-            isAuthenticated = true;
-            updateUi();
+            setAuthenticationState(true);
         } catch (error) {
             authMessage.textContent =
                 "Sign in was not completed. Please try again.";
 
             reportError(error);
+        } finally {
+            isAuthenticating = false;
+            updateUi();
         }
     });
 
     // Prepares the UI regarding to the state and permissions.
-    // currentRecipe == null → Extract visible && Edit/Print/Save hidden
-    // currentRecipe != null → Extract hidden && Edit/Print/Save visible
-    // hasRecipe && isAuthenticated == false → Save disabled && Login visible
-    // !hasRecipe || isAuthenticated == true → Login hidden
+    // currentRecipe == null → Edit/Print/Save hidden
+    // currentRecipe != null → Edit/Print/Save visible
+    // hasRecipe && authentication resolved && unauthenticated → Save disabled && Login visible
+    // !hasRecipe || authentication pending/authenticated → Login hidden
     function updateUi() {
         const hasRecipe = currentRecipe !== null;
-
-        extractButton.hidden = hasRecipe;
 
         editButton.hidden = !hasRecipe;
         printButton.hidden = !hasRecipe;
         saveButton.hidden = !hasRecipe;
 
-        saveButton.disabled = !isAuthenticated;
+        editButton.disabled = isExtracting || isSaving;
+        printButton.disabled = isExtracting || isSaving;
+        saveButton.disabled = !isAuthenticated || isSaving || isSaved || isExtracting;
 
-        authSection.hidden = !hasRecipe || isAuthenticated;
+        authSection.hidden = !hasRecipe
+            || !isAuthenticationResolved
+            || isAuthenticated;
+        loginButton.disabled = isAuthenticating;
 
         resultSeparator.hidden = !hasRecipe;
     }
@@ -148,6 +228,12 @@ export function initializePopupController({
         saveStatus.textContent = message;
         saveStatus.classList.toggle("success", state === "success");
         saveStatus.classList.toggle("error", state === "error");
+    }
+
+    function showExtractionStatus(message, state = null) {
+        extractionStatus.textContent = message;
+        extractionStatus.classList.toggle("success", state === "success");
+        extractionStatus.classList.toggle("error", state === "error");
     }
 
     function displayRecipe(recipe) {
@@ -229,41 +315,56 @@ export function initializePopupController({
     }
 
     function showExtractionFailure(message) {
-        currentRecipe = null;
-        result.textContent = message;
+        showExtractionStatus(message, "error");
+    }
 
-        showSaveStatus("");
+    function setAuthenticationState(value) {
+        isAuthenticated = Boolean(value);
+        isAuthenticationResolved = true;
         updateUi();
     }
 
     updateUi();
+
+    return {
+        handleExtractionRequest,
+        setAuthenticationState
+    };
 }
 
-export async function extractRecipeFromActiveTab({
+function isAuthenticationRequiredError(error) {
+    return error instanceof Error && error.status === 401;
+}
+
+export async function extractRecipeFromTab({
     chrome,
     extractorFiles,
+    tabId,
     reportExtraction = extractionResult => console.log(extractionResult)
 }) {
-    const [tab] = await chrome.tabs.query({
-        active: true,
-        currentWindow: true
-    });
+    if (!Number.isInteger(tabId) || tabId < 0) {
+        throw new TypeError("tabId must be a non-negative integer.");
+    }
 
     await chrome.scripting.executeScript({
         target: {
-            tabId: tab.id
+            tabId
         },
         files: extractorFiles
     });
 
     const executionResults = await chrome.scripting.executeScript({
         target: {
-            tabId: tab.id
+            tabId
         },
         func: () => globalThis.RecipeClipper.extractRecipe()
     });
 
-    const extractionResult = executionResults[0].result;
+    const extractionResult = executionResults?.[0]?.result;
+
+    if (extractionResult === undefined) {
+        throw new Error("The extraction script did not return a result.");
+    }
 
     reportExtraction(extractionResult);
 

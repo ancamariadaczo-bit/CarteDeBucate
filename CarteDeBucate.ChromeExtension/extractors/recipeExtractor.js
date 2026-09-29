@@ -36,6 +36,23 @@
     function isValidRecipe(recipe) {
 
         return recipe !== null &&
-            typeof recipe === "object";
+            typeof recipe === "object" &&
+            !Array.isArray(recipe) &&
+            isNonEmptyText(recipe.name) &&
+            isNonEmptyTextArray(recipe.ingredients) &&
+            isNonEmptyTextArray(recipe.steps);
+    }
+
+    function isNonEmptyText(value) {
+
+        return typeof value === "string" &&
+            value.trim().length > 0;
+    }
+
+    function isNonEmptyTextArray(values) {
+
+        return Array.isArray(values) &&
+            values.length > 0 &&
+            values.every(isNonEmptyText);
     }
 })();

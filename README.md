@@ -88,14 +88,15 @@ npm test
 ```
 
 After the tests pass, the hook checks whether Codex CLI is installed and logged
-in. When it is available, the hook runs a code review for the commits that are
-about to be pushed. The hook reads the exact local and remote refs supplied by
-Git and uses the remote object ID as the review base for an existing branch.
+in. When it is available, the hook runs a C# code review followed by a
+JavaScript code review for the commits that are about to be pushed. Both
+reviews use the same base selected from the exact local and remote refs supplied
+by Git.
 
-If Codex CLI is missing or logged out, the review is skipped and the push
-continues after the tests. If a review starts but cannot be completed, the push
-is cancelled. After a successful review, the hook displays the findings and
-asks for explicit confirmation before continuing with the push.
+If Codex CLI is missing or logged out, the reviews are skipped and the push
+continues after the tests. If either review starts but cannot be completed, the
+push is cancelled. After both reviews succeed, the hook displays the findings
+and asks for explicit confirmation before continuing with the push.
 
 To prevent a review from covering different code than the push, the hook accepts
 one clean, checked-out branch per push. Pushes containing multiple refs, a
@@ -129,9 +130,9 @@ git push
 ```
 
 The push automatically triggers the local tests. When Codex CLI is available and
-logged in, it also runs the code review and asks for confirmation. A failed test,
-an incomplete review that was started, or a rejected confirmation cancels the
-push before the code is sent to GitHub.
+logged in, it also runs the C# and JavaScript code reviews and asks for
+confirmation. A failed test, an incomplete review that was started, or a
+rejected confirmation cancels the push before the code is sent to GitHub.
 
 After the code reaches GitHub:
 

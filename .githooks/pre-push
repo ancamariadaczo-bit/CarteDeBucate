@@ -92,27 +92,24 @@ verify_push_source || exit 1
 
 if ! command -v codex >/dev/null 2>&1; then
     echo ""
-    echo "Codex CLI is not installed. Skipping code review."
+    echo "Codex CLI is not installed. Skipping code reviews."
     exit 0
 fi
 
 if ! codex login status >/dev/null 2>&1; then
     echo ""
-    echo "Codex is not logged in. Skipping code review."
+    echo "Codex is not logged in. Skipping code reviews."
     exit 0
 fi
 
 if [ "$PUSH_LOCAL_OID" = "$ZERO_OID" ]; then
     echo ""
-    echo "Deleting $PUSH_REMOTE_REF does not require a code review."
+    echo "Deleting $PUSH_REMOTE_REF does not require code reviews."
     exit 0
 fi
 
-echo ""
-echo "Running Codex code review..."
-
 if [ "$PUSH_REMOTE_OID" != "$ZERO_OID" ]; then
-    codex review --base "$PUSH_REMOTE_OID"
+    REVIEW_BASE=$PUSH_REMOTE_OID
 else
     REMOTE_DEFAULT_OID=$(git ls-remote "$2" HEAD 2>/dev/null | awk 'NR == 1 { print $1 }')
 
@@ -129,12 +126,31 @@ else
         echo "Push cancelled."
         exit 1
     fi
-
-    codex review --base "$REVIEW_BASE"
 fi
 
+echo ""
+echo "Running Codex C# code review..."
+
+codex review \
+    -c 'developer_instructions="Use the $dotnet-code-review skill. Review only C# and .NET changes."' \
+    --base "$REVIEW_BASE"
+
 if [ $? -ne 0 ]; then
-    echo "Codex review could not be completed. Push cancelled."
+    echo "Codex C# review could not be completed. Push cancelled."
+    exit 1
+fi
+
+verify_push_source || exit 1
+
+echo ""
+echo "Running Codex JavaScript code review..."
+
+codex review \
+    -c 'developer_instructions="Use the $javascript-code-review skill. Review only JavaScript and Chrome Extension changes."' \
+    --base "$REVIEW_BASE"
+
+if [ $? -ne 0 ]; then
+    echo "Codex JavaScript review could not be completed. Push cancelled."
     exit 1
 fi
 
@@ -142,7 +158,7 @@ verify_push_source || exit 1
 
 
 echo ""
-printf "Codex review finished. Continue with push? [y/N] "
+printf "Codex reviews finished. Continue with push? [y/N] "
 read answer </dev/tty
 
 case "$answer" in

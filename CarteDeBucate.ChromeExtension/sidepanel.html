@@ -5,35 +5,24 @@
     <meta charset="UTF-8">
     <title>Recipe Clipper – Print &amp; Save Recipes</title>
 
-    <style>
-        html {
-            width: 468px;
-            min-height: 150px;
-        }
-    </style>
-
-    <link rel="stylesheet" href="popup.css">
+    <link rel="stylesheet" href="sidepanel.css">
 </head>
 
 <body>
 
-    <header class="popup-header">
-        <img class="popup-icon" src="icons/icon48.png" alt="">
+    <header class="side-panel-header">
+        <img class="side-panel-icon" src="icons/icon48.png" alt="">
 
         <div>
             <h2>Recipe Clipper – Print &amp; Save Recipes</h2>
 
-            <p class="popup-description">
+            <p class="side-panel-description">
                 Extract the recipe from the current page.
             </p>
         </div>
     </header>
 
     <div class="controls">
-        <button id="extractButton">
-            Extract Recipe
-        </button>
-
         <button id="editButton" hidden>
             Edit Recipe
         </button>
@@ -46,6 +35,10 @@
             Save to Cookbook
         </button>
     </div>
+
+    <p id="extractionStatus" class="extraction-status" role="status" aria-live="polite">
+        Click the extension icon to extract a recipe from the current page.
+    </p>
 
     <div id="authSection" class="auth-section">
         <span id="authMessage">
@@ -63,7 +56,7 @@
 
     <div id="result"></div>
 
-    <script src="popup.js"></script>
+    <script src="sidepanel.js"></script>
 
 </body>
 

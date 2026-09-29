@@ -22,8 +22,10 @@ async function setupEditor({
     payloadReadError = null,
     saveRecipe,
     saveRecipeToApi,
+    removeAccessToken,
     login,
     initialIsAuthenticated = false,
+    initialIsAuthenticationResolved = true,
     navigateToPrint,
     closeWindow,
     reportError
@@ -49,11 +51,13 @@ async function setupEditor({
             calls.cookbookRequests.push(recipe);
             return saveRecipeToApiEffect(recipe);
         },
+        removeAccessToken: removeAccessToken ?? (async () => {}),
         login: async () => {
             calls.loginRequests.push(true);
             return loginEffect();
         },
         initialIsAuthenticated,
+        initialIsAuthenticationResolved,
         navigateToPrint: navigateToPrint ?? (() => browser.effects.navigate("print.html")),
         closeWindow: closeWindow ?? browser.effects.closeWindow,
         reportError: reportError ?? (error => calls.errors.push(error))
@@ -139,6 +143,62 @@ test("editor auth state can be updated after initialization", async () => {
 
         assert.equal(context.document.getElementById("saveButton").disabled, false);
         assert.equal(context.document.getElementById("authSection").hidden, true);
+    } finally {
+        context.cleanup();
+    }
+});
+
+test("initial authentication resolution blocks login without blocking editing or printing", async () => {
+    const context = await setupEditor({
+        initialIsAuthenticationResolved: false
+    });
+
+    try {
+        const loginButton = context.document.getElementById("loginButton");
+
+        loginButton.click();
+        await flushAsyncWork();
+
+        assert.equal(context.calls.loginRequests.length, 0);
+        assert.equal(context.document.getElementById("authSection").hidden, true);
+        assert.equal(context.document.getElementById("saveButton").disabled, true);
+        assert.equal(context.document.getElementById("printButton").disabled, false);
+        assert.equal(context.document.getElementById("recipeName").disabled, false);
+
+        context.controller.setAuthenticationState(false);
+
+        assert.equal(context.document.getElementById("authSection").hidden, false);
+        assert.equal(loginButton.disabled, false);
+    } finally {
+        context.cleanup();
+    }
+});
+
+test("ignores a second login click while authentication is in progress", async () => {
+    let completeLogin;
+    const context = await setupEditor({
+        login: () => new Promise(resolve => {
+            completeLogin = resolve;
+        })
+    });
+
+    try {
+        const loginButton = context.document.getElementById("loginButton");
+
+        loginButton.click();
+        loginButton.dispatchEvent(new context.window.Event("click", {
+            bubbles: true,
+            cancelable: true
+        }));
+
+        assert.equal(context.calls.loginRequests.length, 1);
+        assert.equal(loginButton.disabled, true);
+
+        completeLogin();
+        await flushAsyncWork();
+
+        assert.equal(context.document.getElementById("authSection").hidden, true);
+        assert.equal(context.document.getElementById("saveButton").disabled, false);
     } finally {
         context.cleanup();
     }
@@ -502,6 +562,38 @@ test("Save to Cookbook re-enables after an API error and displays its reason", a
     }
 });
 
+test("an expired editor session removes the token and reveals login again", async () => {
+    const authenticationError = Object.assign(
+        new Error("Authentication has expired. Sign in again."),
+        { status: 401 }
+    );
+    let removeAccessTokenCount = 0;
+    const context = await setupEditor({
+        initialIsAuthenticated: true,
+        saveRecipeToApi: async () => {
+            throw authenticationError;
+        },
+        removeAccessToken: async () => {
+            removeAccessTokenCount += 1;
+        }
+    });
+
+    try {
+        await clickAndFlush(context.document.getElementById("saveButton"));
+
+        assert.equal(removeAccessTokenCount, 1);
+        assert.equal(context.document.getElementById("authSection").hidden, false);
+        assert.equal(context.document.getElementById("saveButton").disabled, true);
+        assert.equal(
+            context.document.getElementById("saveStatus").textContent,
+            "Your session expired. Sign in again."
+        );
+        assert.deepEqual(context.calls.errors, [authenticationError]);
+    } finally {
+        context.cleanup();
+    }
+});
+
 test("a new authenticated editor instance starts with Save enabled", async () => {
     const firstContext = await setupEditor({ initialIsAuthenticated: true });
 
@@ -583,6 +675,7 @@ test("the real edit entrypoint composes authentication, Cookbook saving, print, 
     assert.match(script, /from "\.\/auth\/authenticationState\.js"/);
     assert.match(script, /chrome\.runtime\.sendMessage\(\{\s*type: "LOGIN"/);
     assert.match(script, /resolveAuthenticationState\(\{/);
+    assert.match(script, /initialIsAuthenticationResolved:\s*false/);
     assert.match(script, /getAccessToken\(\)/);
     assert.doesNotMatch(script, /\bfetch\s*\(/);
     assert.match(script, /localStorage\.getItem\("recipeToPrint"\)/);
