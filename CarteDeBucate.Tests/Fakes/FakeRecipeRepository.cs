@@ -15,6 +15,8 @@ public class FakeRecipeRepository : IRecipeRepository
     public bool SearchRecipesPageWasCalled { get; private set; }
     public bool GetRecipeByIdWasCalled { get; private set; }
     public bool GetRecipeByIdAndUserIdWasCalled { get; private set; }
+    public bool RecipeExistsBySourceUrlWasCalled { get; private set; }
+    public bool RecipeExistsBySourceUrlForUserWasCalled { get; private set; }
 
     public Recipe? AddedRecipe { get; private set; }
     public IReadOnlyList<Recipe>? AddedRecipes { get; private set; }
@@ -33,6 +35,7 @@ public class FakeRecipeRepository : IRecipeRepository
     public string? SearchTextPassedToSearchRecipes { get; private set; }
     public string? SearchTextPassedToSearchRecipesPage { get; private set; }
     public string? SourceUrlPassedToRecipeExists { get; private set; }
+    public int? UserIdPassedToRecipeExistsForUser { get; private set; }
 
     public bool SourceUrlExists { get; set; }
     public Exception? ExceptionToThrowOnAddRecipes { get; set; }
@@ -197,6 +200,7 @@ public class FakeRecipeRepository : IRecipeRepository
 
     public bool RecipeExistsBySourceUrl(string sourceUrl)
     {
+        RecipeExistsBySourceUrlWasCalled = true;
         SourceUrlPassedToRecipeExists = sourceUrl;
 
         if (SourceUrlExists)
@@ -209,7 +213,9 @@ public class FakeRecipeRepository : IRecipeRepository
 
     public bool RecipeExistsBySourceUrlForUser(string sourceUrl, int userId)
     {
+        RecipeExistsBySourceUrlForUserWasCalled = true;
         SourceUrlPassedToRecipeExists = sourceUrl;
+        UserIdPassedToRecipeExistsForUser = userId;
 
         if (SourceUrlExists)
         {

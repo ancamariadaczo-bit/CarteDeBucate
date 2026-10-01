@@ -68,6 +68,58 @@ public class AuthenticationPipelineTests
     }
 
     [Fact]
+    public async Task RecipeExists_WithoutToken_ShouldReturnUnauthorized()
+    {
+        using HttpClient client = CreateClient();
+
+        HttpResponseMessage response = await client.GetAsync(
+            CreateRecipeExistsRequestUri());
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task RecipeExists_WithInvalidToken_ShouldReturnUnauthorized()
+    {
+        using HttpClient client = CreateClient();
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", "not-a-valid-jwt");
+
+        HttpResponseMessage response = await client.GetAsync(
+            CreateRecipeExistsRequestUri());
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task RecipeExists_WithValidToken_ShouldReturnBooleanAndReachCurrentUserContext()
+    {
+        _factory.ExistsProbe.Reset();
+        _factory.ExistsProbe.ResultToReturn = true;
+        using HttpClient client = CreateClient();
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue(
+                "Bearer",
+                _factory.CreateToken("42", "chef"));
+
+        HttpResponseMessage response = await client.GetAsync(
+            CreateRecipeExistsRequestUri());
+        RecipeExistsResponse? result =
+            await response.Content.ReadFromJsonAsync<RecipeExistsResponse>();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.NotNull(result);
+        Assert.True(result.Exists);
+        Assert.Equal(1, _factory.ExistsProbe.CallCount);
+        Assert.Equal(
+            "https://recipes.example.test/pipeline-soup",
+            _factory.ExistsProbe.SourceUrl);
+        Assert.True(_factory.ExistsProbe.IsAuthenticated);
+        Assert.Equal(42, _factory.ExistsProbe.UserId);
+        Assert.Equal("chef", _factory.ExistsProbe.Username);
+    }
+
+    [Fact]
     public async Task GetCurrentUser_WithoutToken_ShouldReturnUnauthorized()
     {
         using HttpClient client = CreateClient();
@@ -149,6 +201,14 @@ public class AuthenticationPipelineTests
         };
     }
 
+    private static string CreateRecipeExistsRequestUri()
+    {
+        string sourceUrl = Uri.EscapeDataString(
+            "https://recipes.example.test/pipeline-soup");
+
+        return $"/api/recipes/exists?sourceUrl={sourceUrl}";
+    }
+
     private static HttpRequestMessage CreateCorsPreflightRequest(string origin)
     {
         HttpRequestMessage request = new(HttpMethod.Options, "/api/recipes");
@@ -163,6 +223,11 @@ public class AuthenticationPipelineTests
         public string? UserId { get; init; }
 
         public string? Username { get; init; }
+    }
+
+    private sealed class RecipeExistsResponse
+    {
+        public bool Exists { get; init; }
     }
 }
 
@@ -189,6 +254,7 @@ public sealed class AuthenticationApiWebApplicationFactory
     }
 
     public RecipeSaveProbe SaveProbe { get; } = new();
+    public RecipeExistsProbe ExistsProbe { get; } = new();
 
     public string CreateToken(string userId, string username)
     {
@@ -221,10 +287,12 @@ public sealed class AuthenticationApiWebApplicationFactory
         {
             services.RemoveAll<IRecipeLibraryService>();
             services.AddSingleton(SaveProbe);
+            services.AddSingleton(ExistsProbe);
             services.AddScoped<IRecipeLibraryService>(serviceProvider =>
                 new PipelineRecipeLibraryService(
                     serviceProvider.GetRequiredService<ICurrentUserContext>(),
-                    serviceProvider.GetRequiredService<RecipeSaveProbe>()));
+                    serviceProvider.GetRequiredService<RecipeSaveProbe>(),
+                    serviceProvider.GetRequiredService<RecipeExistsProbe>()));
         });
     }
 
@@ -278,17 +346,58 @@ public sealed class RecipeSaveProbe
     }
 }
 
+public sealed class RecipeExistsProbe
+{
+    public bool ResultToReturn { get; set; }
+
+    public int CallCount { get; private set; }
+
+    public string? SourceUrl { get; private set; }
+
+    public bool IsAuthenticated { get; private set; }
+
+    public int? UserId { get; private set; }
+
+    public string? Username { get; private set; }
+
+    public bool Capture(
+        string sourceUrl,
+        ICurrentUserContext currentUserContext)
+    {
+        CallCount++;
+        SourceUrl = sourceUrl;
+        IsAuthenticated = currentUserContext.IsAuthenticated;
+        UserId = currentUserContext.UserId;
+        Username = currentUserContext.Username;
+
+        return ResultToReturn;
+    }
+
+    public void Reset()
+    {
+        ResultToReturn = false;
+        CallCount = 0;
+        SourceUrl = null;
+        IsAuthenticated = false;
+        UserId = null;
+        Username = null;
+    }
+}
+
 public sealed class PipelineRecipeLibraryService : IRecipeLibraryService
 {
     private readonly ICurrentUserContext _currentUserContext;
     private readonly RecipeSaveProbe _saveProbe;
+    private readonly RecipeExistsProbe _existsProbe;
 
     public PipelineRecipeLibraryService(
         ICurrentUserContext currentUserContext,
-        RecipeSaveProbe saveProbe)
+        RecipeSaveProbe saveProbe,
+        RecipeExistsProbe existsProbe)
     {
         _currentUserContext = currentUserContext;
         _saveProbe = saveProbe;
+        _existsProbe = existsProbe;
     }
 
     public RecipeSaveResult SaveRecipe(Recipe recipe)
@@ -334,6 +443,11 @@ public sealed class PipelineRecipeLibraryService : IRecipeLibraryService
         int pageSize)
     {
         throw new NotSupportedException();
+    }
+
+    public bool RecipeExistsBySourceUrl(string sourceUrl)
+    {
+        return _existsProbe.Capture(sourceUrl, _currentUserContext);
     }
 
     public RecipeSaveResult UpdateRecipe(Recipe recipe)

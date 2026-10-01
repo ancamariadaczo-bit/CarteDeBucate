@@ -95,6 +95,25 @@ public class RecipeLibraryService : IRecipeLibraryService
             pageSize);
     }
 
+    public bool RecipeExistsBySourceUrl(string sourceUrl)
+    {
+        if (string.IsNullOrWhiteSpace(sourceUrl))
+        {
+            return false;
+        }
+
+        string normalizedSourceUrl = sourceUrl.Trim();
+
+        if (CurrentUserId.HasValue)
+        {
+            return _recipeRepository.RecipeExistsBySourceUrlForUser(
+                normalizedSourceUrl,
+                CurrentUserId.Value);
+        }
+
+        return _recipeRepository.RecipeExistsBySourceUrl(normalizedSourceUrl);
+    }
+
     public RecipeSaveResult SaveRecipe(Recipe recipe)
     {
         NormalizeSourceUrl(recipe);
@@ -188,13 +207,4 @@ public class RecipeLibraryService : IRecipeLibraryService
         recipe.SourceUrl = recipe.SourceUrl?.Trim() ?? string.Empty;
     }
 
-    private bool RecipeExistsBySourceUrl(string sourceUrl)
-    {
-        if (CurrentUserId.HasValue)
-        {
-            return _recipeRepository.RecipeExistsBySourceUrlForUser(sourceUrl, CurrentUserId.Value);
-        }
-
-        return _recipeRepository.RecipeExistsBySourceUrl(sourceUrl);
-    }
 }

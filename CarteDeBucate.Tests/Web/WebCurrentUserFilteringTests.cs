@@ -114,6 +114,31 @@ public class WebCurrentUserFilteringTests
     }
 
     [Fact]
+    public void RecipeExistsBySourceUrl_WithAuthenticatedWebUser_ShouldCheckOnlyCurrentUserRecipes()
+    {
+        FakeRecipeRepository repository = new FakeRecipeRepository
+        {
+            Recipes = new List<Recipe>
+            {
+                CreateRecipe(1, userId: 7, "https://example.com/current-user"),
+                CreateRecipe(2, userId: 9, "https://example.com/other-user")
+            }
+        };
+        RecipeLibraryService service = CreateRecipeLibraryService(repository, userId: 7);
+
+        bool currentUserRecipeExists = service.RecipeExistsBySourceUrl(
+            "https://example.com/current-user");
+        bool otherUserRecipeExists = service.RecipeExistsBySourceUrl(
+            "https://example.com/other-user");
+
+        Assert.True(currentUserRecipeExists);
+        Assert.False(otherUserRecipeExists);
+        Assert.False(repository.RecipeExistsBySourceUrlWasCalled);
+        Assert.True(repository.RecipeExistsBySourceUrlForUserWasCalled);
+        Assert.Equal(7, repository.UserIdPassedToRecipeExistsForUser);
+    }
+
+    [Fact]
     public void ExportToJsonContent_WithAuthenticatedWebUser_ShouldExportOnlyCurrentUserRecipes()
     {
         FakeRecipeRepository repository = new FakeRecipeRepository

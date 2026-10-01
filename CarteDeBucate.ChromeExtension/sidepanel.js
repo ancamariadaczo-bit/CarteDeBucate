@@ -8,7 +8,10 @@ import("./controllers/sidePanelController.js").then(async ({
     extractRecipeFromTab,
     initializeSidePanelController
 }) => {
-    const { saveRecipeToApi } = await import("./api/recipeApiClient.js");
+    const {
+        recipeExistsBySourceUrl,
+        saveRecipeToApi
+    } = await import("./api/recipeApiClient.js");
 
     const { getCurrentUser } = await import("./api/authenticationApiClient.js");
 
@@ -56,6 +59,14 @@ import("./controllers/sidePanelController.js").then(async ({
 
             return saveRecipeToApi(
                 recipe,
+                accessToken
+            );
+        },
+        recipeExistsBySourceUrl: async sourceUrl => {
+            const accessToken = await getAccessToken();
+
+            return recipeExistsBySourceUrl(
+                sourceUrl,
                 accessToken
             );
         },

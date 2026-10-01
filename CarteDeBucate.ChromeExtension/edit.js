@@ -1,4 +1,7 @@
-import { saveRecipeToApi } from "./api/recipeApiClient.js";
+import {
+    recipeExistsBySourceUrl,
+    saveRecipeToApi
+} from "./api/recipeApiClient.js";
 import { getCurrentUser } from "./api/authenticationApiClient.js";
 import { getAccessToken, removeAccessToken } from "./auth/authStorage.js";
 import { resolveAuthenticationState } from "./auth/authenticationState.js";
@@ -45,6 +48,14 @@ const editorController = initializeEditController({
 
         return saveRecipeToApi(
             recipe,
+            accessToken
+        );
+    },
+    recipeExistsBySourceUrl: async sourceUrl => {
+        const accessToken = await getAccessToken();
+
+        return recipeExistsBySourceUrl(
+            sourceUrl,
             accessToken
         );
     },

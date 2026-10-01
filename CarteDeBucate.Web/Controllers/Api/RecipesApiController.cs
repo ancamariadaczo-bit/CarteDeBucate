@@ -15,6 +15,36 @@ public class RecipesApiController : ControllerBase
         _recipeLibraryService = recipeLibraryService;
     }
 
+    [HttpGet("exists")]
+    public IActionResult Exists([FromQuery] string? sourceUrl)
+    {
+        if (string.IsNullOrWhiteSpace(sourceUrl))
+        {
+            return BadRequest(new
+            {
+                message = AppTexts.RecipeSourceUrlRequired
+            });
+        }
+
+        string normalizedSourceUrl = sourceUrl.Trim();
+
+        if (!UrlValidator.IsValidHttpUrl(normalizedSourceUrl))
+        {
+            return BadRequest(new
+            {
+                message = AppTexts.RecipeSourceUrlInvalid
+            });
+        }
+
+        bool exists =
+            _recipeLibraryService.RecipeExistsBySourceUrl(normalizedSourceUrl);
+
+        return Ok(new
+        {
+            exists
+        });
+    }
+
     [HttpPost]
     public IActionResult Create([FromBody] CreateRecipeRequest request)
     {

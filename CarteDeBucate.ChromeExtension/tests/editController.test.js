@@ -22,6 +22,7 @@ async function setupEditor({
     payloadReadError = null,
     saveRecipe,
     saveRecipeToApi,
+    recipeExistsBySourceUrl,
     removeAccessToken,
     login,
     initialIsAuthenticated = false,
@@ -35,11 +36,14 @@ async function setupEditor({
     const calls = {
         savedRecipes: [],
         cookbookRequests: [],
+        duplicateChecks: [],
         loginRequests: [],
         errors: []
     };
     const saveRecipeToApiEffect = saveRecipeToApi
         ?? (async () => ({ recipeId: 1 }));
+    const recipeExistsBySourceUrlEffect = recipeExistsBySourceUrl
+        ?? (async () => false);
     const loginEffect = login ?? (async () => {});
 
     const controller = initializeEditController({
@@ -50,6 +54,10 @@ async function setupEditor({
         saveRecipeToApi: async recipe => {
             calls.cookbookRequests.push(recipe);
             return saveRecipeToApiEffect(recipe);
+        },
+        recipeExistsBySourceUrl: async sourceUrl => {
+            calls.duplicateChecks.push(sourceUrl);
+            return recipeExistsBySourceUrlEffect(sourceUrl);
         },
         removeAccessToken: removeAccessToken ?? (async () => {}),
         login: async () => {
@@ -74,9 +82,9 @@ function submit(window, form) {
 }
 
 async function flushAsyncWork() {
-    await Promise.resolve();
-    await Promise.resolve();
-    await Promise.resolve();
+    for (let index = 0; index < 6; index += 1) {
+        await Promise.resolve();
+    }
 }
 
 async function clickAndFlush(element) {
@@ -462,6 +470,10 @@ test("Save to Cookbook sends the normalized edited recipe instead of the origina
 
         await clickAndFlush(context.document.getElementById("saveButton"));
 
+        assert.deepEqual(
+            context.calls.duplicateChecks,
+            ["https://recipes.example.test/edited-soup"]
+        );
         assert.equal(context.calls.cookbookRequests.length, 1);
         assert.notDeepEqual(context.calls.cookbookRequests[0], validRecipe);
         assert.deepEqual(context.calls.cookbookRequests[0], {
@@ -485,9 +497,204 @@ test("Save to Cookbook does not request the API when edited values are invalid",
 
         await clickAndFlush(context.document.getElementById("saveButton"));
 
+        assert.equal(context.calls.duplicateChecks.length, 0);
         assert.equal(context.calls.cookbookRequests.length, 0);
         assert.equal(context.document.getElementById("errorMessage").hidden, false);
         assert.equal(context.document.getElementById("saveButton").disabled, false);
+    } finally {
+        context.cleanup();
+    }
+});
+
+test("Save to Cookbook keeps the edited form and skips saving when the URL is a duplicate", async () => {
+    const context = await setupEditor({
+        initialIsAuthenticated: true,
+        recipeExistsBySourceUrl: async () => true
+    });
+
+    try {
+        const recipeName = context.document.getElementById("recipeName");
+        const sourceUrl = context.document.getElementById("sourceUrl");
+        const saveButton = context.document.getElementById("saveButton");
+        const saveStatus = context.document.getElementById("saveStatus");
+
+        recipeName.value = "Edited duplicate soup";
+        sourceUrl.value = " https://recipes.example.test/edited-duplicate ";
+
+        await clickAndFlush(saveButton);
+
+        assert.deepEqual(
+            context.calls.duplicateChecks,
+            ["https://recipes.example.test/edited-duplicate"]
+        );
+        assert.equal(context.calls.cookbookRequests.length, 0);
+        assert.equal(
+            saveStatus.textContent,
+            "This recipe is already saved in your cookbook."
+        );
+        assert.equal(saveStatus.classList.contains("success"), false);
+        assert.equal(saveStatus.classList.contains("error"), false);
+        assert.equal(recipeName.value, "Edited duplicate soup");
+        assert.equal(
+            sourceUrl.value,
+            "https://recipes.example.test/edited-duplicate"
+        );
+        assert.equal(saveButton.disabled, false);
+        assert.equal(context.document.getElementById("printButton").disabled, false);
+        assert.equal(context.document.getElementById("cancelButton").disabled, false);
+    } finally {
+        context.cleanup();
+    }
+});
+
+test("Save to Cookbook ignores a second click while the duplicate check is pending", async () => {
+    let completeCheck;
+    const context = await setupEditor({
+        initialIsAuthenticated: true,
+        recipeExistsBySourceUrl: () => new Promise(resolve => {
+            completeCheck = resolve;
+        })
+    });
+
+    try {
+        const saveButton = context.document.getElementById("saveButton");
+
+        saveButton.click();
+
+        assert.equal(saveButton.disabled, true);
+        assert.equal(context.calls.duplicateChecks.length, 1);
+        assert.equal(context.calls.cookbookRequests.length, 0);
+
+        saveButton.dispatchEvent(new context.window.Event("click", {
+            bubbles: true,
+            cancelable: true
+        }));
+
+        assert.equal(context.calls.duplicateChecks.length, 1);
+        assert.equal(context.calls.cookbookRequests.length, 0);
+
+        completeCheck(false);
+        await flushAsyncWork();
+
+        assert.equal(context.calls.cookbookRequests.length, 1);
+    } finally {
+        context.cleanup();
+    }
+});
+
+test("an unauthorized duplicate check removes the token without saving", async () => {
+    const authenticationError = Object.assign(
+        new Error("Authentication has expired. Sign in again."),
+        { status: 401 }
+    );
+    let removeAccessTokenCount = 0;
+    const context = await setupEditor({
+        initialIsAuthenticated: true,
+        recipeExistsBySourceUrl: async () => {
+            throw authenticationError;
+        },
+        removeAccessToken: async () => {
+            removeAccessTokenCount += 1;
+        }
+    });
+
+    try {
+        await clickAndFlush(context.document.getElementById("saveButton"));
+
+        assert.equal(removeAccessTokenCount, 1);
+        assert.equal(context.calls.cookbookRequests.length, 0);
+        assert.equal(context.document.getElementById("authSection").hidden, false);
+        assert.equal(context.document.getElementById("saveButton").disabled, true);
+        assert.equal(
+            context.document.getElementById("saveStatus").textContent,
+            "Your session expired. Sign in again."
+        );
+        assert.deepEqual(context.calls.errors, [authenticationError]);
+    } finally {
+        context.cleanup();
+    }
+});
+
+test("a technical duplicate-check failure is reported and saving continues", async () => {
+    const duplicateCheckError = new Error("Duplicate endpoint unavailable.");
+    const context = await setupEditor({
+        initialIsAuthenticated: true,
+        recipeExistsBySourceUrl: async () => {
+            throw duplicateCheckError;
+        }
+    });
+
+    try {
+        await clickAndFlush(context.document.getElementById("saveButton"));
+
+        assert.deepEqual(context.calls.errors, [duplicateCheckError]);
+        assert.equal(context.calls.duplicateChecks.length, 1);
+        assert.equal(context.calls.cookbookRequests.length, 1);
+        assert.equal(
+            context.document.getElementById("saveStatus").textContent,
+            "Recipe saved successfully."
+        );
+    } finally {
+        context.cleanup();
+    }
+});
+
+test("a new Save attempt clears the duplicate message and uses one current snapshot", async () => {
+    let duplicateCheckCount = 0;
+    let completeSecondCheck;
+    const context = await setupEditor({
+        initialIsAuthenticated: true,
+        recipeExistsBySourceUrl: async () => {
+            duplicateCheckCount += 1;
+
+            if (duplicateCheckCount === 1) {
+                return true;
+            }
+
+            return new Promise(resolve => {
+                completeSecondCheck = resolve;
+            });
+        }
+    });
+
+    try {
+        const sourceUrl = context.document.getElementById("sourceUrl");
+        const saveButton = context.document.getElementById("saveButton");
+        const saveStatus = context.document.getElementById("saveStatus");
+
+        await clickAndFlush(saveButton);
+
+        assert.equal(
+            saveStatus.textContent,
+            "This recipe is already saved in your cookbook."
+        );
+
+        sourceUrl.value = " https://recipes.example.test/second-attempt ";
+        saveButton.click();
+
+        assert.equal(
+            saveStatus.textContent,
+            "Checking whether this recipe is already saved..."
+        );
+        assert.deepEqual(context.calls.duplicateChecks, [
+            validRecipe.sourceUrl,
+            "https://recipes.example.test/second-attempt"
+        ]);
+
+        sourceUrl.value = "https://recipes.example.test/changed-during-check";
+        completeSecondCheck(false);
+        await flushAsyncWork();
+
+        assert.equal(context.calls.cookbookRequests.length, 1);
+        assert.equal(
+            context.calls.cookbookRequests[0].sourceUrl,
+            "https://recipes.example.test/second-attempt"
+        );
+        assert.equal(
+            sourceUrl.value,
+            "https://recipes.example.test/changed-during-check"
+        );
+        assert.equal(saveStatus.textContent, "Recipe saved successfully.");
     } finally {
         context.cleanup();
     }
@@ -510,6 +717,15 @@ test("Save to Cookbook disables immediately, prevents parallel requests, and sta
         saveButton.click();
 
         assert.equal(saveButton.disabled, true);
+        assert.equal(
+            saveStatus.textContent,
+            "Checking whether this recipe is already saved..."
+        );
+        assert.equal(context.calls.duplicateChecks.length, 1);
+        assert.equal(context.calls.cookbookRequests.length, 0);
+
+        await flushAsyncWork();
+
         assert.equal(saveStatus.textContent, "Saving...");
         assert.equal(context.calls.cookbookRequests.length, 1);
 
@@ -669,6 +885,10 @@ test("the real edit entrypoint composes authentication, Cookbook saving, print, 
     assert.match(html, /id="loginButton"\s+type="button"/);
     assert.match(html, /id="saveStatus"[^>]+role="status"/);
     assert.match(script, /import\s*{\s*initializeEditController\s*}/);
+    assert.match(
+        script,
+        /import\s*\{[\s\S]*?recipeExistsBySourceUrl,[\s\S]*?saveRecipeToApi[\s\S]*?}\s*from "\.\/api\/recipeApiClient\.js"/
+    );
     assert.match(script, /from "\.\/api\/recipeApiClient\.js"/);
     assert.match(script, /from "\.\/api\/authenticationApiClient\.js"/);
     assert.match(script, /from "\.\/auth\/authStorage\.js"/);
@@ -677,6 +897,15 @@ test("the real edit entrypoint composes authentication, Cookbook saving, print, 
     assert.match(script, /resolveAuthenticationState\(\{/);
     assert.match(script, /initialIsAuthenticationResolved:\s*false/);
     assert.match(script, /getAccessToken\(\)/);
+    assert.match(
+        script,
+        /recipeExistsBySourceUrl:\s*async sourceUrl\s*=>\s*\{[\s\S]*?const accessToken\s*=\s*await getAccessToken\(\);[\s\S]*?return recipeExistsBySourceUrl\(\s*sourceUrl,\s*accessToken\s*\);[\s\S]*?}/
+    );
+    assert.equal(
+        (script.match(/const accessToken\s*=\s*await getAccessToken\(\);/g) ?? [])
+            .length,
+        2
+    );
     assert.doesNotMatch(script, /\bfetch\s*\(/);
     assert.match(script, /localStorage\.getItem\("recipeToPrint"\)/);
     assert.match(script, /localStorage\.setItem\("recipeToPrint"/);

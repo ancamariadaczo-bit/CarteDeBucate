@@ -13,6 +13,7 @@ public class FakeRecipeLibraryService : IRecipeLibraryService
     public RecipeSaveResult SaveResultToReturn { get; set; } = new();
     public RecipeSaveResult UpdateResultToReturn { get; set; } = new();
     public RecipeSaveResult DeleteResultToReturn { get; set; } = new();
+    public bool RecipeExistsBySourceUrlResultToReturn { get; set; }
 
     public bool GetRecipeSummariesWasCalled { get; private set; }
     public bool GetRecipeSummariesPageWasCalled { get; private set; }
@@ -20,6 +21,7 @@ public class FakeRecipeLibraryService : IRecipeLibraryService
     public bool GetRecipeByIdWasCalled { get; private set; }
     public bool SearchRecipesWasCalled { get; private set; }
     public bool SearchRecipesPageWasCalled { get; private set; }
+    public int RecipeExistsBySourceUrlCallCount { get; private set; }
     public bool SaveRecipeWasCalled { get; private set; }
     public bool UpdateRecipeWasCalled { get; private set; }
     public bool DeleteRecipeWasCalled { get; private set; }
@@ -32,6 +34,7 @@ public class FakeRecipeLibraryService : IRecipeLibraryService
 
     public string? SearchTextPassedToSearchRecipes { get; private set; }
     public string? SearchTextPassedToSearchRecipesPage { get; private set; }
+    public string? SourceUrlPassedToRecipeExists { get; private set; }
     public int? PageNumberPassedToSearchRecipesPage { get; private set; }
     public int? PageSizePassedToSearchRecipesPage { get; private set; }
     public List<int> PageNumbersPassedToSearchRecipesPage { get; } = new();
@@ -91,6 +94,14 @@ public class FakeRecipeLibraryService : IRecipeLibraryService
         return SearchResultsPagesToReturn.Count > 0
             ? SearchResultsPagesToReturn.Dequeue()
             : SearchResultsPageToReturn;
+    }
+
+    public bool RecipeExistsBySourceUrl(string sourceUrl)
+    {
+        RecipeExistsBySourceUrlCallCount++;
+        SourceUrlPassedToRecipeExists = sourceUrl;
+
+        return RecipeExistsBySourceUrlResultToReturn;
     }
 
     public RecipeSaveResult SaveRecipe(Recipe recipe)

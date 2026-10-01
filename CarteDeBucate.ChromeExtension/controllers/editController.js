@@ -9,6 +9,7 @@ export function initializeEditController({
     payloadReadError = null,
     saveRecipe,
     saveRecipeToApi,
+    recipeExistsBySourceUrl,
     removeAccessToken = async () => {},
     login,
     initialIsAuthenticated = false,
@@ -83,28 +84,37 @@ export function initializeEditController({
 
         isSaving = true;
         updateUi();
-        showSaveStatus("Saving...");
+        showSaveStatus("Checking whether this recipe is already saved...");
 
         try {
+            try {
+                const exists = await recipeExistsBySourceUrl(
+                    editedRecipe.sourceUrl
+                );
+
+                if (exists) {
+                    showSaveStatus(
+                        "This recipe is already saved in your cookbook."
+                    );
+                    return;
+                }
+            } catch (error) {
+                if (isAuthenticationRequiredError(error)) {
+                    await handleExpiredSession(error);
+                    return;
+                }
+
+                reportError(error);
+            }
+
+            showSaveStatus("Saving...");
             await saveRecipeToApi(editedRecipe);
 
             isSaved = true;
             showSaveStatus("Recipe saved successfully.", "success");
         } catch (error) {
             if (isAuthenticationRequiredError(error)) {
-                setAuthenticationState(false);
-                showSaveStatus(
-                    "Your session expired. Sign in again.",
-                    "error"
-                );
-
-                try {
-                    await removeAccessToken();
-                } catch (storageError) {
-                    reportError(storageError);
-                }
-
-                reportError(error);
+                await handleExpiredSession(error);
                 return;
             }
 
@@ -326,6 +336,22 @@ export function initializeEditController({
         isAuthenticated = Boolean(value);
         isAuthenticationResolved = true;
         updateUi();
+    }
+
+    async function handleExpiredSession(error) {
+        setAuthenticationState(false);
+        showSaveStatus(
+            "Your session expired. Sign in again.",
+            "error"
+        );
+
+        try {
+            await removeAccessToken();
+        } catch (storageError) {
+            reportError(storageError);
+        }
+
+        reportError(error);
     }
 
     function updateUi() {

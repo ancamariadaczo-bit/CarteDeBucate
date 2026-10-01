@@ -326,6 +326,114 @@ public class RecipeLibraryServiceTests
     }
 
     [Fact]
+    public void RecipeExistsBySourceUrl_WhenUrlExistsInGlobalContext_ShouldReturnTrue()
+    {
+        FakeRecipeRepository repository = new FakeRecipeRepository
+        {
+            SourceUrlExists = true
+        };
+        RecipeLibraryService service = new RecipeLibraryService(repository);
+
+        bool exists = service.RecipeExistsBySourceUrl("https://example.com/banana-bread");
+
+        Assert.True(exists);
+        Assert.True(repository.RecipeExistsBySourceUrlWasCalled);
+        Assert.False(repository.RecipeExistsBySourceUrlForUserWasCalled);
+    }
+
+    [Fact]
+    public void RecipeExistsBySourceUrl_WhenUrlDoesNotExist_ShouldReturnFalse()
+    {
+        FakeRecipeRepository repository = new FakeRecipeRepository();
+        RecipeLibraryService service = new RecipeLibraryService(repository);
+
+        bool exists = service.RecipeExistsBySourceUrl("https://example.com/missing");
+
+        Assert.False(exists);
+        Assert.True(repository.RecipeExistsBySourceUrlWasCalled);
+    }
+
+    [Fact]
+    public void RecipeExistsBySourceUrl_WithExteriorWhitespace_ShouldNormalizeUrl()
+    {
+        FakeRecipeRepository repository = new FakeRecipeRepository
+        {
+            SourceUrlExists = true
+        };
+        RecipeLibraryService service = new RecipeLibraryService(repository);
+
+        bool exists = service.RecipeExistsBySourceUrl(
+            "  https://example.com/banana-bread  ");
+
+        Assert.True(exists);
+        Assert.Equal(
+            "https://example.com/banana-bread",
+            repository.SourceUrlPassedToRecipeExists);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void RecipeExistsBySourceUrl_WithMissingUrl_ShouldReturnFalseWithoutCallingRepository(
+        string? sourceUrl)
+    {
+        FakeRecipeRepository repository = new FakeRecipeRepository();
+        RecipeLibraryService service = new RecipeLibraryService(repository);
+
+        bool exists = service.RecipeExistsBySourceUrl(sourceUrl!);
+
+        Assert.False(exists);
+        Assert.False(repository.RecipeExistsBySourceUrlWasCalled);
+        Assert.False(repository.RecipeExistsBySourceUrlForUserWasCalled);
+    }
+
+    [Fact]
+    public void RecipeExistsBySourceUrl_WhenUserIsLoggedIn_ShouldUseOnlyCurrentUserCheck()
+    {
+        FakeRecipeRepository repository = new FakeRecipeRepository
+        {
+            SourceUrlExists = true
+        };
+        CurrentUserContext currentUserContext = new CurrentUserContext();
+        currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
+        RecipeLibraryService service = new RecipeLibraryService(
+            repository,
+            currentUserContext);
+
+        bool exists = service.RecipeExistsBySourceUrl("https://example.com/banana-bread");
+
+        Assert.True(exists);
+        Assert.False(repository.RecipeExistsBySourceUrlWasCalled);
+        Assert.True(repository.RecipeExistsBySourceUrlForUserWasCalled);
+        Assert.Equal(7, repository.UserIdPassedToRecipeExistsForUser);
+    }
+
+    [Fact]
+    public void RecipeExistsBySourceUrl_WithUrlOwnedByAnotherUser_ShouldReturnFalse()
+    {
+        FakeRecipeRepository repository = new FakeRecipeRepository
+        {
+            Recipes = new List<Recipe>
+            {
+                CreateValidRecipe(userId: 9)
+            }
+        };
+        CurrentUserContext currentUserContext = new CurrentUserContext();
+        currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
+        RecipeLibraryService service = new RecipeLibraryService(
+            repository,
+            currentUserContext);
+
+        bool exists = service.RecipeExistsBySourceUrl("https://example.com/banana-bread");
+
+        Assert.False(exists);
+        Assert.False(repository.RecipeExistsBySourceUrlWasCalled);
+        Assert.True(repository.RecipeExistsBySourceUrlForUserWasCalled);
+        Assert.Equal(7, repository.UserIdPassedToRecipeExistsForUser);
+    }
+
+    [Fact]
     public void SaveRecipe_WithValidRecipe_ShouldSaveRecipe()
     {
         FakeRecipeRepository repository = new FakeRecipeRepository();

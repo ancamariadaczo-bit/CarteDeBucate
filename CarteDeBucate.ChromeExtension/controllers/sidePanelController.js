@@ -3,6 +3,7 @@ export function initializeSidePanelController({
     extractRecipe,
     saveRecipe,
     saveRecipeToApi,
+    recipeExistsBySourceUrl,
     removeAccessToken = async () => { },
     login,
     openWindow,
@@ -29,6 +30,9 @@ export function initializeSidePanelController({
     let isAuthenticated = initialIsAuthenticated;
     let isAuthenticationResolved = initialIsAuthenticationResolved;
     let isAuthenticating = false;
+    let duplicateCheckStatus = "unknown";
+    let checkedSourceUrl = null;
+    let duplicateCheckRevision = 0;
     const processedRequestIds = new Set();
 
     async function handleExtractionRequest({ requestId, tabId } = {}) {
@@ -61,10 +65,12 @@ export function initializeSidePanelController({
         currentRecipe = null;
         isSaved = false;
         result.textContent = "";
-        showSaveStatus("");
+        resetDuplicateCheck();
         isExtracting = true;
         showExtractionStatus("Extracting recipe...");
         updateUi();
+
+        let shouldCheckForDuplicate = false;
 
         try {
             const extractionResult = await extractRecipe(tabId);
@@ -83,6 +89,7 @@ export function initializeSidePanelController({
             displayRecipe(currentRecipe);
 
             showExtractionStatus("");
+            shouldCheckForDuplicate = true;
         } catch (error) {
             reportError(error);
             showExtractionFailure(
@@ -91,6 +98,10 @@ export function initializeSidePanelController({
         } finally {
             isExtracting = false;
             updateUi();
+        }
+
+        if (shouldCheckForDuplicate && isAuthenticated) {
+            void checkCurrentRecipeForDuplicate();
         }
     }
 
@@ -135,29 +146,54 @@ export function initializeSidePanelController({
             return;
         }
 
+        const recipeToSave = currentRecipe;
+        const sourceUrlToSave = normalizeSourceUrl(recipeToSave.sourceUrl);
+        const hasCurrentDuplicateResult =
+            checkedSourceUrl === sourceUrlToSave;
+
+        if (
+            hasCurrentDuplicateResult
+            && (
+                duplicateCheckStatus === "checking"
+                || duplicateCheckStatus === "exists"
+            )
+        ) {
+            return;
+        }
+
+        if (
+            !hasCurrentDuplicateResult
+            || duplicateCheckStatus === "unknown"
+        ) {
+            const checkResult = await checkCurrentRecipeForDuplicate();
+
+            if (
+                checkResult !== "not-found"
+                && checkResult !== "unknown"
+            ) {
+                return;
+            }
+
+            if (
+                currentRecipe !== recipeToSave
+                || !isAuthenticated
+                || normalizeSourceUrl(currentRecipe.sourceUrl) !== sourceUrlToSave
+            ) {
+                return;
+            }
+        }
+
         isSaving = true;
         updateUi();
         showSaveStatus("Saving...");
 
         try {
-            await saveRecipeToApi(currentRecipe);
+            await saveRecipeToApi(recipeToSave);
             isSaved = true;
             showSaveStatus("Recipe saved successfully.", "success");
         } catch (error) {
             if (isAuthenticationRequiredError(error)) {
-                setAuthenticationState(false);
-                showSaveStatus(
-                    "Your session expired. Sign in again.",
-                    "error"
-                );
-
-                try {
-                    await removeAccessToken();
-                } catch (storageError) {
-                    reportError(storageError);
-                }
-
-                reportError(error);
+                await handleExpiredSession(error);
                 isSaved = false;
                 return;
             }
@@ -216,7 +252,15 @@ export function initializeSidePanelController({
 
         editButton.disabled = isExtracting || isSaving;
         printButton.disabled = isExtracting || isSaving;
-        saveButton.disabled = !isAuthenticated || isSaving || isSaved || isExtracting;
+        const duplicateCheckBlocksSave =
+            duplicateCheckStatus === "checking"
+            || duplicateCheckStatus === "exists";
+
+        saveButton.disabled = !isAuthenticated
+            || isSaving
+            || isSaved
+            || isExtracting
+            || duplicateCheckBlocksSave;
 
         authSection.hidden = !hasRecipe
             || !isAuthenticationResolved
@@ -321,9 +365,123 @@ export function initializeSidePanelController({
     }
 
     function setAuthenticationState(value) {
+        const wasAuthenticated = isAuthenticated;
+        const wasAuthenticationResolved = isAuthenticationResolved;
+        const shouldCheckAfterAuthentication =
+            !isAuthenticated || !isAuthenticationResolved;
+
         isAuthenticated = Boolean(value);
         isAuthenticationResolved = true;
+
+        if (!isAuthenticated) {
+            if (wasAuthenticated || !wasAuthenticationResolved) {
+                resetDuplicateCheck();
+            }
+
+            updateUi();
+            return;
+        }
+
+        if (currentRecipe && shouldCheckAfterAuthentication) {
+            void checkCurrentRecipeForDuplicate();
+            return;
+        }
+
         updateUi();
+    }
+
+    async function checkCurrentRecipeForDuplicate() {
+        if (!currentRecipe || !isAuthenticated) {
+            return "unknown";
+        }
+
+        const recipeSnapshot = currentRecipe;
+        const sourceUrlSnapshot = normalizeSourceUrl(recipeSnapshot.sourceUrl);
+
+        if (
+            checkedSourceUrl === sourceUrlSnapshot
+            && duplicateCheckStatus !== "unknown"
+        ) {
+            return duplicateCheckStatus;
+        }
+
+        const checkRevision = ++duplicateCheckRevision;
+        duplicateCheckStatus = "checking";
+        checkedSourceUrl = sourceUrlSnapshot;
+        showSaveStatus("Checking whether this recipe is already saved...");
+        updateUi();
+
+        try {
+            const exists = await recipeExistsBySourceUrl(sourceUrlSnapshot);
+
+            if (!isCurrentDuplicateCheck(
+                checkRevision,
+                recipeSnapshot,
+                sourceUrlSnapshot
+            )) {
+                return "stale";
+            }
+
+            duplicateCheckStatus = exists ? "exists" : "not-found";
+            showSaveStatus(
+                exists
+                    ? "This recipe is already saved in your cookbook."
+                    : ""
+            );
+            updateUi();
+
+            return duplicateCheckStatus;
+        } catch (error) {
+            if (!isCurrentDuplicateCheck(
+                checkRevision,
+                recipeSnapshot,
+                sourceUrlSnapshot
+            )) {
+                return "stale";
+            }
+
+            if (isAuthenticationRequiredError(error)) {
+                await handleExpiredSession(error);
+                return "unauthenticated";
+            }
+
+            duplicateCheckStatus = "unknown";
+            showSaveStatus("");
+            updateUi();
+            reportError(error);
+
+            return "unknown";
+        }
+    }
+
+    function isCurrentDuplicateCheck(revision, recipeSnapshot, sourceUrlSnapshot) {
+        return revision === duplicateCheckRevision
+            && currentRecipe === recipeSnapshot
+            && isAuthenticated
+            && normalizeSourceUrl(currentRecipe.sourceUrl) === sourceUrlSnapshot;
+    }
+
+    function resetDuplicateCheck() {
+        duplicateCheckRevision += 1;
+        duplicateCheckStatus = "unknown";
+        checkedSourceUrl = null;
+        showSaveStatus("");
+    }
+
+    async function handleExpiredSession(error) {
+        setAuthenticationState(false);
+        showSaveStatus(
+            "Your session expired. Sign in again.",
+            "error"
+        );
+
+        try {
+            await removeAccessToken();
+        } catch (storageError) {
+            reportError(storageError);
+        }
+
+        reportError(error);
     }
 
     updateUi();
@@ -336,6 +494,10 @@ export function initializeSidePanelController({
 
 function isAuthenticationRequiredError(error) {
     return error instanceof Error && error.status === 401;
+}
+
+function normalizeSourceUrl(sourceUrl) {
+    return String(sourceUrl ?? "").trim();
 }
 
 export async function extractRecipeFromTab({

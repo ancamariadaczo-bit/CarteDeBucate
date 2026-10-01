@@ -10,6 +10,105 @@ using Microsoft.AspNetCore.Mvc;
 public class RecipesApiControllerTests
 {
     [Fact]
+    public void Exists_WhenRecipeExists_ShouldReturnTrue()
+    {
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
+        {
+            RecipeExistsBySourceUrlResultToReturn = true
+        };
+        RecipesApiController controller = new RecipesApiController(recipeService);
+
+        IActionResult result = controller.Exists("https://example.com/banana-bread");
+
+        OkObjectResult okResult = Assert.IsType<OkObjectResult>(result);
+        Assert.True(GetResponseProperty<bool>(okResult.Value, "exists"));
+        Assert.Equal(1, recipeService.RecipeExistsBySourceUrlCallCount);
+        Assert.Equal(
+            "https://example.com/banana-bread",
+            recipeService.SourceUrlPassedToRecipeExists);
+    }
+
+    [Fact]
+    public void Exists_WhenRecipeDoesNotExist_ShouldReturnFalse()
+    {
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService();
+        RecipesApiController controller = new RecipesApiController(recipeService);
+
+        IActionResult result = controller.Exists("https://example.com/missing");
+
+        OkObjectResult okResult = Assert.IsType<OkObjectResult>(result);
+        Assert.False(GetResponseProperty<bool>(okResult.Value, "exists"));
+        Assert.Equal(1, recipeService.RecipeExistsBySourceUrlCallCount);
+    }
+
+    [Fact]
+    public void Exists_WithExteriorWhitespace_ShouldPassNormalizedUrlToService()
+    {
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService();
+        RecipesApiController controller = new RecipesApiController(recipeService);
+
+        IActionResult result = controller.Exists(
+            "  https://example.com/banana-bread  ");
+
+        Assert.IsType<OkObjectResult>(result);
+        Assert.Equal(1, recipeService.RecipeExistsBySourceUrlCallCount);
+        Assert.Equal(
+            "https://example.com/banana-bread",
+            recipeService.SourceUrlPassedToRecipeExists);
+    }
+
+    [Fact]
+    public void Exists_WithMissingSourceUrl_ShouldReturnBadRequestWithoutCallingService()
+    {
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService();
+        RecipesApiController controller = new RecipesApiController(recipeService);
+
+        IActionResult result = controller.Exists(null);
+
+        BadRequestObjectResult badRequestResult =
+            Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal(
+            AppTexts.RecipeSourceUrlRequired,
+            GetResponseProperty<string>(badRequestResult.Value, "message"));
+        Assert.Equal(0, recipeService.RecipeExistsBySourceUrlCallCount);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Exists_WithEmptySourceUrl_ShouldReturnBadRequestWithoutCallingService(
+        string sourceUrl)
+    {
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService();
+        RecipesApiController controller = new RecipesApiController(recipeService);
+
+        IActionResult result = controller.Exists(sourceUrl);
+
+        BadRequestObjectResult badRequestResult =
+            Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal(
+            AppTexts.RecipeSourceUrlRequired,
+            GetResponseProperty<string>(badRequestResult.Value, "message"));
+        Assert.Equal(0, recipeService.RecipeExistsBySourceUrlCallCount);
+    }
+
+    [Fact]
+    public void Exists_WithUnsupportedProtocol_ShouldReturnBadRequestWithoutCallingService()
+    {
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService();
+        RecipesApiController controller = new RecipesApiController(recipeService);
+
+        IActionResult result = controller.Exists("ftp://example.com/banana-bread");
+
+        BadRequestObjectResult badRequestResult =
+            Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal(
+            AppTexts.RecipeSourceUrlInvalid,
+            GetResponseProperty<string>(badRequestResult.Value, "message"));
+        Assert.Equal(0, recipeService.RecipeExistsBySourceUrlCallCount);
+    }
+
+    [Fact]
     public void Create_WhenSaveSucceeds_ShouldSaveMappedRecipeAndReturnCreatedResult()
     {
         Recipe savedRecipe = new Recipe

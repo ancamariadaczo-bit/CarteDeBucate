@@ -10,6 +10,8 @@ public interface IRecipeLibraryService
     List<RecipeSummary> SearchRecipes(string searchText);
     PagedResult<RecipeSummary> SearchRecipesPage(string searchText, int pageNumber, int pageSize);
 
+    bool RecipeExistsBySourceUrl(string sourceUrl);
+
     RecipeSaveResult SaveRecipe(Recipe recipe);
 
     RecipeSaveResult UpdateRecipe(Recipe recipe);
