@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Recipe Clipper – Print & Save Recipes",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "minimum_chrome_version": "116",
     "description": "Extract recipes from web pages and format them for easy printing or saving as PDF.",
     "permissions": [
