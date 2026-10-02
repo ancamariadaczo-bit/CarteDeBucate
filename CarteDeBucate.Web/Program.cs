@@ -5,11 +5,14 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using CarteDeBucate.Web.BackgroundServices;
+using CarteDeBucate.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-string databasePath = builder.Configuration["DatabasePath"]
+string configuredDatabasePath = builder.Configuration["DatabasePath"]
     ?? throw new InvalidOperationException("DatabasePath is not configured.");
+string databasePath = Path.GetFullPath(configuredDatabasePath);
 WebAppSettings webAppSettings = builder.Configuration.Get<WebAppSettings>()
     ?? new WebAppSettings();
 
@@ -121,6 +124,13 @@ builder.Services.AddScoped<IAuthenticationService>(serviceProvider =>
         userRepository,
         currentUserContext);
 });
+
+builder.Services.AddSingleton<DatabaseBackupService>(serviceProvider =>
+    new DatabaseBackupService(
+        serviceProvider.GetRequiredService<ILogger<DatabaseBackupService>>(),
+        databasePath,
+        serviceProvider.GetRequiredService<IWebHostEnvironment>()));
+builder.Services.AddHostedService<DatabaseBackupWorker>();
 
 var app = builder.Build();
 
