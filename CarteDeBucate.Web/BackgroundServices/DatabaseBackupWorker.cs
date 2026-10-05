@@ -8,11 +8,11 @@ public class DatabaseBackupWorker : BackgroundService
     private static readonly TimeSpan BackupRetryDelay = TimeSpan.FromMinutes(15);
 
     private readonly ILogger<DatabaseBackupWorker> _logger;
-    private readonly DatabaseBackupService _backupService;
+    private readonly IDatabaseBackupService _backupService;
 
     public DatabaseBackupWorker(
         ILogger<DatabaseBackupWorker> logger,
-        DatabaseBackupService backupService)
+        IDatabaseBackupService backupService)
     {
         _logger = logger;
         _backupService = backupService;

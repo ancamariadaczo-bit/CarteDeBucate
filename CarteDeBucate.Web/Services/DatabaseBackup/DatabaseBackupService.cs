@@ -2,7 +2,7 @@ using Microsoft.Data.Sqlite;
 
 namespace CarteDeBucate.Web.Services;
 
-public class DatabaseBackupService
+public class DatabaseBackupService : IDatabaseBackupService
 {
     private readonly ILogger<DatabaseBackupService> _logger;
     private readonly string _databasePath;

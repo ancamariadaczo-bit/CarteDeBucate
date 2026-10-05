@@ -125,7 +125,7 @@ builder.Services.AddScoped<IAuthenticationService>(serviceProvider =>
         currentUserContext);
 });
 
-builder.Services.AddSingleton<DatabaseBackupService>(serviceProvider =>
+builder.Services.AddSingleton<IDatabaseBackupService>(serviceProvider =>
     new DatabaseBackupService(
         serviceProvider.GetRequiredService<ILogger<DatabaseBackupService>>(),
         databasePath,
