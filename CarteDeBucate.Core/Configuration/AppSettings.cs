@@ -10,6 +10,8 @@ public class AppSettings
 
     public string DatabasePath { get; private set; } = "recipes.db";
 
+    public string RecipePhotosPath { get; private set; } = "recipe-photos";
+
     public bool AuthenticationEnabled { get; set; } = false;
 
     //public bool AiFallbackEnabled { get; private set; } = false;
@@ -93,6 +95,11 @@ public class AppSettings
             settings.DatabasePath = settingsFile.DatabasePath;
         }
 
+        if (!string.IsNullOrWhiteSpace(settingsFile.RecipePhotosPath))
+        {
+            settings.RecipePhotosPath = settingsFile.RecipePhotosPath;
+        }
+
         if (Enum.TryParse(settingsFile.StorageMode, ignoreCase: true, out StorageMode storageMode))
         {
             settings.CurrentStorageMode = storageMode;
@@ -156,6 +163,8 @@ public class AppSettings
         public string? UsersFilePath { get; set; }
 
         public string? DatabasePath { get; set; }
+
+        public string? RecipePhotosPath { get; set; }
 
         public JsonElement? AuthenticationEnabled { get; set; }
 
