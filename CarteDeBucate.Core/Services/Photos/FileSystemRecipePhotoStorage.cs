@@ -355,7 +355,7 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
                 finalFilePath,
                 FileMode.Open,
                 FileAccess.Read,
-                FileShare.Read,
+                FileShare.Read | FileShare.Delete,
                 CopyBufferSize,
                 FileOptions.SequentialScan);
         }
@@ -375,36 +375,11 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
         string storageFileName)
     {
         string finalFilePath = ResolveFinalFilePath(storageFileName);
-
-        if (!File.Exists(finalFilePath))
-        {
-            return null;
-        }
-
         (string token, string directoryPath) =
             CreateQuarantineDirectory();
         string quarantinedFilePath = Path.Combine(
             directoryPath,
             storageFileName);
-
-        try
-        {
-            File.Move(
-                finalFilePath,
-                quarantinedFilePath,
-                overwrite: false);
-        }
-        catch (FileNotFoundException)
-        {
-            DeleteEmptyDirectory(directoryPath);
-            return null;
-        }
-        catch
-        {
-            DeleteEmptyDirectory(directoryPath);
-            throw;
-        }
-
         QuarantineDescriptor descriptor = new()
         {
             Token = token,
@@ -415,48 +390,72 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
         try
         {
             WriteQuarantineDescriptor(directoryPath, descriptor);
-            return new StagedRecipePhotoDeletion(token);
         }
         catch
         {
-            RestoreAfterDescriptorFailure(
-                quarantinedFilePath,
-                finalFilePath,
-                directoryPath);
+            DeleteQuarantineDirectory(directoryPath);
             throw;
         }
+
+        try
+        {
+            File.Move(
+                finalFilePath,
+                quarantinedFilePath,
+                overwrite: false);
+        }
+        catch (Exception exception) when (
+            exception is FileNotFoundException
+                or DirectoryNotFoundException)
+        {
+            DeleteQuarantineDirectory(directoryPath);
+            return null;
+        }
+        catch
+        {
+            DeleteQuarantineDirectory(directoryPath);
+            throw;
+        }
+
+        return new StagedRecipePhotoDeletion(token);
     }
 
     public void RestoreFromQuarantine(
         StagedRecipePhotoDeletion deletion)
     {
         string directoryPath = ResolveQuarantineDirectoryPath(deletion);
+        QuarantineDescriptor descriptor;
 
-        if (!Directory.Exists(directoryPath))
+        try
+        {
+            descriptor = ReadQuarantineDescriptor(
+                directoryPath,
+                deletion.Token);
+        }
+        catch (DirectoryNotFoundException)
         {
             return;
         }
 
-        QuarantineDescriptor descriptor = ReadQuarantineDescriptor(
-            directoryPath,
-            deletion.Token);
         string quarantinedFilePath = Path.Combine(
             directoryPath,
             descriptor.StorageFileName);
         string finalFilePath = ResolveFinalFilePath(
             descriptor.StorageFileName);
 
-        if (File.Exists(quarantinedFilePath))
+        try
         {
             File.Move(
                 quarantinedFilePath,
                 finalFilePath,
                 overwrite: false);
         }
-        else if (!File.Exists(finalFilePath))
+        catch (Exception exception) when (
+            exception is FileNotFoundException
+                or DirectoryNotFoundException)
         {
-            throw new FileNotFoundException(
-                "The quarantined photo content is missing.",
+            EnsureRestoredFileExists(
+                finalFilePath,
                 quarantinedFilePath);
         }
 
@@ -468,12 +467,17 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
     {
         string directoryPath = ResolveQuarantineDirectoryPath(deletion);
 
-        if (!Directory.Exists(directoryPath))
+        try
+        {
+            _ = ReadQuarantineDescriptor(
+                directoryPath,
+                deletion.Token);
+        }
+        catch (DirectoryNotFoundException)
         {
             return;
         }
 
-        _ = ReadQuarantineDescriptor(directoryPath, deletion.Token);
         DeleteQuarantineDirectory(directoryPath);
     }
 
@@ -590,38 +594,40 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
         }
     }
 
-    private static void RestoreAfterDescriptorFailure(
-        string quarantinedFilePath,
+    private static void EnsureRestoredFileExists(
         string finalFilePath,
-        string directoryPath)
+        string quarantinedFilePath)
     {
-        if (!File.Exists(finalFilePath))
+        try
         {
-            File.Move(
+            FileAttributes attributes = File.GetAttributes(finalFilePath);
+
+            if ((attributes & FileAttributes.Directory) != 0)
+            {
+                throw new IOException(
+                    "The restored photo path is a directory.");
+            }
+        }
+        catch (Exception exception) when (
+            exception is FileNotFoundException
+                or DirectoryNotFoundException)
+        {
+            throw new FileNotFoundException(
+                "The quarantined photo content is missing.",
                 quarantinedFilePath,
-                finalFilePath,
-                overwrite: false);
-        }
-
-        if (!File.Exists(quarantinedFilePath))
-        {
-            DeleteQuarantineDirectory(directoryPath);
-        }
-    }
-
-    private static void DeleteEmptyDirectory(string directoryPath)
-    {
-        if (Directory.Exists(directoryPath))
-        {
-            Directory.Delete(directoryPath);
+                exception);
         }
     }
 
     private static void DeleteQuarantineDirectory(string directoryPath)
     {
-        if (Directory.Exists(directoryPath))
+        try
         {
             Directory.Delete(directoryPath, recursive: true);
+        }
+        catch (DirectoryNotFoundException)
+        {
+            // The cleanup is already complete.
         }
     }
 

@@ -60,6 +60,24 @@ public sealed class FileSystemRecipePhotoStorageQuarantineTests : IDisposable
     }
 
     [Fact]
+    public async Task MoveToQuarantine_WhileFileIsOpen_ShouldKeepExistingReaderUsable()
+    {
+        byte[] content = [1, 2, 3];
+        string storageFileName = await CreateFinalFileAsync(content);
+        using Stream openContent =
+            _storage.OpenFinalFile(storageFileName)!;
+
+        StagedRecipePhotoDeletion? deletion =
+            _storage.MoveToQuarantine(storageFileName);
+        using MemoryStream result = new();
+        openContent.CopyTo(result);
+
+        Assert.NotNull(deletion);
+        Assert.Equal(content, result.ToArray());
+        Assert.False(_storage.FinalFileExists(storageFileName));
+    }
+
+    [Fact]
     public async Task RestoreFromQuarantine_ShouldRestoreOriginalStorageFileName()
     {
         byte[] content = [1, 2, 3];
