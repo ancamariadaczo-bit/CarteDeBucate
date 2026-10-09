@@ -1,19 +1,45 @@
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+
 public class RecipeLibraryService : IRecipeLibraryService
 {
     private readonly IRecipeRepository _recipeRepository;
     private readonly ICurrentUserContext? _currentUserContext;
+    private readonly IRecipePhotoDeletionCoordinator? _photoDeletionCoordinator;
+    private readonly ILogger<RecipeLibraryService> _logger;
 
     public RecipeLibraryService(IRecipeRepository recipeRepository)
-        : this(recipeRepository, null)
+        : this(
+            recipeRepository,
+            null,
+            null,
+            NullLogger<RecipeLibraryService>.Instance)
     {
     }
 
     public RecipeLibraryService(
         IRecipeRepository recipeRepository,
         ICurrentUserContext? currentUserContext)
+        : this(
+            recipeRepository,
+            currentUserContext,
+            null,
+            NullLogger<RecipeLibraryService>.Instance)
     {
+    }
+
+    internal RecipeLibraryService(
+        IRecipeRepository recipeRepository,
+        ICurrentUserContext? currentUserContext,
+        IRecipePhotoDeletionCoordinator? photoDeletionCoordinator,
+        ILogger<RecipeLibraryService> logger)
+    {
+        ArgumentNullException.ThrowIfNull(logger);
+
         _recipeRepository = recipeRepository;
         _currentUserContext = currentUserContext;
+        _photoDeletionCoordinator = photoDeletionCoordinator;
+        _logger = logger;
     }
 
     public List<RecipeSummary> GetRecipeSummaries()
@@ -188,19 +214,94 @@ public class RecipeLibraryService : IRecipeLibraryService
             return RecipeSaveResult.Fail(AppTexts.RecipeNotFound);
         }
 
-        if (CurrentUserId.HasValue)
+        if (_photoDeletionCoordinator is null)
         {
-            _recipeRepository.DeleteRecipeForUser(recipeId, CurrentUserId.Value);
+            DeleteRecipeFromRepository(recipeId);
+
+            return RecipeSaveResult.Success(AppTexts.RecipeDeleted);
         }
-        else
+
+        PreparedRecipePhotoDeletionBatch? batch;
+
+        try
         {
-            _recipeRepository.DeleteRecipe(recipeId);
+            batch = _photoDeletionCoordinator.PrepareRecipeDeletion(recipeId);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(
+                exception,
+                "Failed to prepare photo content for recipe {RecipeId} deletion.",
+                recipeId);
+
+            return RecipeSaveResult.Fail(AppTexts.RecipeDeletionFailed);
+        }
+
+        if (batch is null)
+        {
+            _logger.LogError(
+                "Photo content could not be prepared for recipe {RecipeId} deletion.",
+                recipeId);
+
+            return RecipeSaveResult.Fail(AppTexts.RecipeDeletionFailed);
+        }
+
+        try
+        {
+            DeleteRecipeFromRepository(recipeId);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(
+                exception,
+                "Failed to delete recipe {RecipeId} metadata.",
+                recipeId);
+
+            try
+            {
+                _photoDeletionCoordinator.RestoreRecipeDeletion(batch);
+            }
+            catch (Exception restoreException)
+            {
+                _logger.LogError(
+                    restoreException,
+                    "Failed to restore photo content for recipe {RecipeId}.",
+                    recipeId);
+            }
+
+            return RecipeSaveResult.Fail(AppTexts.RecipeDeletionFailed);
+        }
+
+        try
+        {
+            _photoDeletionCoordinator.ConfirmRecipeDeletion(batch);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(
+                exception,
+                "Photo cleanup is pending for deleted recipe {RecipeId}.",
+                recipeId);
         }
 
         return RecipeSaveResult.Success(AppTexts.RecipeDeleted);
     }
 
     private int? CurrentUserId => _currentUserContext?.UserId;
+
+    private void DeleteRecipeFromRepository(int recipeId)
+    {
+        if (CurrentUserId.HasValue)
+        {
+            _recipeRepository.DeleteRecipeForUser(
+                recipeId,
+                CurrentUserId.Value);
+        }
+        else
+        {
+            _recipeRepository.DeleteRecipe(recipeId);
+        }
+    }
 
     private static void NormalizeSourceUrl(Recipe recipe)
     {

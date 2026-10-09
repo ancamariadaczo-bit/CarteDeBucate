@@ -103,6 +103,7 @@ public static class AppTexts
     public const string EnterRecipeIdToDelete = "Introdu ID-ul rețetei pe care vrei să o ștergi: ";
     public const string InvalidRecipeId = "ID invalid.";
     public const string RecipeDeleted = "Rețeta a fost ștearsă.";
+    public const string RecipeDeletionFailed = "Rețeta nu a putut fi ștearsă.";
     public const string RecipeNotFound = "Nu am găsit o rețetă cu acest ID.";
     public const string MenuViewRecipeDetails = "Vezi detalii rețetă";
     public const string EnterRecipeIdToView = "Introdu ID-ul rețetei pe care vrei să o vezi: ";

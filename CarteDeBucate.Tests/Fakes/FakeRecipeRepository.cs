@@ -39,6 +39,7 @@ public class FakeRecipeRepository : IRecipeRepository
 
     public bool SourceUrlExists { get; set; }
     public Exception? ExceptionToThrowOnAddRecipes { get; set; }
+    public Exception? ExceptionToThrowOnDeleteRecipe { get; set; }
 
     public List<Recipe> Recipes { get; set; } = new List<Recipe>();
 
@@ -232,6 +233,11 @@ public class FakeRecipeRepository : IRecipeRepository
         DeleteRecipeWasCalled = true;
         DeletedRecipeId = recipeId;
 
+        if (ExceptionToThrowOnDeleteRecipe is not null)
+        {
+            throw ExceptionToThrowOnDeleteRecipe;
+        }
+
         Recipe? existingRecipe = Recipes.FirstOrDefault(recipe => recipe.Id == recipeId);
 
         if (existingRecipe != null)
@@ -245,6 +251,11 @@ public class FakeRecipeRepository : IRecipeRepository
         DeleteRecipeForUserWasCalled = true;
         DeletedRecipeId = recipeId;
         UserIdPassedToDeleteRecipeForUser = userId;
+
+        if (ExceptionToThrowOnDeleteRecipe is not null)
+        {
+            throw ExceptionToThrowOnDeleteRecipe;
+        }
 
         Recipe? existingRecipe = Recipes.FirstOrDefault(recipe =>
             recipe.Id == recipeId &&

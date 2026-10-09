@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+
 public class RecipeLibraryServiceTests
 {
     [Fact]
@@ -770,6 +772,163 @@ public class RecipeLibraryServiceTests
         Assert.Single(repository.Recipes);
     }
 
+    [Fact]
+    public void DeleteRecipe_WithPhotoCoordinator_ShouldPrepareDeleteAndConfirmInGlobalContext()
+    {
+        Recipe recipe = CreateValidRecipe(userId: null);
+        recipe.Id = 12;
+        FakeRecipeRepository repository = new()
+        {
+            Recipes = [recipe]
+        };
+        FakeRecipePhotoDeletionCoordinator coordinator = new();
+        RecipeLibraryService service = new(
+            repository,
+            null,
+            coordinator,
+            new RecordingRecipeLibraryLogger());
+
+        RecipeSaveResult result = service.DeleteRecipe(recipe.Id);
+
+        Assert.True(result.IsSuccess);
+        Assert.True(coordinator.PrepareWasCalled);
+        Assert.Equal(recipe.Id, coordinator.PreparedRecipeId);
+        Assert.True(repository.DeleteRecipeWasCalled);
+        Assert.False(repository.DeleteRecipeForUserWasCalled);
+        Assert.True(coordinator.ConfirmWasCalled);
+        Assert.False(coordinator.RestoreWasCalled);
+        Assert.Same(
+            coordinator.PreparedBatch,
+            coordinator.ConfirmedBatch);
+    }
+
+    [Fact]
+    public void DeleteRecipe_WhenPhotoPreparationFails_ShouldNotDeleteRecipe()
+    {
+        Recipe recipe = CreateValidRecipe(userId: null);
+        recipe.Id = 12;
+        FakeRecipeRepository repository = new()
+        {
+            Recipes = [recipe]
+        };
+        FakeRecipePhotoDeletionCoordinator coordinator = new()
+        {
+            PrepareSucceeds = false
+        };
+        RecipeLibraryService service = new(
+            repository,
+            null,
+            coordinator,
+            new RecordingRecipeLibraryLogger());
+
+        RecipeSaveResult result = service.DeleteRecipe(recipe.Id);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(AppTexts.RecipeDeletionFailed, result.Message);
+        Assert.True(coordinator.PrepareWasCalled);
+        Assert.False(repository.DeleteRecipeWasCalled);
+        Assert.False(repository.DeleteRecipeForUserWasCalled);
+        Assert.False(coordinator.ConfirmWasCalled);
+        Assert.False(coordinator.RestoreWasCalled);
+    }
+
+    [Fact]
+    public void DeleteRecipe_WhenRepositoryThrows_ShouldRestorePreparedPhotos()
+    {
+        Recipe recipe = CreateValidRecipe(userId: null);
+        recipe.Id = 12;
+        FakeRecipeRepository repository = new()
+        {
+            Recipes = [recipe],
+            ExceptionToThrowOnDeleteRecipe =
+                new InvalidOperationException("database failed")
+        };
+        FakeRecipePhotoDeletionCoordinator coordinator = new();
+        RecordingRecipeLibraryLogger logger = new();
+        RecipeLibraryService service = new(
+            repository,
+            null,
+            coordinator,
+            logger);
+
+        RecipeSaveResult result = service.DeleteRecipe(recipe.Id);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(AppTexts.RecipeDeletionFailed, result.Message);
+        Assert.True(repository.DeleteRecipeWasCalled);
+        Assert.True(coordinator.RestoreWasCalled);
+        Assert.False(coordinator.ConfirmWasCalled);
+        Assert.Same(
+            coordinator.PreparedBatch,
+            coordinator.RestoredBatch);
+        Assert.Contains(LogLevel.Error, logger.Levels);
+    }
+
+    [Fact]
+    public void DeleteRecipe_WhenPhotoConfirmationThrows_ShouldKeepSuccessfulDeletion()
+    {
+        Recipe recipe = CreateValidRecipe(userId: null);
+        recipe.Id = 12;
+        FakeRecipeRepository repository = new()
+        {
+            Recipes = [recipe]
+        };
+        FakeRecipePhotoDeletionCoordinator coordinator = new()
+        {
+            ConfirmException = new IOException("cleanup failed")
+        };
+        RecordingRecipeLibraryLogger logger = new();
+        RecipeLibraryService service = new(
+            repository,
+            null,
+            coordinator,
+            logger);
+
+        RecipeSaveResult result = service.DeleteRecipe(recipe.Id);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(AppTexts.RecipeDeleted, result.Message);
+        Assert.True(repository.DeleteRecipeWasCalled);
+        Assert.True(coordinator.ConfirmWasCalled);
+        Assert.False(coordinator.RestoreWasCalled);
+        Assert.Contains(LogLevel.Warning, logger.Levels);
+    }
+
+    [Fact]
+    public void DeleteRecipe_WithPhotoCoordinatorAndAuthenticatedUser_ShouldUseFilteredDelete()
+    {
+        const int userId = 7;
+        Recipe recipe = CreateValidRecipe(userId);
+        recipe.Id = 12;
+        FakeRecipeRepository repository = new()
+        {
+            Recipes = [recipe]
+        };
+        CurrentUserContext currentUserContext = new();
+        currentUserContext.SetCurrentUser(new User
+        {
+            Id = userId,
+            Username = "ana"
+        });
+        FakeRecipePhotoDeletionCoordinator coordinator = new();
+        RecipeLibraryService service = new(
+            repository,
+            currentUserContext,
+            coordinator,
+            new RecordingRecipeLibraryLogger());
+
+        RecipeSaveResult result = service.DeleteRecipe(recipe.Id);
+
+        Assert.True(result.IsSuccess);
+        Assert.False(repository.DeleteRecipeWasCalled);
+        Assert.True(repository.DeleteRecipeForUserWasCalled);
+        Assert.Equal(
+            userId,
+            repository.UserIdPassedToDeleteRecipeForUser);
+        Assert.True(coordinator.PrepareWasCalled);
+        Assert.True(coordinator.ConfirmWasCalled);
+    }
+
     private static Recipe CreateValidRecipe(int? userId)
     {
         return new Recipe
@@ -789,5 +948,102 @@ public class RecipeLibraryServiceTests
                 "Bake for 30 minutes."
             }
         };
+    }
+
+    private sealed class FakeRecipePhotoDeletionCoordinator :
+        IRecipePhotoDeletionCoordinator
+    {
+        public bool PrepareSucceeds { get; set; } = true;
+
+        public Exception? ConfirmException { get; set; }
+
+        public bool PrepareWasCalled { get; private set; }
+
+        public bool ConfirmWasCalled { get; private set; }
+
+        public bool RestoreWasCalled { get; private set; }
+
+        public int? PreparedRecipeId { get; private set; }
+
+        public PreparedRecipePhotoDeletionBatch? PreparedBatch
+        {
+            get;
+            private set;
+        }
+
+        public PreparedRecipePhotoDeletionBatch? ConfirmedBatch
+        {
+            get;
+            private set;
+        }
+
+        public PreparedRecipePhotoDeletionBatch? RestoredBatch
+        {
+            get;
+            private set;
+        }
+
+        public PreparedRecipePhotoDeletionBatch? PrepareRecipeDeletion(
+            int recipeId)
+        {
+            PrepareWasCalled = true;
+            PreparedRecipeId = recipeId;
+
+            if (!PrepareSucceeds)
+            {
+                return null;
+            }
+
+            PreparedBatch = new PreparedRecipePhotoDeletionBatch(
+                recipeId,
+                []);
+            return PreparedBatch;
+        }
+
+        public void ConfirmRecipeDeletion(
+            PreparedRecipePhotoDeletionBatch batch)
+        {
+            ConfirmWasCalled = true;
+            ConfirmedBatch = batch;
+
+            if (ConfirmException is not null)
+            {
+                throw ConfirmException;
+            }
+        }
+
+        public void RestoreRecipeDeletion(
+            PreparedRecipePhotoDeletionBatch batch)
+        {
+            RestoreWasCalled = true;
+            RestoredBatch = batch;
+        }
+    }
+
+    private sealed class RecordingRecipeLibraryLogger :
+        ILogger<RecipeLibraryService>
+    {
+        public List<LogLevel> Levels { get; } = [];
+
+        public IDisposable? BeginScope<TState>(TState state)
+            where TState : notnull
+        {
+            return null;
+        }
+
+        public bool IsEnabled(LogLevel logLevel)
+        {
+            return true;
+        }
+
+        public void Log<TState>(
+            LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception? exception,
+            Func<TState, Exception?, string> formatter)
+        {
+            Levels.Add(logLevel);
+        }
     }
 }

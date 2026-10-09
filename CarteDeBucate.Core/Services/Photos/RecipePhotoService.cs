@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Logging;
 
-internal sealed class RecipePhotoService : IRecipePhotoService
+internal sealed class RecipePhotoService :
+    IRecipePhotoService,
+    IRecipePhotoDeletionCoordinator
 {
     private readonly IRecipePhotoStorage _storage;
     private readonly IRecipePhotoRepository _photoRepository;
@@ -566,6 +568,88 @@ internal sealed class RecipePhotoService : IRecipePhotoService
         return RecipePhotoResult.Success("The photo was deleted.");
     }
 
+    public PreparedRecipePhotoDeletionBatch? PrepareRecipeDeletion(
+        int recipeId)
+    {
+        List<StagedRecipePhotoDeletion> stagedDeletions = [];
+
+        try
+        {
+            Recipe? recipe = GetRecipeInCurrentContext(recipeId);
+
+            if (recipe is null)
+            {
+                return null;
+            }
+
+            List<RecipePhoto> photos =
+                GetPhotosInCurrentContext(recipeId);
+
+            foreach (RecipePhoto photo in photos)
+            {
+                StagedRecipePhotoDeletion? stagedDeletion =
+                    _storage.MoveToQuarantine(photo.StorageFileName);
+
+                if (stagedDeletion is null)
+                {
+                    _logger.LogWarning(
+                        "The content file for photo {PhotoId} was missing while preparing recipe {RecipeId} for deletion.",
+                        photo.Id,
+                        recipeId);
+                    continue;
+                }
+
+                stagedDeletions.Add(stagedDeletion);
+            }
+
+            return new PreparedRecipePhotoDeletionBatch(
+                recipeId,
+                stagedDeletions);
+        }
+        catch (Exception exception)
+        {
+            RestorePreparedDeletions(stagedDeletions, recipeId);
+            _logger.LogError(
+                exception,
+                "Failed to prepare photo content for recipe {RecipeId} deletion.",
+                recipeId);
+
+            return null;
+        }
+    }
+
+    public void ConfirmRecipeDeletion(
+        PreparedRecipePhotoDeletionBatch batch)
+    {
+        ArgumentNullException.ThrowIfNull(batch);
+
+        foreach (StagedRecipePhotoDeletion stagedDeletion
+            in batch.StagedDeletions)
+        {
+            try
+            {
+                _storage.DeleteFromQuarantine(stagedDeletion);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogWarning(
+                    exception,
+                    "Cleanup is pending for deleted recipe {RecipeId} photo content.",
+                    batch.RecipeId);
+            }
+        }
+    }
+
+    public void RestoreRecipeDeletion(
+        PreparedRecipePhotoDeletionBatch batch)
+    {
+        ArgumentNullException.ThrowIfNull(batch);
+
+        RestorePreparedDeletions(
+            batch.StagedDeletions,
+            batch.RecipeId);
+    }
+
     private static RecipePhotoResult? ValidateAddInput(
         int recipeId,
         Stream? content,
@@ -660,6 +744,27 @@ internal sealed class RecipePhotoService : IRecipePhotoService
                 exception,
                 "Failed to restore quarantined content for photo {PhotoId}.",
                 photoId);
+        }
+    }
+
+    private void RestorePreparedDeletions(
+        IEnumerable<StagedRecipePhotoDeletion> stagedDeletions,
+        int recipeId)
+    {
+        foreach (StagedRecipePhotoDeletion stagedDeletion
+            in stagedDeletions)
+        {
+            try
+            {
+                _storage.RestoreFromQuarantine(stagedDeletion);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogWarning(
+                    exception,
+                    "Failed to restore photo content while rolling back recipe {RecipeId} deletion.",
+                    recipeId);
+            }
         }
     }
 }
