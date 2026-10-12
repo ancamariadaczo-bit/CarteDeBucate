@@ -17,6 +17,7 @@ public class FakeRecipeRepository : IRecipeRepository
     public bool GetRecipeByIdAndUserIdWasCalled { get; private set; }
     public bool RecipeExistsBySourceUrlWasCalled { get; private set; }
     public bool RecipeExistsBySourceUrlForUserWasCalled { get; private set; }
+    public bool GetAllRecipesWasCalled { get; private set; }
 
     public Recipe? AddedRecipe { get; private set; }
     public IReadOnlyList<Recipe>? AddedRecipes { get; private set; }
@@ -40,6 +41,7 @@ public class FakeRecipeRepository : IRecipeRepository
     public bool SourceUrlExists { get; set; }
     public Exception? ExceptionToThrowOnAddRecipes { get; set; }
     public Exception? ExceptionToThrowOnDeleteRecipe { get; set; }
+    public Exception? ExceptionToThrowOnGetAllRecipes { get; set; }
 
     public List<Recipe> Recipes { get; set; } = new List<Recipe>();
 
@@ -54,6 +56,13 @@ public class FakeRecipeRepository : IRecipeRepository
 
     public List<Recipe> GetAllRecipes()
     {
+        GetAllRecipesWasCalled = true;
+
+        if (ExceptionToThrowOnGetAllRecipes is not null)
+        {
+            throw ExceptionToThrowOnGetAllRecipes;
+        }
+
         return Recipes;
     }
 
