@@ -7,11 +7,7 @@ public class RecipeLibraryServiceTests
     {
         FakeRecipeRepository repository = new FakeRecipeRepository
         {
-            Recipes = new List<Recipe>
-            {
-                CreateValidRecipe(userId: 7),
-                CreateValidRecipe(userId: 9)
-            }
+            Recipes = new List<Recipe> { CreateValidRecipe(userId: 7), CreateValidRecipe(userId: 9) },
         };
 
         RecipeLibraryService service = new RecipeLibraryService(repository);
@@ -28,19 +24,13 @@ public class RecipeLibraryServiceTests
     {
         FakeRecipeRepository repository = new FakeRecipeRepository
         {
-            Recipes = new List<Recipe>
-            {
-                CreateValidRecipe(userId: 7),
-                CreateValidRecipe(userId: 9)
-            }
+            Recipes = new List<Recipe> { CreateValidRecipe(userId: 7), CreateValidRecipe(userId: 9) },
         };
 
         CurrentUserContext currentUserContext = new CurrentUserContext();
         currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
 
-        RecipeLibraryService service = new RecipeLibraryService(
-            repository,
-            currentUserContext);
+        RecipeLibraryService service = new RecipeLibraryService(repository, currentUserContext);
 
         List<RecipeSummary> recipes = service.GetRecipeSummaries();
 
@@ -55,11 +45,7 @@ public class RecipeLibraryServiceTests
     {
         FakeRecipeRepository repository = new FakeRecipeRepository
         {
-            Recipes = new List<Recipe>
-            {
-                CreateValidRecipe(userId: 7),
-                CreateValidRecipe(userId: 9)
-            }
+            Recipes = new List<Recipe> { CreateValidRecipe(userId: 7), CreateValidRecipe(userId: 9) },
         };
 
         RecipeLibraryService service = new RecipeLibraryService(repository);
@@ -79,11 +65,7 @@ public class RecipeLibraryServiceTests
     {
         FakeRecipeRepository repository = new FakeRecipeRepository
         {
-            Recipes = new List<Recipe>
-            {
-                CreateValidRecipe(userId: 7),
-                CreateValidRecipe(userId: 9)
-            }
+            Recipes = new List<Recipe> { CreateValidRecipe(userId: 7), CreateValidRecipe(userId: 9) },
         };
 
         CurrentUserContext currentUserContext = new CurrentUserContext();
@@ -104,7 +86,7 @@ public class RecipeLibraryServiceTests
     {
         FakeRecipeRepository repository = new FakeRecipeRepository
         {
-            Recipes = new List<Recipe> { CreateValidRecipe(userId: null) }
+            Recipes = new List<Recipe> { CreateValidRecipe(userId: null) },
         };
 
         RecipeLibraryService service = new RecipeLibraryService(repository);
@@ -121,19 +103,13 @@ public class RecipeLibraryServiceTests
     {
         FakeRecipeRepository repository = new FakeRecipeRepository
         {
-            Recipes = new List<Recipe>
-            {
-                CreateValidRecipe(userId: 7),
-                CreateValidRecipe(userId: 9)
-            }
+            Recipes = new List<Recipe> { CreateValidRecipe(userId: 7), CreateValidRecipe(userId: 9) },
         };
 
         CurrentUserContext currentUserContext = new CurrentUserContext();
         currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
 
-        RecipeLibraryService service = new RecipeLibraryService(
-            repository,
-            currentUserContext);
+        RecipeLibraryService service = new RecipeLibraryService(repository, currentUserContext);
 
         bool hasRecipes = service.HasRecipesInCurrentContext();
 
@@ -164,7 +140,7 @@ public class RecipeLibraryServiceTests
 
         FakeRecipeRepository repository = new FakeRecipeRepository
         {
-            Recipes = new List<Recipe> { expectedRecipe }
+            Recipes = new List<Recipe> { expectedRecipe },
         };
 
         RecipeLibraryService service = new RecipeLibraryService(repository);
@@ -184,19 +160,13 @@ public class RecipeLibraryServiceTests
 
         FakeRecipeRepository repository = new FakeRecipeRepository
         {
-            Recipes = new List<Recipe>
-            {
-                expectedRecipe,
-                CreateValidRecipe(userId: 9)
-            }
+            Recipes = new List<Recipe> { expectedRecipe, CreateValidRecipe(userId: 9) },
         };
 
         CurrentUserContext currentUserContext = new CurrentUserContext();
         currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
 
-        RecipeLibraryService service = new RecipeLibraryService(
-            repository,
-            currentUserContext);
+        RecipeLibraryService service = new RecipeLibraryService(repository, currentUserContext);
 
         Recipe? recipe = service.GetRecipeById(expectedRecipe.Id);
 
@@ -213,15 +183,13 @@ public class RecipeLibraryServiceTests
 
         FakeRecipeRepository repository = new FakeRecipeRepository
         {
-            Recipes = new List<Recipe> { otherUserRecipe }
+            Recipes = new List<Recipe> { otherUserRecipe },
         };
 
         CurrentUserContext currentUserContext = new CurrentUserContext();
         currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
 
-        RecipeLibraryService service = new RecipeLibraryService(
-            repository,
-            currentUserContext);
+        RecipeLibraryService service = new RecipeLibraryService(repository, currentUserContext);
 
         Recipe? recipe = service.GetRecipeById(otherUserRecipe.Id);
 
@@ -235,7 +203,7 @@ public class RecipeLibraryServiceTests
     {
         FakeRecipeRepository repository = new FakeRecipeRepository
         {
-            Recipes = new List<Recipe> { CreateValidRecipe(userId: null) }
+            Recipes = new List<Recipe> { CreateValidRecipe(userId: null) },
         };
 
         RecipeLibraryService service = new RecipeLibraryService(repository);
@@ -251,19 +219,13 @@ public class RecipeLibraryServiceTests
     {
         FakeRecipeRepository repository = new FakeRecipeRepository
         {
-            Recipes = new List<Recipe>
-            {
-                CreateValidRecipe(userId: 7),
-                CreateValidRecipe(userId: 9)
-            }
+            Recipes = new List<Recipe> { CreateValidRecipe(userId: 7), CreateValidRecipe(userId: 9) },
         };
 
         CurrentUserContext currentUserContext = new CurrentUserContext();
         currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
 
-        RecipeLibraryService service = new RecipeLibraryService(
-            repository,
-            currentUserContext);
+        RecipeLibraryService service = new RecipeLibraryService(repository, currentUserContext);
 
         List<RecipeSummary> recipes = service.SearchRecipes("banana");
 
@@ -277,7 +239,7 @@ public class RecipeLibraryServiceTests
     {
         FakeRecipeRepository repository = new FakeRecipeRepository
         {
-            Recipes = new List<Recipe> { CreateValidRecipe(userId: null) }
+            Recipes = new List<Recipe> { CreateValidRecipe(userId: null) },
         };
 
         RecipeLibraryService service = new RecipeLibraryService(repository);
@@ -293,11 +255,7 @@ public class RecipeLibraryServiceTests
     {
         FakeRecipeRepository repository = new FakeRecipeRepository
         {
-            Recipes = new List<Recipe>
-            {
-                CreateValidRecipe(userId: 7),
-                CreateValidRecipe(userId: 9)
-            }
+            Recipes = new List<Recipe> { CreateValidRecipe(userId: 7), CreateValidRecipe(userId: 9) },
         };
 
         CurrentUserContext currentUserContext = new CurrentUserContext();
@@ -330,10 +288,7 @@ public class RecipeLibraryServiceTests
     [Fact]
     public void RecipeExistsBySourceUrl_WhenUrlExistsInGlobalContext_ShouldReturnTrue()
     {
-        FakeRecipeRepository repository = new FakeRecipeRepository
-        {
-            SourceUrlExists = true
-        };
+        FakeRecipeRepository repository = new FakeRecipeRepository { SourceUrlExists = true };
         RecipeLibraryService service = new RecipeLibraryService(repository);
 
         bool exists = service.RecipeExistsBySourceUrl("https://example.com/banana-bread");
@@ -358,19 +313,13 @@ public class RecipeLibraryServiceTests
     [Fact]
     public void RecipeExistsBySourceUrl_WithExteriorWhitespace_ShouldNormalizeUrl()
     {
-        FakeRecipeRepository repository = new FakeRecipeRepository
-        {
-            SourceUrlExists = true
-        };
+        FakeRecipeRepository repository = new FakeRecipeRepository { SourceUrlExists = true };
         RecipeLibraryService service = new RecipeLibraryService(repository);
 
-        bool exists = service.RecipeExistsBySourceUrl(
-            "  https://example.com/banana-bread  ");
+        bool exists = service.RecipeExistsBySourceUrl("  https://example.com/banana-bread  ");
 
         Assert.True(exists);
-        Assert.Equal(
-            "https://example.com/banana-bread",
-            repository.SourceUrlPassedToRecipeExists);
+        Assert.Equal("https://example.com/banana-bread", repository.SourceUrlPassedToRecipeExists);
     }
 
     [Theory]
@@ -378,7 +327,8 @@ public class RecipeLibraryServiceTests
     [InlineData("")]
     [InlineData("   ")]
     public void RecipeExistsBySourceUrl_WithMissingUrl_ShouldReturnFalseWithoutCallingRepository(
-        string? sourceUrl)
+        string? sourceUrl
+    )
     {
         FakeRecipeRepository repository = new FakeRecipeRepository();
         RecipeLibraryService service = new RecipeLibraryService(repository);
@@ -393,15 +343,10 @@ public class RecipeLibraryServiceTests
     [Fact]
     public void RecipeExistsBySourceUrl_WhenUserIsLoggedIn_ShouldUseOnlyCurrentUserCheck()
     {
-        FakeRecipeRepository repository = new FakeRecipeRepository
-        {
-            SourceUrlExists = true
-        };
+        FakeRecipeRepository repository = new FakeRecipeRepository { SourceUrlExists = true };
         CurrentUserContext currentUserContext = new CurrentUserContext();
         currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
-        RecipeLibraryService service = new RecipeLibraryService(
-            repository,
-            currentUserContext);
+        RecipeLibraryService service = new RecipeLibraryService(repository, currentUserContext);
 
         bool exists = service.RecipeExistsBySourceUrl("https://example.com/banana-bread");
 
@@ -416,16 +361,11 @@ public class RecipeLibraryServiceTests
     {
         FakeRecipeRepository repository = new FakeRecipeRepository
         {
-            Recipes = new List<Recipe>
-            {
-                CreateValidRecipe(userId: 9)
-            }
+            Recipes = new List<Recipe> { CreateValidRecipe(userId: 9) },
         };
         CurrentUserContext currentUserContext = new CurrentUserContext();
         currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
-        RecipeLibraryService service = new RecipeLibraryService(
-            repository,
-            currentUserContext);
+        RecipeLibraryService service = new RecipeLibraryService(repository, currentUserContext);
 
         bool exists = service.RecipeExistsBySourceUrl("https://example.com/banana-bread");
 
@@ -470,8 +410,7 @@ public class RecipeLibraryServiceTests
     [InlineData("ftp://example.com/recipe")]
     [InlineData("/recipe/relative")]
     [InlineData("not a url")]
-    public void SaveRecipe_WithInvalidSourceUrl_ShouldNotCallRepository(
-        string sourceUrl)
+    public void SaveRecipe_WithInvalidSourceUrl_ShouldNotCallRepository(string sourceUrl)
     {
         FakeRecipeRepository repository = new FakeRecipeRepository();
         RecipeLibraryService service = new RecipeLibraryService(repository);
@@ -496,21 +435,14 @@ public class RecipeLibraryServiceTests
         RecipeSaveResult result = service.SaveRecipe(recipe);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(
-            "https://example.com/banana-bread",
-            repository.SourceUrlPassedToRecipeExists);
-        Assert.Equal(
-            "https://example.com/banana-bread",
-            repository.AddedRecipe?.SourceUrl);
+        Assert.Equal("https://example.com/banana-bread", repository.SourceUrlPassedToRecipeExists);
+        Assert.Equal("https://example.com/banana-bread", repository.AddedRecipe?.SourceUrl);
     }
 
     [Fact]
     public void SaveRecipe_WithExistingSourceUrl_ShouldNotSaveRecipe()
     {
-        FakeRecipeRepository repository = new FakeRecipeRepository
-        {
-            SourceUrlExists = true
-        };
+        FakeRecipeRepository repository = new FakeRecipeRepository { SourceUrlExists = true };
 
         RecipeLibraryService service = new RecipeLibraryService(repository);
 
@@ -530,9 +462,7 @@ public class RecipeLibraryServiceTests
         CurrentUserContext currentUserContext = new CurrentUserContext();
         currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
 
-        RecipeLibraryService service = new RecipeLibraryService(
-            repository,
-            currentUserContext);
+        RecipeLibraryService service = new RecipeLibraryService(repository, currentUserContext);
 
         Recipe recipe = CreateValidRecipe(userId: null);
 
@@ -567,7 +497,7 @@ public class RecipeLibraryServiceTests
 
         FakeRecipeRepository repository = new FakeRecipeRepository
         {
-            Recipes = new List<Recipe> { recipe }
+            Recipes = new List<Recipe> { recipe },
         };
 
         RecipeLibraryService service = new RecipeLibraryService(repository);
@@ -590,7 +520,7 @@ public class RecipeLibraryServiceTests
 
         FakeRecipeRepository repository = new FakeRecipeRepository
         {
-            Recipes = new List<Recipe> { recipe }
+            Recipes = new List<Recipe> { recipe },
         };
 
         RecipeLibraryService service = new RecipeLibraryService(repository);
@@ -616,15 +546,13 @@ public class RecipeLibraryServiceTests
 
         FakeRecipeRepository repository = new FakeRecipeRepository
         {
-            Recipes = new List<Recipe> { recipe }
+            Recipes = new List<Recipe> { recipe },
         };
 
         CurrentUserContext currentUserContext = new CurrentUserContext();
         currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
 
-        RecipeLibraryService service = new RecipeLibraryService(
-            repository,
-            currentUserContext);
+        RecipeLibraryService service = new RecipeLibraryService(repository, currentUserContext);
 
         Recipe updatedRecipe = CreateValidRecipe(userId: null);
         updatedRecipe.Id = recipe.Id;
@@ -647,15 +575,13 @@ public class RecipeLibraryServiceTests
 
         FakeRecipeRepository repository = new FakeRecipeRepository
         {
-            Recipes = new List<Recipe> { otherUserRecipe }
+            Recipes = new List<Recipe> { otherUserRecipe },
         };
 
         CurrentUserContext currentUserContext = new CurrentUserContext();
         currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
 
-        RecipeLibraryService service = new RecipeLibraryService(
-            repository,
-            currentUserContext);
+        RecipeLibraryService service = new RecipeLibraryService(repository, currentUserContext);
 
         Recipe recipe = CreateValidRecipe(userId: 7);
         recipe.Id = otherUserRecipe.Id;
@@ -703,7 +629,7 @@ public class RecipeLibraryServiceTests
 
         FakeRecipeRepository repository = new FakeRecipeRepository
         {
-            Recipes = new List<Recipe> { recipe }
+            Recipes = new List<Recipe> { recipe },
         };
 
         RecipeLibraryService service = new RecipeLibraryService(repository);
@@ -726,15 +652,13 @@ public class RecipeLibraryServiceTests
 
         FakeRecipeRepository repository = new FakeRecipeRepository
         {
-            Recipes = new List<Recipe> { recipe }
+            Recipes = new List<Recipe> { recipe },
         };
 
         CurrentUserContext currentUserContext = new CurrentUserContext();
         currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
 
-        RecipeLibraryService service = new RecipeLibraryService(
-            repository,
-            currentUserContext);
+        RecipeLibraryService service = new RecipeLibraryService(repository, currentUserContext);
 
         RecipeSaveResult result = service.DeleteRecipe(recipe.Id);
 
@@ -754,15 +678,13 @@ public class RecipeLibraryServiceTests
 
         FakeRecipeRepository repository = new FakeRecipeRepository
         {
-            Recipes = new List<Recipe> { otherUserRecipe }
+            Recipes = new List<Recipe> { otherUserRecipe },
         };
 
         CurrentUserContext currentUserContext = new CurrentUserContext();
         currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
 
-        RecipeLibraryService service = new RecipeLibraryService(
-            repository,
-            currentUserContext);
+        RecipeLibraryService service = new RecipeLibraryService(repository, currentUserContext);
 
         RecipeSaveResult result = service.DeleteRecipe(otherUserRecipe.Id);
 
@@ -777,16 +699,14 @@ public class RecipeLibraryServiceTests
     {
         Recipe recipe = CreateValidRecipe(userId: null);
         recipe.Id = 12;
-        FakeRecipeRepository repository = new()
-        {
-            Recipes = [recipe]
-        };
+        FakeRecipeRepository repository = new() { Recipes = [recipe] };
         FakeRecipePhotoDeletionCoordinator coordinator = new();
         RecipeLibraryService service = new(
             repository,
             null,
             coordinator,
-            new RecordingRecipeLibraryLogger());
+            new RecordingRecipeLibraryLogger()
+        );
 
         RecipeSaveResult result = service.DeleteRecipe(recipe.Id);
 
@@ -797,9 +717,7 @@ public class RecipeLibraryServiceTests
         Assert.False(repository.DeleteRecipeForUserWasCalled);
         Assert.True(coordinator.ConfirmWasCalled);
         Assert.False(coordinator.RestoreWasCalled);
-        Assert.Same(
-            coordinator.PreparedBatch,
-            coordinator.ConfirmedBatch);
+        Assert.Same(coordinator.PreparedBatch, coordinator.ConfirmedBatch);
     }
 
     [Fact]
@@ -807,19 +725,14 @@ public class RecipeLibraryServiceTests
     {
         Recipe recipe = CreateValidRecipe(userId: null);
         recipe.Id = 12;
-        FakeRecipeRepository repository = new()
-        {
-            Recipes = [recipe]
-        };
-        FakeRecipePhotoDeletionCoordinator coordinator = new()
-        {
-            PrepareSucceeds = false
-        };
+        FakeRecipeRepository repository = new() { Recipes = [recipe] };
+        FakeRecipePhotoDeletionCoordinator coordinator = new() { PrepareSucceeds = false };
         RecipeLibraryService service = new(
             repository,
             null,
             coordinator,
-            new RecordingRecipeLibraryLogger());
+            new RecordingRecipeLibraryLogger()
+        );
 
         RecipeSaveResult result = service.DeleteRecipe(recipe.Id);
 
@@ -840,16 +753,11 @@ public class RecipeLibraryServiceTests
         FakeRecipeRepository repository = new()
         {
             Recipes = [recipe],
-            ExceptionToThrowOnDeleteRecipe =
-                new InvalidOperationException("database failed")
+            ExceptionToThrowOnDeleteRecipe = new InvalidOperationException("database failed"),
         };
         FakeRecipePhotoDeletionCoordinator coordinator = new();
         RecordingRecipeLibraryLogger logger = new();
-        RecipeLibraryService service = new(
-            repository,
-            null,
-            coordinator,
-            logger);
+        RecipeLibraryService service = new(repository, null, coordinator, logger);
 
         RecipeSaveResult result = service.DeleteRecipe(recipe.Id);
 
@@ -858,9 +766,7 @@ public class RecipeLibraryServiceTests
         Assert.True(repository.DeleteRecipeWasCalled);
         Assert.True(coordinator.RestoreWasCalled);
         Assert.False(coordinator.ConfirmWasCalled);
-        Assert.Same(
-            coordinator.PreparedBatch,
-            coordinator.RestoredBatch);
+        Assert.Same(coordinator.PreparedBatch, coordinator.RestoredBatch);
         Assert.Contains(LogLevel.Error, logger.Levels);
     }
 
@@ -869,20 +775,13 @@ public class RecipeLibraryServiceTests
     {
         Recipe recipe = CreateValidRecipe(userId: null);
         recipe.Id = 12;
-        FakeRecipeRepository repository = new()
-        {
-            Recipes = [recipe]
-        };
+        FakeRecipeRepository repository = new() { Recipes = [recipe] };
         FakeRecipePhotoDeletionCoordinator coordinator = new()
         {
-            ConfirmException = new IOException("cleanup failed")
+            ConfirmException = new IOException("cleanup failed"),
         };
         RecordingRecipeLibraryLogger logger = new();
-        RecipeLibraryService service = new(
-            repository,
-            null,
-            coordinator,
-            logger);
+        RecipeLibraryService service = new(repository, null, coordinator, logger);
 
         RecipeSaveResult result = service.DeleteRecipe(recipe.Id);
 
@@ -900,31 +799,23 @@ public class RecipeLibraryServiceTests
         const int userId = 7;
         Recipe recipe = CreateValidRecipe(userId);
         recipe.Id = 12;
-        FakeRecipeRepository repository = new()
-        {
-            Recipes = [recipe]
-        };
+        FakeRecipeRepository repository = new() { Recipes = [recipe] };
         CurrentUserContext currentUserContext = new();
-        currentUserContext.SetCurrentUser(new User
-        {
-            Id = userId,
-            Username = "ana"
-        });
+        currentUserContext.SetCurrentUser(new User { Id = userId, Username = "ana" });
         FakeRecipePhotoDeletionCoordinator coordinator = new();
         RecipeLibraryService service = new(
             repository,
             currentUserContext,
             coordinator,
-            new RecordingRecipeLibraryLogger());
+            new RecordingRecipeLibraryLogger()
+        );
 
         RecipeSaveResult result = service.DeleteRecipe(recipe.Id);
 
         Assert.True(result.IsSuccess);
         Assert.False(repository.DeleteRecipeWasCalled);
         Assert.True(repository.DeleteRecipeForUserWasCalled);
-        Assert.Equal(
-            userId,
-            repository.UserIdPassedToDeleteRecipeForUser);
+        Assert.Equal(userId, repository.UserIdPassedToDeleteRecipeForUser);
         Assert.True(coordinator.PrepareWasCalled);
         Assert.True(coordinator.ConfirmWasCalled);
     }
@@ -937,21 +828,12 @@ public class RecipeLibraryServiceTests
             SourceUrl = "https://example.com/banana-bread",
             SavedAt = new DateTime(2026, 1, 1),
             UserId = userId,
-            Ingredients = new List<string>
-            {
-                "2 bananas",
-                "2 eggs"
-            },
-            Steps = new List<string>
-            {
-                "Mix ingredients.",
-                "Bake for 30 minutes."
-            }
+            Ingredients = new List<string> { "2 bananas", "2 eggs" },
+            Steps = new List<string> { "Mix ingredients.", "Bake for 30 minutes." },
         };
     }
 
-    private sealed class FakeRecipePhotoDeletionCoordinator :
-        IRecipePhotoDeletionCoordinator
+    private sealed class FakeRecipePhotoDeletionCoordinator : IRecipePhotoDeletionCoordinator
     {
         public bool PrepareSucceeds { get; set; } = true;
 
@@ -965,26 +847,13 @@ public class RecipeLibraryServiceTests
 
         public int? PreparedRecipeId { get; private set; }
 
-        public PreparedRecipePhotoDeletionBatch? PreparedBatch
-        {
-            get;
-            private set;
-        }
+        public PreparedRecipePhotoDeletionBatch? PreparedBatch { get; private set; }
 
-        public PreparedRecipePhotoDeletionBatch? ConfirmedBatch
-        {
-            get;
-            private set;
-        }
+        public PreparedRecipePhotoDeletionBatch? ConfirmedBatch { get; private set; }
 
-        public PreparedRecipePhotoDeletionBatch? RestoredBatch
-        {
-            get;
-            private set;
-        }
+        public PreparedRecipePhotoDeletionBatch? RestoredBatch { get; private set; }
 
-        public PreparedRecipePhotoDeletionBatch? PrepareRecipeDeletion(
-            int recipeId)
+        public PreparedRecipePhotoDeletionBatch? PrepareRecipeDeletion(int recipeId)
         {
             PrepareWasCalled = true;
             PreparedRecipeId = recipeId;
@@ -994,14 +863,11 @@ public class RecipeLibraryServiceTests
                 return null;
             }
 
-            PreparedBatch = new PreparedRecipePhotoDeletionBatch(
-                recipeId,
-                []);
+            PreparedBatch = new PreparedRecipePhotoDeletionBatch(recipeId, []);
             return PreparedBatch;
         }
 
-        public void ConfirmRecipeDeletion(
-            PreparedRecipePhotoDeletionBatch batch)
+        public void ConfirmRecipeDeletion(PreparedRecipePhotoDeletionBatch batch)
         {
             ConfirmWasCalled = true;
             ConfirmedBatch = batch;
@@ -1012,16 +878,14 @@ public class RecipeLibraryServiceTests
             }
         }
 
-        public void RestoreRecipeDeletion(
-            PreparedRecipePhotoDeletionBatch batch)
+        public void RestoreRecipeDeletion(PreparedRecipePhotoDeletionBatch batch)
         {
             RestoreWasCalled = true;
             RestoredBatch = batch;
         }
     }
 
-    private sealed class RecordingRecipeLibraryLogger :
-        ILogger<RecipeLibraryService>
+    private sealed class RecordingRecipeLibraryLogger : ILogger<RecipeLibraryService>
     {
         public List<LogLevel> Levels { get; } = [];
 
@@ -1041,7 +905,8 @@ public class RecipeLibraryServiceTests
             EventId eventId,
             TState state,
             Exception? exception,
-            Func<TState, Exception?, string> formatter)
+            Func<TState, Exception?, string> formatter
+        )
         {
             Levels.Add(logLevel);
         }

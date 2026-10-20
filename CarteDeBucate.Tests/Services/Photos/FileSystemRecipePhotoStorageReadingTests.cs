@@ -1,16 +1,13 @@
 public sealed class FileSystemRecipePhotoStorageReadingTests : IDisposable
 {
-    private const string MissingStorageFileName =
-        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg";
+    private const string MissingStorageFileName = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg";
 
     private readonly string _rootPath;
     private readonly FileSystemRecipePhotoStorage _storage;
 
     public FileSystemRecipePhotoStorageReadingTests()
     {
-        _rootPath = Path.Combine(
-            Path.GetTempPath(),
-            $"recipe-photo-reading-tests-{Guid.NewGuid():N}");
+        _rootPath = Path.Combine(Path.GetTempPath(), $"recipe-photo-reading-tests-{Guid.NewGuid():N}");
         _storage = new FileSystemRecipePhotoStorage(_rootPath);
     }
 
@@ -18,8 +15,7 @@ public sealed class FileSystemRecipePhotoStorageReadingTests : IDisposable
     public async Task OpenFinalFile_WhenFileExists_ShouldReturnCompleteContent()
     {
         byte[] expectedContent = [1, 2, 3, 4];
-        string storageFileName = await CreateFinalFileAsync(
-            expectedContent);
+        string storageFileName = await CreateFinalFileAsync(expectedContent);
 
         Stream? openedContent = _storage.OpenFinalFile(storageFileName);
         Assert.NotNull(openedContent);
@@ -61,10 +57,8 @@ public sealed class FileSystemRecipePhotoStorageReadingTests : IDisposable
     {
         const string invalidStorageFileName = "../outside.jpg";
 
-        Assert.Throws<ArgumentException>(() =>
-            _storage.OpenFinalFile(invalidStorageFileName));
-        Assert.Throws<ArgumentException>(() =>
-            _storage.FinalFileExists(invalidStorageFileName));
+        Assert.Throws<ArgumentException>(() => _storage.OpenFinalFile(invalidStorageFileName));
+        Assert.Throws<ArgumentException>(() => _storage.FinalFileExists(invalidStorageFileName));
     }
 
     public void Dispose()
@@ -80,10 +74,9 @@ public sealed class FileSystemRecipePhotoStorageReadingTests : IDisposable
         using MemoryStream source = new(content);
         StagedRecipePhotoUpload upload = await _storage.StageUploadAsync(
             source,
-            maximumBytes: content.Length);
+            maximumBytes: content.Length
+        );
 
-        return _storage.FinalizeUpload(
-            upload,
-            RecipePhotoFormat.Jpeg);
+        return _storage.FinalizeUpload(upload, RecipePhotoFormat.Jpeg);
     }
 }

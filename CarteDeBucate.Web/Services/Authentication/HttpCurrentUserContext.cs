@@ -9,9 +9,7 @@ public class HttpCurrentUserContext : ICurrentUserContext
     private readonly WebAppSettings _settings;
     private User? _currentRequestUser;
 
-    public HttpCurrentUserContext(
-        IHttpContextAccessor httpContextAccessor,
-        WebAppSettings settings)
+    public HttpCurrentUserContext(IHttpContextAccessor httpContextAccessor, WebAppSettings settings)
     {
         _httpContextAccessor = httpContextAccessor;
         _settings = settings;
@@ -19,8 +17,10 @@ public class HttpCurrentUserContext : ICurrentUserContext
 
     public bool IsAuthenticated =>
         _settings.AuthenticationEnabled
-            && (_httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated == true
-                || _currentRequestUser is not null);
+        && (
+            _httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated == true
+            || _currentRequestUser is not null
+        );
 
     public int? UserId
     {
@@ -31,8 +31,9 @@ public class HttpCurrentUserContext : ICurrentUserContext
                 return null;
             }
 
-            string? userIdClaim = _httpContextAccessor.HttpContext?.User
-                .FindFirstValue(ClaimTypes.NameIdentifier);
+            string? userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirstValue(
+                ClaimTypes.NameIdentifier
+            );
 
             if (int.TryParse(userIdClaim, out int userId))
             {

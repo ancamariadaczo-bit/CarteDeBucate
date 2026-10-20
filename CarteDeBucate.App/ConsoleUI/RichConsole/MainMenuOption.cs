@@ -9,5 +9,5 @@ public enum MainMenuOption
     DeleteRecipe,
     ExportBackup,
     ImportBackup,
-    Exit
+    Exit,
 }

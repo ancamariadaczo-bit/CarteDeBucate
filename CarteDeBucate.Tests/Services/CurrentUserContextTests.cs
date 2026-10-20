@@ -15,11 +15,7 @@ public class CurrentUserContextTests
     {
         CurrentUserContext context = new CurrentUserContext();
 
-        context.SetCurrentUser(new User
-        {
-            Id = 12,
-            Username = "anca"
-        });
+        context.SetCurrentUser(new User { Id = 12, Username = "anca" });
 
         Assert.True(context.IsAuthenticated);
         Assert.Equal(12, context.UserId);
@@ -30,11 +26,7 @@ public class CurrentUserContextTests
     public void Clear_ShouldRemoveCurrentUser()
     {
         CurrentUserContext context = new CurrentUserContext();
-        context.SetCurrentUser(new User
-        {
-            Id = 12,
-            Username = "anca"
-        });
+        context.SetCurrentUser(new User { Id = 12, Username = "anca" });
 
         context.Clear();
 

@@ -6,11 +6,12 @@ public class RecipeBackupService : IRecipeBackupService
     private readonly ICurrentUserContext? _currentUserContext;
 
     public RecipeBackupService(IRecipeRepository recipeRepository)
-        : this(recipeRepository, null)
-    {
-    }
+        : this(recipeRepository, null) { }
 
-    public RecipeBackupService(IRecipeRepository recipeRepository, ICurrentUserContext? currentUserContext)
+    public RecipeBackupService(
+        IRecipeRepository recipeRepository,
+        ICurrentUserContext? currentUserContext
+    )
     {
         _recipeRepository = recipeRepository;
         _currentUserContext = currentUserContext;
@@ -22,13 +23,15 @@ public class RecipeBackupService : IRecipeBackupService
         {
             string? directoryPath = Path.GetDirectoryName(backupFilePath);
 
-            if (string.IsNullOrWhiteSpace(backupFilePath) ||
-                (!string.IsNullOrWhiteSpace(directoryPath) && !Directory.Exists(directoryPath)))
+            if (
+                string.IsNullOrWhiteSpace(backupFilePath)
+                || (!string.IsNullOrWhiteSpace(directoryPath) && !Directory.Exists(directoryPath))
+            )
             {
                 return new RecipeBackupResult
                 {
                     IsSuccess = false,
-                    Message = AppTexts.InvalidBackupFile
+                    Message = AppTexts.InvalidBackupFile,
                 };
             }
 
@@ -39,7 +42,7 @@ public class RecipeBackupService : IRecipeBackupService
                 {
                     IsSuccess = false,
                     Message = exportResult.Message,
-                    ExportedCount = exportResult.ExportedCount
+                    ExportedCount = exportResult.ExportedCount,
                 };
             }
 
@@ -49,7 +52,7 @@ public class RecipeBackupService : IRecipeBackupService
             {
                 IsSuccess = true,
                 Message = exportResult.Message,
-                ExportedCount = exportResult.ExportedCount
+                ExportedCount = exportResult.ExportedCount,
             };
         }
         catch (Exception exception)
@@ -57,7 +60,7 @@ public class RecipeBackupService : IRecipeBackupService
             return new RecipeBackupResult
             {
                 IsSuccess = false,
-                Message = string.Format(AppTexts.BackupExportFailed, exception.Message)
+                Message = string.Format(AppTexts.BackupExportFailed, exception.Message),
             };
         }
     }
@@ -70,18 +73,16 @@ public class RecipeBackupService : IRecipeBackupService
             RecipeBackupDocument backupDocument = new RecipeBackupDocument
             {
                 ExportedAtUtc = DateTime.UtcNow,
-                Recipes = recipes.Select(RecipeBackupMapper.ToBackupItem).ToList()
+                Recipes = recipes.Select(RecipeBackupMapper.ToBackupItem).ToList(),
             };
-            string json = JsonSerializer.Serialize(
-                backupDocument,
-                RecipeBackupJson.SerializerOptions);
+            string json = JsonSerializer.Serialize(backupDocument, RecipeBackupJson.SerializerOptions);
 
             return new RecipeBackupExportResult
             {
                 IsSuccess = true,
                 Message = string.Format(AppTexts.BackupExportCompleted, recipes.Count),
                 ExportedCount = recipes.Count,
-                Json = json
+                Json = json,
             };
         }
         catch (Exception exception)
@@ -89,7 +90,7 @@ public class RecipeBackupService : IRecipeBackupService
             return new RecipeBackupExportResult
             {
                 IsSuccess = false,
-                Message = string.Format(AppTexts.BackupExportFailed, exception.Message)
+                Message = string.Format(AppTexts.BackupExportFailed, exception.Message),
             };
         }
     }
@@ -103,7 +104,7 @@ public class RecipeBackupService : IRecipeBackupService
                 return new RecipeBackupResult
                 {
                     IsSuccess = false,
-                    Message = AppTexts.BackupFileNotFound
+                    Message = AppTexts.BackupFileNotFound,
                 };
             }
 
@@ -113,11 +114,7 @@ public class RecipeBackupService : IRecipeBackupService
         }
         catch (Exception)
         {
-            return new RecipeBackupResult
-            {
-                IsSuccess = false,
-                Message = AppTexts.BackupImportFailed
-            };
+            return new RecipeBackupResult { IsSuccess = false, Message = AppTexts.BackupImportFailed };
         }
     }
 
@@ -132,7 +129,7 @@ public class RecipeBackupService : IRecipeBackupService
                 return new RecipeBackupResult
                 {
                     IsSuccess = false,
-                    Message = AppTexts.InvalidBackupFile
+                    Message = AppTexts.InvalidBackupFile,
                 };
             }
 
@@ -151,21 +148,20 @@ public class RecipeBackupService : IRecipeBackupService
                         Message = string.Format(
                             AppTexts.BackupImportInvalidRecipe,
                             recipeIndex + 1,
-                            string.Join(" ", validationResult.Errors))
+                            string.Join(" ", validationResult.Errors)
+                        ),
                     };
                 }
             }
 
             List<Recipe> recipesToImport = new List<Recipe>();
-            HashSet<string> sourceUrlsInDocument =
-                new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            HashSet<string> sourceUrlsInDocument = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             int skippedCount = 0;
 
             foreach (Recipe recipe in recipes)
             {
                 bool isDuplicateInDocument = !sourceUrlsInDocument.Add(recipe.SourceUrl);
-                bool alreadyExists =
-                    isDuplicateInDocument || RecipeExistsBySourceUrl(recipe.SourceUrl);
+                bool alreadyExists = isDuplicateInDocument || RecipeExistsBySourceUrl(recipe.SourceUrl);
 
                 if (alreadyExists)
                 {
@@ -189,9 +185,10 @@ public class RecipeBackupService : IRecipeBackupService
                 Message = string.Format(
                     AppTexts.BackupImportCompleted,
                     recipesToImport.Count,
-                    skippedCount),
+                    skippedCount
+                ),
                 ImportedCount = recipesToImport.Count,
-                SkippedCount = skippedCount
+                SkippedCount = skippedCount,
             };
         }
         catch (JsonException)
@@ -199,16 +196,12 @@ public class RecipeBackupService : IRecipeBackupService
             return new RecipeBackupResult
             {
                 IsSuccess = false,
-                Message = AppTexts.BackupImportInvalidDocument
+                Message = AppTexts.BackupImportInvalidDocument,
             };
         }
         catch (Exception)
         {
-            return new RecipeBackupResult
-            {
-                IsSuccess = false,
-                Message = AppTexts.BackupImportFailed
-            };
+            return new RecipeBackupResult { IsSuccess = false, Message = AppTexts.BackupImportFailed };
         }
     }
 
@@ -218,17 +211,14 @@ public class RecipeBackupService : IRecipeBackupService
 
         if (version == RecipeBackupVersions.Current)
         {
-            RecipeBackupDocument backupDocument =
-                RecipeBackupDocumentReader.ReadCurrentDocument(json);
+            RecipeBackupDocument backupDocument = RecipeBackupDocumentReader.ReadCurrentDocument(json);
 
             if (backupDocument.Recipes.Any(recipe => recipe is null))
             {
                 throw new JsonException();
             }
 
-            return backupDocument.Recipes
-                .Select(RecipeBackupMapper.ToRecipe)
-                .ToList();
+            return backupDocument.Recipes.Select(RecipeBackupMapper.ToRecipe).ToList();
         }
 
         List<Recipe>? legacyRecipes = JsonSerializer.Deserialize<List<Recipe>>(json);
@@ -238,8 +228,8 @@ public class RecipeBackupService : IRecipeBackupService
             throw new JsonException();
         }
 
-        return legacyRecipes?
-            .Select(RecipeBackupMapper.ToBackupItem)
+        return legacyRecipes
+            ?.Select(RecipeBackupMapper.ToBackupItem)
             .Select(RecipeBackupMapper.ToRecipe)
             .ToList();
     }

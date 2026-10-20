@@ -1,4 +1,3 @@
-
 namespace CarteDeBucate.Web.Models.Api;
 
 public static class CreateRecipeRequestExtensions
@@ -10,7 +9,7 @@ public static class CreateRecipeRequestExtensions
             Name = request.Name,
             SourceUrl = request.SourceUrl,
             Ingredients = request.Ingredients,
-            Steps = request.Steps
+            Steps = request.Steps,
         };
     }
 }

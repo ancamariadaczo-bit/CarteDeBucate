@@ -12,10 +12,7 @@ export function getExtractionRequestStorageKey(windowId, requestId) {
     return `${getExtractionRequestStorageKeyPrefix(windowId)}${encodeURIComponent(requestId)}`;
 }
 
-export function createExtractionRequestStore({
-    storageSession,
-    now = () => Date.now()
-}) {
+export function createExtractionRequestStore({ storageSession, now = () => Date.now() }) {
     assertStorageSession(storageSession);
 
     const consumedRequestIds = new Set();
@@ -59,9 +56,7 @@ export function createExtractionRequestStore({
                 const entries = await readWindowRequestEntries(windowId);
                 const candidate = findOldestConsumableEntry(entries, windowId);
                 const keysToRemove = entries
-                    .filter(([key, request]) =>
-                        !isConsumableEntry(key, request, windowId)
-                    )
+                    .filter(([key, request]) => !isConsumableEntry(key, request, windowId))
                     .map(([key]) => key);
 
                 if (candidate) {
@@ -95,28 +90,27 @@ export function createExtractionRequestStore({
         const keyPrefix = getExtractionRequestStorageKeyPrefix(windowId);
         const storedValues = await storageSession.get(null);
 
-        return Object.entries(storedValues ?? {})
-            .filter(([key]) => key.startsWith(keyPrefix));
+        return Object.entries(storedValues ?? {}).filter(([key]) => key.startsWith(keyPrefix));
     }
 
     function findOldestConsumableEntry(entries, windowId) {
-        return entries
-            .filter(([key, request]) =>
-                isConsumableEntry(key, request, windowId)
-            )
-            .map(([key, request]) => ({ key, request }))
-            .sort((left, right) =>
-                left.request.timestamp - right.request.timestamp
-                || left.request.requestId.localeCompare(right.request.requestId)
-            )[0] ?? null;
+        return (
+            entries
+                .filter(([key, request]) => isConsumableEntry(key, request, windowId))
+                .map(([key, request]) => ({ key, request }))
+                .sort(
+                    (left, right) =>
+                        left.request.timestamp - right.request.timestamp ||
+                        left.request.requestId.localeCompare(right.request.requestId)
+                )[0] ?? null
+        );
     }
 
     function isConsumableEntry(key, request, expectedWindowId) {
-        return isConsumableRequest(request, expectedWindowId)
-            && key === getExtractionRequestStorageKey(
-                request.windowId,
-                request.requestId
-            );
+        return (
+            isConsumableRequest(request, expectedWindowId) &&
+            key === getExtractionRequestStorageKey(request.windowId, request.requestId)
+        );
     }
 
     function isConsumableRequest(request, expectedWindowId) {
@@ -127,10 +121,12 @@ export function createExtractionRequestStore({
         const currentTimestamp = now();
         const age = currentTimestamp - request.timestamp;
 
-        return Number.isFinite(currentTimestamp)
-            && age >= 0
-            && age <= EXTRACTION_REQUEST_MAX_AGE_MS
-            && !consumedRequestIds.has(request.requestId);
+        return (
+            Number.isFinite(currentTimestamp) &&
+            age >= 0 &&
+            age <= EXTRACTION_REQUEST_MAX_AGE_MS &&
+            !consumedRequestIds.has(request.requestId)
+        );
     }
 
     return {
@@ -143,10 +139,10 @@ export function createExtractionRequestStore({
 
 function assertStorageSession(storageSession) {
     if (
-        !storageSession
-        || typeof storageSession.get !== "function"
-        || typeof storageSession.set !== "function"
-        || typeof storageSession.remove !== "function"
+        !storageSession ||
+        typeof storageSession.get !== "function" ||
+        typeof storageSession.set !== "function" ||
+        typeof storageSession.remove !== "function"
     ) {
         throw new TypeError("storageSession must provide get, set, and remove functions.");
     }
@@ -178,13 +174,15 @@ function isValidRequest(request) {
     const keys = Object.keys(request).sort();
     const expectedKeys = ["requestId", "tabId", "timestamp", "windowId"];
 
-    return keys.length === expectedKeys.length
-        && keys.every((key, index) => key === expectedKeys[index])
-        && typeof request.requestId === "string"
-        && request.requestId.trim().length > 0
-        && Number.isInteger(request.tabId)
-        && request.tabId >= 0
-        && Number.isInteger(request.windowId)
-        && request.windowId >= 0
-        && Number.isFinite(request.timestamp);
+    return (
+        keys.length === expectedKeys.length &&
+        keys.every((key, index) => key === expectedKeys[index]) &&
+        typeof request.requestId === "string" &&
+        request.requestId.trim().length > 0 &&
+        Number.isInteger(request.tabId) &&
+        request.tabId >= 0 &&
+        Number.isInteger(request.windowId) &&
+        request.windowId >= 0 &&
+        Number.isFinite(request.timestamp)
+    );
 }

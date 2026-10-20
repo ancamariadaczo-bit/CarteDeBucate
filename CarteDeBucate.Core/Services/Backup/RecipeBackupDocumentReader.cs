@@ -12,11 +12,13 @@ public static class RecipeBackupDocumentReader
             return RecipeBackupVersions.LegacyJsonArray;
         }
 
-        if (root.ValueKind == JsonValueKind.Object
+        if (
+            root.ValueKind == JsonValueKind.Object
             && root.TryGetProperty(RecipeBackupJson.VersionPropertyName, out JsonElement versionElement)
             && versionElement.ValueKind == JsonValueKind.Number
             && versionElement.TryGetInt32(out int version)
-            && version == RecipeBackupVersions.Current)
+            && version == RecipeBackupVersions.Current
+        )
         {
             return version;
         }
@@ -29,31 +31,41 @@ public static class RecipeBackupDocumentReader
         using JsonDocument jsonDocument = JsonDocument.Parse(json);
         JsonElement root = jsonDocument.RootElement;
 
-        if (root.ValueKind != JsonValueKind.Object
+        if (
+            root.ValueKind != JsonValueKind.Object
             || !root.TryGetProperty(RecipeBackupJson.VersionPropertyName, out JsonElement versionElement)
             || versionElement.ValueKind != JsonValueKind.Number
             || !versionElement.TryGetInt32(out int version)
-            || version != RecipeBackupVersions.Current)
+            || version != RecipeBackupVersions.Current
+        )
         {
             throw new JsonException("Unsupported recipe backup version.");
         }
 
-        if (!root.TryGetProperty(RecipeBackupJson.ExportedAtUtcPropertyName, out JsonElement exportedAtElement)
+        if (
+            !root.TryGetProperty(
+                RecipeBackupJson.ExportedAtUtcPropertyName,
+                out JsonElement exportedAtElement
+            )
             || exportedAtElement.ValueKind != JsonValueKind.String
-            || !exportedAtElement.TryGetDateTime(out _))
+            || !exportedAtElement.TryGetDateTime(out _)
+        )
         {
             throw new JsonException("The backup export date is missing or invalid.");
         }
 
-        if (!root.TryGetProperty(RecipeBackupJson.RecipesPropertyName, out JsonElement recipesElement)
-            || recipesElement.ValueKind != JsonValueKind.Array)
+        if (
+            !root.TryGetProperty(RecipeBackupJson.RecipesPropertyName, out JsonElement recipesElement)
+            || recipesElement.ValueKind != JsonValueKind.Array
+        )
         {
             throw new JsonException("The backup recipes are missing or invalid.");
         }
 
         RecipeBackupDocument? backupDocument = JsonSerializer.Deserialize<RecipeBackupDocument>(
             json,
-            RecipeBackupJson.SerializerOptions);
+            RecipeBackupJson.SerializerOptions
+        );
 
         if (backupDocument?.Recipes == null)
         {

@@ -1,21 +1,22 @@
 internal sealed record StagedRecipePhotoUploadInventoryItem(
     StagedRecipePhotoUpload Upload,
-    DateTime LastModifiedAtUtc);
+    DateTime LastModifiedAtUtc
+);
 
 internal sealed record StagedRecipePhotoDeletionInventoryItem(
     StagedRecipePhotoDeletion Deletion,
     string StorageFileName,
-    DateTime QuarantinedAtUtc);
+    DateTime QuarantinedAtUtc
+);
 
 internal sealed record RecipePhotoStorageFileInventoryItem(
     string StorageFileName,
-    DateTime LastModifiedAtUtc);
+    DateTime LastModifiedAtUtc
+);
 
 internal sealed class RecipePhotoStorageInventory<TItem>
 {
-    public RecipePhotoStorageInventory(
-        IReadOnlyList<TItem> items,
-        int invalidEntryCount)
+    public RecipePhotoStorageInventory(IReadOnlyList<TItem> items, int invalidEntryCount)
     {
         ArgumentNullException.ThrowIfNull(items);
 

@@ -1,23 +1,18 @@
 public class FakeRecipeBackupService : IRecipeBackupService
 {
-    public RecipeBackupResult ExportResultToReturn { get; set; } = new()
-    {
-        IsSuccess = true,
-        Message = "Backup exported successfully."
-    };
+    public RecipeBackupResult ExportResultToReturn { get; set; } =
+        new() { IsSuccess = true, Message = "Backup exported successfully." };
 
-    public RecipeBackupExportResult ExportContentResultToReturn { get; set; } = new()
-    {
-        IsSuccess = true,
-        Message = "Backup exported successfully.",
-        Json = "[]"
-    };
+    public RecipeBackupExportResult ExportContentResultToReturn { get; set; } =
+        new()
+        {
+            IsSuccess = true,
+            Message = "Backup exported successfully.",
+            Json = "[]",
+        };
 
-    public RecipeBackupResult ImportResultToReturn { get; set; } = new()
-    {
-        IsSuccess = true,
-        Message = "Backup import completed."
-    };
+    public RecipeBackupResult ImportResultToReturn { get; set; } =
+        new() { IsSuccess = true, Message = "Backup import completed." };
 
     public bool ExportToJsonWasCalled { get; private set; }
     public bool ExportToJsonContentWasCalled { get; private set; }

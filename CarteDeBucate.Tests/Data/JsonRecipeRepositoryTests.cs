@@ -47,10 +47,8 @@ public class JsonRecipeRepositoryTests
         {
             JsonRecipeRepository repository = new JsonRecipeRepository(filePath);
             repository.AddRecipe(CreateRecipe());
-            Recipe firstRecipe = CreateRecipe(
-                sourceUrl: "https://example.com/first-batch-recipe");
-            Recipe secondRecipe = CreateRecipe(
-                sourceUrl: "https://example.com/second-batch-recipe");
+            Recipe firstRecipe = CreateRecipe(sourceUrl: "https://example.com/first-batch-recipe");
+            Recipe secondRecipe = CreateRecipe(sourceUrl: "https://example.com/second-batch-recipe");
 
             repository.AddRecipes(new[] { firstRecipe, secondRecipe });
 
@@ -78,12 +76,10 @@ public class JsonRecipeRepositoryTests
             JsonRecipeRepository repository = new JsonRecipeRepository(filePath);
             repository.AddRecipe(CreateRecipe());
             string originalJson = File.ReadAllText(filePath);
-            Recipe invalidRecipe = CreateRecipe(
-                sourceUrl: "https://example.com/invalid-batch-recipe");
+            Recipe invalidRecipe = CreateRecipe(sourceUrl: "https://example.com/invalid-batch-recipe");
             invalidRecipe.Ingredients = null!;
 
-            Assert.Throws<ArgumentNullException>(() =>
-                repository.AddRecipes(new[] { invalidRecipe }));
+            Assert.Throws<ArgumentNullException>(() => repository.AddRecipes(new[] { invalidRecipe }));
 
             Assert.Equal(originalJson, File.ReadAllText(filePath));
             Assert.Equal(0, invalidRecipe.Id);
@@ -99,9 +95,7 @@ public class JsonRecipeRepositoryTests
     [Fact]
     public void AddRecipes_WhenAtomicMoveFails_ShouldRemoveTemporaryFile()
     {
-        string targetPath = Path.Combine(
-            Path.GetTempPath(),
-            $"recipes-target-{Guid.NewGuid()}");
+        string targetPath = Path.Combine(Path.GetTempPath(), $"recipes-target-{Guid.NewGuid()}");
         Directory.CreateDirectory(targetPath);
 
         try
@@ -109,8 +103,7 @@ public class JsonRecipeRepositoryTests
             JsonRecipeRepository repository = new JsonRecipeRepository(targetPath);
             Recipe recipe = CreateRecipe();
 
-            Assert.ThrowsAny<IOException>(() =>
-                repository.AddRecipes(new[] { recipe }));
+            Assert.ThrowsAny<IOException>(() => repository.AddRecipes(new[] { recipe }));
 
             Assert.True(Directory.Exists(targetPath));
             Assert.Equal(0, recipe.Id);
@@ -228,7 +221,8 @@ public class JsonRecipeRepositoryTests
             Recipe firstUserRecipe = CreateRecipe(userId: 1);
             Recipe secondUserRecipe = CreateRecipe(
                 sourceUrl: "https://example.com/other-recipe",
-                userId: 2);
+                userId: 2
+            );
 
             repository.AddRecipe(firstUserRecipe);
             repository.AddRecipe(secondUserRecipe);
@@ -284,7 +278,8 @@ public class JsonRecipeRepositoryTests
             Recipe firstUserRecipe = CreateRecipe(userId: 1);
             Recipe secondUserRecipe = CreateRecipe(
                 sourceUrl: "https://example.com/other-recipe",
-                userId: 2);
+                userId: 2
+            );
 
             repository.AddRecipe(firstUserRecipe);
             repository.AddRecipe(secondUserRecipe);
@@ -335,19 +330,13 @@ public class JsonRecipeRepositoryTests
         {
             JsonRecipeRepository repository = new JsonRecipeRepository(filePath);
 
-            Recipe notesRecipe = CreateRecipe(
-                name: "Cake",
-                sourceUrl: "https://example.com/cake");
+            Recipe notesRecipe = CreateRecipe(name: "Cake", sourceUrl: "https://example.com/cake");
             notesRecipe.Notes = "Serve with raspberries.";
 
-            Recipe ingredientRecipe = CreateRecipe(
-                name: "Bowl",
-                sourceUrl: "https://example.com/bowl");
+            Recipe ingredientRecipe = CreateRecipe(name: "Bowl", sourceUrl: "https://example.com/bowl");
             ingredientRecipe.Ingredients = ["Greek yogurt"];
 
-            Recipe stepRecipe = CreateRecipe(
-                name: "Salad",
-                sourceUrl: "https://example.com/salad");
+            Recipe stepRecipe = CreateRecipe(name: "Salad", sourceUrl: "https://example.com/salad");
             stepRecipe.Steps = ["Toast the walnuts."];
 
             repository.AddRecipe(notesRecipe);
@@ -384,11 +373,13 @@ public class JsonRecipeRepositoryTests
             Recipe firstUserRecipe = CreateRecipe(
                 name: "Banana bread",
                 sourceUrl: "https://example.com/banana-bread",
-                userId: 1);
+                userId: 1
+            );
             Recipe secondUserRecipe = CreateRecipe(
                 name: "Banana pancakes",
                 sourceUrl: "https://example.com/banana-pancakes",
-                userId: 2);
+                userId: 2
+            );
 
             repository.AddRecipe(firstUserRecipe);
             repository.AddRecipe(secondUserRecipe);
@@ -414,17 +405,22 @@ public class JsonRecipeRepositoryTests
         {
             JsonRecipeRepository repository = new JsonRecipeRepository(filePath);
             repository.AddRecipe(CreateRecipe(name: "Banana bread", userId: 1));
-            repository.AddRecipe(CreateRecipe(
-                name: "Banana cake",
-                sourceUrl: "https://example.com/banana-cake",
-                userId: 1));
-            repository.AddRecipe(CreateRecipe(
-                name: "Banana pancakes",
-                sourceUrl: "https://example.com/banana-pancakes",
-                userId: 2));
+            repository.AddRecipe(
+                CreateRecipe(
+                    name: "Banana cake",
+                    sourceUrl: "https://example.com/banana-cake",
+                    userId: 1
+                )
+            );
+            repository.AddRecipe(
+                CreateRecipe(
+                    name: "Banana pancakes",
+                    sourceUrl: "https://example.com/banana-pancakes",
+                    userId: 2
+                )
+            );
 
-            PagedResult<RecipeSummary> result =
-                repository.SearchRecipesPage("banana", 1, 2, 1);
+            PagedResult<RecipeSummary> result = repository.SearchRecipesPage("banana", 1, 2, 1);
 
             Assert.Single(result.Items);
             Assert.All(result.Items, recipe => Assert.Equal(1, recipe.UserId));
@@ -565,7 +561,8 @@ public class JsonRecipeRepositoryTests
             Recipe changedRecipe = CreateRecipe(
                 name: "Should not be saved",
                 sourceUrl: "https://example.com/changed",
-                userId: 8);
+                userId: 8
+            );
             changedRecipe.Id = recipe.Id;
 
             repository.UpdateRecipeForUser(changedRecipe, 9);
@@ -593,7 +590,8 @@ public class JsonRecipeRepositoryTests
             Recipe firstUserRecipe = CreateRecipe(userId: 10);
             Recipe secondUserRecipe = CreateRecipe(
                 sourceUrl: "https://example.com/second-user-recipe",
-                userId: 11);
+                userId: 11
+            );
 
             repository.AddRecipe(firstUserRecipe);
             repository.AddRecipe(secondUserRecipe);
@@ -614,7 +612,8 @@ public class JsonRecipeRepositoryTests
     private static Recipe CreateRecipe(
         string name = "Recipe",
         string sourceUrl = "https://example.com/recipe",
-        int? userId = null)
+        int? userId = null
+    )
     {
         return new Recipe
         {
@@ -623,7 +622,7 @@ public class JsonRecipeRepositoryTests
             SavedAt = new DateTime(2026, 6, 8, 10, 0, 0),
             UserId = userId,
             Ingredients = ["Flour"],
-            Steps = ["Mix"]
+            Steps = ["Mix"],
         };
     }
 

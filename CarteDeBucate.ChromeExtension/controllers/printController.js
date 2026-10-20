@@ -130,10 +130,7 @@ export function initializePrintController({
                 image.addEventListener("load", finishWaiting, { once: true });
                 image.addEventListener("error", finishWaiting, { once: true });
 
-                timeoutId = scheduleTimeout(
-                    finishWaiting,
-                    imageLoadTimeoutMilliseconds
-                );
+                timeoutId = scheduleTimeout(finishWaiting, imageLoadTimeoutMilliseconds);
             });
         });
 

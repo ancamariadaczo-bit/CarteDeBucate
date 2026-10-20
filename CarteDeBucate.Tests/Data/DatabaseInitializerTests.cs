@@ -82,8 +82,7 @@ public class DatabaseInitializerTests
             indexReader.Close();
 
             using SqliteCommand columnsCommand = connection.CreateCommand();
-            columnsCommand.CommandText =
-                "PRAGMA index_info(IX_RecipePhotos_RecipeId_DisplayOrder_Id);";
+            columnsCommand.CommandText = "PRAGMA index_info(IX_RecipePhotos_RecipeId_DisplayOrder_Id);";
 
             using SqliteDataReader columnsReader = columnsCommand.ExecuteReader();
             List<string> indexedColumns = new List<string>();
@@ -109,7 +108,8 @@ public class DatabaseInitializerTests
             InsertRecipePhoto(connection, firstRecipeId, "same-photo.jpg");
 
             Assert.Throws<SqliteException>(() =>
-                InsertRecipePhoto(connection, secondRecipeId, "same-photo.jpg"));
+                InsertRecipePhoto(connection, secondRecipeId, "same-photo.jpg")
+            );
         });
     }
 
@@ -121,21 +121,15 @@ public class DatabaseInitializerTests
             using SqliteConnection connection = OpenConnection(databasePath);
             int recipeId = InsertRecipe(connection);
 
-            InsertRecipePhoto(
-                connection,
-                recipeId,
-                "a",
-                "b",
-                "c",
-                fileSize: 1,
-                displayOrder: 0);
+            InsertRecipePhoto(connection, recipeId, "a", "b", "c", fileSize: 1, displayOrder: 0);
 
             InsertRecipePhoto(
                 connection,
                 recipeId,
                 new string('s', 128),
                 new string('o', 255),
-                new string('c', 100));
+                new string('c', 100)
+            );
 
             AssertInsertFails(connection, recipeId, " ", "photo.jpg", "image/jpeg");
             AssertInsertFails(connection, recipeId, new string('s', 129), "photo.jpg", "image/jpeg");
@@ -145,28 +139,32 @@ public class DatabaseInitializerTests
                 recipeId,
                 "invalid-original-max",
                 new string('o', 256),
-                "image/jpeg");
+                "image/jpeg"
+            );
             AssertInsertFails(connection, recipeId, "invalid-content-min", "photo.jpg", " ");
             AssertInsertFails(
                 connection,
                 recipeId,
                 "invalid-content-max",
                 "photo.jpg",
-                new string('c', 101));
+                new string('c', 101)
+            );
             AssertInsertFails(
                 connection,
                 recipeId,
                 "invalid-file-size",
                 "photo.jpg",
                 "image/jpeg",
-                fileSize: 0);
+                fileSize: 0
+            );
             AssertInsertFails(
                 connection,
                 recipeId,
                 "invalid-display-order",
                 "photo.jpg",
                 "image/jpeg",
-                displayOrder: -1);
+                displayOrder: -1
+            );
         });
     }
 
@@ -196,7 +194,8 @@ public class DatabaseInitializerTests
         string type,
         bool isNotNull,
         string? defaultValue,
-        int primaryKeyOrder)
+        int primaryKeyOrder
+    )
     {
         Assert.True(columns.TryGetValue(name, out ColumnDefinition? column));
         Assert.NotNull(column);
@@ -208,7 +207,8 @@ public class DatabaseInitializerTests
 
     private static Dictionary<string, ColumnDefinition> ReadColumns(
         string databasePath,
-        string tableName)
+        string tableName
+    )
     {
         using SqliteConnection connection = OpenConnection(databasePath);
         using SqliteCommand command = connection.CreateCommand();
@@ -227,10 +227,10 @@ public class DatabaseInitializerTests
                 new ColumnDefinition(
                     reader.GetString(reader.GetOrdinal("type")),
                     reader.GetInt32(reader.GetOrdinal("notnull")) == 1,
-                    reader.IsDBNull(defaultValueOrdinal)
-                        ? null
-                        : reader.GetString(defaultValueOrdinal),
-                    reader.GetInt32(reader.GetOrdinal("pk"))));
+                    reader.IsDBNull(defaultValueOrdinal) ? null : reader.GetString(defaultValueOrdinal),
+                    reader.GetInt32(reader.GetOrdinal("pk"))
+                )
+            );
         }
 
         return columns;
@@ -307,7 +307,8 @@ public class DatabaseInitializerTests
         string originalFileName = "photo.jpg",
         string contentType = "image/jpeg",
         long fileSize = 100,
-        int displayOrder = 0)
+        int displayOrder = 0
+    )
     {
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
@@ -350,22 +351,27 @@ public class DatabaseInitializerTests
         string originalFileName,
         string contentType,
         long fileSize = 100,
-        int displayOrder = 0)
+        int displayOrder = 0
+    )
     {
-        Assert.Throws<SqliteException>(() => InsertRecipePhoto(
-            connection,
-            recipeId,
-            storageFileName,
-            originalFileName,
-            contentType,
-            fileSize,
-            displayOrder));
+        Assert.Throws<SqliteException>(() =>
+            InsertRecipePhoto(
+                connection,
+                recipeId,
+                storageFileName,
+                originalFileName,
+                contentType,
+                fileSize,
+                displayOrder
+            )
+        );
     }
 
     private static SqliteConnection OpenConnection(string databasePath)
     {
-        SqliteConnection connection =
-            new SqliteConnection(SqliteConnectionStringFactory.Create(databasePath));
+        SqliteConnection connection = new SqliteConnection(
+            SqliteConnectionStringFactory.Create(databasePath)
+        );
         connection.Open();
 
         return connection;
@@ -386,7 +392,8 @@ public class DatabaseInitializerTests
     {
         string databasePath = Path.Combine(
             Path.GetTempPath(),
-            $"recipes-initializer-{Guid.NewGuid()}.db");
+            $"recipes-initializer-{Guid.NewGuid()}.db"
+        );
 
         try
         {
@@ -405,5 +412,6 @@ public class DatabaseInitializerTests
         string Type,
         bool IsNotNull,
         string? DefaultValue,
-        int PrimaryKeyOrder);
+        int PrimaryKeyOrder
+    );
 }

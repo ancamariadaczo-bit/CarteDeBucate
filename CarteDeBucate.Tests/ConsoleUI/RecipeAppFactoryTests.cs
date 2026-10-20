@@ -9,7 +9,8 @@ public class RecipeAppFactoryTests
             new FakeRecipeConsoleWriter(),
             new FakeRecipeImporterService(),
             new FakeRecipeLibraryService(),
-            new FakeRecipeBackupService());
+            new FakeRecipeBackupService()
+        );
 
         Assert.IsType<ClassicConsoleRecipeApp>(app);
     }
@@ -23,7 +24,8 @@ public class RecipeAppFactoryTests
             new FakeRecipeConsoleWriter(),
             new FakeRecipeImporterService(),
             new FakeRecipeLibraryService(),
-            new FakeRecipeBackupService());
+            new FakeRecipeBackupService()
+        );
 
         Assert.IsType<RichConsoleRecipeApp>(app);
     }
@@ -32,10 +34,16 @@ public class RecipeAppFactoryTests
     public void ToDisplayText_ShouldReturnTextForEveryMainMenuOption()
     {
         Assert.Equal(RichConsoleTexts.MenuAddRecipe, MainMenuOption.AddRecipe.ToDisplayText());
-        Assert.Equal(RichConsoleTexts.MenuImportRecipeFromUrl, MainMenuOption.ImportRecipeFromUrl.ToDisplayText());
+        Assert.Equal(
+            RichConsoleTexts.MenuImportRecipeFromUrl,
+            MainMenuOption.ImportRecipeFromUrl.ToDisplayText()
+        );
         Assert.Equal(RichConsoleTexts.MenuShowRecipes, MainMenuOption.ShowRecipes.ToDisplayText());
         Assert.Equal(RichConsoleTexts.MenuSearchRecipe, MainMenuOption.SearchRecipe.ToDisplayText());
-        Assert.Equal(RichConsoleTexts.MenuViewRecipeDetails, MainMenuOption.ViewRecipeDetails.ToDisplayText());
+        Assert.Equal(
+            RichConsoleTexts.MenuViewRecipeDetails,
+            MainMenuOption.ViewRecipeDetails.ToDisplayText()
+        );
         Assert.Equal(RichConsoleTexts.MenuEditRecipe, MainMenuOption.EditRecipe.ToDisplayText());
         Assert.Equal(RichConsoleTexts.MenuDeleteRecipe, MainMenuOption.DeleteRecipe.ToDisplayText());
         Assert.Equal(RichConsoleTexts.MenuExportBackup, MainMenuOption.ExportBackup.ToDisplayText());

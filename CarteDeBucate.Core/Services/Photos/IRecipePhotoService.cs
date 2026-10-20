@@ -7,7 +7,8 @@ public interface IRecipePhotoService
         string declaredContentType,
         long? declaredLength,
         RecipePhotoOrigin origin,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default
+    );
 
     RecipePhotosResult GetPhotosForRecipe(int recipeId);
 

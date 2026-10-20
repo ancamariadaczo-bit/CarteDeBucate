@@ -13,8 +13,8 @@ public class LoginViewModelTests
 
         Assert.Contains(
             results,
-            result => HasError(result, nameof(LoginViewModel.Username),
-                "Username-ul este obligatoriu."));
+            result => HasError(result, nameof(LoginViewModel.Username), "Username-ul este obligatoriu.")
+        );
     }
 
     [Fact]
@@ -27,8 +27,8 @@ public class LoginViewModelTests
 
         Assert.Contains(
             results,
-            result => HasError(result, nameof(LoginViewModel.Password),
-                "Parola este obligatorie."));
+            result => HasError(result, nameof(LoginViewModel.Password), "Parola este obligatorie.")
+        );
     }
 
     [Fact]
@@ -43,11 +43,7 @@ public class LoginViewModelTests
 
     private static LoginViewModel CreateValidModel()
     {
-        return new LoginViewModel
-        {
-            Username = "anca",
-            Password = "password"
-        };
+        return new LoginViewModel { Username = "anca", Password = "password" };
     }
 
     private static List<ValidationResult> Validate(LoginViewModel model)
@@ -55,21 +51,13 @@ public class LoginViewModelTests
         ValidationContext context = new ValidationContext(model);
         List<ValidationResult> results = new List<ValidationResult>();
 
-        Validator.TryValidateObject(
-            model,
-            context,
-            results,
-            validateAllProperties: true);
+        Validator.TryValidateObject(model, context, results, validateAllProperties: true);
 
         return results;
     }
 
-    private static bool HasError(
-        ValidationResult result,
-        string memberName,
-        string errorMessage)
+    private static bool HasError(ValidationResult result, string memberName, string errorMessage)
     {
-        return result.ErrorMessage == errorMessage
-            && result.MemberNames.Contains(memberName);
+        return result.ErrorMessage == errorMessage && result.MemberNames.Contains(memberName);
     }
 }

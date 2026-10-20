@@ -14,7 +14,8 @@ public class RecipePhotosApiController : ControllerBase
 
     public RecipePhotosApiController(
         IRecipePhotoService recipePhotoService,
-        IRecipePhotoReconciliationService recipePhotoReconciliationService)
+        IRecipePhotoReconciliationService recipePhotoReconciliationService
+    )
     {
         _recipePhotoService = recipePhotoService;
         _recipePhotoReconciliationService = recipePhotoReconciliationService;
@@ -25,28 +26,25 @@ public class RecipePhotosApiController : ControllerBase
     public async Task<IActionResult> AddPhoto(
         int recipeId,
         [FromForm] IFormFile? photo,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         if (photo is null)
         {
-            return BadRequest(new
-            {
-                code = "MissingPhoto",
-                message = "Photo file is required."
-            });
+            return BadRequest(new { code = "MissingPhoto", message = "Photo file is required." });
         }
 
         using Stream content = photo.OpenReadStream();
 
-        RecipePhotoResult result =
-            await _recipePhotoService.AddPhotoAsync(
-                recipeId,
-                content,
-                photo.FileName,
-                photo.ContentType,
-                photo.Length,
-                RecipePhotoOrigin.UserUpload,
-                cancellationToken);
+        RecipePhotoResult result = await _recipePhotoService.AddPhotoAsync(
+            recipeId,
+            content,
+            photo.FileName,
+            photo.ContentType,
+            photo.Length,
+            RecipePhotoOrigin.UserUpload,
+            cancellationToken
+        );
 
         if (result.IsSuccess)
         {
@@ -56,62 +54,46 @@ public class RecipePhotosApiController : ControllerBase
                 {
                     code = result.Code.ToString(),
                     message = result.Message,
-                    photo = result.Photo
-                });
+                    photo = result.Photo,
+                }
+            );
         }
 
-        object errorResponse = new
-        {
-            code = result.Code.ToString(),
-            message = result.Message
-        };
+        object errorResponse = new { code = result.Code.ToString(), message = result.Message };
 
         return result.Code switch
         {
             RecipePhotoResultCode.InvalidRecipeId
-                or RecipePhotoResultCode.EmptyContent
-                or RecipePhotoResultCode.InvalidContent
-                => BadRequest(errorResponse),
+            or RecipePhotoResultCode.EmptyContent
+            or RecipePhotoResultCode.InvalidContent => BadRequest(errorResponse),
 
-            RecipePhotoResultCode.RecipeNotFound
-                => NotFound(errorResponse),
+            RecipePhotoResultCode.RecipeNotFound => NotFound(errorResponse),
 
-            RecipePhotoResultCode.PhotoLimitReached
-                => Conflict(errorResponse),
+            RecipePhotoResultCode.PhotoLimitReached => Conflict(errorResponse),
 
-            RecipePhotoResultCode.FileTooLarge
-                => StatusCode(
-                    StatusCodes.Status413PayloadTooLarge,
-                    errorResponse),
+            RecipePhotoResultCode.FileTooLarge => StatusCode(
+                StatusCodes.Status413PayloadTooLarge,
+                errorResponse
+            ),
 
-            RecipePhotoResultCode.UnsupportedFormat
-                => StatusCode(
-                    StatusCodes.Status415UnsupportedMediaType,
-                    errorResponse),
+            RecipePhotoResultCode.UnsupportedFormat => StatusCode(
+                StatusCodes.Status415UnsupportedMediaType,
+                errorResponse
+            ),
 
-            RecipePhotoResultCode.StorageFailure
-                or RecipePhotoResultCode.PersistenceFailure
-                => StatusCode(
-                    StatusCodes.Status500InternalServerError,
-                    errorResponse),
+            RecipePhotoResultCode.StorageFailure or RecipePhotoResultCode.PersistenceFailure =>
+                StatusCode(StatusCodes.Status500InternalServerError, errorResponse),
 
-            _ => StatusCode(
-                StatusCodes.Status500InternalServerError,
-                errorResponse)
+            _ => StatusCode(StatusCodes.Status500InternalServerError, errorResponse),
         };
     }
 
     [HttpDelete("~/api/photos/{photoId:int}")]
     public IActionResult DeletePhoto(int photoId)
     {
-        RecipePhotoResult result =
-            _recipePhotoService.DeletePhoto(photoId);
+        RecipePhotoResult result = _recipePhotoService.DeletePhoto(photoId);
 
-        object response = new
-        {
-            code = result.Code.ToString(),
-            message = result.Message
-        };
+        object response = new { code = result.Code.ToString(), message = result.Message };
 
         if (result.IsSuccess)
         {
@@ -120,28 +102,20 @@ public class RecipePhotosApiController : ControllerBase
 
         return result.Code switch
         {
-            RecipePhotoResultCode.PhotoNotFound
-                => NotFound(response),
+            RecipePhotoResultCode.PhotoNotFound => NotFound(response),
 
-            RecipePhotoResultCode.StorageFailure
-                or RecipePhotoResultCode.PersistenceFailure
-                => StatusCode(
-                    StatusCodes.Status500InternalServerError,
-                    response),
+            RecipePhotoResultCode.StorageFailure or RecipePhotoResultCode.PersistenceFailure =>
+                StatusCode(StatusCodes.Status500InternalServerError, response),
 
-            _ => StatusCode(
-                StatusCodes.Status500InternalServerError,
-                response)
+            _ => StatusCode(StatusCodes.Status500InternalServerError, response),
         };
     }
 
     [HttpPost("~/api/photos/reconcile")]
     public IActionResult ReconcilePhotos()
     {
-        RecipePhotoReconciliationReport report =
-            _recipePhotoReconciliationService.Reconcile();
+        RecipePhotoReconciliationReport report = _recipePhotoReconciliationService.Reconcile();
 
         return Ok(report);
     }
-
 }

@@ -27,7 +27,11 @@ public class FakeRichConsoleDisplay : IRichConsoleDisplay
         ShowTitleWasCalled = true;
     }
 
-    public void ShowRecipes(List<RecipeSummary> recipes, string? title = null, string? emptyMessage = null)
+    public void ShowRecipes(
+        List<RecipeSummary> recipes,
+        string? title = null,
+        string? emptyMessage = null
+    )
     {
         ShowRecipesWasCalled = true;
         RecipesPassedToShowRecipes = recipes;

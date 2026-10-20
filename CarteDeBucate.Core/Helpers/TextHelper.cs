@@ -7,8 +7,7 @@ public static class TextHelper
             return "";
         }
 
-        return text
-            .ToLowerInvariant()
+        return text.ToLowerInvariant()
             .Replace("ă", "a")
             .Replace("â", "a")
             .Replace("î", "i")

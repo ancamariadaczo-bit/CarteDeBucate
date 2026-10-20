@@ -5,7 +5,8 @@ public class RecipePhotosResultTests
     {
         RecipePhotosResult result = RecipePhotosResult.Success(
             Array.Empty<RecipePhotoInfo>(),
-            "No photos.");
+            "No photos."
+        );
 
         Assert.True(result.IsSuccess);
         Assert.Equal(RecipePhotoResultCode.Success, result.Code);
@@ -18,7 +19,8 @@ public class RecipePhotosResultTests
     {
         RecipePhotosResult result = RecipePhotosResult.Failure(
             RecipePhotoResultCode.RecipeNotFound,
-            "Recipe not found.");
+            "Recipe not found."
+        );
 
         Assert.False(result.IsSuccess);
         Assert.Equal(RecipePhotoResultCode.RecipeNotFound, result.Code);

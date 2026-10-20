@@ -13,7 +13,7 @@ public class RichConsoleMenu : IRichConsoleMenu
         MainMenuOption.DeleteRecipe,
         MainMenuOption.ExportBackup,
         MainMenuOption.ImportBackup,
-        MainMenuOption.Exit
+        MainMenuOption.Exit,
     ];
 
     public MainMenuOption ShowMainMenu()
@@ -23,6 +23,7 @@ public class RichConsoleMenu : IRichConsoleMenu
                 .Title(RichConsoleTexts.MainMenuTitleMarkup)
                 .PageSize(10)
                 .UseConverter(option => option.ToDisplayText())
-                .AddChoices(MenuOptions));
+                .AddChoices(MenuOptions)
+        );
     }
 }

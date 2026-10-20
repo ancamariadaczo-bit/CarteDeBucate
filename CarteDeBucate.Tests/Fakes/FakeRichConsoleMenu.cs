@@ -8,8 +8,6 @@ public class FakeRichConsoleMenu : IRichConsoleMenu
     {
         ShowMainMenuWasCalled = true;
 
-        return OptionsToReturn.Count == 0
-            ? MainMenuOption.Exit
-            : OptionsToReturn.Dequeue();
+        return OptionsToReturn.Count == 0 ? MainMenuOption.Exit : OptionsToReturn.Dequeue();
     }
 }

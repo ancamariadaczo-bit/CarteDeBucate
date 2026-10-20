@@ -8,13 +8,12 @@ public class RecipePhotoValidatorTests
         byte[] content,
         string declaredContentType,
         RecipePhotoFormat expectedFormat,
-        string expectedContentType)
+        string expectedContentType
+    )
     {
         using MemoryStream stream = new MemoryStream(content);
 
-        RecipePhotoValidationResult result = _validator.Validate(
-            stream,
-            declaredContentType);
+        RecipePhotoValidationResult result = _validator.Validate(stream, declaredContentType);
 
         Assert.True(result.IsValid);
         Assert.Equal(RecipePhotoResultCode.Success, result.Code);
@@ -27,9 +26,7 @@ public class RecipePhotoValidatorTests
     {
         using MemoryStream stream = new MemoryStream();
 
-        RecipePhotoValidationResult result = _validator.Validate(
-            stream,
-            "image/jpeg");
+        RecipePhotoValidationResult result = _validator.Validate(stream, "image/jpeg");
 
         Assert.False(result.IsValid);
         Assert.Equal(RecipePhotoResultCode.EmptyContent, result.Code);
@@ -42,9 +39,7 @@ public class RecipePhotoValidatorTests
     {
         using MemoryStream stream = new MemoryStream(PngContent());
 
-        RecipePhotoValidationResult result = _validator.Validate(
-            stream,
-            "image/jpeg");
+        RecipePhotoValidationResult result = _validator.Validate(stream, "image/jpeg");
 
         Assert.False(result.IsValid);
         Assert.Equal(RecipePhotoResultCode.InvalidContent, result.Code);
@@ -55,9 +50,7 @@ public class RecipePhotoValidatorTests
     {
         using MemoryStream stream = new MemoryStream("not an image"u8.ToArray());
 
-        RecipePhotoValidationResult result = _validator.Validate(
-            stream,
-            "image/jpeg");
+        RecipePhotoValidationResult result = _validator.Validate(stream, "image/jpeg");
 
         Assert.False(result.IsValid);
         Assert.Equal(RecipePhotoResultCode.InvalidContent, result.Code);
@@ -68,9 +61,7 @@ public class RecipePhotoValidatorTests
     {
         using MemoryStream stream = new MemoryStream([0xFF, 0xD8]);
 
-        RecipePhotoValidationResult result = _validator.Validate(
-            stream,
-            "image/jpeg");
+        RecipePhotoValidationResult result = _validator.Validate(stream, "image/jpeg");
 
         Assert.False(result.IsValid);
         Assert.Equal(RecipePhotoResultCode.InvalidContent, result.Code);
@@ -79,12 +70,9 @@ public class RecipePhotoValidatorTests
     [Fact]
     public void Validate_WithUnsupportedFormat_ShouldReturnUnsupportedFormat()
     {
-        using MemoryStream stream = new MemoryStream(
-            [0x47, 0x49, 0x46, 0x38, 0x39, 0x61]);
+        using MemoryStream stream = new MemoryStream([0x47, 0x49, 0x46, 0x38, 0x39, 0x61]);
 
-        RecipePhotoValidationResult result = _validator.Validate(
-            stream,
-            "image/gif");
+        RecipePhotoValidationResult result = _validator.Validate(stream, "image/gif");
 
         Assert.False(result.IsValid);
         Assert.Equal(RecipePhotoResultCode.UnsupportedFormat, result.Code);
@@ -96,40 +84,20 @@ public class RecipePhotoValidatorTests
         using MemoryStream stream = new MemoryStream(JpegContent());
         stream.Position = 2;
 
-        RecipePhotoValidationResult result = _validator.Validate(
-            stream,
-            "image/jpeg");
+        RecipePhotoValidationResult result = _validator.Validate(stream, "image/jpeg");
 
         Assert.True(result.IsValid);
         Assert.Equal(2, stream.Position);
         Assert.True(stream.CanRead);
     }
 
-    public static TheoryData<
-        byte[],
-        string,
-        RecipePhotoFormat,
-        string> ValidPhotoContent => new()
-    {
+    public static TheoryData<byte[], string, RecipePhotoFormat, string> ValidPhotoContent =>
+        new()
         {
-            JpegContent(),
-            " IMAGE/JPEG ",
-            RecipePhotoFormat.Jpeg,
-            "image/jpeg"
-        },
-        {
-            PngContent(),
-            "image/png",
-            RecipePhotoFormat.Png,
-            "image/png"
-        },
-        {
-            WebPContent(),
-            "image/webp",
-            RecipePhotoFormat.WebP,
-            "image/webp"
-        }
-    };
+            { JpegContent(), " IMAGE/JPEG ", RecipePhotoFormat.Jpeg, "image/jpeg" },
+            { PngContent(), "image/png", RecipePhotoFormat.Png, "image/png" },
+            { WebPContent(), "image/webp", RecipePhotoFormat.WebP, "image/webp" },
+        };
 
     private static byte[] JpegContent()
     {
@@ -143,12 +111,6 @@ public class RecipePhotoValidatorTests
 
     private static byte[] WebPContent()
     {
-        return
-        [
-            0x52, 0x49, 0x46, 0x46,
-            0x24, 0x00, 0x00, 0x00,
-            0x57, 0x45, 0x42, 0x50,
-            0x01
-        ];
+        return [0x52, 0x49, 0x46, 0x46, 0x24, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50, 0x01];
     }
 }

@@ -32,6 +32,7 @@ public class OptionalAuthenticationFilter : IAuthorizationFilter
         context.Result = new RedirectToActionResult(
             nameof(AccountController.Login),
             "Account",
-            new { returnUrl });
+            new { returnUrl }
+        );
     }
 }

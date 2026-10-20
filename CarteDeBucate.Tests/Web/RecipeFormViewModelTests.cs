@@ -13,8 +13,8 @@ public class RecipeFormViewModelTests
 
         Assert.Contains(
             results,
-            result => HasError(result, nameof(RecipeFormViewModel.Name),
-                "Numele este obligatoriu."));
+            result => HasError(result, nameof(RecipeFormViewModel.Name), "Numele este obligatoriu.")
+        );
     }
 
     [Fact]
@@ -27,8 +27,9 @@ public class RecipeFormViewModelTests
 
         Assert.Contains(
             results,
-            result => HasError(result, nameof(RecipeFormViewModel.SourceUrl),
-                "URL-ul sursă este obligatoriu."));
+            result =>
+                HasError(result, nameof(RecipeFormViewModel.SourceUrl), "URL-ul sursă este obligatoriu.")
+        );
     }
 
     [Fact]
@@ -41,8 +42,8 @@ public class RecipeFormViewModelTests
 
         Assert.Contains(
             results,
-            result => HasError(result, nameof(RecipeFormViewModel.SourceUrl),
-                "Introdu un URL valid."));
+            result => HasError(result, nameof(RecipeFormViewModel.SourceUrl), "Introdu un URL valid.")
+        );
     }
 
     [Fact]
@@ -55,8 +56,13 @@ public class RecipeFormViewModelTests
 
         Assert.Contains(
             results,
-            result => HasError(result, nameof(RecipeFormViewModel.IngredientsText),
-                "Ingredientele sunt obligatorii."));
+            result =>
+                HasError(
+                    result,
+                    nameof(RecipeFormViewModel.IngredientsText),
+                    "Ingredientele sunt obligatorii."
+                )
+        );
     }
 
     [Fact]
@@ -69,8 +75,8 @@ public class RecipeFormViewModelTests
 
         Assert.Contains(
             results,
-            result => HasError(result, nameof(RecipeFormViewModel.StepsText),
-                "Pașii sunt obligatorii."));
+            result => HasError(result, nameof(RecipeFormViewModel.StepsText), "Pașii sunt obligatorii.")
+        );
     }
 
     [Fact]
@@ -90,7 +96,7 @@ public class RecipeFormViewModelTests
             Name = "Supa",
             SourceUrl = "https://example.com/supa",
             IngredientsText = "Apa",
-            StepsText = "Fierbe apa"
+            StepsText = "Fierbe apa",
         };
     }
 
@@ -99,21 +105,13 @@ public class RecipeFormViewModelTests
         ValidationContext context = new ValidationContext(model);
         List<ValidationResult> results = new List<ValidationResult>();
 
-        Validator.TryValidateObject(
-            model,
-            context,
-            results,
-            validateAllProperties: true);
+        Validator.TryValidateObject(model, context, results, validateAllProperties: true);
 
         return results;
     }
 
-    private static bool HasError(
-        ValidationResult result,
-        string memberName,
-        string errorMessage)
+    private static bool HasError(ValidationResult result, string memberName, string errorMessage)
     {
-        return result.ErrorMessage == errorMessage
-            && result.MemberNames.Contains(memberName);
+        return result.ErrorMessage == errorMessage && result.MemberNames.Contains(memberName);
     }
 }

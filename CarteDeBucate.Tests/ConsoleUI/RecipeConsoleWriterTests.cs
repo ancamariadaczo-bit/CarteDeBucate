@@ -7,11 +7,11 @@ public class RecipeConsoleWriterTests
     public void ShowMenu_ShouldWriteMenuOptions()
     {
         string output = CaptureOutput(writer =>
-            writer.ShowMenu(
-            [
+            writer.ShowMenu([
                 new MenuOption { Key = "1", Text = "Add" },
-                new MenuOption { Key = "2", Text = "Exit" }
-            ]));
+                new MenuOption { Key = "2", Text = "Exit" },
+            ])
+        );
 
         Assert.Contains(AppTexts.AppTitle, output);
         Assert.Contains("1. Add", output);
@@ -49,7 +49,7 @@ public class RecipeConsoleWriterTests
             Id = 1,
             Name = "Cake",
             SourceUrl = "https://example.com/cake",
-            SavedAt = new DateTime(2026, 6, 8, 10, 0, 0)
+            SavedAt = new DateTime(2026, 6, 8, 10, 0, 0),
         };
 
         string output = CaptureOutput(writer => writer.DisplayRecipe(recipe, 1));
@@ -93,7 +93,7 @@ public class RecipeConsoleWriterTests
             SavedAt = new DateTime(2026, 6, 8, 10, 0, 0),
             Ingredients = ["Flour"],
             Steps = ["Bake"],
-            Notes = "Good"
+            Notes = "Good",
         };
     }
 }

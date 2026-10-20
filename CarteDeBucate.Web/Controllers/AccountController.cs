@@ -16,7 +16,8 @@ public class AccountController : Controller
     public AccountController(
         IAuthenticationService authenticationService,
         WebAppSettings settings,
-        ILogger<AccountController> logger)
+        ILogger<AccountController> logger
+    )
     {
         _authenticationService = authenticationService;
         _settings = settings;
@@ -31,10 +32,7 @@ public class AccountController : Controller
             return RedirectAfterAuthentication(returnUrl);
         }
 
-        return View(new LoginViewModel
-        {
-            ReturnUrl = returnUrl
-        });
+        return View(new LoginViewModel { ReturnUrl = returnUrl });
     }
 
     [HttpPost]
@@ -46,8 +44,7 @@ public class AccountController : Controller
             return View(model);
         }
 
-        AuthenticationResult result =
-            _authenticationService.Login(model.Username, model.Password);
+        AuthenticationResult result = _authenticationService.Login(model.Username, model.Password);
 
         if (!result.IsSuccess || result.User == null)
         {
@@ -60,9 +57,7 @@ public class AccountController : Controller
 
         await SignInUser(result.User);
 
-        _logger.LogInformation(
-            "User login succeeded. User identifier: {UserId}",
-            result.User.Id);
+        _logger.LogInformation("User login succeeded. User identifier: {UserId}", result.User.Id);
 
         return RedirectAfterAuthentication(model.ReturnUrl);
     }
@@ -81,8 +76,7 @@ public class AccountController : Controller
             return View(model);
         }
 
-        AuthenticationResult result =
-            _authenticationService.Register(model.Username, model.Password);
+        AuthenticationResult result = _authenticationService.Register(model.Username, model.Password);
 
         if (!result.IsSuccess || result.User == null)
         {
@@ -95,13 +89,9 @@ public class AccountController : Controller
 
         await SignInUser(result.User);
 
-        _logger.LogInformation(
-            "User registration succeeded. User identifier: {UserId}",
-            result.User.Id);
+        _logger.LogInformation("User registration succeeded. User identifier: {UserId}", result.User.Id);
 
-        return RedirectToAction(
-            nameof(RecipesController.Index),
-            "Recipes");
+        return RedirectToAction(nameof(RecipesController.Index), "Recipes");
     }
 
     [HttpPost]
@@ -113,25 +103,22 @@ public class AccountController : Controller
         _authenticationService.Logout();
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
-        _logger.LogInformation(
-            "User logout succeeded. User identifier: {UserId}",
-            userId);
+        _logger.LogInformation("User logout succeeded. User identifier: {UserId}", userId);
 
         if (_settings.AuthenticationEnabled)
         {
             return RedirectToAction(nameof(Login));
         }
 
-        return RedirectToAction(
-            nameof(RecipesController.Index),
-            "Recipes");
+        return RedirectToAction(nameof(RecipesController.Index), "Recipes");
     }
 
     public IActionResult AccessDenied()
     {
         _logger.LogWarning(
             "Access denied for user {UserId}",
-            User.FindFirstValue(ClaimTypes.NameIdentifier));
+            User.FindFirstValue(ClaimTypes.NameIdentifier)
+        );
 
         return View();
     }
@@ -141,9 +128,12 @@ public class AccountController : Controller
         List<Claim> claims =
         [
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Name, user.Username)
+            new Claim(ClaimTypes.Name, user.Username),
         ];
-        ClaimsIdentity identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        ClaimsIdentity identity = new ClaimsIdentity(
+            claims,
+            CookieAuthenticationDefaults.AuthenticationScheme
+        );
         ClaimsPrincipal principal = new ClaimsPrincipal(identity);
 
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);

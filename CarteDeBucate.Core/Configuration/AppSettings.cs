@@ -42,7 +42,8 @@ public class AppSettings
         {
             settingsFile = JsonSerializer.Deserialize<AppSettingsFile>(
                 json,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+            );
         }
         catch (JsonException)
         {
@@ -54,7 +55,10 @@ public class AppSettings
 
     private static string? FindConfigurationFilePath()
     {
-        string currentDirectoryPath = Path.Combine(Directory.GetCurrentDirectory(), ConfigurationFileName);
+        string currentDirectoryPath = Path.Combine(
+            Directory.GetCurrentDirectory(),
+            ConfigurationFileName
+        );
 
         if (File.Exists(currentDirectoryPath))
         {

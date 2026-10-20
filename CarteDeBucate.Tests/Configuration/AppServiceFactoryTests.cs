@@ -1,6 +1,6 @@
-using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Logging;
 using System.Reflection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 public class AppServiceFactoryTests
 {
@@ -9,13 +9,15 @@ public class AppServiceFactoryTests
     {
         MethodInfo[] factoryMethods = typeof(AppServiceFactory).GetMethods(
             BindingFlags.Public
-            | BindingFlags.NonPublic
-            | BindingFlags.Static
-            | BindingFlags.DeclaredOnly);
+                | BindingFlags.NonPublic
+                | BindingFlags.Static
+                | BindingFlags.DeclaredOnly
+        );
 
         Assert.DoesNotContain(
             factoryMethods.SelectMany(method => method.GetParameters()),
-            parameter => parameter.ParameterType == typeof(AppSettings));
+            parameter => parameter.ParameterType == typeof(AppSettings)
+        );
     }
 
     [Fact]
@@ -25,7 +27,8 @@ public class AppServiceFactoryTests
             StorageMode.Json,
             "recipes.json",
             "recipes.db",
-            NullLogger<DatabaseRecipeRepository>.Instance);
+            NullLogger<DatabaseRecipeRepository>.Instance
+        );
 
         Assert.IsType<JsonRecipeRepository>(repository);
     }
@@ -37,7 +40,8 @@ public class AppServiceFactoryTests
             StorageMode.Database,
             "recipes.json",
             "recipes.db",
-            NullLogger<DatabaseRecipeRepository>.Instance);
+            NullLogger<DatabaseRecipeRepository>.Instance
+        );
 
         Assert.IsType<DatabaseRecipeRepository>(repository);
     }
@@ -45,8 +49,9 @@ public class AppServiceFactoryTests
     [Fact]
     public void CreateDatabaseRecipePhotoRepository_ShouldCreateDatabaseRepository()
     {
-        IRecipePhotoRepository repository =
-            AppServiceFactory.CreateDatabaseRecipePhotoRepository("recipes.db");
+        IRecipePhotoRepository repository = AppServiceFactory.CreateDatabaseRecipePhotoRepository(
+            "recipes.db"
+        );
 
         Assert.IsType<DatabaseRecipePhotoRepository>(repository);
     }
@@ -56,24 +61,27 @@ public class AppServiceFactoryTests
     {
         string databaseDirectoryPath = Path.Combine(
             Path.GetTempPath(),
-            $"service-factory-tests-{Guid.NewGuid():N}");
-        string expectedRootPath = Path.Combine(
-            databaseDirectoryPath,
-            "recipe-photos");
+            $"service-factory-tests-{Guid.NewGuid():N}"
+        );
+        string expectedRootPath = Path.Combine(databaseDirectoryPath, "recipe-photos");
         try
         {
-            IRecipePhotoStorage storage =
-                AppServiceFactory.CreateDatabaseRecipePhotoStorage(
-                    expectedRootPath);
+            IRecipePhotoStorage storage = AppServiceFactory.CreateDatabaseRecipePhotoStorage(
+                expectedRootPath
+            );
 
             Assert.IsType<FileSystemRecipePhotoStorage>(storage);
             Assert.True(Directory.Exists(expectedRootPath));
-            Assert.True(Directory.Exists(Path.Combine(
-                expectedRootPath,
-                FileSystemRecipePhotoStorage.StagingDirectoryName)));
-            Assert.True(Directory.Exists(Path.Combine(
-                expectedRootPath,
-                FileSystemRecipePhotoStorage.QuarantineDirectoryName)));
+            Assert.True(
+                Directory.Exists(
+                    Path.Combine(expectedRootPath, FileSystemRecipePhotoStorage.StagingDirectoryName)
+                )
+            );
+            Assert.True(
+                Directory.Exists(
+                    Path.Combine(expectedRootPath, FileSystemRecipePhotoStorage.QuarantineDirectoryName)
+                )
+            );
         }
         finally
         {
@@ -89,73 +97,58 @@ public class AppServiceFactoryTests
     {
         string databaseDirectoryPath = Path.Combine(
             Path.GetTempPath(),
-            $"service-factory-tests-{Guid.NewGuid():N}");
-        string databasePath = Path.Combine(
-            databaseDirectoryPath,
-            "recipes.db");
-        string recipePhotosPath = Path.Combine(
-            databaseDirectoryPath,
-            "recipe-photos");
+            $"service-factory-tests-{Guid.NewGuid():N}"
+        );
+        string databasePath = Path.Combine(databaseDirectoryPath, "recipes.db");
+        string recipePhotosPath = Path.Combine(databaseDirectoryPath, "recipe-photos");
         FakeRecipeRepository recipeRepository = new();
         CurrentUserContext currentUserContext = new();
         RecordingLoggerFactory loggerFactory = new();
 
         try
         {
-            IRecipePhotoService service =
-                AppServiceFactory.CreateDatabaseRecipePhotoService(
-                    databasePath,
-                    recipePhotosPath,
-                    recipeRepository,
-                    currentUserContext,
-                    loggerFactory);
+            IRecipePhotoService service = AppServiceFactory.CreateDatabaseRecipePhotoService(
+                databasePath,
+                recipePhotosPath,
+                recipeRepository,
+                currentUserContext,
+                loggerFactory
+            );
 
-            RecipePhotoService concreteService =
-                Assert.IsType<RecipePhotoService>(service);
+            RecipePhotoService concreteService = Assert.IsType<RecipePhotoService>(service);
             Assert.IsType<FileSystemRecipePhotoStorage>(
-                GetPrivateField<IRecipePhotoStorage>(
-                    concreteService,
-                    "_storage"));
+                GetPrivateField<IRecipePhotoStorage>(concreteService, "_storage")
+            );
             Assert.IsType<DatabaseRecipePhotoRepository>(
-                GetPrivateField<IRecipePhotoRepository>(
-                    concreteService,
-                    "_photoRepository"));
+                GetPrivateField<IRecipePhotoRepository>(concreteService, "_photoRepository")
+            );
             Assert.Same(
                 recipeRepository,
-                GetPrivateField<IRecipeRepository>(
-                    concreteService,
-                    "_recipeRepository"));
+                GetPrivateField<IRecipeRepository>(concreteService, "_recipeRepository")
+            );
             Assert.Same(
                 currentUserContext,
-                GetPrivateField<ICurrentUserContext>(
-                    concreteService,
-                    "_currentUserContext"));
+                GetPrivateField<ICurrentUserContext>(concreteService, "_currentUserContext")
+            );
             Assert.IsType<RecipePhotoValidator>(
-                GetPrivateField<RecipePhotoValidator>(
-                    concreteService,
-                    "_validator"));
+                GetPrivateField<RecipePhotoValidator>(concreteService, "_validator")
+            );
             Assert.IsType<RecipePhotoFileNameNormalizer>(
-                GetPrivateField<RecipePhotoFileNameNormalizer>(
-                    concreteService,
-                    "_fileNameNormalizer"));
+                GetPrivateField<RecipePhotoFileNameNormalizer>(concreteService, "_fileNameNormalizer")
+            );
 
-            RecipePhotoOptions options =
-                GetPrivateField<RecipePhotoOptions>(
-                    concreteService,
-                    "_options");
+            RecipePhotoOptions options = GetPrivateField<RecipePhotoOptions>(
+                concreteService,
+                "_options"
+            );
             Assert.Equal(10L * 1024 * 1024, options.MaxFileSizeBytes);
             Assert.Equal(20, options.MaxPhotosPerRecipe);
-            Assert.Equal(
-                TimeSpan.FromHours(24),
-                options.ReconciliationMinimumAge);
+            Assert.Equal(TimeSpan.FromHours(24), options.ReconciliationMinimumAge);
             Assert.Same(
                 TimeProvider.System,
-                GetPrivateField<TimeProvider>(
-                    concreteService,
-                    "_timeProvider"));
-            Assert.NotNull(GetPrivateField<ILogger<RecipePhotoService>>(
-                concreteService,
-                "_logger"));
+                GetPrivateField<TimeProvider>(concreteService, "_timeProvider")
+            );
+            Assert.NotNull(GetPrivateField<ILogger<RecipePhotoService>>(concreteService, "_logger"));
             Assert.Equal(1, loggerFactory.CreateLoggerCallCount);
         }
         finally
@@ -172,56 +165,30 @@ public class AppServiceFactoryTests
     {
         string databaseDirectoryPath = Path.Combine(
             Path.GetTempPath(),
-            $"service-factory-tests-{Guid.NewGuid():N}");
-        string databasePath = Path.Combine(
-            databaseDirectoryPath,
-            "recipes.db");
-        string recipePhotosPath = Path.Combine(
-            databaseDirectoryPath,
-            "recipe-photos");
-        RecipePhotoOptions options = new()
-        {
-            MaxFileSizeBytes = 1234,
-            MaxPhotosPerRecipe = 7
-        };
-        FixedTimeProvider timeProvider = new(
-            new DateTimeOffset(
-                2026,
-                10,
-                13,
-                12,
-                0,
-                0,
-                TimeSpan.Zero));
+            $"service-factory-tests-{Guid.NewGuid():N}"
+        );
+        string databasePath = Path.Combine(databaseDirectoryPath, "recipes.db");
+        string recipePhotosPath = Path.Combine(databaseDirectoryPath, "recipe-photos");
+        RecipePhotoOptions options = new() { MaxFileSizeBytes = 1234, MaxPhotosPerRecipe = 7 };
+        FixedTimeProvider timeProvider = new(new DateTimeOffset(2026, 10, 13, 12, 0, 0, TimeSpan.Zero));
         RecordingLoggerFactory loggerFactory = new();
 
         try
         {
-            IRecipePhotoService service =
-                AppServiceFactory.CreateDatabaseRecipePhotoService(
-                    databasePath,
-                    recipePhotosPath,
-                    new FakeRecipeRepository(),
-                    null,
-                    options,
-                    timeProvider,
-                    loggerFactory);
-
-            RecipePhotoService concreteService =
-                Assert.IsType<RecipePhotoService>(service);
-            Assert.Same(
+            IRecipePhotoService service = AppServiceFactory.CreateDatabaseRecipePhotoService(
+                databasePath,
+                recipePhotosPath,
+                new FakeRecipeRepository(),
+                null,
                 options,
-                GetPrivateField<RecipePhotoOptions>(
-                    concreteService,
-                    "_options"));
-            Assert.Same(
                 timeProvider,
-                GetPrivateField<TimeProvider>(
-                    concreteService,
-                    "_timeProvider"));
-            Assert.Null(GetPrivateFieldValue(
-                concreteService,
-                "_currentUserContext"));
+                loggerFactory
+            );
+
+            RecipePhotoService concreteService = Assert.IsType<RecipePhotoService>(service);
+            Assert.Same(options, GetPrivateField<RecipePhotoOptions>(concreteService, "_options"));
+            Assert.Same(timeProvider, GetPrivateField<TimeProvider>(concreteService, "_timeProvider"));
+            Assert.Null(GetPrivateFieldValue(concreteService, "_currentUserContext"));
             Assert.Equal(1, loggerFactory.CreateLoggerCallCount);
         }
         finally
@@ -238,56 +205,46 @@ public class AppServiceFactoryTests
     {
         string databaseDirectoryPath = Path.Combine(
             Path.GetTempPath(),
-            $"service-factory-tests-{Guid.NewGuid():N}");
-        string databasePath = Path.Combine(
-            databaseDirectoryPath,
-            "recipes.db");
-        string recipePhotosPath = Path.Combine(
-            databaseDirectoryPath,
-            "recipe-photos");
+            $"service-factory-tests-{Guid.NewGuid():N}"
+        );
+        string databasePath = Path.Combine(databaseDirectoryPath, "recipes.db");
+        string recipePhotosPath = Path.Combine(databaseDirectoryPath, "recipe-photos");
         FakeRecipeRepository recipeRepository = new();
         RecordingLoggerFactory loggerFactory = new();
 
         try
         {
             IRecipePhotoReconciliationService service =
-                AppServiceFactory
-                    .CreateDatabaseRecipePhotoReconciliationService(
-                        databasePath,
-                        recipePhotosPath,
-                        recipeRepository,
-                        loggerFactory);
+                AppServiceFactory.CreateDatabaseRecipePhotoReconciliationService(
+                    databasePath,
+                    recipePhotosPath,
+                    recipeRepository,
+                    loggerFactory
+                );
 
             RecipePhotoReconciliationService concreteService =
                 Assert.IsType<RecipePhotoReconciliationService>(service);
             Assert.IsType<FileSystemRecipePhotoStorage>(
-                GetPrivateField<IRecipePhotoStorage>(
-                    concreteService,
-                    "_storage"));
+                GetPrivateField<IRecipePhotoStorage>(concreteService, "_storage")
+            );
             Assert.IsType<DatabaseRecipePhotoRepository>(
-                GetPrivateField<IRecipePhotoRepository>(
-                    concreteService,
-                    "_photoRepository"));
+                GetPrivateField<IRecipePhotoRepository>(concreteService, "_photoRepository")
+            );
             Assert.Same(
                 recipeRepository,
-                GetPrivateField<IRecipeRepository>(
-                    concreteService,
-                    "_recipeRepository"));
+                GetPrivateField<IRecipeRepository>(concreteService, "_recipeRepository")
+            );
             Assert.Equal(
                 TimeSpan.FromHours(24),
-                GetPrivateField<TimeSpan>(
-                    concreteService,
-                    "_reconciliationMinimumAge"));
+                GetPrivateField<TimeSpan>(concreteService, "_reconciliationMinimumAge")
+            );
             Assert.Same(
                 TimeProvider.System,
-                GetPrivateField<TimeProvider>(
-                    concreteService,
-                    "_timeProvider"));
+                GetPrivateField<TimeProvider>(concreteService, "_timeProvider")
+            );
             Assert.NotNull(
-                GetPrivateField<
-                    ILogger<RecipePhotoReconciliationService>>(
-                        concreteService,
-                        "_logger"));
+                GetPrivateField<ILogger<RecipePhotoReconciliationService>>(concreteService, "_logger")
+            );
             Assert.False(recipeRepository.GetAllRecipesWasCalled);
             Assert.Equal(1, loggerFactory.CreateLoggerCallCount);
         }
@@ -305,53 +262,34 @@ public class AppServiceFactoryTests
     {
         string databaseDirectoryPath = Path.Combine(
             Path.GetTempPath(),
-            $"service-factory-tests-{Guid.NewGuid():N}");
-        string databasePath = Path.Combine(
-            databaseDirectoryPath,
-            "recipes.db");
-        string recipePhotosPath = Path.Combine(
-            databaseDirectoryPath,
-            "recipe-photos");
+            $"service-factory-tests-{Guid.NewGuid():N}"
+        );
+        string databasePath = Path.Combine(databaseDirectoryPath, "recipes.db");
+        string recipePhotosPath = Path.Combine(databaseDirectoryPath, "recipe-photos");
         FakeRecipeRepository recipeRepository = new();
-        RecipePhotoOptions options = new()
-        {
-            ReconciliationMinimumAge = TimeSpan.FromHours(6)
-        };
-        FixedTimeProvider timeProvider = new(
-            new DateTimeOffset(
-                2026,
-                10,
-                13,
-                13,
-                0,
-                0,
-                TimeSpan.Zero));
+        RecipePhotoOptions options = new() { ReconciliationMinimumAge = TimeSpan.FromHours(6) };
+        FixedTimeProvider timeProvider = new(new DateTimeOffset(2026, 10, 13, 13, 0, 0, TimeSpan.Zero));
         RecordingLoggerFactory loggerFactory = new();
 
         try
         {
             IRecipePhotoReconciliationService service =
-                AppServiceFactory
-                    .CreateDatabaseRecipePhotoReconciliationService(
-                        databasePath,
-                        recipePhotosPath,
-                        recipeRepository,
-                        options,
-                        timeProvider,
-                        loggerFactory);
+                AppServiceFactory.CreateDatabaseRecipePhotoReconciliationService(
+                    databasePath,
+                    recipePhotosPath,
+                    recipeRepository,
+                    options,
+                    timeProvider,
+                    loggerFactory
+                );
 
             RecipePhotoReconciliationService concreteService =
                 Assert.IsType<RecipePhotoReconciliationService>(service);
             Assert.Equal(
                 options.ReconciliationMinimumAge,
-                GetPrivateField<TimeSpan>(
-                    concreteService,
-                    "_reconciliationMinimumAge"));
-            Assert.Same(
-                timeProvider,
-                GetPrivateField<TimeProvider>(
-                    concreteService,
-                    "_timeProvider"));
+                GetPrivateField<TimeSpan>(concreteService, "_reconciliationMinimumAge")
+            );
+            Assert.Same(timeProvider, GetPrivateField<TimeProvider>(concreteService, "_timeProvider"));
             Assert.False(recipeRepository.GetAllRecipesWasCalled);
             Assert.Equal(1, loggerFactory.CreateLoggerCallCount);
         }
@@ -370,7 +308,8 @@ public class AppServiceFactoryTests
         IUserRepository repository = AppServiceFactory.CreateUserRepository(
             StorageMode.Json,
             "users.json",
-            "recipes.db");
+            "recipes.db"
+        );
 
         Assert.IsType<JsonUserRepository>(repository);
     }
@@ -381,7 +320,8 @@ public class AppServiceFactoryTests
         IUserRepository repository = AppServiceFactory.CreateUserRepository(
             StorageMode.Database,
             "users.json",
-            "recipes.db");
+            "recipes.db"
+        );
 
         Assert.IsType<DatabaseUserRepository>(repository);
     }
@@ -391,8 +331,7 @@ public class AppServiceFactoryTests
     {
         var factoryMethods = typeof(AppServiceFactory)
             .GetMethods()
-            .Where(method =>
-                method.Name == nameof(AppServiceFactory.CreateRecipeImporterService))
+            .Where(method => method.Name == nameof(AppServiceFactory.CreateRecipeImporterService))
             .ToArray();
 
         var factoryMethod = Assert.Single(factoryMethods);
@@ -400,22 +339,21 @@ public class AppServiceFactoryTests
 
         Assert.Equal(2, parameters.Length);
         Assert.Equal(typeof(HttpClient), parameters[0].ParameterType);
-        Assert.Equal(
-            typeof(RecipeImportDestinationPolicy),
-            parameters[1].ParameterType);
+        Assert.Equal(typeof(RecipeImportDestinationPolicy), parameters[1].ParameterType);
     }
 
     [Fact]
     public void CreateRecipeImporterService_WithProvidedDependencies_ShouldCreateService()
     {
         using HttpClient httpClient = new HttpClient();
-        RecipeImportDestinationPolicy destinationPolicy =
-            new RecipeImportDestinationPolicy(new DnsHostAddressResolver());
+        RecipeImportDestinationPolicy destinationPolicy = new RecipeImportDestinationPolicy(
+            new DnsHostAddressResolver()
+        );
 
-        IRecipeImporterService service =
-            AppServiceFactory.CreateRecipeImporterService(
-                httpClient,
-                destinationPolicy);
+        IRecipeImporterService service = AppServiceFactory.CreateRecipeImporterService(
+            httpClient,
+            destinationPolicy
+        );
 
         Assert.IsType<RecipeImporterService>(service);
     }
@@ -425,8 +363,10 @@ public class AppServiceFactoryTests
     {
         FakeRecipeRepository repository = new FakeRecipeRepository();
         CurrentUserContext currentUserContext = new CurrentUserContext();
-        IRecipeLibraryService service =
-            AppServiceFactory.CreateRecipeLibraryService(repository, currentUserContext);
+        IRecipeLibraryService service = AppServiceFactory.CreateRecipeLibraryService(
+            repository,
+            currentUserContext
+        );
         Recipe recipe = CreateValidRecipe();
 
         RecipeSaveResult result = service.SaveRecipe(recipe);
@@ -441,46 +381,40 @@ public class AppServiceFactoryTests
     {
         string databaseDirectoryPath = Path.Combine(
             Path.GetTempPath(),
-            $"service-factory-tests-{Guid.NewGuid():N}");
-        string databasePath = Path.Combine(
-            databaseDirectoryPath,
-            "recipes.db");
-        string recipePhotosPath = Path.Combine(
-            databaseDirectoryPath,
-            "recipe-photos");
+            $"service-factory-tests-{Guid.NewGuid():N}"
+        );
+        string databasePath = Path.Combine(databaseDirectoryPath, "recipes.db");
+        string recipePhotosPath = Path.Combine(databaseDirectoryPath, "recipe-photos");
         FakeRecipeRepository recipeRepository = new();
         CurrentUserContext currentUserContext = new();
         RecordingLoggerFactory loggerFactory = new();
 
         try
         {
-            IRecipeLibraryService service =
-                AppServiceFactory.CreateDatabaseRecipeLibraryService(
-                    databasePath,
-                    recipePhotosPath,
-                    recipeRepository,
-                    currentUserContext,
-                    loggerFactory);
+            IRecipeLibraryService service = AppServiceFactory.CreateDatabaseRecipeLibraryService(
+                databasePath,
+                recipePhotosPath,
+                recipeRepository,
+                currentUserContext,
+                loggerFactory
+            );
 
-            RecipeLibraryService concreteService =
-                Assert.IsType<RecipeLibraryService>(service);
+            RecipeLibraryService concreteService = Assert.IsType<RecipeLibraryService>(service);
             Assert.Same(
                 recipeRepository,
-                GetPrivateField<IRecipeRepository>(
-                    concreteService,
-                    "_recipeRepository"));
+                GetPrivateField<IRecipeRepository>(concreteService, "_recipeRepository")
+            );
             Assert.Same(
                 currentUserContext,
-                GetPrivateField<ICurrentUserContext>(
-                    concreteService,
-                    "_currentUserContext"));
+                GetPrivateField<ICurrentUserContext>(concreteService, "_currentUserContext")
+            );
             Assert.IsType<RecipePhotoService>(
                 GetPrivateField<IRecipePhotoDeletionCoordinator>(
                     concreteService,
-                    "_photoDeletionCoordinator"));
-            Assert.NotNull(GetPrivateField<ILogger<RecipeLibraryService>>(
-                concreteService,
-                "_logger"));
+                    "_photoDeletionCoordinator"
+                )
+            );
+            Assert.NotNull(GetPrivateField<ILogger<RecipeLibraryService>>(concreteService, "_logger"));
             Assert.Equal(2, loggerFactory.CreateLoggerCallCount);
         }
         finally
@@ -495,16 +429,13 @@ public class AppServiceFactoryTests
     [Fact]
     public void CreateRecipeLibraryService_ShouldRemainWithoutPhotoDeletionCoordinator()
     {
-        IRecipeLibraryService service =
-            AppServiceFactory.CreateRecipeLibraryService(
-                new FakeRecipeRepository(),
-                new CurrentUserContext());
+        IRecipeLibraryService service = AppServiceFactory.CreateRecipeLibraryService(
+            new FakeRecipeRepository(),
+            new CurrentUserContext()
+        );
 
-        RecipeLibraryService concreteService =
-            Assert.IsType<RecipeLibraryService>(service);
-        Assert.Null(GetPrivateFieldValue(
-            concreteService,
-            "_photoDeletionCoordinator"));
+        RecipeLibraryService concreteService = Assert.IsType<RecipeLibraryService>(service);
+        Assert.Null(GetPrivateFieldValue(concreteService, "_photoDeletionCoordinator"));
     }
 
     [Fact]
@@ -512,8 +443,10 @@ public class AppServiceFactoryTests
     {
         FakeUserRepository repository = new FakeUserRepository();
         CurrentUserContext currentUserContext = new CurrentUserContext();
-        IAuthenticationService service =
-            AppServiceFactory.CreateAuthenticationService(repository, currentUserContext);
+        IAuthenticationService service = AppServiceFactory.CreateAuthenticationService(
+            repository,
+            currentUserContext
+        );
 
         AuthenticationResult result = service.Register("anca", "secret-password");
 
@@ -522,21 +455,16 @@ public class AppServiceFactoryTests
         Assert.True(currentUserContext.IsAuthenticated);
     }
 
-    private static T GetPrivateField<T>(
-        object instance,
-        string fieldName)
+    private static T GetPrivateField<T>(object instance, string fieldName)
     {
-        return Assert.IsAssignableFrom<T>(
-            GetPrivateFieldValue(instance, fieldName));
+        return Assert.IsAssignableFrom<T>(GetPrivateFieldValue(instance, fieldName));
     }
 
-    private static object? GetPrivateFieldValue(
-        object instance,
-        string fieldName)
+    private static object? GetPrivateFieldValue(object instance, string fieldName)
     {
-        FieldInfo? field = instance.GetType().GetField(
-            fieldName,
-            BindingFlags.Instance | BindingFlags.NonPublic);
+        FieldInfo? field = instance
+            .GetType()
+            .GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
 
         Assert.NotNull(field);
 
@@ -554,13 +482,9 @@ public class AppServiceFactoryTests
             return NullLogger.Instance;
         }
 
-        public void AddProvider(ILoggerProvider provider)
-        {
-        }
+        public void AddProvider(ILoggerProvider provider) { }
 
-        public void Dispose()
-        {
-        }
+        public void Dispose() { }
     }
 
     private sealed class FixedTimeProvider : TimeProvider
@@ -586,7 +510,7 @@ public class AppServiceFactoryTests
             SourceUrl = "https://example.com/recipe",
             SavedAt = DateTime.Now,
             Ingredients = new List<string> { "Ingredient" },
-            Steps = new List<string> { "Step" }
+            Steps = new List<string> { "Step" },
         };
     }
 }

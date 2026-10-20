@@ -30,21 +30,19 @@ test("recipeExistsBySourceUrl sends an encoded GET request and returns true", as
         };
     };
 
-    const result = await recipeExistsBySourceUrl(
-        sourceUrl,
-        accessToken,
-        fetchRequest
-    );
+    const result = await recipeExistsBySourceUrl(sourceUrl, accessToken, fetchRequest);
 
-    assert.deepEqual(requests, [[
-        `${recipeExistsApiUrl}?sourceUrl=https%3A%2F%2Fexample.com%2Frecipe%3Ffirst%3Done%26second%3Dtwo`,
-        {
-            method: "GET",
-            headers: {
-                "Authorization": `Bearer ${accessToken}`
+    assert.deepEqual(requests, [
+        [
+            `${recipeExistsApiUrl}?sourceUrl=https%3A%2F%2Fexample.com%2Frecipe%3Ffirst%3Done%26second%3Dtwo`,
+            {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${accessToken}`
+                }
             }
-        }
-    ]]);
+        ]
+    ]);
     assert.equal(result, true);
 });
 
@@ -55,11 +53,7 @@ test("recipeExistsBySourceUrl returns false when the recipe does not exist", asy
         json: async () => ({ exists: false })
     });
 
-    const result = await recipeExistsBySourceUrl(
-        recipe.sourceUrl,
-        "test-access-token",
-        fetchRequest
-    );
+    const result = await recipeExistsBySourceUrl(recipe.sourceUrl, "test-access-token", fetchRequest);
 
     assert.equal(result, false);
 });
@@ -67,9 +61,10 @@ test("recipeExistsBySourceUrl returns false when the recipe does not exist", asy
 test("recipeExistsBySourceUrl rejects the request when the access token is missing", async () => {
     await assert.rejects(
         () => recipeExistsBySourceUrl(recipe.sourceUrl, null),
-        error => error instanceof Error
-            && error.status === 401
-            && error.message === "Authentication is required."
+        error =>
+            error instanceof Error &&
+            error.status === 401 &&
+            error.message === "Authentication is required."
     );
 });
 
@@ -85,14 +80,11 @@ test("recipeExistsBySourceUrl preserves an unauthorized status without parsing t
     });
 
     await assert.rejects(
-        () => recipeExistsBySourceUrl(
-            recipe.sourceUrl,
-            "expired-access-token",
-            fetchRequest
-        ),
-        error => error instanceof Error
-            && error.status === 401
-            && error.message === "Authentication has expired. Sign in again."
+        () => recipeExistsBySourceUrl(recipe.sourceUrl, "expired-access-token", fetchRequest),
+        error =>
+            error instanceof Error &&
+            error.status === 401 &&
+            error.message === "Authentication has expired. Sign in again."
     );
     assert.equal(jsonReadCount, 0);
 });
@@ -107,14 +99,11 @@ test("recipeExistsBySourceUrl uses the API message when the request fails", asyn
     });
 
     await assert.rejects(
-        () => recipeExistsBySourceUrl(
-            recipe.sourceUrl,
-            "test-access-token",
-            fetchRequest
-        ),
-        error => error instanceof Error
-            && error.status === 400
-            && error.message === "The source URL is invalid."
+        () => recipeExistsBySourceUrl(recipe.sourceUrl, "test-access-token", fetchRequest),
+        error =>
+            error instanceof Error &&
+            error.status === 400 &&
+            error.message === "The source URL is invalid."
     );
 });
 
@@ -128,14 +117,11 @@ test("recipeExistsBySourceUrl uses the HTTP status when an error body is not JSO
     });
 
     await assert.rejects(
-        () => recipeExistsBySourceUrl(
-            recipe.sourceUrl,
-            "test-access-token",
-            fetchRequest
-        ),
-        error => error instanceof Error
-            && error.status === 503
-            && error.message === "API request failed with status 503"
+        () => recipeExistsBySourceUrl(recipe.sourceUrl, "test-access-token", fetchRequest),
+        error =>
+            error instanceof Error &&
+            error.status === 503 &&
+            error.message === "API request failed with status 503"
     );
 });
 
@@ -147,14 +133,11 @@ test("recipeExistsBySourceUrl rejects a successful response without exists", asy
     });
 
     await assert.rejects(
-        () => recipeExistsBySourceUrl(
-            recipe.sourceUrl,
-            "test-access-token",
-            fetchRequest
-        ),
-        error => error instanceof Error
-            && error.status === 200
-            && error.message === "The API response did not contain a valid exists value."
+        () => recipeExistsBySourceUrl(recipe.sourceUrl, "test-access-token", fetchRequest),
+        error =>
+            error instanceof Error &&
+            error.status === 200 &&
+            error.message === "The API response did not contain a valid exists value."
     );
 });
 
@@ -166,14 +149,11 @@ test("recipeExistsBySourceUrl rejects a non-boolean exists value", async () => {
     });
 
     await assert.rejects(
-        () => recipeExistsBySourceUrl(
-            recipe.sourceUrl,
-            "test-access-token",
-            fetchRequest
-        ),
-        error => error instanceof Error
-            && error.status === 200
-            && error.message === "The API response did not contain a valid exists value."
+        () => recipeExistsBySourceUrl(recipe.sourceUrl, "test-access-token", fetchRequest),
+        error =>
+            error instanceof Error &&
+            error.status === 200 &&
+            error.message === "The API response did not contain a valid exists value."
     );
 });
 
@@ -187,14 +167,11 @@ test("recipeExistsBySourceUrl rejects a successful response that is not JSON", a
     });
 
     await assert.rejects(
-        () => recipeExistsBySourceUrl(
-            recipe.sourceUrl,
-            "test-access-token",
-            fetchRequest
-        ),
-        error => error instanceof Error
-            && error.status === 200
-            && error.message === "The API response was not valid JSON."
+        () => recipeExistsBySourceUrl(recipe.sourceUrl, "test-access-token", fetchRequest),
+        error =>
+            error instanceof Error &&
+            error.status === 200 &&
+            error.message === "The API response was not valid JSON."
     );
 });
 
@@ -217,22 +194,24 @@ test("saveRecipeToApi sends the recipe to the recipes API and returns its respon
 
     const result = await saveRecipeToApi(recipe, accessToken, fetchRequest);
 
-    assert.deepEqual(requests, [[
-        recipeApiUrl,
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${accessToken}`
-            },
-            body: JSON.stringify({
-                name: recipe.name,
-                sourceUrl: recipe.sourceUrl,
-                ingredients: recipe.ingredients,
-                steps: recipe.steps
-            })
-        }
-    ]]);
+    assert.deepEqual(requests, [
+        [
+            recipeApiUrl,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${accessToken}`
+                },
+                body: JSON.stringify({
+                    name: recipe.name,
+                    sourceUrl: recipe.sourceUrl,
+                    ingredients: recipe.ingredients,
+                    steps: recipe.steps
+                })
+            }
+        ]
+    ]);
     assert.deepEqual(result, apiResponse);
 });
 
@@ -295,9 +274,10 @@ test("saveRecipeToApi preserves an unauthorized status without parsing an empty 
 
     await assert.rejects(
         () => saveRecipeToApi(recipe, "expired-access-token", fetchRequest),
-        error => error instanceof Error
-            && error.status === 401
-            && error.message === "Authentication has expired. Sign in again."
+        error =>
+            error instanceof Error &&
+            error.status === 401 &&
+            error.message === "Authentication has expired. Sign in again."
     );
     assert.equal(jsonReadCount, 0);
 });
@@ -313,17 +293,19 @@ test("saveRecipeToApi uses the HTTP status when an error body is not JSON", asyn
 
     await assert.rejects(
         () => saveRecipeToApi(recipe, "test-access-token", fetchRequest),
-        error => error instanceof Error
-            && error.status === 503
-            && error.message === "API request failed with status 503"
+        error =>
+            error instanceof Error &&
+            error.status === 503 &&
+            error.message === "API request failed with status 503"
     );
 });
 
 test("saveRecipeToApi rejects the request when the access token is missing", async () => {
     await assert.rejects(
         () => saveRecipeToApi(recipe, null),
-        error => error instanceof Error
-            && error.status === 401
-            && error.message === "Authentication is required."
+        error =>
+            error instanceof Error &&
+            error.status === 401 &&
+            error.message === "Authentication is required."
     );
 });

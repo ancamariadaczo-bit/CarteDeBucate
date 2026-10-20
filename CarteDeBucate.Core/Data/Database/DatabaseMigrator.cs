@@ -40,8 +40,16 @@ public class DatabaseMigrator
             new DatabaseMigration(1, "Add recipe status column", DatabaseScripts.AddRecipeStatusColumn),
             new DatabaseMigration(2, "Create Users table", DatabaseScripts.CreateUsersTable),
             new DatabaseMigration(3, "Add user id to recipes", DatabaseScripts.AddUserIdToRecipes),
-            new DatabaseMigration(4, "Create RecipePhotos table", DatabaseScripts.CreateRecipePhotosSchema),
-            new DatabaseMigration(5, "Make usernames case-insensitively unique", DatabaseScripts.CreateUsersUsernameNoCaseUniqueIndex)
+            new DatabaseMigration(
+                4,
+                "Create RecipePhotos table",
+                DatabaseScripts.CreateRecipePhotosSchema
+            ),
+            new DatabaseMigration(
+                5,
+                "Make usernames case-insensitively unique",
+                DatabaseScripts.CreateUsersUsernameNoCaseUniqueIndex
+            ),
         };
     }
 
@@ -69,7 +77,10 @@ public class DatabaseMigrator
         return count > 0;
     }
 
-    private static bool IsMigrationAlreadyPresentInSchema(SqliteConnection connection, DatabaseMigration migration)
+    private static bool IsMigrationAlreadyPresentInSchema(
+        SqliteConnection connection,
+        DatabaseMigration migration
+    )
     {
         return migration.Version switch
         {
@@ -78,7 +89,7 @@ public class DatabaseMigrator
             3 => ColumnExists(connection, "Recipes", "UserId"),
             4 => TableExists(connection, "RecipePhotos"),
             5 => IndexExists(connection, "IX_Users_Username_NoCase"),
-            _ => false
+            _ => false,
         };
     }
 
@@ -163,7 +174,8 @@ public class DatabaseMigrator
     private static void SaveMigration(
         SqliteConnection connection,
         DatabaseMigration migration,
-        SqliteTransaction? transaction = null)
+        SqliteTransaction? transaction = null
+    )
     {
         using SqliteCommand saveMigrationCommand = connection.CreateCommand();
         saveMigrationCommand.Transaction = transaction;

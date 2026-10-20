@@ -18,7 +18,8 @@ public class RecipeBackupsController : Controller
 
     public RecipeBackupsController(
         IRecipeBackupService backupService,
-        ILogger<RecipeBackupsController> logger)
+        ILogger<RecipeBackupsController> logger
+    )
     {
         _backupService = backupService;
         _logger = logger;
@@ -37,9 +38,7 @@ public class RecipeBackupsController : Controller
 
         if (!result.IsSuccess)
         {
-            _logger.LogWarning(
-                "Recipe backup export failed. Reason: {FailureReason}",
-                result.Message);
+            _logger.LogWarning("Recipe backup export failed. Reason: {FailureReason}", result.Message);
 
             TempData[ErrorMessageKey] = result.Message;
 
@@ -50,7 +49,8 @@ public class RecipeBackupsController : Controller
 
         _logger.LogInformation(
             "Recipe backup export completed successfully. File size: {FileSizeBytes} bytes",
-            fileContents.Length);
+            fileContents.Length
+        );
 
         return File(fileContents, JsonContentType, CreateBackupFileName());
     }
@@ -78,14 +78,16 @@ public class RecipeBackupsController : Controller
         {
             _logger.LogInformation(
                 "Recipe backup import completed successfully. File size: {FileSizeBytes} bytes",
-                backupFile.Length);
+                backupFile.Length
+            );
         }
         else
         {
             _logger.LogWarning(
                 "Recipe backup import failed. File size: {FileSizeBytes} bytes. Reason: {FailureReason}",
                 backupFile.Length,
-                result.Message);
+                result.Message
+            );
         }
 
         return RedirectToAction(nameof(Index));

@@ -6,21 +6,27 @@ public class RichConsoleRecipeAppTests
         List<RecipeSummary> recipes =
         [
             new RecipeSummary { Id = 1, Name = "Banana Bread" },
-            new RecipeSummary { Id = 2, Name = "Pancakes" }
+            new RecipeSummary { Id = 2, Name = "Pancakes" },
         ];
 
         FakeRecipeImporterService importerService = new();
         FakeRecipeLibraryService libraryService = new()
         {
-            RecipeSummariesPageToReturn =
-                new PagedResult<RecipeSummary>(recipes, 1, 10, recipes.Count)
+            RecipeSummariesPageToReturn = new PagedResult<RecipeSummary>(recipes, 1, 10, recipes.Count),
         };
         FakeRecipeBackupService backupService = new();
         FakeRichConsoleMenu menu = CreateMenu(MainMenuOption.ShowRecipes);
         FakeRichConsoleDisplay display = new();
         FakeRichConsoleReader reader = new();
 
-        RichConsoleRecipeApp app = CreateApp(importerService, libraryService, backupService, menu, display, reader);
+        RichConsoleRecipeApp app = CreateApp(
+            importerService,
+            libraryService,
+            backupService,
+            menu,
+            display,
+            reader
+        );
 
         await app.RunAsync();
 
@@ -36,21 +42,17 @@ public class RichConsoleRecipeAppTests
     [Fact]
     public async Task Run_WithShowAllRecipesOption_ShouldNavigateToNextPage()
     {
-        List<RecipeSummary> firstPageRecipes =
-        [
-            new RecipeSummary { Id = 1, Name = "Banana Bread" }
-        ];
-        List<RecipeSummary> secondPageRecipes =
-        [
-            new RecipeSummary { Id = 2, Name = "Pancakes" }
-        ];
+        List<RecipeSummary> firstPageRecipes = [new RecipeSummary { Id = 1, Name = "Banana Bread" }];
+        List<RecipeSummary> secondPageRecipes = [new RecipeSummary { Id = 2, Name = "Pancakes" }];
 
         FakeRecipeImporterService importerService = new();
         FakeRecipeLibraryService libraryService = new();
         libraryService.RecipeSummariesPagesToReturn.Enqueue(
-            new PagedResult<RecipeSummary>(firstPageRecipes, 1, 10, 20));
+            new PagedResult<RecipeSummary>(firstPageRecipes, 1, 10, 20)
+        );
         libraryService.RecipeSummariesPagesToReturn.Enqueue(
-            new PagedResult<RecipeSummary>(secondPageRecipes, 2, 10, 20));
+            new PagedResult<RecipeSummary>(secondPageRecipes, 2, 10, 20)
+        );
 
         FakeRecipeBackupService backupService = new();
         FakeRichConsoleMenu menu = CreateMenu(MainMenuOption.ShowRecipes);
@@ -59,13 +61,18 @@ public class RichConsoleRecipeAppTests
         reader.PaginationActionsToReturn.Enqueue(PaginationAction.NextPage);
         reader.PaginationActionsToReturn.Enqueue(PaginationAction.BackToMenu);
 
-        RichConsoleRecipeApp app = CreateApp(importerService, libraryService, backupService, menu, display, reader);
+        RichConsoleRecipeApp app = CreateApp(
+            importerService,
+            libraryService,
+            backupService,
+            menu,
+            display,
+            reader
+        );
 
         await app.RunAsync();
 
-        Assert.Equal(
-            new List<int> { 1, 2 },
-            libraryService.PageNumbersPassedToGetRecipeSummariesPage);
+        Assert.Equal(new List<int> { 1, 2 }, libraryService.PageNumbersPassedToGetRecipeSummariesPage);
         Assert.True(reader.ReadPaginationActionWasCalled);
         Assert.True(display.ShowRecipesWasCalled);
         Assert.Equal(3, display.ClearCallCount);
@@ -74,25 +81,23 @@ public class RichConsoleRecipeAppTests
     [Fact]
     public async Task Run_WithShowAllRecipesOption_ShouldStayOnCurrentPageWhenPaginationBoundaryIsReached()
     {
-        List<RecipeSummary> firstPageRecipes =
-        [
-            new RecipeSummary { Id = 1, Name = "Banana Bread" }
-        ];
-        List<RecipeSummary> secondPageRecipes =
-        [
-            new RecipeSummary { Id = 2, Name = "Pancakes" }
-        ];
+        List<RecipeSummary> firstPageRecipes = [new RecipeSummary { Id = 1, Name = "Banana Bread" }];
+        List<RecipeSummary> secondPageRecipes = [new RecipeSummary { Id = 2, Name = "Pancakes" }];
 
         FakeRecipeImporterService importerService = new();
         FakeRecipeLibraryService libraryService = new();
         libraryService.RecipeSummariesPagesToReturn.Enqueue(
-            new PagedResult<RecipeSummary>(firstPageRecipes, 1, 10, 20));
+            new PagedResult<RecipeSummary>(firstPageRecipes, 1, 10, 20)
+        );
         libraryService.RecipeSummariesPagesToReturn.Enqueue(
-            new PagedResult<RecipeSummary>(firstPageRecipes, 1, 10, 20));
+            new PagedResult<RecipeSummary>(firstPageRecipes, 1, 10, 20)
+        );
         libraryService.RecipeSummariesPagesToReturn.Enqueue(
-            new PagedResult<RecipeSummary>(secondPageRecipes, 2, 10, 20));
+            new PagedResult<RecipeSummary>(secondPageRecipes, 2, 10, 20)
+        );
         libraryService.RecipeSummariesPagesToReturn.Enqueue(
-            new PagedResult<RecipeSummary>(secondPageRecipes, 2, 10, 20));
+            new PagedResult<RecipeSummary>(secondPageRecipes, 2, 10, 20)
+        );
 
         FakeRecipeBackupService backupService = new();
         FakeRichConsoleMenu menu = CreateMenu(MainMenuOption.ShowRecipes);
@@ -103,13 +108,21 @@ public class RichConsoleRecipeAppTests
         reader.PaginationActionsToReturn.Enqueue(PaginationAction.NextPage);
         reader.PaginationActionsToReturn.Enqueue(PaginationAction.BackToMenu);
 
-        RichConsoleRecipeApp app = CreateApp(importerService, libraryService, backupService, menu, display, reader);
+        RichConsoleRecipeApp app = CreateApp(
+            importerService,
+            libraryService,
+            backupService,
+            menu,
+            display,
+            reader
+        );
 
         await app.RunAsync();
 
         Assert.Equal(
             new List<int> { 1, 1, 2, 2 },
-            libraryService.PageNumbersPassedToGetRecipeSummariesPage);
+            libraryService.PageNumbersPassedToGetRecipeSummariesPage
+        );
         Assert.Equal(5, display.ClearCallCount);
     }
 
@@ -119,8 +132,12 @@ public class RichConsoleRecipeAppTests
         FakeRecipeImporterService importerService = new();
         FakeRecipeLibraryService libraryService = new()
         {
-            RecipeSummariesPageToReturn =
-                new PagedResult<RecipeSummary>(new List<RecipeSummary>(), 1, 10, 0)
+            RecipeSummariesPageToReturn = new PagedResult<RecipeSummary>(
+                new List<RecipeSummary>(),
+                1,
+                10,
+                0
+            ),
         };
 
         FakeRecipeBackupService backupService = new();
@@ -128,7 +145,14 @@ public class RichConsoleRecipeAppTests
         FakeRichConsoleDisplay display = new();
         FakeRichConsoleReader reader = new();
 
-        RichConsoleRecipeApp app = CreateApp(importerService, libraryService, backupService, menu, display, reader);
+        RichConsoleRecipeApp app = CreateApp(
+            importerService,
+            libraryService,
+            backupService,
+            menu,
+            display,
+            reader
+        );
 
         await app.RunAsync();
 
@@ -147,7 +171,7 @@ public class RichConsoleRecipeAppTests
 
         FakeRecipeLibraryService libraryService = new()
         {
-            SaveResultToReturn = new RecipeSaveResult { IsSuccess = true, Message = "Saved." }
+            SaveResultToReturn = new RecipeSaveResult { IsSuccess = true, Message = "Saved." },
         };
         FakeRichConsoleReader reader = new() { RecipeToReturn = recipe };
 
@@ -157,7 +181,8 @@ public class RichConsoleRecipeAppTests
             new FakeRecipeBackupService(),
             CreateMenu(MainMenuOption.AddRecipe),
             new FakeRichConsoleDisplay(),
-            reader);
+            reader
+        );
 
         await app.RunAsync();
 
@@ -175,8 +200,12 @@ public class RichConsoleRecipeAppTests
         FakeRecipeLibraryService libraryService = new()
         {
             RecipeSummariesToReturn = recipes,
-            SearchResultsPageToReturn =
-                new PagedResult<RecipeSummary>(searchResults, 1, 10, searchResults.Count)
+            SearchResultsPageToReturn = new PagedResult<RecipeSummary>(
+                searchResults,
+                1,
+                10,
+                searchResults.Count
+            ),
         };
 
         FakeRichConsoleReader reader = new() { SearchText = "cake" };
@@ -188,7 +217,8 @@ public class RichConsoleRecipeAppTests
             new FakeRecipeBackupService(),
             CreateMenu(MainMenuOption.SearchRecipe),
             display,
-            reader);
+            reader
+        );
 
         await app.RunAsync();
 
@@ -202,7 +232,8 @@ public class RichConsoleRecipeAppTests
         Assert.Equal(searchResults, display.RecipesPassedToShowRecipes);
         Assert.Contains(
             string.Format(AppTexts.SearchResultsTotal, searchResults.Count),
-            display.Messages);
+            display.Messages
+        );
     }
 
     [Fact]
@@ -212,14 +243,13 @@ public class RichConsoleRecipeAppTests
         List<RecipeSummary> firstPageResults = [new RecipeSummary { Id = 1, Name = "Cake" }];
         List<RecipeSummary> secondPageResults = [new RecipeSummary { Id = 2, Name = "Chocolate Cake" }];
         FakeRecipeImporterService importerService = new();
-        FakeRecipeLibraryService libraryService = new()
-        {
-            RecipeSummariesToReturn = recipes
-        };
+        FakeRecipeLibraryService libraryService = new() { RecipeSummariesToReturn = recipes };
         libraryService.SearchResultsPagesToReturn.Enqueue(
-            new PagedResult<RecipeSummary>(firstPageResults, 1, 10, 20));
+            new PagedResult<RecipeSummary>(firstPageResults, 1, 10, 20)
+        );
         libraryService.SearchResultsPagesToReturn.Enqueue(
-            new PagedResult<RecipeSummary>(secondPageResults, 2, 10, 20));
+            new PagedResult<RecipeSummary>(secondPageResults, 2, 10, 20)
+        );
 
         FakeRichConsoleReader reader = new() { SearchText = "cake" };
         reader.PaginationActionsToReturn.Enqueue(PaginationAction.NextPage);
@@ -232,13 +262,12 @@ public class RichConsoleRecipeAppTests
             new FakeRecipeBackupService(),
             CreateMenu(MainMenuOption.SearchRecipe),
             display,
-            reader);
+            reader
+        );
 
         await app.RunAsync();
 
-        Assert.Equal(
-            new List<int> { 1, 2 },
-            libraryService.PageNumbersPassedToSearchRecipesPage);
+        Assert.Equal(new List<int> { 1, 2 }, libraryService.PageNumbersPassedToSearchRecipesPage);
         Assert.Equal("cake", libraryService.SearchTextPassedToSearchRecipesPage);
         Assert.True(display.ShowRecipesWasCalled);
     }
@@ -250,14 +279,13 @@ public class RichConsoleRecipeAppTests
         List<RecipeSummary> cakeResults = [new RecipeSummary { Id = 1, Name = "Cake" }];
         List<RecipeSummary> soupResults = [new RecipeSummary { Id = 2, Name = "Soup" }];
         FakeRecipeImporterService importerService = new();
-        FakeRecipeLibraryService libraryService = new()
-        {
-            RecipeSummariesToReturn = recipes
-        };
+        FakeRecipeLibraryService libraryService = new() { RecipeSummariesToReturn = recipes };
         libraryService.SearchResultsPagesToReturn.Enqueue(
-            new PagedResult<RecipeSummary>(cakeResults, 1, 10, 1));
+            new PagedResult<RecipeSummary>(cakeResults, 1, 10, 1)
+        );
         libraryService.SearchResultsPagesToReturn.Enqueue(
-            new PagedResult<RecipeSummary>(soupResults, 1, 10, 1));
+            new PagedResult<RecipeSummary>(soupResults, 1, 10, 1)
+        );
 
         FakeRichConsoleReader reader = new();
         reader.SearchTextsToReturn.Enqueue("cake");
@@ -274,13 +302,12 @@ public class RichConsoleRecipeAppTests
             new FakeRecipeBackupService(),
             CreateMenu(MainMenuOption.SearchRecipe),
             display,
-            reader);
+            reader
+        );
 
         await app.RunAsync();
 
-        Assert.Equal(
-            new List<int> { 1, 1 },
-            libraryService.PageNumbersPassedToSearchRecipesPage);
+        Assert.Equal(new List<int> { 1, 1 }, libraryService.PageNumbersPassedToSearchRecipesPage);
         Assert.Equal("soup", libraryService.SearchTextPassedToSearchRecipesPage);
         Assert.True(reader.ConfirmSearchAnotherRecipeWasCalled);
     }
@@ -294,7 +321,7 @@ public class RichConsoleRecipeAppTests
         FakeRecipeLibraryService libraryService = new()
         {
             RecipeSummariesToReturn = [selectedRecipe],
-            RecipeToReturn = recipe
+            RecipeToReturn = recipe,
         };
 
         FakeRichConsoleReader reader = new() { SelectedRecipe = selectedRecipe };
@@ -306,7 +333,8 @@ public class RichConsoleRecipeAppTests
             new FakeRecipeBackupService(),
             CreateMenu(MainMenuOption.ViewRecipeDetails),
             display,
-            reader);
+            reader
+        );
 
         await app.RunAsync();
 
@@ -327,13 +355,13 @@ public class RichConsoleRecipeAppTests
         {
             RecipeSummariesToReturn = [selectedRecipe],
             RecipeToReturn = recipe,
-            UpdateResultToReturn = new RecipeSaveResult { IsSuccess = true, Message = "Updated." }
+            UpdateResultToReturn = new RecipeSaveResult { IsSuccess = true, Message = "Updated." },
         };
 
         FakeRichConsoleReader reader = new()
         {
             SelectedRecipe = selectedRecipe,
-            EditedRecipe = editedRecipe
+            EditedRecipe = editedRecipe,
         };
 
         RichConsoleRecipeApp app = CreateApp(
@@ -342,7 +370,8 @@ public class RichConsoleRecipeAppTests
             new FakeRecipeBackupService(),
             CreateMenu(MainMenuOption.EditRecipe),
             new FakeRichConsoleDisplay(),
-            reader);
+            reader
+        );
 
         await app.RunAsync();
 
@@ -361,7 +390,7 @@ public class RichConsoleRecipeAppTests
         FakeRecipeLibraryService libraryService = new()
         {
             RecipeSummariesToReturn = [selectedRecipe],
-            DeleteResultToReturn = new RecipeSaveResult { IsSuccess = true, Message = "Deleted." }
+            DeleteResultToReturn = new RecipeSaveResult { IsSuccess = true, Message = "Deleted." },
         };
 
         FakeRichConsoleReader reader = new() { SelectedRecipe = selectedRecipe };
@@ -372,7 +401,8 @@ public class RichConsoleRecipeAppTests
             new FakeRecipeBackupService(),
             CreateMenu(MainMenuOption.DeleteRecipe),
             new FakeRichConsoleDisplay(),
-            reader);
+            reader
+        );
 
         await app.RunAsync();
 
@@ -385,25 +415,29 @@ public class RichConsoleRecipeAppTests
     [Fact]
     public async Task Run_WithSuccessfulImportAndSave_ShouldImportAndSaveRecipe()
     {
-        Recipe importedRecipe = new Recipe { Name = "Imported", SourceUrl = "https://example.com/recipe" };
+        Recipe importedRecipe = new Recipe
+        {
+            Name = "Imported",
+            SourceUrl = "https://example.com/recipe",
+        };
         FakeRecipeImporterService importerService = new()
         {
             ImportResultToReturn = new RecipeImportResult
             {
                 Success = true,
                 Recipe = importedRecipe,
-                Message = "Imported."
-            }
+                Message = "Imported.",
+            },
         };
         FakeRecipeLibraryService libraryService = new()
         {
-            SaveResultToReturn = new RecipeSaveResult { IsSuccess = true, Message = "Saved." }
+            SaveResultToReturn = new RecipeSaveResult { IsSuccess = true, Message = "Saved." },
         };
 
         FakeRichConsoleReader reader = new()
         {
             RecipeUrlToImport = "https://example.com/recipe",
-            SaveRecipeConfirmation = true
+            SaveRecipeConfirmation = true,
         };
 
         RichConsoleRecipeApp app = CreateApp(
@@ -412,7 +446,8 @@ public class RichConsoleRecipeAppTests
             new FakeRecipeBackupService(),
             CreateMenu(MainMenuOption.ImportRecipeFromUrl),
             new FakeRichConsoleDisplay(),
-            reader);
+            reader
+        );
 
         await app.RunAsync();
 
@@ -431,8 +466,8 @@ public class RichConsoleRecipeAppTests
             {
                 Success = false,
                 Recipe = null,
-                Message = "Failed."
-            }
+                Message = "Failed.",
+            },
         };
 
         FakeRichConsoleReader reader = new() { RecipeUrlToImport = "https://example.com/nope" };
@@ -444,7 +479,8 @@ public class RichConsoleRecipeAppTests
             new FakeRecipeBackupService(),
             CreateMenu(MainMenuOption.ImportRecipeFromUrl),
             new FakeRichConsoleDisplay(),
-            reader);
+            reader
+        );
 
         await app.RunAsync();
 
@@ -464,7 +500,8 @@ public class RichConsoleRecipeAppTests
             backupService,
             CreateMenu(MainMenuOption.ExportBackup),
             new FakeRichConsoleDisplay(),
-            reader);
+            reader
+        );
 
         await app.RunAsync();
 
@@ -485,7 +522,8 @@ public class RichConsoleRecipeAppTests
             backupService,
             CreateMenu(MainMenuOption.ImportBackup),
             new FakeRichConsoleDisplay(),
-            reader);
+            reader
+        );
 
         await app.RunAsync();
 
@@ -509,7 +547,8 @@ public class RichConsoleRecipeAppTests
         IRecipeBackupService backupService,
         IRichConsoleMenu menu,
         IRichConsoleDisplay display,
-        IRichConsoleReader reader)
+        IRichConsoleReader reader
+    )
     {
         return new RichConsoleRecipeApp(
             importerService,
@@ -517,6 +556,7 @@ public class RichConsoleRecipeAppTests
             backupService,
             menu,
             display,
-            reader);
+            reader
+        );
     }
 }

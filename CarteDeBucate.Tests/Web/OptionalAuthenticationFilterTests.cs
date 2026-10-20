@@ -14,7 +14,8 @@ public class OptionalAuthenticationFilterTests
     public void OnAuthorization_WhenAuthenticationIsDisabled_ShouldAllowRequest()
     {
         OptionalAuthenticationFilter filter = new OptionalAuthenticationFilter(
-            new WebAppSettings { AuthenticationEnabled = false });
+            new WebAppSettings { AuthenticationEnabled = false }
+        );
         AuthorizationFilterContext context = CreateAuthorizationContext();
 
         filter.OnAuthorization(context);
@@ -26,9 +27,9 @@ public class OptionalAuthenticationFilterTests
     public void OnAuthorization_WhenAuthenticationIsEnabledAndUserIsAuthenticated_ShouldAllowRequest()
     {
         OptionalAuthenticationFilter filter = new OptionalAuthenticationFilter(
-            new WebAppSettings { AuthenticationEnabled = true });
-        AuthorizationFilterContext context = CreateAuthorizationContext(
-            isAuthenticated: true);
+            new WebAppSettings { AuthenticationEnabled = true }
+        );
+        AuthorizationFilterContext context = CreateAuthorizationContext(isAuthenticated: true);
 
         filter.OnAuthorization(context);
 
@@ -39,20 +40,19 @@ public class OptionalAuthenticationFilterTests
     public void OnAuthorization_WhenAuthenticationIsEnabledAndUserIsAnonymous_ShouldRedirectToLogin()
     {
         OptionalAuthenticationFilter filter = new OptionalAuthenticationFilter(
-            new WebAppSettings { AuthenticationEnabled = true });
+            new WebAppSettings { AuthenticationEnabled = true }
+        );
         AuthorizationFilterContext context = CreateAuthorizationContext(
             path: "/Recipes/Details/12",
-            queryString: "?returnTo=Index");
+            queryString: "?returnTo=Index"
+        );
 
         filter.OnAuthorization(context);
 
-        RedirectToActionResult redirectResult =
-            Assert.IsType<RedirectToActionResult>(context.Result);
+        RedirectToActionResult redirectResult = Assert.IsType<RedirectToActionResult>(context.Result);
         Assert.Equal(nameof(AccountController.Login), redirectResult.ActionName);
         Assert.Equal("Account", redirectResult.ControllerName);
-        Assert.Equal(
-            "/Recipes/Details/12?returnTo=Index",
-            redirectResult.RouteValues?["returnUrl"]);
+        Assert.Equal("/Recipes/Details/12?returnTo=Index", redirectResult.RouteValues?["returnUrl"]);
     }
 
     [Fact]
@@ -70,7 +70,8 @@ public class OptionalAuthenticationFilterTests
     private static AuthorizationFilterContext CreateAuthorizationContext(
         bool isAuthenticated = false,
         string path = "/Recipes",
-        string queryString = "")
+        string queryString = ""
+    )
     {
         DefaultHttpContext httpContext = new DefaultHttpContext();
         httpContext.Request.Path = path;
@@ -81,20 +82,18 @@ public class OptionalAuthenticationFilterTests
             Claim[] claims =
             {
                 new Claim(ClaimTypes.NameIdentifier, "12"),
-                new Claim(ClaimTypes.Name, "anca")
+                new Claim(ClaimTypes.Name, "anca"),
             };
-            httpContext.User = new ClaimsPrincipal(
-                new ClaimsIdentity(claims, "Test"));
+            httpContext.User = new ClaimsPrincipal(new ClaimsIdentity(claims, "Test"));
         }
 
         ActionContext actionContext = new ActionContext(
             httpContext,
             new RouteData(),
-            new ActionDescriptor());
+            new ActionDescriptor()
+        );
 
-        return new AuthorizationFilterContext(
-            actionContext,
-            new List<IFilterMetadata>());
+        return new AuthorizationFilterContext(actionContext, new List<IFilterMetadata>());
     }
 
     private static void AssertControllerUsesOptionalAuthenticationFilter(Type controllerType)
@@ -102,8 +101,7 @@ public class OptionalAuthenticationFilterTests
         ServiceFilterAttribute? filterAttribute = controllerType
             .GetCustomAttributes(typeof(ServiceFilterAttribute), inherit: false)
             .Cast<ServiceFilterAttribute>()
-            .SingleOrDefault(attribute =>
-                attribute.ServiceType == typeof(OptionalAuthenticationFilter));
+            .SingleOrDefault(attribute => attribute.ServiceType == typeof(OptionalAuthenticationFilter));
 
         Assert.NotNull(filterAttribute);
     }

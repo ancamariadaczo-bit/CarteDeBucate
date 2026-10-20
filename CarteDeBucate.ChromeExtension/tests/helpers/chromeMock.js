@@ -1,7 +1,4 @@
-export function createChromeMock({
-    tabs = [{ id: 101 }],
-    executeScriptResults = []
-} = {}) {
+export function createChromeMock({ tabs = [{ id: 101 }], executeScriptResults = [] } = {}) {
     const queuedExecutionResults = [...executeScriptResults];
     const calls = {
         tabsQuery: [],
@@ -127,8 +124,9 @@ export function createControlledTimers() {
     }
 
     function runNext() {
-        const task = [...tasks.values()]
-            .sort((left, right) => left.delay - right.delay || left.id - right.id)[0];
+        const task = [...tasks.values()].sort(
+            (left, right) => left.delay - right.delay || left.id - right.id
+        )[0];
 
         return task ? runTask(task) : false;
     }

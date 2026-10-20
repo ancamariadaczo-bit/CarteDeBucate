@@ -1,7 +1,7 @@
 using CarteDeBucate.Web.Models.Api;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 [ApiController]
@@ -20,61 +20,42 @@ public class RecipesApiController : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(sourceUrl))
         {
-            return BadRequest(new
-            {
-                message = AppTexts.RecipeSourceUrlRequired
-            });
+            return BadRequest(new { message = AppTexts.RecipeSourceUrlRequired });
         }
 
         string normalizedSourceUrl = sourceUrl.Trim();
 
         if (!UrlValidator.IsValidHttpUrl(normalizedSourceUrl))
         {
-            return BadRequest(new
-            {
-                message = AppTexts.RecipeSourceUrlInvalid
-            });
+            return BadRequest(new { message = AppTexts.RecipeSourceUrlInvalid });
         }
 
-        bool exists =
-            _recipeLibraryService.RecipeExistsBySourceUrl(normalizedSourceUrl);
+        bool exists = _recipeLibraryService.RecipeExistsBySourceUrl(normalizedSourceUrl);
 
-        return Ok(new
-        {
-            exists
-        });
+        return Ok(new { exists });
     }
 
     [HttpPost]
     public IActionResult Create([FromBody] CreateRecipeRequest request)
     {
-        RecipeSaveResult result =
-            _recipeLibraryService.SaveRecipe(request.ToRecipe());
+        RecipeSaveResult result = _recipeLibraryService.SaveRecipe(request.ToRecipe());
 
         if (!result.IsSuccess)
         {
-            return BadRequest(new
-            {
-                message = result.Message
-            });
+            return BadRequest(new { message = result.Message });
         }
 
         if (result.Recipe == null)
         {
             return StatusCode(
                 StatusCodes.Status500InternalServerError,
-                new
-                {
-                    message = "Recipe was saved, but the saved recipe could not be returned."
-                });
+                new { message = "Recipe was saved, but the saved recipe could not be returned." }
+            );
         }
 
         return Created(
             $"/Recipes/Details/{result.Recipe.Id}",
-            new
-            {
-                message = result.Message,
-                recipeId = result.Recipe.Id
-            });
+            new { message = result.Message, recipeId = result.Recipe.Id }
+        );
     }
 }

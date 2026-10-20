@@ -1,5 +1,5 @@
-using Microsoft.Data.Sqlite;
 using CarteDeBucate.Web.Services;
+using Microsoft.Data.Sqlite;
 
 namespace CarteDeBucate.Web.BackgroundServices;
 
@@ -12,14 +12,14 @@ public class DatabaseBackupWorker : BackgroundService
 
     public DatabaseBackupWorker(
         ILogger<DatabaseBackupWorker> logger,
-        IDatabaseBackupService backupService)
+        IDatabaseBackupService backupService
+    )
     {
         _logger = logger;
         _backupService = backupService;
     }
 
-    protected override async Task ExecuteAsync(
-       CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("Database backup worker started.");
 
@@ -68,7 +68,8 @@ public class DatabaseBackupWorker : BackgroundService
                 _logger.LogError(
                     exception,
                     "Database backup failed. Retrying in {RetryDelay}.",
-                    BackupRetryDelay);
+                    BackupRetryDelay
+                );
 
                 await Task.Delay(BackupRetryDelay, stoppingToken);
             }

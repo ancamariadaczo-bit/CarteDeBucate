@@ -2,7 +2,8 @@ internal sealed class PreparedRecipePhotoDeletionBatch
 {
     internal PreparedRecipePhotoDeletionBatch(
         int recipeId,
-        IEnumerable<StagedRecipePhotoDeletion> stagedDeletions)
+        IEnumerable<StagedRecipePhotoDeletion> stagedDeletions
+    )
     {
         ArgumentNullException.ThrowIfNull(stagedDeletions);
 
@@ -12,8 +13,5 @@ internal sealed class PreparedRecipePhotoDeletionBatch
 
     internal int RecipeId { get; }
 
-    internal IReadOnlyList<StagedRecipePhotoDeletion> StagedDeletions
-    {
-        get;
-    }
+    internal IReadOnlyList<StagedRecipePhotoDeletion> StagedDeletions { get; }
 }

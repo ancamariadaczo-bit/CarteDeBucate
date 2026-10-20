@@ -80,10 +80,7 @@ public class FakeRecipeLibraryService : IRecipeLibraryService
         return SearchResultsToReturn;
     }
 
-    public PagedResult<RecipeSummary> SearchRecipesPage(
-        string searchText,
-        int pageNumber,
-        int pageSize)
+    public PagedResult<RecipeSummary> SearchRecipesPage(string searchText, int pageNumber, int pageSize)
     {
         SearchRecipesPageWasCalled = true;
         SearchTextPassedToSearchRecipesPage = searchText;

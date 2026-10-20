@@ -6,34 +6,31 @@ public sealed class RecipePhotoBackupReadinessContractTests
     public void PhotoService_ShouldExposeMetadataEnumerationAndContentReading()
     {
         MethodInfo? getPhotosMethod = typeof(IRecipePhotoService).GetMethod(
-            nameof(IRecipePhotoService.GetPhotosForRecipe));
+            nameof(IRecipePhotoService.GetPhotosForRecipe)
+        );
         MethodInfo? getContentMethod = typeof(IRecipePhotoService).GetMethod(
-            nameof(IRecipePhotoService.GetPhotoContent));
+            nameof(IRecipePhotoService.GetPhotoContent)
+        );
 
         Assert.NotNull(getPhotosMethod);
         Assert.Equal(typeof(RecipePhotosResult), getPhotosMethod.ReturnType);
         Assert.Equal(
             new[] { typeof(int) },
-            getPhotosMethod
-                .GetParameters()
-                .Select(parameter => parameter.ParameterType)
-                .ToArray());
+            getPhotosMethod.GetParameters().Select(parameter => parameter.ParameterType).ToArray()
+        );
 
         Assert.NotNull(getContentMethod);
-        Assert.Equal(
-            typeof(RecipePhotoContentResult),
-            getContentMethod.ReturnType);
+        Assert.Equal(typeof(RecipePhotoContentResult), getContentMethod.ReturnType);
         Assert.Equal(
             new[] { typeof(int) },
-            getContentMethod
-                .GetParameters()
-                .Select(parameter => parameter.ParameterType)
-                .ToArray());
+            getContentMethod.GetParameters().Select(parameter => parameter.ParameterType).ToArray()
+        );
         Assert.Equal(
             typeof(Stream),
             typeof(RecipePhotoContentResult)
                 .GetProperty(nameof(RecipePhotoContentResult.Content))!
-                .PropertyType);
+                .PropertyType
+        );
     }
 
     [Fact]
@@ -48,22 +45,18 @@ public sealed class RecipePhotoBackupReadinessContractTests
             nameof(RecipePhotoInfo.OriginalFileName),
             nameof(RecipePhotoInfo.CreatedAtUtc),
             nameof(RecipePhotoInfo.DisplayOrder),
-            nameof(RecipePhotoInfo.Origin)
+            nameof(RecipePhotoInfo.Origin),
         ];
         string[] regeneratedMetadata =
         [
             nameof(RecipePhotoInfo.Id),
             nameof(RecipePhotoInfo.RecipeId),
             nameof(RecipePhotoInfo.ContentType),
-            nameof(RecipePhotoInfo.FileSize)
+            nameof(RecipePhotoInfo.FileSize),
         ];
 
-        Assert.All(
-            portableMetadata,
-            propertyName => Assert.Contains(propertyName, propertyNames));
-        Assert.All(
-            regeneratedMetadata,
-            propertyName => Assert.Contains(propertyName, propertyNames));
+        Assert.All(portableMetadata, propertyName => Assert.Contains(propertyName, propertyNames));
+        Assert.All(regeneratedMetadata, propertyName => Assert.Contains(propertyName, propertyNames));
         Assert.Empty(portableMetadata.Intersect(regeneratedMetadata));
         Assert.DoesNotContain("StorageFileName", propertyNames);
     }
@@ -76,44 +69,36 @@ public sealed class RecipePhotoBackupReadinessContractTests
             typeof(IRecipePhotoService),
             typeof(RecipePhotoInfo),
             typeof(RecipePhotosResult),
-            typeof(RecipePhotoContentResult)
+            typeof(RecipePhotoContentResult),
         ];
 
         foreach (Type contractType in publicPhotoContractTypes)
         {
             Assert.DoesNotContain(
                 contractType.GetProperties(),
-                property => ContainsInternalStorageTerm(property.Name));
+                property => ContainsInternalStorageTerm(property.Name)
+            );
             Assert.DoesNotContain(
                 contractType.GetMethods(),
-                method => ContainsInternalStorageTerm(method.Name));
+                method => ContainsInternalStorageTerm(method.Name)
+            );
             Assert.DoesNotContain(
-                contractType.GetMethods()
-                    .SelectMany(method => method.GetParameters()),
-                parameter => ContainsInternalStorageTerm(
-                    parameter.Name ?? string.Empty));
+                contractType.GetMethods().SelectMany(method => method.GetParameters()),
+                parameter => ContainsInternalStorageTerm(parameter.Name ?? string.Empty)
+            );
         }
 
         Assert.DoesNotContain(
             typeof(IRecipePhotoService).GetMethods(),
-            method => method.Name.Contains(
-                "Restore",
-                StringComparison.OrdinalIgnoreCase));
+            method => method.Name.Contains("Restore", StringComparison.OrdinalIgnoreCase)
+        );
     }
 
     private static bool ContainsInternalStorageTerm(string value)
     {
-        return value.Contains(
-                "StorageFileName",
-                StringComparison.OrdinalIgnoreCase)
-            || value.Contains(
-                "Path",
-                StringComparison.OrdinalIgnoreCase)
-            || value.Contains(
-                "UploadToken",
-                StringComparison.OrdinalIgnoreCase)
-            || value.Contains(
-                "DeletionToken",
-                StringComparison.OrdinalIgnoreCase);
+        return value.Contains("StorageFileName", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("Path", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("UploadToken", StringComparison.OrdinalIgnoreCase)
+            || value.Contains("DeletionToken", StringComparison.OrdinalIgnoreCase);
     }
 }

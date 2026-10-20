@@ -1,5 +1,3 @@
-
-
 public class RecipeConsoleWriter : IRecipeConsoleWriter
 {
     public void Clear()

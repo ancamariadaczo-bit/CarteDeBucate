@@ -7,7 +7,8 @@ public class PagedResultTests
             new List<RecipeSummary>(),
             pageNumber: 1,
             pageSize: 10,
-            totalItems: 0);
+            totalItems: 0
+        );
 
         Assert.Equal(0, result.TotalPages);
         Assert.False(result.HasPreviousPage);
@@ -21,7 +22,8 @@ public class PagedResultTests
             new List<RecipeSummary> { new RecipeSummary() },
             pageNumber: 1,
             pageSize: 10,
-            totalItems: 1);
+            totalItems: 1
+        );
 
         Assert.Equal(1, result.TotalPages);
     }
@@ -33,7 +35,8 @@ public class PagedResultTests
             new List<RecipeSummary>(),
             pageNumber: 1,
             pageSize: 10,
-            totalItems: 11);
+            totalItems: 11
+        );
 
         Assert.Equal(2, result.TotalPages);
     }
@@ -45,7 +48,8 @@ public class PagedResultTests
             new List<RecipeSummary>(),
             pageNumber: 0,
             pageSize: 10,
-            totalItems: 11);
+            totalItems: 11
+        );
 
         Assert.Equal(1, result.PageNumber);
     }
@@ -57,7 +61,8 @@ public class PagedResultTests
             new List<RecipeSummary>(),
             pageNumber: 2,
             pageSize: 10,
-            totalItems: 25);
+            totalItems: 25
+        );
 
         Assert.True(result.HasPreviousPage);
         Assert.True(result.HasNextPage);

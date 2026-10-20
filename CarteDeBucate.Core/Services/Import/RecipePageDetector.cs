@@ -5,8 +5,7 @@ public class RecipePageDetector
         int score = 0;
 
         bool hasValidName =
-            !string.IsNullOrWhiteSpace(recipe.Name) &&
-            recipe.Name != AppTexts.ImportedTitleNotFound;
+            !string.IsNullOrWhiteSpace(recipe.Name) && recipe.Name != AppTexts.ImportedTitleNotFound;
 
         if (hasValidName)
         {
@@ -42,8 +41,7 @@ public class RecipePageDetector
         }
 
         bool hasJsonLdRecipe =
-            normalizedHtml.Contains("application/ld+json") &&
-            normalizedHtml.Contains("recipe");
+            normalizedHtml.Contains("application/ld+json") && normalizedHtml.Contains("recipe");
 
         if (hasJsonLdRecipe)
         {
@@ -59,29 +57,30 @@ public class RecipePageDetector
 
         bool hasStrongVerificationText = ContainsAny(
             normalizedHtml,
-            RecipeImportKeywords.StrongBlockedPageKeywords);
+            RecipeImportKeywords.StrongBlockedPageKeywords
+        );
 
         bool hasCloudflareRayId = normalizedHtml.Contains(
-            TextHelper.NormalizeForSearch(RecipeImportKeywords.CloudflareRayIdKeyword));
+            TextHelper.NormalizeForSearch(RecipeImportKeywords.CloudflareRayIdKeyword)
+        );
 
         bool hasCloudflareBlockSignal = ContainsAny(
             normalizedHtml,
-            RecipeImportKeywords.CloudflareBlockedPageKeywords);
+            RecipeImportKeywords.CloudflareBlockedPageKeywords
+        );
 
         int matchedBlockedKeywordsCount =
-            CountMatches(normalizedHtml, RecipeImportKeywords.StrongBlockedPageKeywords) +
-            CountMatches(normalizedHtml, RecipeImportKeywords.CloudflareBlockedPageKeywords);
+            CountMatches(normalizedHtml, RecipeImportKeywords.StrongBlockedPageKeywords)
+            + CountMatches(normalizedHtml, RecipeImportKeywords.CloudflareBlockedPageKeywords);
 
-        return
-            hasStrongVerificationText ||
-            (hasCloudflareRayId && hasCloudflareBlockSignal) ||
-            matchedBlockedKeywordsCount >= RecipeImportKeywords.BlockedPageMinimumKeywordScore;
+        return hasStrongVerificationText
+            || (hasCloudflareRayId && hasCloudflareBlockSignal)
+            || matchedBlockedKeywordsCount >= RecipeImportKeywords.BlockedPageMinimumKeywordScore;
     }
 
     private static bool ContainsAny(string normalizedText, string[] keywords)
     {
-        return keywords.Any(keyword =>
-            normalizedText.Contains(TextHelper.NormalizeForSearch(keyword)));
+        return keywords.Any(keyword => normalizedText.Contains(TextHelper.NormalizeForSearch(keyword)));
     }
 
     private static int CountMatches(string normalizedText, string[] keywords)

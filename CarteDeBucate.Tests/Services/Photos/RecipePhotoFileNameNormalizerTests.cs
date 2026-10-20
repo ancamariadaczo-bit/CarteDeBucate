@@ -1,14 +1,14 @@
 public class RecipePhotoFileNameNormalizerTests
 {
-    private readonly RecipePhotoFileNameNormalizer _normalizer =
-        new RecipePhotoFileNameNormalizer();
+    private readonly RecipePhotoFileNameNormalizer _normalizer = new RecipePhotoFileNameNormalizer();
 
     [Fact]
     public void Normalize_WithWindowsPath_ShouldKeepOnlyFileName()
     {
         string result = _normalizer.Normalize(
             @"C:\Users\Anca\Pictures\cake.jpeg",
-            RecipePhotoFormat.Jpeg);
+            RecipePhotoFormat.Jpeg
+        );
 
         Assert.Equal("cake.jpg", result);
     }
@@ -16,9 +16,7 @@ public class RecipePhotoFileNameNormalizerTests
     [Fact]
     public void Normalize_WithUnixPath_ShouldKeepOnlyFileName()
     {
-        string result = _normalizer.Normalize(
-            "/tmp/photos/soup.PNG",
-            RecipePhotoFormat.Png);
+        string result = _normalizer.Normalize("/tmp/photos/soup.PNG", RecipePhotoFormat.Png);
 
         Assert.Equal("soup.png", result);
     }
@@ -26,9 +24,7 @@ public class RecipePhotoFileNameNormalizerTests
     [Fact]
     public void Normalize_WithControlCharactersAndOuterSpaces_ShouldRemoveThem()
     {
-        string result = _normalizer.Normalize(
-            "  reci\0pe\r\n.jpeg  ",
-            RecipePhotoFormat.Jpeg);
+        string result = _normalizer.Normalize("  reci\0pe\r\n.jpeg  ", RecipePhotoFormat.Jpeg);
 
         Assert.Equal("recipe.jpg", result);
     }
@@ -36,9 +32,7 @@ public class RecipePhotoFileNameNormalizerTests
     [Fact]
     public void Normalize_WithEmptyName_ShouldUseDefaultName()
     {
-        string result = _normalizer.Normalize(
-            string.Empty,
-            RecipePhotoFormat.WebP);
+        string result = _normalizer.Normalize(string.Empty, RecipePhotoFormat.WebP);
 
         Assert.Equal("photo.webp", result);
     }
@@ -48,9 +42,7 @@ public class RecipePhotoFileNameNormalizerTests
     {
         string originalFileName = new string('a', 300) + ".jpeg";
 
-        string result = _normalizer.Normalize(
-            originalFileName,
-            RecipePhotoFormat.Jpeg);
+        string result = _normalizer.Normalize(originalFileName, RecipePhotoFormat.Jpeg);
 
         Assert.Equal(255, result.Length);
         Assert.EndsWith(".jpg", result);
@@ -60,9 +52,7 @@ public class RecipePhotoFileNameNormalizerTests
     [Fact]
     public void Normalize_WithFalseExtension_ShouldUseDetectedFormatExtension()
     {
-        string result = _normalizer.Normalize(
-            "cake.exe",
-            RecipePhotoFormat.Png);
+        string result = _normalizer.Normalize("cake.exe", RecipePhotoFormat.Png);
 
         Assert.Equal("cake.png", result);
     }
@@ -71,6 +61,7 @@ public class RecipePhotoFileNameNormalizerTests
     public void Normalize_WithUnknownFormat_ShouldThrow()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            _normalizer.Normalize("cake.jpg", RecipePhotoFormat.Unknown));
+            _normalizer.Normalize("cake.jpg", RecipePhotoFormat.Unknown)
+        );
     }
 }

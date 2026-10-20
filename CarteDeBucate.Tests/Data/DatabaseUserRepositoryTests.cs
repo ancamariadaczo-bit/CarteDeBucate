@@ -37,8 +37,10 @@ public class DatabaseUserRepositoryTests
             AuthenticationService authenticationService = new AuthenticationService(repository);
             AuthenticationResult firstResult = authenticationService.Register("anca", "secret-password");
 
-            AuthenticationResult duplicateResult =
-                authenticationService.Register("Anca", "another-password");
+            AuthenticationResult duplicateResult = authenticationService.Register(
+                "Anca",
+                "another-password"
+            );
 
             Assert.True(firstResult.IsSuccess);
             Assert.False(duplicateResult.IsSuccess);
@@ -52,13 +54,14 @@ public class DatabaseUserRepositoryTests
         WithRepository(repository =>
         {
             CurrentUserContext currentUserContext = new CurrentUserContext();
-            AuthenticationService authenticationService =
-                new AuthenticationService(repository, currentUserContext);
+            AuthenticationService authenticationService = new AuthenticationService(
+                repository,
+                currentUserContext
+            );
             authenticationService.Register("anca", "secret-password");
             authenticationService.Logout();
 
-            AuthenticationResult result =
-                authenticationService.Login("AnCa", "secret-password");
+            AuthenticationResult result = authenticationService.Login("AnCa", "secret-password");
 
             Assert.True(result.IsSuccess);
             Assert.Equal("anca", result.User?.Username);
@@ -73,15 +76,13 @@ public class DatabaseUserRepositoryTests
             Username = username,
             PasswordHash = "hash",
             PasswordSalt = "salt",
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
         };
     }
 
     private static void WithRepository(Action<DatabaseUserRepository> test)
     {
-        string databasePath = Path.Combine(
-            Path.GetTempPath(),
-            $"users-{Guid.NewGuid()}.db");
+        string databasePath = Path.Combine(Path.GetTempPath(), $"users-{Guid.NewGuid()}.db");
 
         try
         {

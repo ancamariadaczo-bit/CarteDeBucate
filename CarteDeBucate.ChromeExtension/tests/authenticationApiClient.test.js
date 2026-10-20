@@ -11,10 +11,7 @@ import { API_ENDPOINTS } from "../config/apiConfig.js";
 
 test("authentication API URLs use the centralized endpoints", () => {
     assert.equal(currentUserApiUrl, API_ENDPOINTS.currentUser);
-    assert.equal(
-        exchangeAuthenticationCodeApiUrl,
-        API_ENDPOINTS.exchangeCode
-    );
+    assert.equal(exchangeAuthenticationCodeApiUrl, API_ENDPOINTS.exchangeCode);
 });
 
 test("getCurrentUser returns null without making a request when the token is missing", async () => {
@@ -49,15 +46,17 @@ test("getCurrentUser sends the Bearer token and returns the current user", async
 
     const result = await getCurrentUser(accessToken, fetchRequest);
 
-    assert.deepEqual(requests, [[
-        API_ENDPOINTS.currentUser,
-        {
-            method: "GET",
-            headers: {
-                "Authorization": `Bearer ${accessToken}`
+    assert.deepEqual(requests, [
+        [
+            API_ENDPOINTS.currentUser,
+            {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${accessToken}`
+                }
             }
-        }
-    ]]);
+        ]
+    ]);
     assert.deepEqual(result, currentUser);
 });
 
@@ -114,16 +113,18 @@ test("exchangeAuthenticationCode sends the code as JSON and returns the access t
 
     const result = await exchangeAuthenticationCode(code, fetchRequest);
 
-    assert.deepEqual(requests, [[
-        API_ENDPOINTS.exchangeCode,
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ code })
-        }
-    ]]);
+    assert.deepEqual(requests, [
+        [
+            API_ENDPOINTS.exchangeCode,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ code })
+            }
+        ]
+    ]);
     assert.equal(result, accessToken);
 });
 
@@ -160,13 +161,8 @@ test("exchangeAuthenticationCode rejects successful responses without a valid ac
             });
 
             await assert.rejects(
-                () => exchangeAuthenticationCode(
-                    "temporary-authentication-code",
-                    fetchRequest
-                ),
-                new Error(
-                    "The authentication response did not contain a valid access token."
-                )
+                () => exchangeAuthenticationCode("temporary-authentication-code", fetchRequest),
+                new Error("The authentication response did not contain a valid access token.")
             );
         });
     }
@@ -182,10 +178,7 @@ test("exchangeAuthenticationCode rejects a successful non-JSON response", async 
     });
 
     await assert.rejects(
-        () => exchangeAuthenticationCode(
-            "temporary-authentication-code",
-            fetchRequest
-        ),
+        () => exchangeAuthenticationCode("temporary-authentication-code", fetchRequest),
         new Error("The authentication response was not valid JSON.")
     );
 });
@@ -200,10 +193,7 @@ test("exchangeAuthenticationCode preserves the HTTP status for a non-JSON error 
     });
 
     await assert.rejects(
-        () => exchangeAuthenticationCode(
-            "temporary-authentication-code",
-            fetchRequest
-        ),
+        () => exchangeAuthenticationCode("temporary-authentication-code", fetchRequest),
         new Error("Authentication code exchange failed with status 502.")
     );
 });

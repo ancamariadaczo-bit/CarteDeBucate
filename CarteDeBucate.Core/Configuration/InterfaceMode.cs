@@ -1,5 +1,5 @@
 public enum InterfaceMode
 {
     ClassicConsole,
-    RichConsole
+    RichConsole,
 }

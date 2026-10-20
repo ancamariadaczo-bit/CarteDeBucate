@@ -16,18 +16,18 @@ export function initializeSidePanelLauncher({
         const windowId = tab?.windowId;
 
         if (!isChromeId(tabId) || !isChromeId(windowId)) {
-            reportError(new TypeError(
-                "The action click did not provide a valid tab id and window id."
-            ));
+            reportError(new TypeError("The action click did not provide a valid tab id and window id."));
             return;
         }
 
         try {
             await openSidePanel({ windowId });
         } catch (error) {
-            reportError(new Error("The Side Panel could not be opened.", {
-                cause: error
-            }));
+            reportError(
+                new Error("The Side Panel could not be opened.", {
+                    cause: error
+                })
+            );
             return;
         }
 
@@ -40,9 +40,11 @@ export function initializeSidePanelLauncher({
 
             await publishExtractionRequest({ requestId, tabId, windowId });
         } catch (error) {
-            reportError(new Error("The extraction request could not be published.", {
-                cause: error
-            }));
+            reportError(
+                new Error("The extraction request could not be published.", {
+                    cause: error
+                })
+            );
         }
     }
 

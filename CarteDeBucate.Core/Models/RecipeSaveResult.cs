@@ -6,11 +6,7 @@ public class RecipeSaveResult
 
     public static RecipeSaveResult Success(string message)
     {
-        return new RecipeSaveResult
-        {
-            IsSuccess = true,
-            Message = message
-        };
+        return new RecipeSaveResult { IsSuccess = true, Message = message };
     }
 
     public static RecipeSaveResult Success(string message, Recipe recipe)
@@ -19,16 +15,12 @@ public class RecipeSaveResult
         {
             IsSuccess = true,
             Message = message,
-            Recipe = recipe
+            Recipe = recipe,
         };
     }
 
     public static RecipeSaveResult Fail(string message)
     {
-        return new RecipeSaveResult
-        {
-            IsSuccess = false,
-            Message = message
-        };
+        return new RecipeSaveResult { IsSuccess = false, Message = message };
     }
 }

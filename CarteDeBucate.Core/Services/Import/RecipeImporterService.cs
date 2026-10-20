@@ -11,11 +11,7 @@ public class RecipeImporterService : IRecipeImporterService
     {
         if (string.IsNullOrWhiteSpace(url))
         {
-            return new RecipeImportResult
-            {
-                Success = false,
-                Message = AppTexts.EmptyUrl
-            };
+            return new RecipeImportResult { Success = false, Message = AppTexts.EmptyUrl };
         }
 
         return await _recipeImporter.ImportFromUrlAsync(url);

@@ -5,9 +5,7 @@ public sealed class FileSystemRecipePhotoStorageStagingTests : IDisposable
 
     public FileSystemRecipePhotoStorageStagingTests()
     {
-        _rootPath = Path.Combine(
-            Path.GetTempPath(),
-            $"recipe-photo-staging-tests-{Guid.NewGuid():N}");
+        _rootPath = Path.Combine(Path.GetTempPath(), $"recipe-photo-staging-tests-{Guid.NewGuid():N}");
 
         _storage = new FileSystemRecipePhotoStorage(_rootPath);
     }
@@ -20,7 +18,8 @@ public sealed class FileSystemRecipePhotoStorageStagingTests : IDisposable
 
         StagedRecipePhotoUpload upload = await _storage.StageUploadAsync(
             source,
-            maximumBytes: content.Length);
+            maximumBytes: content.Length
+        );
 
         Assert.Equal(content.Length, upload.Length);
         Assert.Equal(content, File.ReadAllBytes(GetSingleStagedFile()));
@@ -36,7 +35,8 @@ public sealed class FileSystemRecipePhotoStorageStagingTests : IDisposable
 
         StagedRecipePhotoUpload upload = await _storage.StageUploadAsync(
             source,
-            maximumBytes: content.Length);
+            maximumBytes: content.Length
+        );
 
         Assert.Equal(content.Length, upload.Length);
         Assert.Equal(content, File.ReadAllBytes(GetSingleStagedFile()));
@@ -48,9 +48,7 @@ public sealed class FileSystemRecipePhotoStorageStagingTests : IDisposable
     {
         using MemoryStream source = new();
 
-        StagedRecipePhotoUpload upload = await _storage.StageUploadAsync(
-            source,
-            maximumBytes: 10);
+        StagedRecipePhotoUpload upload = await _storage.StageUploadAsync(source, maximumBytes: 10);
 
         Assert.Equal(0, upload.Length);
         Assert.Equal(0, new FileInfo(GetSingleStagedFile()).Length);
@@ -64,7 +62,8 @@ public sealed class FileSystemRecipePhotoStorageStagingTests : IDisposable
 
         StagedRecipePhotoUpload upload = await _storage.StageUploadAsync(
             source,
-            maximumBytes: content.Length);
+            maximumBytes: content.Length
+        );
 
         Assert.Equal(content.Length, upload.Length);
         Assert.Single(GetStagedFiles());
@@ -77,10 +76,9 @@ public sealed class FileSystemRecipePhotoStorageStagingTests : IDisposable
         using MemoryStream source = new(content);
 
         RecipePhotoStorageLimitExceededException exception =
-            await Assert.ThrowsAsync<RecipePhotoStorageLimitExceededException>(
-                () => _storage.StageUploadAsync(
-                    source,
-                    maximumBytes: content.Length - 1));
+            await Assert.ThrowsAsync<RecipePhotoStorageLimitExceededException>(() =>
+                _storage.StageUploadAsync(source, maximumBytes: content.Length - 1)
+            );
 
         Assert.Equal(content.Length - 1, exception.MaximumBytes);
         Assert.Empty(GetStagedFiles());
@@ -93,10 +91,8 @@ public sealed class FileSystemRecipePhotoStorageStagingTests : IDisposable
         using CancelAfterFirstReadStream source = new(cancellation);
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-            _storage.StageUploadAsync(
-                source,
-                maximumBytes: 10,
-                cancellation.Token));
+            _storage.StageUploadAsync(source, maximumBytes: 10, cancellation.Token)
+        );
 
         Assert.Empty(GetStagedFiles());
         Assert.True(source.CanRead);
@@ -107,8 +103,7 @@ public sealed class FileSystemRecipePhotoStorageStagingTests : IDisposable
     {
         using ThrowAfterFirstReadStream source = new();
 
-        await Assert.ThrowsAsync<IOException>(() =>
-            _storage.StageUploadAsync(source, maximumBytes: 10));
+        await Assert.ThrowsAsync<IOException>(() => _storage.StageUploadAsync(source, maximumBytes: 10));
 
         Assert.Empty(GetStagedFiles());
         Assert.True(source.CanRead);
@@ -125,9 +120,8 @@ public sealed class FileSystemRecipePhotoStorageStagingTests : IDisposable
     private string[] GetStagedFiles()
     {
         return Directory.GetFiles(
-            Path.Combine(
-                _rootPath,
-                FileSystemRecipePhotoStorage.StagingDirectoryName));
+            Path.Combine(_rootPath, FileSystemRecipePhotoStorage.StagingDirectoryName)
+        );
     }
 
     private string GetSingleStagedFile()
@@ -162,14 +156,13 @@ public sealed class FileSystemRecipePhotoStorageStagingTests : IDisposable
 
         public override ValueTask<int> ReadAsync(
             Memory<byte> buffer,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default
+        )
         {
             return _inner.ReadAsync(buffer, cancellationToken);
         }
 
-        public override void Flush()
-        {
-        }
+        public override void Flush() { }
 
         public override long Seek(long offset, SeekOrigin origin)
         {
@@ -202,8 +195,7 @@ public sealed class FileSystemRecipePhotoStorageStagingTests : IDisposable
         private readonly CancellationTokenSource _cancellation;
         private bool _hasRead;
 
-        public CancelAfterFirstReadStream(
-            CancellationTokenSource cancellation)
+        public CancelAfterFirstReadStream(CancellationTokenSource cancellation)
         {
             _cancellation = cancellation;
         }
@@ -221,7 +213,8 @@ public sealed class FileSystemRecipePhotoStorageStagingTests : IDisposable
 
         public override ValueTask<int> ReadAsync(
             Memory<byte> buffer,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default
+        )
         {
             if (_hasRead)
             {
@@ -239,9 +232,7 @@ public sealed class FileSystemRecipePhotoStorageStagingTests : IDisposable
             throw new NotSupportedException();
         }
 
-        public override void Flush()
-        {
-        }
+        public override void Flush() { }
 
         public override long Seek(long offset, SeekOrigin origin)
         {
@@ -276,12 +267,12 @@ public sealed class FileSystemRecipePhotoStorageStagingTests : IDisposable
 
         public override ValueTask<int> ReadAsync(
             Memory<byte> buffer,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default
+        )
         {
             if (_hasRead)
             {
-                return ValueTask.FromException<int>(
-                    new IOException("Simulated read failure."));
+                return ValueTask.FromException<int>(new IOException("Simulated read failure."));
             }
 
             _hasRead = true;
@@ -294,9 +285,7 @@ public sealed class FileSystemRecipePhotoStorageStagingTests : IDisposable
             throw new NotSupportedException();
         }
 
-        public override void Flush()
-        {
-        }
+        public override void Flush() { }
 
         public override long Seek(long offset, SeekOrigin origin)
         {

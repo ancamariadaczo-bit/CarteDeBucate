@@ -5,19 +5,12 @@ import {
     extractRecipeFromTab,
     initializeSidePanelController
 } from "../controllers/sidePanelController.js";
-import {
-    createBrowserEffectsMock,
-    createChromeMock,
-    createStorageMock
-} from "./helpers/chromeMock.js";
+import { createBrowserEffectsMock, createChromeMock, createStorageMock } from "./helpers/chromeMock.js";
 import { createDomFromFile } from "./helpers/createDom.js";
 
 const sidePanelHtmlPath = new URL("../sidepanel.html", import.meta.url);
 const sidePanelScriptPath = new URL("../sidepanel.js", import.meta.url);
-const sidePanelControllerPath = new URL(
-    "../controllers/sidePanelController.js",
-    import.meta.url
-);
+const sidePanelControllerPath = new URL("../controllers/sidePanelController.js", import.meta.url);
 
 const recipe = {
     name: "Soup",
@@ -37,15 +30,18 @@ const secondRecipe = {
     steps: ["Mix."]
 };
 
-async function setupSidePanel(extractRecipe, {
-    saveRecipeToApi = async () => {},
-    recipeExistsBySourceUrl = async () => false,
-    removeAccessToken = async () => {},
-    login = async () => {},
-    initialIsAuthenticated = false,
-    initialIsAuthenticationResolved = true,
-    reportError = () => {}
-} = {}) {
+async function setupSidePanel(
+    extractRecipe,
+    {
+        saveRecipeToApi = async () => {},
+        recipeExistsBySourceUrl = async () => false,
+        removeAccessToken = async () => {},
+        login = async () => {},
+        initialIsAuthenticated = false,
+        initialIsAuthenticationResolved = true,
+        reportError = () => {}
+    } = {}
+) {
     const context = await createDomFromFile(sidePanelHtmlPath);
     const storage = createStorageMock();
     const browser = createBrowserEffectsMock();
@@ -78,10 +74,7 @@ async function flushAsyncWork() {
     }
 }
 
-async function requestExtraction(context, {
-    requestId = "request-1",
-    tabId = 101
-} = {}) {
+async function requestExtraction(context, { requestId = "request-1", tabId = 101 } = {}) {
     await context.controller.handleExtractionRequest({ requestId, tabId });
 }
 
@@ -99,8 +92,7 @@ test("starts with extraction guidance and no Extract action", async () => {
         assert.equal(extractionStatus.getAttribute("role"), "status");
         assert.equal(extractionStatus.getAttribute("aria-live"), "polite");
         assert.deepEqual(
-            [...context.document.querySelectorAll(".controls button")]
-                .map(button => button.id),
+            [...context.document.querySelectorAll(".controls button")].map(button => button.id),
             ["editButton", "printButton", "saveButton"]
         );
         assert.equal(context.document.getElementById("editButton").hidden, true);
@@ -257,10 +249,9 @@ test("renders a successful extraction with title, links, image, ingredients, and
 });
 
 test("enables all recipe actions after an authenticated extraction", async () => {
-    const context = await setupSidePanel(
-        async () => ({ success: true, recipe }),
-        { initialIsAuthenticated: true }
-    );
+    const context = await setupSidePanel(async () => ({ success: true, recipe }), {
+        initialIsAuthenticated: true
+    });
 
     try {
         await requestExtraction(context);
@@ -330,15 +321,12 @@ test("checks an authenticated extraction before enabling Save", async () => {
 
 test("does not check duplicates after an unauthenticated extraction", async () => {
     let duplicateCheckCount = 0;
-    const context = await setupSidePanel(
-        async () => ({ success: true, recipe }),
-        {
-            recipeExistsBySourceUrl: async () => {
-                duplicateCheckCount += 1;
-                return false;
-            }
+    const context = await setupSidePanel(async () => ({ success: true, recipe }), {
+        recipeExistsBySourceUrl: async () => {
+            duplicateCheckCount += 1;
+            return false;
         }
-    );
+    });
 
     try {
         await requestExtraction(context);
@@ -352,25 +340,19 @@ test("does not check duplicates after an unauthenticated extraction", async () =
 
 test("keeps Save disabled and Edit and Print available for a duplicate", async () => {
     let saveCount = 0;
-    const context = await setupSidePanel(
-        async () => ({ success: true, recipe }),
-        {
-            initialIsAuthenticated: true,
-            recipeExistsBySourceUrl: async () => true,
-            saveRecipeToApi: async () => {
-                saveCount += 1;
-            }
+    const context = await setupSidePanel(async () => ({ success: true, recipe }), {
+        initialIsAuthenticated: true,
+        recipeExistsBySourceUrl: async () => true,
+        saveRecipeToApi: async () => {
+            saveCount += 1;
         }
-    );
+    });
 
     try {
         await requestExtraction(context);
 
         const saveStatus = context.document.getElementById("saveStatus");
-        assert.equal(
-            saveStatus.textContent,
-            "This recipe is already saved in your cookbook."
-        );
+        assert.equal(saveStatus.textContent, "This recipe is already saved in your cookbook.");
         assert.equal(saveStatus.classList.contains("success"), false);
         assert.equal(saveStatus.classList.contains("error"), false);
         assert.equal(context.document.getElementById("saveButton").disabled, true);
@@ -387,19 +369,16 @@ test("keeps Save disabled and Edit and Print available for a duplicate", async (
 test("saves a new recipe without repeating its successful duplicate check", async () => {
     const checkedSourceUrls = [];
     const savedRecipes = [];
-    const context = await setupSidePanel(
-        async () => ({ success: true, recipe }),
-        {
-            initialIsAuthenticated: true,
-            recipeExistsBySourceUrl: async sourceUrl => {
-                checkedSourceUrls.push(sourceUrl);
-                return false;
-            },
-            saveRecipeToApi: async value => {
-                savedRecipes.push(value);
-            }
+    const context = await setupSidePanel(async () => ({ success: true, recipe }), {
+        initialIsAuthenticated: true,
+        recipeExistsBySourceUrl: async sourceUrl => {
+            checkedSourceUrls.push(sourceUrl);
+            return false;
+        },
+        saveRecipeToApi: async value => {
+            savedRecipes.push(value);
         }
-    );
+    });
 
     try {
         await requestExtraction(context);
@@ -419,19 +398,16 @@ test("saves a new recipe without repeating its successful duplicate check", asyn
 test("does not start a second duplicate check for the same recipe while one is pending", async () => {
     let duplicateCheckCount = 0;
     let completeCheck;
-    const context = await setupSidePanel(
-        async () => ({ success: true, recipe }),
-        {
-            initialIsAuthenticated: true,
-            recipeExistsBySourceUrl: () => {
-                duplicateCheckCount += 1;
+    const context = await setupSidePanel(async () => ({ success: true, recipe }), {
+        initialIsAuthenticated: true,
+        recipeExistsBySourceUrl: () => {
+            duplicateCheckCount += 1;
 
-                return new Promise(resolve => {
-                    completeCheck = resolve;
-                });
-            }
+            return new Promise(resolve => {
+                completeCheck = resolve;
+            });
         }
-    );
+    });
 
     try {
         const extraction = context.controller.handleExtractionRequest({
@@ -452,25 +428,21 @@ test("does not start a second duplicate check for the same recipe while one is p
 });
 
 test("an unauthorized duplicate check removes the token and reveals login", async () => {
-    const authenticationError = Object.assign(
-        new Error("Authentication has expired. Sign in again."),
-        { status: 401 }
-    );
+    const authenticationError = Object.assign(new Error("Authentication has expired. Sign in again."), {
+        status: 401
+    });
     const reportedErrors = [];
     let removeAccessTokenCount = 0;
-    const context = await setupSidePanel(
-        async () => ({ success: true, recipe }),
-        {
-            initialIsAuthenticated: true,
-            recipeExistsBySourceUrl: async () => {
-                throw authenticationError;
-            },
-            removeAccessToken: async () => {
-                removeAccessTokenCount += 1;
-            },
-            reportError: error => reportedErrors.push(error)
-        }
-    );
+    const context = await setupSidePanel(async () => ({ success: true, recipe }), {
+        initialIsAuthenticated: true,
+        recipeExistsBySourceUrl: async () => {
+            throw authenticationError;
+        },
+        removeAccessToken: async () => {
+            removeAccessTokenCount += 1;
+        },
+        reportError: error => reportedErrors.push(error)
+    });
 
     try {
         await requestExtraction(context);
@@ -494,19 +466,16 @@ test("a technical automatic duplicate-check failure reports the error and enable
     const duplicateCheckError = new Error("Duplicate endpoint unavailable.");
     const reportedErrors = [];
     let saveCount = 0;
-    const context = await setupSidePanel(
-        async () => ({ success: true, recipe }),
-        {
-            initialIsAuthenticated: true,
-            recipeExistsBySourceUrl: async () => {
-                throw duplicateCheckError;
-            },
-            saveRecipeToApi: async () => {
-                saveCount += 1;
-            },
-            reportError: error => reportedErrors.push(error)
-        }
-    );
+    const context = await setupSidePanel(async () => ({ success: true, recipe }), {
+        initialIsAuthenticated: true,
+        recipeExistsBySourceUrl: async () => {
+            throw duplicateCheckError;
+        },
+        saveRecipeToApi: async () => {
+            saveCount += 1;
+        },
+        reportError: error => reportedErrors.push(error)
+    });
 
     try {
         await requestExtraction(context);
@@ -525,20 +494,17 @@ test("Save retries an unknown duplicate check and fails open after another techn
     const reportedErrors = [];
     let duplicateCheckCount = 0;
     let saveCount = 0;
-    const context = await setupSidePanel(
-        async () => ({ success: true, recipe }),
-        {
-            initialIsAuthenticated: true,
-            recipeExistsBySourceUrl: async () => {
-                duplicateCheckCount += 1;
-                throw duplicateCheckError;
-            },
-            saveRecipeToApi: async () => {
-                saveCount += 1;
-            },
-            reportError: error => reportedErrors.push(error)
-        }
-    );
+    const context = await setupSidePanel(async () => ({ success: true, recipe }), {
+        initialIsAuthenticated: true,
+        recipeExistsBySourceUrl: async () => {
+            duplicateCheckCount += 1;
+            throw duplicateCheckError;
+        },
+        saveRecipeToApi: async () => {
+            saveCount += 1;
+        },
+        reportError: error => reportedErrors.push(error)
+    });
 
     try {
         await requestExtraction(context);
@@ -546,10 +512,7 @@ test("Save retries an unknown duplicate check and fails open after another techn
 
         assert.equal(duplicateCheckCount, 2);
         assert.equal(saveCount, 1);
-        assert.deepEqual(reportedErrors, [
-            duplicateCheckError,
-            duplicateCheckError
-        ]);
+        assert.deepEqual(reportedErrors, [duplicateCheckError, duplicateCheckError]);
         assert.equal(
             context.document.getElementById("saveStatus").textContent,
             "Recipe saved successfully."
@@ -566,23 +529,20 @@ test("a new extraction clears the previous duplicate result", async () => {
         { success: true, recipe },
         { success: true, recipe: secondRecipe }
     ];
-    const context = await setupSidePanel(
-        async () => extractionResults.shift(),
-        {
-            initialIsAuthenticated: true,
-            recipeExistsBySourceUrl: async () => {
-                duplicateCheckCount += 1;
+    const context = await setupSidePanel(async () => extractionResults.shift(), {
+        initialIsAuthenticated: true,
+        recipeExistsBySourceUrl: async () => {
+            duplicateCheckCount += 1;
 
-                if (duplicateCheckCount === 1) {
-                    return true;
-                }
-
-                return new Promise(resolve => {
-                    completeSecondCheck = resolve;
-                });
+            if (duplicateCheckCount === 1) {
+                return true;
             }
+
+            return new Promise(resolve => {
+                completeSecondCheck = resolve;
+            });
         }
-    );
+    });
 
     try {
         await requestExtraction(context, { requestId: "request-1" });
@@ -621,15 +581,13 @@ test("an old duplicate-check response cannot change a newly extracted recipe", a
         { success: true, recipe },
         { success: true, recipe: secondRecipe }
     ];
-    const context = await setupSidePanel(
-        async () => extractionResults.shift(),
-        {
-            initialIsAuthenticated: true,
-            recipeExistsBySourceUrl: sourceUrl => new Promise(resolve => {
+    const context = await setupSidePanel(async () => extractionResults.shift(), {
+        initialIsAuthenticated: true,
+        recipeExistsBySourceUrl: sourceUrl =>
+            new Promise(resolve => {
                 pendingChecks.push({ sourceUrl, resolve });
             })
-        }
-    );
+    });
 
     try {
         const firstExtraction = context.controller.handleExtractionRequest({
@@ -666,16 +624,13 @@ test("an old duplicate-check response cannot change a newly extracted recipe", a
 
 test("losing authentication resets the duplicate result", async () => {
     let duplicateCheckCount = 0;
-    const context = await setupSidePanel(
-        async () => ({ success: true, recipe }),
-        {
-            initialIsAuthenticated: true,
-            recipeExistsBySourceUrl: async () => {
-                duplicateCheckCount += 1;
-                return false;
-            }
+    const context = await setupSidePanel(async () => ({ success: true, recipe }), {
+        initialIsAuthenticated: true,
+        recipeExistsBySourceUrl: async () => {
+            duplicateCheckCount += 1;
+            return false;
         }
-    );
+    });
 
     try {
         await requestExtraction(context);
@@ -697,10 +652,9 @@ test("losing authentication resets the duplicate result", async () => {
 });
 
 test("shows a green status panel after a successful Cookbook save", async () => {
-    const context = await setupSidePanel(
-        async () => ({ success: true, recipe }),
-        { initialIsAuthenticated: true }
-    );
+    const context = await setupSidePanel(async () => ({ success: true, recipe }), {
+        initialIsAuthenticated: true
+    });
 
     try {
         await requestExtraction(context);
@@ -720,16 +674,13 @@ test("shows a green status panel after a successful Cookbook save", async () => 
 test("shows a red status panel after a failed Cookbook save", async () => {
     const saveError = new Error("The recipe already exists.");
     const reportedErrors = [];
-    const context = await setupSidePanel(
-        async () => ({ success: true, recipe }),
-        {
-            initialIsAuthenticated: true,
-            saveRecipeToApi: async () => {
-                throw saveError;
-            },
-            reportError: error => reportedErrors.push(error)
-        }
-    );
+    const context = await setupSidePanel(async () => ({ success: true, recipe }), {
+        initialIsAuthenticated: true,
+        saveRecipeToApi: async () => {
+            throw saveError;
+        },
+        reportError: error => reportedErrors.push(error)
+    });
 
     try {
         await requestExtraction(context);
@@ -751,25 +702,21 @@ test("shows a red status panel after a failed Cookbook save", async () => {
 });
 
 test("an expired session removes the token and reveals login again", async () => {
-    const authenticationError = Object.assign(
-        new Error("Authentication has expired. Sign in again."),
-        { status: 401 }
-    );
+    const authenticationError = Object.assign(new Error("Authentication has expired. Sign in again."), {
+        status: 401
+    });
     const reportedErrors = [];
     let removeAccessTokenCount = 0;
-    const context = await setupSidePanel(
-        async () => ({ success: true, recipe }),
-        {
-            initialIsAuthenticated: true,
-            saveRecipeToApi: async () => {
-                throw authenticationError;
-            },
-            removeAccessToken: async () => {
-                removeAccessTokenCount += 1;
-            },
-            reportError: error => reportedErrors.push(error)
-        }
-    );
+    const context = await setupSidePanel(async () => ({ success: true, recipe }), {
+        initialIsAuthenticated: true,
+        saveRecipeToApi: async () => {
+            throw authenticationError;
+        },
+        removeAccessToken: async () => {
+            removeAccessTokenCount += 1;
+        },
+        reportError: error => reportedErrors.push(error)
+    });
 
     try {
         await requestExtraction(context);
@@ -793,10 +740,7 @@ test("a new successful extraction replaces the recipe and resets Save state", as
         { success: true, recipe },
         { success: true, recipe: secondRecipe }
     ];
-    const context = await setupSidePanel(
-        async () => results.shift(),
-        { initialIsAuthenticated: true }
-    );
+    const context = await setupSidePanel(async () => results.shift(), { initialIsAuthenticated: true });
 
     try {
         await requestExtraction(context, { requestId: "request-1" });
@@ -837,9 +781,10 @@ test("refuses a new extraction while Save is in progress", async () => {
         },
         {
             initialIsAuthenticated: true,
-            saveRecipeToApi: async () => new Promise(resolve => {
-                completeSave = resolve;
-            })
+            saveRecipeToApi: async () =>
+                new Promise(resolve => {
+                    completeSave = resolve;
+                })
         }
     );
 
@@ -871,18 +816,15 @@ test("refuses a new extraction while Save is in progress", async () => {
 test("a successful login updates the Side Panel to the authenticated state", async () => {
     let loginCount = 0;
     const checkedSourceUrls = [];
-    const context = await setupSidePanel(
-        async () => ({ success: true, recipe }),
-        {
-            login: async () => {
-                loginCount += 1;
-            },
-            recipeExistsBySourceUrl: async sourceUrl => {
-                checkedSourceUrls.push(sourceUrl);
-                return false;
-            }
+    const context = await setupSidePanel(async () => ({ success: true, recipe }), {
+        login: async () => {
+            loginCount += 1;
+        },
+        recipeExistsBySourceUrl: async sourceUrl => {
+            checkedSourceUrls.push(sourceUrl);
+            return false;
         }
-    );
+    });
 
     try {
         await requestExtraction(context);
@@ -901,18 +843,15 @@ test("a successful login updates the Side Panel to the authenticated state", asy
 test("ignores a second login click while Side Panel authentication is in progress", async () => {
     let loginCount = 0;
     let completeLogin;
-    const context = await setupSidePanel(
-        async () => ({ success: true, recipe }),
-        {
-            login: () => {
-                loginCount += 1;
+    const context = await setupSidePanel(async () => ({ success: true, recipe }), {
+        login: () => {
+            loginCount += 1;
 
-                return new Promise(resolve => {
-                    completeLogin = resolve;
-                });
-            }
+            return new Promise(resolve => {
+                completeLogin = resolve;
+            });
         }
-    );
+    });
 
     try {
         await requestExtraction(context);
@@ -920,10 +859,12 @@ test("ignores a second login click while Side Panel authentication is in progres
         const loginButton = context.document.getElementById("loginButton");
 
         loginButton.click();
-        loginButton.dispatchEvent(new context.window.Event("click", {
-            bubbles: true,
-            cancelable: true
-        }));
+        loginButton.dispatchEvent(
+            new context.window.Event("click", {
+                bubbles: true,
+                cancelable: true
+            })
+        );
 
         assert.equal(loginCount, 1);
         assert.equal(loginButton.disabled, true);
@@ -940,16 +881,13 @@ test("ignores a second login click while Side Panel authentication is in progres
 
 test("initial authentication can resolve after extraction without blocking public actions", async () => {
     let duplicateCheckCount = 0;
-    const context = await setupSidePanel(
-        async () => ({ success: true, recipe }),
-        {
-            initialIsAuthenticationResolved: false,
-            recipeExistsBySourceUrl: async () => {
-                duplicateCheckCount += 1;
-                return false;
-            }
+    const context = await setupSidePanel(async () => ({ success: true, recipe }), {
+        initialIsAuthenticationResolved: false,
+        recipeExistsBySourceUrl: async () => {
+            duplicateCheckCount += 1;
+            return false;
         }
-    );
+    });
 
     try {
         await requestExtraction(context);
@@ -986,15 +924,12 @@ test("initial authentication can resolve after extraction without blocking publi
 test("a failed login reports the error and displays a user-facing message", async () => {
     const loginError = new Error("The authentication window was closed.");
     const reportedErrors = [];
-    const context = await setupSidePanel(
-        async () => ({ success: true, recipe }),
-        {
-            login: async () => {
-                throw loginError;
-            },
-            reportError: error => reportedErrors.push(error)
-        }
-    );
+    const context = await setupSidePanel(async () => ({ success: true, recipe }), {
+        login: async () => {
+            throw loginError;
+        },
+        reportError: error => reportedErrors.push(error)
+    });
 
     try {
         await requestExtraction(context);
@@ -1018,22 +953,19 @@ test("a failed login reports the error and displays a user-facing message", asyn
 test("a new login attempt clears the previous user-facing error", async () => {
     let loginAttempt = 0;
     let completeSecondAttempt;
-    const context = await setupSidePanel(
-        async () => ({ success: true, recipe }),
-        {
-            login: async () => {
-                loginAttempt += 1;
+    const context = await setupSidePanel(async () => ({ success: true, recipe }), {
+        login: async () => {
+            loginAttempt += 1;
 
-                if (loginAttempt === 1) {
-                    throw new Error("The first login attempt failed.");
-                }
-
-                await new Promise(resolve => {
-                    completeSecondAttempt = resolve;
-                });
+            if (loginAttempt === 1) {
+                throw new Error("The first login attempt failed.");
             }
+
+            await new Promise(resolve => {
+                completeSecondAttempt = resolve;
+            });
         }
-    );
+    });
 
     try {
         const loginButton = context.document.getElementById("loginButton");
@@ -1042,10 +974,7 @@ test("a new login attempt clears the previous user-facing error", async () => {
         await requestExtraction(context);
         await clickAndFlush(loginButton);
 
-        assert.equal(
-            authMessage.textContent,
-            "Sign in was not completed. Please try again."
-        );
+        assert.equal(authMessage.textContent, "Sign in was not completed. Please try again.");
 
         loginButton.click();
         await Promise.resolve();
@@ -1165,7 +1094,9 @@ test("reports a rejected extraction and restores the failure state", async () =>
     const extractionError = new Error("Cannot inject into this tab.");
     const reportedErrors = [];
     const context = await setupSidePanel(
-        async () => { throw extractionError; },
+        async () => {
+            throw extractionError;
+        },
         {
             reportError: error => reportedErrors.push(error)
         }
@@ -1219,13 +1150,10 @@ test("Edit and Print save the payload and open 900x700 popup windows", async () 
         await clickAndFlush(context.document.getElementById("editButton"));
         await clickAndFlush(context.document.getElementById("printButton"));
 
-        assert.deepEqual(
-            context.storage.calls.setItem,
-            [
-                ["recipeToPrint", JSON.stringify(recipe)],
-                ["recipeToPrint", JSON.stringify(recipe)]
-            ]
-        );
+        assert.deepEqual(context.storage.calls.setItem, [
+            ["recipeToPrint", JSON.stringify(recipe)],
+            ["recipeToPrint", JSON.stringify(recipe)]
+        ]);
         assert.deepEqual(context.browser.calls.openWindow, [
             { page: "edit.html", type: "popup", width: 900, height: 700 },
             { page: "print.html", type: "popup", width: 900, height: 700 }
@@ -1313,7 +1241,7 @@ test("the real classic Side Panel bootstrap preserves injection and dependency c
     assert.match(html, /class="side-panel-header"/);
     assert.match(html, /id="extractionStatus"[^>]+role="status"[^>]+aria-live="polite"/);
     assert.doesNotMatch(html, /id="extractButton"/);
-    assert.match(script, /import\("\.\/controllers\/sidePanelController\.js"\)\.then/);
+    assert.match(script, /import\("\.\/controllers\/sidePanelController\.js"\)\s*\.then/);
     assert.match(script, /import\("\.\/api\/recipeApiClient\.js"\)/);
     assert.match(
         script,
@@ -1329,8 +1257,7 @@ test("the real classic Side Panel bootstrap preserves injection and dependency c
         /recipeExistsBySourceUrl:\s*async sourceUrl\s*=>\s*\{[\s\S]*?const accessToken\s*=\s*await getAccessToken\(\);[\s\S]*?return recipeExistsBySourceUrl\(\s*sourceUrl,\s*accessToken\s*\);[\s\S]*?}/
     );
     assert.equal(
-        (script.match(/controller\.setAuthenticationState\(isAuthenticated\)/g) ?? [])
-            .length,
+        (script.match(/controller\.setAuthenticationState\(isAuthenticated\)/g) ?? []).length,
         2
     );
     assert.doesNotMatch(controllerScript, /\bgetAccessToken\b/);

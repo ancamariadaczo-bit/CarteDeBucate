@@ -5,8 +5,7 @@ public sealed class RecipeImportHttpMessageHandler : DelegatingHandler
 {
     private readonly RecipeImportDestinationPolicy _destinationPolicy;
 
-    public RecipeImportHttpMessageHandler(
-        RecipeImportDestinationPolicy destinationPolicy)
+    public RecipeImportHttpMessageHandler(RecipeImportDestinationPolicy destinationPolicy)
     {
         _destinationPolicy = destinationPolicy;
 
@@ -14,13 +13,14 @@ public sealed class RecipeImportHttpMessageHandler : DelegatingHandler
         {
             AllowAutoRedirect = false,
             UseProxy = false,
-            ConnectCallback = ConnectAsync
+            ConnectCallback = ConnectAsync,
         };
     }
 
     private async ValueTask<Stream> ConnectAsync(
         SocketsHttpConnectionContext context,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         Uri? requestUri = context.InitialRequestMessage.RequestUri;
 
@@ -29,27 +29,25 @@ public sealed class RecipeImportHttpMessageHandler : DelegatingHandler
             throw CreateRejectedDestinationException();
         }
 
-        IReadOnlyList<IPAddress> approvedAddresses =
-            await GetApprovedAddressesAsync(
-                context,
-                requestUri,
-                cancellationToken);
+        IReadOnlyList<IPAddress> approvedAddresses = await GetApprovedAddressesAsync(
+            context,
+            requestUri,
+            cancellationToken
+        );
 
         foreach (IPAddress address in approvedAddresses)
         {
-            Socket socket = new Socket(
-                address.AddressFamily,
-                SocketType.Stream,
-                ProtocolType.Tcp)
+            Socket socket = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp)
             {
-                NoDelay = true
+                NoDelay = true,
             };
 
             try
             {
                 await socket.ConnectAsync(
                     new IPEndPoint(address, context.DnsEndPoint.Port),
-                    cancellationToken);
+                    cancellationToken
+                );
 
                 return new NetworkStream(socket, ownsSocket: true);
             }
@@ -70,17 +68,22 @@ public sealed class RecipeImportHttpMessageHandler : DelegatingHandler
     private async Task<IReadOnlyList<IPAddress>> GetApprovedAddressesAsync(
         SocketsHttpConnectionContext context,
         Uri requestUri,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
-        if (RecipeImportRequestOptions.TryGetApprovedDestination(
+        if (
+            RecipeImportRequestOptions.TryGetApprovedDestination(
                 context.InitialRequestMessage,
-                out ApprovedRecipeImportDestination? approvedDestination) &&
-            approvedDestination != null &&
-            approvedDestination.Port == context.DnsEndPoint.Port &&
-            string.Equals(
+                out ApprovedRecipeImportDestination? approvedDestination
+            )
+            && approvedDestination != null
+            && approvedDestination.Port == context.DnsEndPoint.Port
+            && string.Equals(
                 approvedDestination.Host,
                 context.DnsEndPoint.Host,
-                StringComparison.OrdinalIgnoreCase))
+                StringComparison.OrdinalIgnoreCase
+            )
+        )
         {
             return approvedDestination.Addresses;
         }
@@ -88,7 +91,8 @@ public sealed class RecipeImportHttpMessageHandler : DelegatingHandler
         Uri destination = new UriBuilder(
             requestUri.Scheme,
             context.DnsEndPoint.Host,
-            context.DnsEndPoint.Port).Uri;
+            context.DnsEndPoint.Port
+        ).Uri;
 
         RecipeImportDestinationValidationResult validationResult =
             await _destinationPolicy.ValidateAsync(destination, cancellationToken);

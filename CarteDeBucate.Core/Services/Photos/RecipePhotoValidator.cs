@@ -2,9 +2,7 @@ public sealed class RecipePhotoValidator
 {
     private const int MaximumSignatureLength = 12;
 
-    public RecipePhotoValidationResult Validate(
-        Stream content,
-        string declaredContentType)
+    public RecipePhotoValidationResult Validate(Stream content, string declaredContentType)
     {
         ArgumentNullException.ThrowIfNull(content);
 
@@ -12,7 +10,8 @@ public sealed class RecipePhotoValidator
         {
             throw new ArgumentException(
                 "The photo content stream must be readable and seekable.",
-                nameof(content));
+                nameof(content)
+            );
         }
 
         long initialPosition = content.Position;
@@ -26,14 +25,15 @@ public sealed class RecipePhotoValidator
 
             if (signatureLength == 0)
             {
-                return RecipePhotoValidationResult.Failure(
-                    RecipePhotoResultCode.EmptyContent);
+                return RecipePhotoValidationResult.Failure(RecipePhotoResultCode.EmptyContent);
             }
 
-            RecipePhotoFormat detectedFormat =
-                RecipePhotoFormats.DetectFormat(signature[..signatureLength]);
-            RecipePhotoFormat declaredFormat =
-                RecipePhotoFormats.GetFormatFromContentType(declaredContentType);
+            RecipePhotoFormat detectedFormat = RecipePhotoFormats.DetectFormat(
+                signature[..signatureLength]
+            );
+            RecipePhotoFormat declaredFormat = RecipePhotoFormats.GetFormatFromContentType(
+                declaredContentType
+            );
 
             if (detectedFormat == RecipePhotoFormat.Unknown)
             {
@@ -47,22 +47,17 @@ public sealed class RecipePhotoValidator
 
             if (declaredFormat == RecipePhotoFormat.Unknown)
             {
-                return RecipePhotoValidationResult.Failure(
-                    RecipePhotoResultCode.UnsupportedFormat);
+                return RecipePhotoValidationResult.Failure(RecipePhotoResultCode.UnsupportedFormat);
             }
 
             if (detectedFormat != declaredFormat)
             {
-                return RecipePhotoValidationResult.Failure(
-                    RecipePhotoResultCode.InvalidContent);
+                return RecipePhotoValidationResult.Failure(RecipePhotoResultCode.InvalidContent);
             }
 
-            string normalizedContentType =
-                RecipePhotoFormats.GetContentType(detectedFormat)!;
+            string normalizedContentType = RecipePhotoFormats.GetContentType(detectedFormat)!;
 
-            return RecipePhotoValidationResult.Success(
-                detectedFormat,
-                normalizedContentType);
+            return RecipePhotoValidationResult.Success(detectedFormat, normalizedContentType);
         }
         finally
         {
@@ -70,9 +65,7 @@ public sealed class RecipePhotoValidator
         }
     }
 
-    private static int ReadSignature(
-        Stream content,
-        Span<byte> signature)
+    private static int ReadSignature(Stream content, Span<byte> signature)
     {
         int totalBytesRead = 0;
 
@@ -98,7 +91,8 @@ public sealed class RecipePhotoValidationResult
         bool isValid,
         RecipePhotoResultCode code,
         RecipePhotoFormat format,
-        string contentType)
+        string contentType
+    )
     {
         IsValid = isValid;
         Code = code;
@@ -114,24 +108,13 @@ public sealed class RecipePhotoValidationResult
 
     public string ContentType { get; }
 
-    internal static RecipePhotoValidationResult Success(
-        RecipePhotoFormat format,
-        string contentType)
+    internal static RecipePhotoValidationResult Success(RecipePhotoFormat format, string contentType)
     {
-        return new RecipePhotoValidationResult(
-            true,
-            RecipePhotoResultCode.Success,
-            format,
-            contentType);
+        return new RecipePhotoValidationResult(true, RecipePhotoResultCode.Success, format, contentType);
     }
 
-    internal static RecipePhotoValidationResult Failure(
-        RecipePhotoResultCode code)
+    internal static RecipePhotoValidationResult Failure(RecipePhotoResultCode code)
     {
-        return new RecipePhotoValidationResult(
-            false,
-            code,
-            RecipePhotoFormat.Unknown,
-            string.Empty);
+        return new RecipePhotoValidationResult(false, code, RecipePhotoFormat.Unknown, string.Empty);
     }
 }

@@ -16,12 +16,10 @@ public class PasswordHasher
             saltBytes,
             Iterations,
             HashAlgorithmName.SHA256,
-            HashSize);
-
-        return (
-            Convert.ToBase64String(hashBytes),
-            Convert.ToBase64String(saltBytes)
+            HashSize
         );
+
+        return (Convert.ToBase64String(hashBytes), Convert.ToBase64String(saltBytes));
     }
 
     public bool VerifyPassword(string password, string hash, string salt)
@@ -33,7 +31,8 @@ public class PasswordHasher
             saltBytes,
             Iterations,
             HashAlgorithmName.SHA256,
-            HashSize);
+            HashSize
+        );
 
         string computedHash = Convert.ToBase64String(hashBytes);
 

@@ -25,31 +25,31 @@ public static class AppServiceFactory
         StorageMode storageMode,
         string recipesFilePath,
         string databasePath,
-        ILogger<DatabaseRecipeRepository> logger)
+        ILogger<DatabaseRecipeRepository> logger
+    )
     {
         return storageMode switch
         {
             StorageMode.Json => new JsonRecipeRepository(recipesFilePath),
             StorageMode.Database => new DatabaseRecipeRepository(databasePath, logger),
-            _ => throw new InvalidOperationException(AppTexts.UnknownStorageModeError)
+            _ => throw new InvalidOperationException(AppTexts.UnknownStorageModeError),
         };
     }
 
     public static IRecipeRepository CreateDatabaseRecipeRepository(
         string databasePath,
-        ILogger<DatabaseRecipeRepository> logger)
+        ILogger<DatabaseRecipeRepository> logger
+    )
     {
         return new DatabaseRecipeRepository(databasePath, logger);
     }
 
-    public static IRecipePhotoRepository CreateDatabaseRecipePhotoRepository(
-        string databasePath)
+    public static IRecipePhotoRepository CreateDatabaseRecipePhotoRepository(string databasePath)
     {
         return new DatabaseRecipePhotoRepository(databasePath);
     }
 
-    internal static IRecipePhotoStorage CreateDatabaseRecipePhotoStorage(
-        string recipePhotosPath)
+    internal static IRecipePhotoStorage CreateDatabaseRecipePhotoStorage(string recipePhotosPath)
     {
         return new FileSystemRecipePhotoStorage(recipePhotosPath);
     }
@@ -59,7 +59,8 @@ public static class AppServiceFactory
         string recipePhotosPath,
         IRecipeRepository recipeRepository,
         ICurrentUserContext? currentUserContext,
-        ILoggerFactory loggerFactory)
+        ILoggerFactory loggerFactory
+    )
     {
         return CreateDatabaseRecipePhotoService(
             databasePath,
@@ -68,7 +69,8 @@ public static class AppServiceFactory
             currentUserContext,
             new RecipePhotoOptions(),
             TimeProvider.System,
-            loggerFactory);
+            loggerFactory
+        );
     }
 
     public static IRecipePhotoService CreateDatabaseRecipePhotoService(
@@ -78,21 +80,19 @@ public static class AppServiceFactory
         ICurrentUserContext? currentUserContext,
         RecipePhotoOptions options,
         TimeProvider timeProvider,
-        ILoggerFactory loggerFactory)
+        ILoggerFactory loggerFactory
+    )
     {
         ArgumentNullException.ThrowIfNull(recipeRepository);
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(timeProvider);
         ArgumentNullException.ThrowIfNull(loggerFactory);
 
-        IRecipePhotoRepository photoRepository =
-            CreateDatabaseRecipePhotoRepository(databasePath);
-        IRecipePhotoStorage storage =
-            CreateDatabaseRecipePhotoStorage(recipePhotosPath);
+        IRecipePhotoRepository photoRepository = CreateDatabaseRecipePhotoRepository(databasePath);
+        IRecipePhotoStorage storage = CreateDatabaseRecipePhotoStorage(recipePhotosPath);
         RecipePhotoValidator validator = new();
         RecipePhotoFileNameNormalizer fileNameNormalizer = new();
-        ILogger<RecipePhotoService> logger =
-            loggerFactory.CreateLogger<RecipePhotoService>();
+        ILogger<RecipePhotoService> logger = loggerFactory.CreateLogger<RecipePhotoService>();
 
         return new RecipePhotoService(
             storage,
@@ -103,15 +103,16 @@ public static class AppServiceFactory
             fileNameNormalizer,
             options,
             timeProvider,
-            logger);
+            logger
+        );
     }
 
-    public static IRecipePhotoReconciliationService
-        CreateDatabaseRecipePhotoReconciliationService(
-            string databasePath,
-            string recipePhotosPath,
-            IRecipeRepository recipeRepository,
-            ILoggerFactory loggerFactory)
+    public static IRecipePhotoReconciliationService CreateDatabaseRecipePhotoReconciliationService(
+        string databasePath,
+        string recipePhotosPath,
+        IRecipeRepository recipeRepository,
+        ILoggerFactory loggerFactory
+    )
     {
         return CreateDatabaseRecipePhotoReconciliationService(
             databasePath,
@@ -119,27 +120,26 @@ public static class AppServiceFactory
             recipeRepository,
             new RecipePhotoOptions(),
             TimeProvider.System,
-            loggerFactory);
+            loggerFactory
+        );
     }
 
-    public static IRecipePhotoReconciliationService
-        CreateDatabaseRecipePhotoReconciliationService(
-            string databasePath,
-            string recipePhotosPath,
-            IRecipeRepository recipeRepository,
-            RecipePhotoOptions options,
-            TimeProvider timeProvider,
-            ILoggerFactory loggerFactory)
+    public static IRecipePhotoReconciliationService CreateDatabaseRecipePhotoReconciliationService(
+        string databasePath,
+        string recipePhotosPath,
+        IRecipeRepository recipeRepository,
+        RecipePhotoOptions options,
+        TimeProvider timeProvider,
+        ILoggerFactory loggerFactory
+    )
     {
         ArgumentNullException.ThrowIfNull(recipeRepository);
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(timeProvider);
         ArgumentNullException.ThrowIfNull(loggerFactory);
 
-        IRecipePhotoStorage storage =
-            CreateDatabaseRecipePhotoStorage(recipePhotosPath);
-        IRecipePhotoRepository photoRepository =
-            CreateDatabaseRecipePhotoRepository(databasePath);
+        IRecipePhotoStorage storage = CreateDatabaseRecipePhotoStorage(recipePhotosPath);
+        IRecipePhotoRepository photoRepository = CreateDatabaseRecipePhotoRepository(databasePath);
         ILogger<RecipePhotoReconciliationService> logger =
             loggerFactory.CreateLogger<RecipePhotoReconciliationService>();
 
@@ -149,19 +149,21 @@ public static class AppServiceFactory
             photoRepository,
             options,
             timeProvider,
-            logger);
+            logger
+        );
     }
 
     public static IUserRepository CreateUserRepository(
         StorageMode storageMode,
         string usersFilePath,
-        string databasePath)
+        string databasePath
+    )
     {
         return storageMode switch
         {
             StorageMode.Json => new JsonUserRepository(usersFilePath),
             StorageMode.Database => new DatabaseUserRepository(databasePath),
-            _ => throw new InvalidOperationException(AppTexts.UnknownStorageModeError)
+            _ => throw new InvalidOperationException(AppTexts.UnknownStorageModeError),
         };
     }
 
@@ -172,18 +174,18 @@ public static class AppServiceFactory
 
     public static IRecipeImporterService CreateRecipeImporterService(
         HttpClient httpClient,
-        RecipeImportDestinationPolicy destinationPolicy)
+        RecipeImportDestinationPolicy destinationPolicy
+    )
     {
-        RecipeImporter recipeImporter = new RecipeImporter(
-            httpClient,
-            destinationPolicy);
+        RecipeImporter recipeImporter = new RecipeImporter(httpClient, destinationPolicy);
 
         return new RecipeImporterService(recipeImporter);
     }
 
     public static IRecipeLibraryService CreateRecipeLibraryService(
         IRecipeRepository recipeRepository,
-        ICurrentUserContext currentUserContext)
+        ICurrentUserContext currentUserContext
+    )
     {
         return new RecipeLibraryService(recipeRepository, currentUserContext);
     }
@@ -193,7 +195,8 @@ public static class AppServiceFactory
         string recipePhotosPath,
         IRecipeRepository recipeRepository,
         ICurrentUserContext? currentUserContext,
-        ILoggerFactory loggerFactory)
+        ILoggerFactory loggerFactory
+    )
     {
         return CreateDatabaseRecipeLibraryService(
             databasePath,
@@ -202,7 +205,8 @@ public static class AppServiceFactory
             currentUserContext,
             new RecipePhotoOptions(),
             TimeProvider.System,
-            loggerFactory);
+            loggerFactory
+        );
     }
 
     public static IRecipeLibraryService CreateDatabaseRecipeLibraryService(
@@ -212,36 +216,39 @@ public static class AppServiceFactory
         ICurrentUserContext? currentUserContext,
         RecipePhotoOptions photoOptions,
         TimeProvider timeProvider,
-        ILoggerFactory loggerFactory)
+        ILoggerFactory loggerFactory
+    )
     {
         ArgumentNullException.ThrowIfNull(recipeRepository);
         ArgumentNullException.ThrowIfNull(photoOptions);
         ArgumentNullException.ThrowIfNull(timeProvider);
         ArgumentNullException.ThrowIfNull(loggerFactory);
 
-        IRecipePhotoService photoService =
-            CreateDatabaseRecipePhotoService(
-                databasePath,
-                recipePhotosPath,
-                recipeRepository,
-                currentUserContext,
-                photoOptions,
-                timeProvider,
-                loggerFactory);
+        IRecipePhotoService photoService = CreateDatabaseRecipePhotoService(
+            databasePath,
+            recipePhotosPath,
+            recipeRepository,
+            currentUserContext,
+            photoOptions,
+            timeProvider,
+            loggerFactory
+        );
         IRecipePhotoDeletionCoordinator photoDeletionCoordinator =
             (IRecipePhotoDeletionCoordinator)photoService;
-        ILogger<RecipeLibraryService> logger =
-            loggerFactory.CreateLogger<RecipeLibraryService>();
+        ILogger<RecipeLibraryService> logger = loggerFactory.CreateLogger<RecipeLibraryService>();
 
         return new RecipeLibraryService(
             recipeRepository,
             currentUserContext,
             photoDeletionCoordinator,
-            logger);
+            logger
+        );
     }
 
     public static IRecipeBackupService CreateRecipeBackupService(
-        IRecipeRepository recipeRepository, ICurrentUserContext currentUserContext)
+        IRecipeRepository recipeRepository,
+        ICurrentUserContext currentUserContext
+    )
     {
         return new RecipeBackupService(recipeRepository, currentUserContext);
     }
@@ -250,18 +257,18 @@ public static class AppServiceFactory
         StorageMode storageMode,
         string usersFilePath,
         string databasePath,
-        ICurrentUserContext currentUserContext)
+        ICurrentUserContext currentUserContext
+    )
     {
-        IUserRepository userRepository = CreateUserRepository(
-            storageMode,
-            usersFilePath,
-            databasePath);
+        IUserRepository userRepository = CreateUserRepository(storageMode, usersFilePath, databasePath);
 
         return CreateAuthenticationService(userRepository, currentUserContext);
     }
 
     public static IAuthenticationService CreateAuthenticationService(
-        IUserRepository userRepository, ICurrentUserContext currentUserContext)
+        IUserRepository userRepository,
+        ICurrentUserContext currentUserContext
+    )
     {
         return new AuthenticationService(userRepository, currentUserContext);
     }

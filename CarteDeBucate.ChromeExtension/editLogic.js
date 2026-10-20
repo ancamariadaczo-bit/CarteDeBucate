@@ -11,9 +11,7 @@ export function isValidHttpUrl(value) {
         return false;
     }
 
-    const isHttpOrHttps =
-        url.protocol === "http:" ||
-        url.protocol === "https:";
+    const isHttpOrHttps = url.protocol === "http:" || url.protocol === "https:";
 
     return isHttpOrHttps && Boolean(url.hostname.trim());
 }
@@ -46,9 +44,7 @@ export function normalizeInstructions(values) {
         return [];
     }
 
-    return values
-        .map(normalizeInstruction)
-        .filter(value => value.length > 0);
+    return values.map(normalizeInstruction).filter(value => value.length > 0);
 }
 
 export function parseRecipePayload(recipeJson) {
@@ -72,17 +68,11 @@ export function parseRecipePayload(recipeJson) {
 }
 
 export function validateAndBuildEditedRecipe(originalRecipe, formValues) {
-    const name = typeof formValues?.name === "string"
-        ? formValues.name.trim()
-        : "";
+    const name = typeof formValues?.name === "string" ? formValues.name.trim() : "";
 
-    const sourceUrl = typeof formValues?.sourceUrl === "string"
-        ? formValues.sourceUrl.trim()
-        : "";
+    const sourceUrl = typeof formValues?.sourceUrl === "string" ? formValues.sourceUrl.trim() : "";
 
-    const imageUrl = typeof formValues?.imageUrl === "string"
-        ? formValues.imageUrl.trim()
-        : "";
+    const imageUrl = typeof formValues?.imageUrl === "string" ? formValues.imageUrl.trim() : "";
 
     const ingredients = normalizeNonEmptyValues(formValues?.ingredients);
     const steps = normalizeInstructions(formValues?.steps);

@@ -6,9 +6,7 @@ public class PagedResult<T>
         PageNumber = Math.Max(1, pageNumber);
         PageSize = Math.Max(1, pageSize);
         TotalItems = Math.Max(0, totalItems);
-        TotalPages = TotalItems == 0
-            ? 0
-            : (int)Math.Ceiling((double)TotalItems / PageSize);
+        TotalPages = TotalItems == 0 ? 0 : (int)Math.Ceiling((double)TotalItems / PageSize);
     }
 
     public List<T> Items { get; }

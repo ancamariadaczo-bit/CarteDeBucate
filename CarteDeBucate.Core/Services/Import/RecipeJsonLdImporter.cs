@@ -44,7 +44,8 @@ public class RecipeJsonLdImporter
         MatchCollection matches = Regex.Matches(
             html,
             @"<script[^>]*type=[""']application/ld\+json[""'][^>]*>(.*?)</script>",
-            RegexOptions.IgnoreCase | RegexOptions.Singleline);
+            RegexOptions.IgnoreCase | RegexOptions.Singleline
+        );
 
         foreach (Match match in matches)
         {
@@ -103,7 +104,12 @@ public class RecipeJsonLdImporter
             return false;
         }
 
-        if (!element.TryGetProperty(RecipeImportConstants.JsonLdTypeProperty, out JsonElement typeElement))
+        if (
+            !element.TryGetProperty(
+                RecipeImportConstants.JsonLdTypeProperty,
+                out JsonElement typeElement
+            )
+        )
         {
             return false;
         }
@@ -117,8 +123,10 @@ public class RecipeJsonLdImporter
         {
             foreach (JsonElement typeItem in typeElement.EnumerateArray())
             {
-                if (typeItem.ValueKind == JsonValueKind.String &&
-                    typeItem.GetString() == RecipeImportConstants.RecipeType)
+                if (
+                    typeItem.ValueKind == JsonValueKind.String
+                    && typeItem.GetString() == RecipeImportConstants.RecipeType
+                )
                 {
                     return true;
                 }
@@ -130,14 +138,13 @@ public class RecipeJsonLdImporter
 
     private static Recipe CreateRecipeFromJsonLd(JsonElement recipeElement, string url)
     {
-        Recipe recipe = new Recipe
-        {
-            SourceUrl = url.Trim(),
-            SavedAt = DateTime.Now
-        };
+        Recipe recipe = new Recipe { SourceUrl = url.Trim(), SavedAt = DateTime.Now };
 
         recipe.Name = GetStringProperty(recipeElement, RecipeImportConstants.NameProperty);
-        recipe.Ingredients = GetStringListProperty(recipeElement, RecipeImportConstants.RecipeIngredientProperty);
+        recipe.Ingredients = GetStringListProperty(
+            recipeElement,
+            RecipeImportConstants.RecipeIngredientProperty
+        );
         recipe.Steps = GetInstructions(recipeElement);
 
         return recipe;
@@ -190,7 +197,12 @@ public class RecipeJsonLdImporter
     {
         List<string> steps = new List<string>();
 
-        if (!recipeElement.TryGetProperty(RecipeImportConstants.RecipeInstructionsProperty, out JsonElement instructions))
+        if (
+            !recipeElement.TryGetProperty(
+                RecipeImportConstants.RecipeInstructionsProperty,
+                out JsonElement instructions
+            )
+        )
         {
             return steps;
         }
@@ -237,8 +249,10 @@ public class RecipeJsonLdImporter
             return;
         }
 
-        if (instruction.TryGetProperty(RecipeImportConstants.TextProperty, out JsonElement textProperty) &&
-            textProperty.ValueKind == JsonValueKind.String)
+        if (
+            instruction.TryGetProperty(RecipeImportConstants.TextProperty, out JsonElement textProperty)
+            && textProperty.ValueKind == JsonValueKind.String
+        )
         {
             string? text = textProperty.GetString();
 
@@ -250,8 +264,10 @@ public class RecipeJsonLdImporter
             return;
         }
 
-        if (instruction.TryGetProperty(RecipeImportConstants.NameProperty, out JsonElement nameProperty) &&
-            nameProperty.ValueKind == JsonValueKind.String)
+        if (
+            instruction.TryGetProperty(RecipeImportConstants.NameProperty, out JsonElement nameProperty)
+            && nameProperty.ValueKind == JsonValueKind.String
+        )
         {
             string? name = nameProperty.GetString();
 
@@ -261,8 +277,13 @@ public class RecipeJsonLdImporter
             }
         }
 
-        if (instruction.TryGetProperty(RecipeImportConstants.ItemListElementProperty, out JsonElement itemListElement) &&
-            itemListElement.ValueKind == JsonValueKind.Array)
+        if (
+            instruction.TryGetProperty(
+                RecipeImportConstants.ItemListElementProperty,
+                out JsonElement itemListElement
+            )
+            && itemListElement.ValueKind == JsonValueKind.Array
+        )
         {
             foreach (JsonElement item in itemListElement.EnumerateArray())
             {

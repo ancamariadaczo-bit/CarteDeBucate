@@ -2,17 +2,16 @@ using Microsoft.Extensions.Logging;
 
 public sealed class RecipePhotoReconciliationServiceStagingTests
 {
-    private static readonly DateTimeOffset UtcNow =
-        new(2026, 10, 12, 12, 0, 0, TimeSpan.Zero);
+    private static readonly DateTimeOffset UtcNow = new(2026, 10, 12, 12, 0, 0, TimeSpan.Zero);
 
     [Fact]
     public void Reconcile_WithUploadNewerThanThreshold_ShouldSkipIt()
     {
         StagingStorage storage = new();
         StagedRecipePhotoUpload upload = CreateUpload("new-upload");
-        storage.StagedUploads.Add(new StagedRecipePhotoUploadInventoryItem(
-            upload,
-            UtcNow.UtcDateTime.AddHours(-23)));
+        storage.StagedUploads.Add(
+            new StagedRecipePhotoUploadInventoryItem(upload, UtcNow.UtcDateTime.AddHours(-23))
+        );
         RecipePhotoReconciliationService service = CreateService(storage);
 
         RecipePhotoReconciliationReport report = service.Reconcile();
@@ -28,9 +27,9 @@ public sealed class RecipePhotoReconciliationServiceStagingTests
     {
         StagingStorage storage = new();
         StagedRecipePhotoUpload upload = CreateUpload("threshold-upload");
-        storage.StagedUploads.Add(new StagedRecipePhotoUploadInventoryItem(
-            upload,
-            UtcNow.UtcDateTime.AddHours(-24)));
+        storage.StagedUploads.Add(
+            new StagedRecipePhotoUploadInventoryItem(upload, UtcNow.UtcDateTime.AddHours(-24))
+        );
         RecipePhotoReconciliationService service = CreateService(storage);
 
         RecipePhotoReconciliationReport report = service.Reconcile();
@@ -46,9 +45,9 @@ public sealed class RecipePhotoReconciliationServiceStagingTests
     {
         StagingStorage storage = new();
         StagedRecipePhotoUpload upload = CreateUpload("old-upload");
-        storage.StagedUploads.Add(new StagedRecipePhotoUploadInventoryItem(
-            upload,
-            UtcNow.UtcDateTime.AddHours(-25)));
+        storage.StagedUploads.Add(
+            new StagedRecipePhotoUploadInventoryItem(upload, UtcNow.UtcDateTime.AddHours(-25))
+        );
         RecipePhotoReconciliationService service = CreateService(storage);
 
         RecipePhotoReconciliationReport report = service.Reconcile();
@@ -64,27 +63,22 @@ public sealed class RecipePhotoReconciliationServiceStagingTests
     {
         StagingStorage storage = new();
         StagedRecipePhotoUpload failingUpload = CreateUpload("failing-upload");
-        StagedRecipePhotoUpload successfulUpload =
-            CreateUpload("successful-upload");
-        storage.StagedUploads.Add(new StagedRecipePhotoUploadInventoryItem(
-            failingUpload,
-            UtcNow.UtcDateTime.AddHours(-26)));
-        storage.StagedUploads.Add(new StagedRecipePhotoUploadInventoryItem(
-            successfulUpload,
-            UtcNow.UtcDateTime.AddHours(-25)));
+        StagedRecipePhotoUpload successfulUpload = CreateUpload("successful-upload");
+        storage.StagedUploads.Add(
+            new StagedRecipePhotoUploadInventoryItem(failingUpload, UtcNow.UtcDateTime.AddHours(-26))
+        );
+        storage.StagedUploads.Add(
+            new StagedRecipePhotoUploadInventoryItem(successfulUpload, UtcNow.UtcDateTime.AddHours(-25))
+        );
         storage.FailingUpload = failingUpload;
         RecordingLogger logger = new();
-        RecipePhotoReconciliationService service = CreateService(
-            storage,
-            logger);
+        RecipePhotoReconciliationService service = CreateService(storage, logger);
 
         RecipePhotoReconciliationReport report = service.Reconcile();
 
         Assert.Equal(1, report.DeletedCount);
         Assert.Equal(1, report.FailedCount);
-        Assert.Same(
-            successfulUpload,
-            Assert.Single(storage.AbandonedUploads));
+        Assert.Same(successfulUpload, Assert.Single(storage.AbandonedUploads));
         Assert.Contains(LogLevel.Error, logger.Levels);
     }
 
@@ -93,10 +87,9 @@ public sealed class RecipePhotoReconciliationServiceStagingTests
     {
         StagingStorage storage = new();
 
-        ArgumentOutOfRangeException exception = Assert.Throws<
-            ArgumentOutOfRangeException>(() => CreateService(
-                storage,
-                minimumAge: TimeSpan.FromHours(-1)));
+        ArgumentOutOfRangeException exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            CreateService(storage, minimumAge: TimeSpan.FromHours(-1))
+        );
 
         Assert.Equal("ReconciliationMinimumAge", exception.ParamName);
     }
@@ -106,12 +99,10 @@ public sealed class RecipePhotoReconciliationServiceStagingTests
     {
         StagingStorage storage = new();
         StagedRecipePhotoUpload upload = CreateUpload("old-upload");
-        storage.StagedUploads.Add(new StagedRecipePhotoUploadInventoryItem(
-            upload,
-            UtcNow.UtcDateTime.AddYears(-100)));
-        RecipePhotoReconciliationService service = CreateService(
-            storage,
-            minimumAge: TimeSpan.MaxValue);
+        storage.StagedUploads.Add(
+            new StagedRecipePhotoUploadInventoryItem(upload, UtcNow.UtcDateTime.AddYears(-100))
+        );
+        RecipePhotoReconciliationService service = CreateService(storage, minimumAge: TimeSpan.MaxValue);
 
         RecipePhotoReconciliationReport report = service.Reconcile();
 
@@ -124,19 +115,17 @@ public sealed class RecipePhotoReconciliationServiceStagingTests
     private static RecipePhotoReconciliationService CreateService(
         StagingStorage storage,
         RecordingLogger? logger = null,
-        TimeSpan? minimumAge = null)
+        TimeSpan? minimumAge = null
+    )
     {
         return new RecipePhotoReconciliationService(
             storage,
             new FakeRecipeRepository(),
             new EmptyPhotoRepository(),
-            new RecipePhotoOptions
-            {
-                ReconciliationMinimumAge =
-                    minimumAge ?? TimeSpan.FromHours(24)
-            },
+            new RecipePhotoOptions { ReconciliationMinimumAge = minimumAge ?? TimeSpan.FromHours(24) },
             new FixedTimeProvider(UtcNow),
-            logger ?? new RecordingLogger());
+            logger ?? new RecordingLogger()
+        );
     }
 
     private static StagedRecipePhotoUpload CreateUpload(string token)
@@ -171,9 +160,7 @@ public sealed class RecipePhotoReconciliationServiceStagingTests
             return [];
         }
 
-        public List<RecipePhoto> GetByRecipeIdAndUserId(
-            int recipeId,
-            int userId)
+        public List<RecipePhoto> GetByRecipeIdAndUserId(int recipeId, int userId)
         {
             throw new NotImplementedException();
         }
@@ -191,10 +178,7 @@ public sealed class RecipePhotoReconciliationServiceStagingTests
 
     private sealed class StagingStorage : IRecipePhotoStorage
     {
-        public List<StagedRecipePhotoUploadInventoryItem> StagedUploads
-        {
-            get;
-        } = [];
+        public List<StagedRecipePhotoUploadInventoryItem> StagedUploads { get; } = [];
 
         public List<StagedRecipePhotoUpload> AbandonedUploads { get; } = [];
 
@@ -203,7 +187,8 @@ public sealed class RecipePhotoReconciliationServiceStagingTests
         public Task<StagedRecipePhotoUpload> StageUploadAsync(
             Stream content,
             long maximumBytes,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default
+        )
         {
             throw new NotImplementedException();
         }
@@ -213,9 +198,7 @@ public sealed class RecipePhotoReconciliationServiceStagingTests
             throw new NotImplementedException();
         }
 
-        public string FinalizeUpload(
-            StagedRecipePhotoUpload upload,
-            RecipePhotoFormat format)
+        public string FinalizeUpload(StagedRecipePhotoUpload upload, RecipePhotoFormat format)
         {
             throw new NotImplementedException();
         }
@@ -240,49 +223,43 @@ public sealed class RecipePhotoReconciliationServiceStagingTests
             throw new NotImplementedException();
         }
 
-        public StagedRecipePhotoDeletion? MoveToQuarantine(
-            string storageFileName)
+        public StagedRecipePhotoDeletion? MoveToQuarantine(string storageFileName)
         {
             throw new NotImplementedException();
         }
 
-        public void RestoreFromQuarantine(
-            StagedRecipePhotoDeletion deletion)
+        public void RestoreFromQuarantine(StagedRecipePhotoDeletion deletion)
         {
             throw new NotImplementedException();
         }
 
-        public void DeleteFromQuarantine(
-            StagedRecipePhotoDeletion deletion)
+        public void DeleteFromQuarantine(StagedRecipePhotoDeletion deletion)
         {
             throw new NotImplementedException();
         }
 
-        public RecipePhotoStorageInventory<StagedRecipePhotoUploadInventoryItem>
-            GetStagedUploads()
+        public RecipePhotoStorageInventory<StagedRecipePhotoUploadInventoryItem> GetStagedUploads()
         {
-            return new RecipePhotoStorageInventory<
-                StagedRecipePhotoUploadInventoryItem>(
-                    StagedUploads,
-                    invalidEntryCount: 0);
+            return new RecipePhotoStorageInventory<StagedRecipePhotoUploadInventoryItem>(
+                StagedUploads,
+                invalidEntryCount: 0
+            );
         }
 
-        public RecipePhotoStorageInventory<StagedRecipePhotoDeletionInventoryItem>
-            GetQuarantinedDeletions()
+        public RecipePhotoStorageInventory<StagedRecipePhotoDeletionInventoryItem> GetQuarantinedDeletions()
         {
-            return new RecipePhotoStorageInventory<
-                StagedRecipePhotoDeletionInventoryItem>(
-                    [],
-                    invalidEntryCount: 0);
+            return new RecipePhotoStorageInventory<StagedRecipePhotoDeletionInventoryItem>(
+                [],
+                invalidEntryCount: 0
+            );
         }
 
-        public RecipePhotoStorageInventory<RecipePhotoStorageFileInventoryItem>
-            GetFinalFiles()
+        public RecipePhotoStorageInventory<RecipePhotoStorageFileInventoryItem> GetFinalFiles()
         {
-            return new RecipePhotoStorageInventory<
-                RecipePhotoStorageFileInventoryItem>(
-                    [],
-                    invalidEntryCount: 0);
+            return new RecipePhotoStorageInventory<RecipePhotoStorageFileInventoryItem>(
+                [],
+                invalidEntryCount: 0
+            );
         }
     }
 
@@ -301,8 +278,7 @@ public sealed class RecipePhotoReconciliationServiceStagingTests
         }
     }
 
-    private sealed class RecordingLogger :
-        ILogger<RecipePhotoReconciliationService>
+    private sealed class RecordingLogger : ILogger<RecipePhotoReconciliationService>
     {
         public List<LogLevel> Levels { get; } = [];
 
@@ -322,7 +298,8 @@ public sealed class RecipePhotoReconciliationServiceStagingTests
             EventId eventId,
             TState state,
             Exception? exception,
-            Func<TState, Exception?, string> formatter)
+            Func<TState, Exception?, string> formatter
+        )
         {
             Levels.Add(logLevel);
         }

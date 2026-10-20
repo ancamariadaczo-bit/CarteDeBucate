@@ -16,9 +16,7 @@ public static class UrlValidator
             return false;
         }
 
-        bool isHttpOrHttps =
-            uri.Scheme == Uri.UriSchemeHttp ||
-            uri.Scheme == Uri.UriSchemeHttps;
+        bool isHttpOrHttps = uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps;
 
         if (!isHttpOrHttps)
         {

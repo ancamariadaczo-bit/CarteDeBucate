@@ -3,9 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "format": "prettier --write \"**/*.js\" \"../CarteDeBucate.Web/wwwroot/js/**/*.js\"",
+    "format:check": "prettier --check \"**/*.js\" \"../CarteDeBucate.Web/wwwroot/js/**/*.js\"",
     "test": "node --test"
   },
   "devDependencies": {
-    "jsdom": "^30.0.1"
+    "jsdom": "^30.0.1",
+    "prettier": "3.9.10"
   }
 }

@@ -1,9 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import {
-    refreshWebLoginTabs
-} from "../auth/webLoginTabs.js";
+import { refreshWebLoginTabs } from "../auth/webLoginTabs.js";
 
 const loginPageUrl = "https://localhost:7080/Account/Login";
 

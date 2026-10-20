@@ -1,8 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-internal sealed class RecipePhotoService :
-    IRecipePhotoService,
-    IRecipePhotoDeletionCoordinator
+internal sealed class RecipePhotoService : IRecipePhotoService, IRecipePhotoDeletionCoordinator
 {
     private readonly IRecipePhotoStorage _storage;
     private readonly IRecipePhotoRepository _photoRepository;
@@ -23,7 +21,8 @@ internal sealed class RecipePhotoService :
         RecipePhotoFileNameNormalizer fileNameNormalizer,
         RecipePhotoOptions options,
         TimeProvider timeProvider,
-        ILogger<RecipePhotoService> logger)
+        ILogger<RecipePhotoService> logger
+    )
     {
         ArgumentNullException.ThrowIfNull(storage);
         ArgumentNullException.ThrowIfNull(photoRepository);
@@ -50,27 +49,21 @@ internal sealed class RecipePhotoService :
     internal Recipe? GetRecipeInCurrentContext(int recipeId)
     {
         return CurrentUserId.HasValue
-            ? _recipeRepository.GetRecipeByIdAndUserId(
-                recipeId,
-                CurrentUserId.Value)
+            ? _recipeRepository.GetRecipeByIdAndUserId(recipeId, CurrentUserId.Value)
             : _recipeRepository.GetRecipeById(recipeId);
     }
 
     internal RecipePhoto? GetPhotoInCurrentContext(int photoId)
     {
         return CurrentUserId.HasValue
-            ? _photoRepository.GetByIdAndUserId(
-                photoId,
-                CurrentUserId.Value)
+            ? _photoRepository.GetByIdAndUserId(photoId, CurrentUserId.Value)
             : _photoRepository.GetById(photoId);
     }
 
     internal List<RecipePhoto> GetPhotosInCurrentContext(int recipeId)
     {
         return CurrentUserId.HasValue
-            ? _photoRepository.GetByRecipeIdAndUserId(
-                recipeId,
-                CurrentUserId.Value)
+            ? _photoRepository.GetByRecipeIdAndUserId(recipeId, CurrentUserId.Value)
             : _photoRepository.GetByRecipeId(recipeId);
     }
 
@@ -87,7 +80,7 @@ internal sealed class RecipePhotoService :
             FileSize = photo.FileSize,
             CreatedAtUtc = photo.CreatedAtUtc,
             DisplayOrder = photo.DisplayOrder,
-            Origin = photo.Origin
+            Origin = photo.Origin,
         };
     }
 
@@ -98,14 +91,16 @@ internal sealed class RecipePhotoService :
         string declaredContentType,
         long? declaredLength,
         RecipePhotoOrigin origin,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         RecipePhotoResult? inputFailure = ValidateAddInput(
             recipeId,
             content,
             declaredContentType,
             declaredLength,
-            origin);
+            origin
+        );
 
         if (inputFailure is not null)
         {
@@ -123,7 +118,8 @@ internal sealed class RecipePhotoService :
             {
                 return RecipePhotoResult.Failure(
                     RecipePhotoResultCode.RecipeNotFound,
-                    "The recipe was not found.");
+                    "The recipe was not found."
+                );
             }
 
             existingPhotos = GetPhotosInCurrentContext(recipeId);
@@ -133,11 +129,13 @@ internal sealed class RecipePhotoService :
             _logger.LogError(
                 exception,
                 "Failed to read recipe photo metadata for recipe {RecipeId}.",
-                recipeId);
+                recipeId
+            );
 
             return RecipePhotoResult.Failure(
                 RecipePhotoResultCode.PersistenceFailure,
-                "The recipe photo metadata could not be read.");
+                "The recipe photo metadata could not be read."
+            );
         }
 
         // This check and the later insert are intentionally not atomic in the
@@ -146,19 +144,20 @@ internal sealed class RecipePhotoService :
         {
             return RecipePhotoResult.Failure(
                 RecipePhotoResultCode.PhotoLimitReached,
-                "The recipe already has the maximum number of photos.");
+                "The recipe already has the maximum number of photos."
+            );
         }
 
         if (declaredLength > _options.MaxFileSizeBytes)
         {
             return RecipePhotoResult.Failure(
                 RecipePhotoResultCode.FileTooLarge,
-                "The declared photo size exceeds the configured limit.");
+                "The declared photo size exceeds the configured limit."
+            );
         }
 
-        int displayOrder = existingPhotos.Count == 0
-            ? 0
-            : existingPhotos.Max(photo => photo.DisplayOrder) + 1;
+        int displayOrder =
+            existingPhotos.Count == 0 ? 0 : existingPhotos.Max(photo => photo.DisplayOrder) + 1;
         StagedRecipePhotoUpload stagedUpload;
 
         try
@@ -166,10 +165,10 @@ internal sealed class RecipePhotoService :
             stagedUpload = await _storage.StageUploadAsync(
                 content,
                 _options.MaxFileSizeBytes,
-                cancellationToken);
+                cancellationToken
+            );
         }
-        catch (OperationCanceledException) when (
-            cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             throw;
         }
@@ -177,29 +176,25 @@ internal sealed class RecipePhotoService :
         {
             return RecipePhotoResult.Failure(
                 RecipePhotoResultCode.FileTooLarge,
-                "The photo exceeds the configured size limit.");
+                "The photo exceeds the configured size limit."
+            );
         }
         catch (Exception exception)
         {
-            _logger.LogError(
-                exception,
-                "Failed to stage a photo for recipe {RecipeId}.",
-                recipeId);
+            _logger.LogError(exception, "Failed to stage a photo for recipe {RecipeId}.", recipeId);
 
             return RecipePhotoResult.Failure(
                 RecipePhotoResultCode.StorageFailure,
-                "The photo could not be stored.");
+                "The photo could not be stored."
+            );
         }
 
         RecipePhotoValidationResult validationResult;
 
         try
         {
-            using Stream stagedContent =
-                _storage.OpenStagedUpload(stagedUpload);
-            validationResult = _validator.Validate(
-                stagedContent,
-                declaredContentType);
+            using Stream stagedContent = _storage.OpenStagedUpload(stagedUpload);
+            validationResult = _validator.Validate(stagedContent, declaredContentType);
         }
         catch (Exception exception)
         {
@@ -207,20 +202,20 @@ internal sealed class RecipePhotoService :
             _logger.LogError(
                 exception,
                 "Failed to validate a staged photo for recipe {RecipeId}.",
-                recipeId);
+                recipeId
+            );
 
             return RecipePhotoResult.Failure(
                 RecipePhotoResultCode.StorageFailure,
-                "The staged photo could not be validated.");
+                "The staged photo could not be validated."
+            );
         }
 
         if (!validationResult.IsValid)
         {
             TryAbandonStagedUpload(stagedUpload, recipeId);
 
-            return RecipePhotoResult.Failure(
-                validationResult.Code,
-                "The photo content is not valid.");
+            return RecipePhotoResult.Failure(validationResult.Code, "The photo content is not valid.");
         }
 
         string normalizedFileName;
@@ -230,14 +225,12 @@ internal sealed class RecipePhotoService :
         {
             normalizedFileName = _fileNameNormalizer.Normalize(
                 originalFileName,
-                validationResult.Format);
+                validationResult.Format
+            );
             cancellationToken.ThrowIfCancellationRequested();
-            storageFileName = _storage.FinalizeUpload(
-                stagedUpload,
-                validationResult.Format);
+            storageFileName = _storage.FinalizeUpload(stagedUpload, validationResult.Format);
         }
-        catch (OperationCanceledException)
-            when (cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             TryAbandonStagedUpload(stagedUpload, recipeId);
             throw;
@@ -245,14 +238,12 @@ internal sealed class RecipePhotoService :
         catch (Exception exception)
         {
             TryAbandonStagedUpload(stagedUpload, recipeId);
-            _logger.LogError(
-                exception,
-                "Failed to finalize a photo for recipe {RecipeId}.",
-                recipeId);
+            _logger.LogError(exception, "Failed to finalize a photo for recipe {RecipeId}.", recipeId);
 
             return RecipePhotoResult.Failure(
                 RecipePhotoResultCode.StorageFailure,
-                "The photo could not be finalized.");
+                "The photo could not be finalized."
+            );
         }
 
         RecipePhoto photo;
@@ -268,14 +259,12 @@ internal sealed class RecipePhotoService :
                 FileSize = stagedUpload.Length,
                 CreatedAtUtc = _timeProvider.GetUtcNow().UtcDateTime,
                 DisplayOrder = displayOrder,
-                Origin = origin
+                Origin = origin,
             };
 
             if (CurrentUserId.HasValue)
             {
-                bool wasAdded = _photoRepository.AddForUser(
-                    photo,
-                    CurrentUserId.Value);
+                bool wasAdded = _photoRepository.AddForUser(photo, CurrentUserId.Value);
 
                 if (!wasAdded)
                 {
@@ -283,7 +272,8 @@ internal sealed class RecipePhotoService :
 
                     return RecipePhotoResult.Failure(
                         RecipePhotoResultCode.RecipeNotFound,
-                        "The recipe was not found.");
+                        "The recipe was not found."
+                    );
                 }
             }
             else
@@ -297,16 +287,16 @@ internal sealed class RecipePhotoService :
             _logger.LogError(
                 exception,
                 "Failed to persist photo metadata for recipe {RecipeId}.",
-                recipeId);
+                recipeId
+            );
 
             return RecipePhotoResult.Failure(
                 RecipePhotoResultCode.PersistenceFailure,
-                "The photo metadata could not be saved.");
+                "The photo metadata could not be saved."
+            );
         }
 
-        return RecipePhotoResult.Success(
-            "The photo was added.",
-            ToPhotoInfo(photo));
+        return RecipePhotoResult.Success("The photo was added.", ToPhotoInfo(photo));
     }
 
     public RecipePhotosResult GetPhotosForRecipe(int recipeId)
@@ -315,7 +305,8 @@ internal sealed class RecipePhotoService :
         {
             return RecipePhotosResult.Failure(
                 RecipePhotoResultCode.InvalidRecipeId,
-                "The recipe id must be greater than zero.");
+                "The recipe id must be greater than zero."
+            );
         }
 
         try
@@ -326,28 +317,24 @@ internal sealed class RecipePhotoService :
             {
                 return RecipePhotosResult.Failure(
                     RecipePhotoResultCode.RecipeNotFound,
-                    "The recipe was not found.");
+                    "The recipe was not found."
+                );
             }
 
-            List<RecipePhotoInfo> photos =
-                GetPhotosInCurrentContext(recipeId)
-                    .Select(ToPhotoInfo)
-                    .ToList();
+            List<RecipePhotoInfo> photos = GetPhotosInCurrentContext(recipeId)
+                .Select(ToPhotoInfo)
+                .ToList();
 
-            return RecipePhotosResult.Success(
-                photos,
-                "The recipe photos were loaded.");
+            return RecipePhotosResult.Success(photos, "The recipe photos were loaded.");
         }
         catch (Exception exception)
         {
-            _logger.LogError(
-                exception,
-                "Failed to load photos for recipe {RecipeId}.",
-                recipeId);
+            _logger.LogError(exception, "Failed to load photos for recipe {RecipeId}.", recipeId);
 
             return RecipePhotosResult.Failure(
                 RecipePhotoResultCode.PersistenceFailure,
-                "The recipe photos could not be loaded.");
+                "The recipe photos could not be loaded."
+            );
         }
     }
 
@@ -357,7 +344,8 @@ internal sealed class RecipePhotoService :
         {
             return RecipePhotoContentResult.Failure(
                 RecipePhotoResultCode.PhotoNotFound,
-                "The photo was not found.");
+                "The photo was not found."
+            );
         }
 
         RecipePhoto? photo;
@@ -368,57 +356,49 @@ internal sealed class RecipePhotoService :
         }
         catch (Exception exception)
         {
-            _logger.LogError(
-                exception,
-                "Failed to load photo metadata for photo {PhotoId}.",
-                photoId);
+            _logger.LogError(exception, "Failed to load photo metadata for photo {PhotoId}.", photoId);
 
             return RecipePhotoContentResult.Failure(
                 RecipePhotoResultCode.PersistenceFailure,
-                "The photo metadata could not be loaded.");
+                "The photo metadata could not be loaded."
+            );
         }
 
         if (photo is null)
         {
             return RecipePhotoContentResult.Failure(
                 RecipePhotoResultCode.PhotoNotFound,
-                "The photo was not found.");
+                "The photo was not found."
+            );
         }
 
-        RecipePhotoFormat format = RecipePhotoFormats
-            .GetFormatFromContentType(photo.ContentType);
-        string? normalizedContentType = RecipePhotoFormats
-            .GetContentType(format);
+        RecipePhotoFormat format = RecipePhotoFormats.GetFormatFromContentType(photo.ContentType);
+        string? normalizedContentType = RecipePhotoFormats.GetContentType(format);
 
         if (normalizedContentType is null)
         {
-            _logger.LogError(
-                "Photo {PhotoId} has an unsupported stored content type.",
-                photoId);
+            _logger.LogError("Photo {PhotoId} has an unsupported stored content type.", photoId);
 
             return RecipePhotoContentResult.Failure(
                 RecipePhotoResultCode.PersistenceFailure,
-                "The stored photo metadata is invalid.");
+                "The stored photo metadata is invalid."
+            );
         }
 
         string normalizedFileName;
 
         try
         {
-            normalizedFileName = _fileNameNormalizer.Normalize(
-                photo.OriginalFileName,
-                format);
+            normalizedFileName = _fileNameNormalizer.Normalize(photo.OriginalFileName, format);
         }
         catch (Exception exception)
         {
-            _logger.LogError(
-                exception,
-                "Photo {PhotoId} has invalid stored file metadata.",
-                photoId);
+            _logger.LogError(exception, "Photo {PhotoId} has invalid stored file metadata.", photoId);
 
             return RecipePhotoContentResult.Failure(
                 RecipePhotoResultCode.PersistenceFailure,
-                "The stored photo metadata is invalid.");
+                "The stored photo metadata is invalid."
+            );
         }
 
         Stream? content;
@@ -429,32 +409,30 @@ internal sealed class RecipePhotoService :
         }
         catch (Exception exception)
         {
-            _logger.LogError(
-                exception,
-                "Failed to open the content file for photo {PhotoId}.",
-                photoId);
+            _logger.LogError(exception, "Failed to open the content file for photo {PhotoId}.", photoId);
 
             return RecipePhotoContentResult.Failure(
                 RecipePhotoResultCode.StorageFailure,
-                "The photo content could not be opened.");
+                "The photo content could not be opened."
+            );
         }
 
         if (content is null)
         {
-            _logger.LogWarning(
-                "The content file for photo {PhotoId} is missing.",
-                photoId);
+            _logger.LogWarning("The content file for photo {PhotoId} is missing.", photoId);
 
             return RecipePhotoContentResult.Failure(
                 RecipePhotoResultCode.ContentFileMissing,
-                "The photo content file is missing.");
+                "The photo content file is missing."
+            );
         }
 
         return RecipePhotoContentResult.Success(
             content,
             normalizedContentType,
             normalizedFileName,
-            "The photo content was loaded.");
+            "The photo content was loaded."
+        );
     }
 
     public RecipePhotoResult DeletePhoto(int photoId)
@@ -463,7 +441,8 @@ internal sealed class RecipePhotoService :
         {
             return RecipePhotoResult.Failure(
                 RecipePhotoResultCode.PhotoNotFound,
-                "The photo was not found.");
+                "The photo was not found."
+            );
         }
 
         RecipePhoto? photo;
@@ -474,40 +453,40 @@ internal sealed class RecipePhotoService :
         }
         catch (Exception exception)
         {
-            _logger.LogError(
-                exception,
-                "Failed to load photo metadata for photo {PhotoId}.",
-                photoId);
+            _logger.LogError(exception, "Failed to load photo metadata for photo {PhotoId}.", photoId);
 
             return RecipePhotoResult.Failure(
                 RecipePhotoResultCode.PersistenceFailure,
-                "The photo metadata could not be loaded.");
+                "The photo metadata could not be loaded."
+            );
         }
 
         if (photo is null)
         {
             return RecipePhotoResult.Failure(
                 RecipePhotoResultCode.PhotoNotFound,
-                "The photo was not found.");
+                "The photo was not found."
+            );
         }
 
         StagedRecipePhotoDeletion? stagedDeletion;
 
         try
         {
-            stagedDeletion = _storage.MoveToQuarantine(
-                photo.StorageFileName);
+            stagedDeletion = _storage.MoveToQuarantine(photo.StorageFileName);
         }
         catch (Exception exception)
         {
             _logger.LogError(
                 exception,
                 "Failed to quarantine the content for photo {PhotoId}.",
-                photoId);
+                photoId
+            );
 
             return RecipePhotoResult.Failure(
                 RecipePhotoResultCode.StorageFailure,
-                "The photo content could not be prepared for deletion.");
+                "The photo content could not be prepared for deletion."
+            );
         }
 
         bool wasDeleted;
@@ -515,22 +494,18 @@ internal sealed class RecipePhotoService :
         try
         {
             wasDeleted = CurrentUserId.HasValue
-                ? _photoRepository.DeleteForUser(
-                    photoId,
-                    CurrentUserId.Value)
+                ? _photoRepository.DeleteForUser(photoId, CurrentUserId.Value)
                 : _photoRepository.Delete(photoId);
         }
         catch (Exception exception)
         {
             TryRestoreQuarantinedFile(stagedDeletion, photoId);
-            _logger.LogError(
-                exception,
-                "Failed to delete metadata for photo {PhotoId}.",
-                photoId);
+            _logger.LogError(exception, "Failed to delete metadata for photo {PhotoId}.", photoId);
 
             return RecipePhotoResult.Failure(
                 RecipePhotoResultCode.PersistenceFailure,
-                "The photo metadata could not be deleted.");
+                "The photo metadata could not be deleted."
+            );
         }
 
         if (!wasDeleted)
@@ -539,14 +514,16 @@ internal sealed class RecipePhotoService :
 
             return RecipePhotoResult.Failure(
                 RecipePhotoResultCode.PhotoNotFound,
-                "The photo was not found.");
+                "The photo was not found."
+            );
         }
 
         if (stagedDeletion is null)
         {
             return RecipePhotoResult.SuccessWithWarning(
                 RecipePhotoResultCode.DeletedMetadataFileWasMissing,
-                "The photo metadata was deleted, but its content file was missing.");
+                "The photo metadata was deleted, but its content file was missing."
+            );
         }
 
         try
@@ -555,21 +532,18 @@ internal sealed class RecipePhotoService :
         }
         catch (Exception exception)
         {
-            _logger.LogWarning(
-                exception,
-                "Cleanup is pending for deleted photo {PhotoId}.",
-                photoId);
+            _logger.LogWarning(exception, "Cleanup is pending for deleted photo {PhotoId}.", photoId);
 
             return RecipePhotoResult.SuccessWithWarning(
                 RecipePhotoResultCode.CleanupPending,
-                "The photo was deleted and file cleanup is pending.");
+                "The photo was deleted and file cleanup is pending."
+            );
         }
 
         return RecipePhotoResult.Success("The photo was deleted.");
     }
 
-    public PreparedRecipePhotoDeletionBatch? PrepareRecipeDeletion(
-        int recipeId)
+    public PreparedRecipePhotoDeletionBatch? PrepareRecipeDeletion(int recipeId)
     {
         List<StagedRecipePhotoDeletion> stagedDeletions = [];
 
@@ -582,29 +556,28 @@ internal sealed class RecipePhotoService :
                 return null;
             }
 
-            List<RecipePhoto> photos =
-                GetPhotosInCurrentContext(recipeId);
+            List<RecipePhoto> photos = GetPhotosInCurrentContext(recipeId);
 
             foreach (RecipePhoto photo in photos)
             {
-                StagedRecipePhotoDeletion? stagedDeletion =
-                    _storage.MoveToQuarantine(photo.StorageFileName);
+                StagedRecipePhotoDeletion? stagedDeletion = _storage.MoveToQuarantine(
+                    photo.StorageFileName
+                );
 
                 if (stagedDeletion is null)
                 {
                     _logger.LogWarning(
                         "The content file for photo {PhotoId} was missing while preparing recipe {RecipeId} for deletion.",
                         photo.Id,
-                        recipeId);
+                        recipeId
+                    );
                     continue;
                 }
 
                 stagedDeletions.Add(stagedDeletion);
             }
 
-            return new PreparedRecipePhotoDeletionBatch(
-                recipeId,
-                stagedDeletions);
+            return new PreparedRecipePhotoDeletionBatch(recipeId, stagedDeletions);
         }
         catch (Exception exception)
         {
@@ -612,19 +585,18 @@ internal sealed class RecipePhotoService :
             _logger.LogError(
                 exception,
                 "Failed to prepare photo content for recipe {RecipeId} deletion.",
-                recipeId);
+                recipeId
+            );
 
             return null;
         }
     }
 
-    public void ConfirmRecipeDeletion(
-        PreparedRecipePhotoDeletionBatch batch)
+    public void ConfirmRecipeDeletion(PreparedRecipePhotoDeletionBatch batch)
     {
         ArgumentNullException.ThrowIfNull(batch);
 
-        foreach (StagedRecipePhotoDeletion stagedDeletion
-            in batch.StagedDeletions)
+        foreach (StagedRecipePhotoDeletion stagedDeletion in batch.StagedDeletions)
         {
             try
             {
@@ -635,19 +607,17 @@ internal sealed class RecipePhotoService :
                 _logger.LogWarning(
                     exception,
                     "Cleanup is pending for deleted recipe {RecipeId} photo content.",
-                    batch.RecipeId);
+                    batch.RecipeId
+                );
             }
         }
     }
 
-    public void RestoreRecipeDeletion(
-        PreparedRecipePhotoDeletionBatch batch)
+    public void RestoreRecipeDeletion(PreparedRecipePhotoDeletionBatch batch)
     {
         ArgumentNullException.ThrowIfNull(batch);
 
-        RestorePreparedDeletions(
-            batch.StagedDeletions,
-            batch.RecipeId);
+        RestorePreparedDeletions(batch.StagedDeletions, batch.RecipeId);
     }
 
     private static RecipePhotoResult? ValidateAddInput(
@@ -655,39 +625,42 @@ internal sealed class RecipePhotoService :
         Stream? content,
         string? declaredContentType,
         long? declaredLength,
-        RecipePhotoOrigin origin)
+        RecipePhotoOrigin origin
+    )
     {
         if (recipeId <= 0)
         {
             return RecipePhotoResult.Failure(
                 RecipePhotoResultCode.InvalidRecipeId,
-                "The recipe id must be greater than zero.");
+                "The recipe id must be greater than zero."
+            );
         }
 
-        if (content is null
+        if (
+            content is null
             || !content.CanRead
             || declaredLength < 0
-            || origin is not (RecipePhotoOrigin.RecipeSource
-                or RecipePhotoOrigin.UserUpload))
+            || origin is not (RecipePhotoOrigin.RecipeSource or RecipePhotoOrigin.UserUpload)
+        )
         {
             return RecipePhotoResult.Failure(
                 RecipePhotoResultCode.InvalidContent,
-                "The declared photo data is not valid.");
+                "The declared photo data is not valid."
+            );
         }
 
         if (string.IsNullOrWhiteSpace(declaredContentType))
         {
             return RecipePhotoResult.Failure(
                 RecipePhotoResultCode.UnsupportedFormat,
-                "The declared photo format is not supported.");
+                "The declared photo format is not supported."
+            );
         }
 
         return null;
     }
 
-    private void TryAbandonStagedUpload(
-        StagedRecipePhotoUpload stagedUpload,
-        int recipeId)
+    private void TryAbandonStagedUpload(StagedRecipePhotoUpload stagedUpload, int recipeId)
     {
         try
         {
@@ -698,18 +671,16 @@ internal sealed class RecipePhotoService :
             _logger.LogWarning(
                 exception,
                 "Failed to abandon a staged photo for recipe {RecipeId}.",
-                recipeId);
+                recipeId
+            );
         }
     }
 
-    private void TryRemoveFinalFile(
-        string storageFileName,
-        int recipeId)
+    private void TryRemoveFinalFile(string storageFileName, int recipeId)
     {
         try
         {
-            StagedRecipePhotoDeletion? deletion =
-                _storage.MoveToQuarantine(storageFileName);
+            StagedRecipePhotoDeletion? deletion = _storage.MoveToQuarantine(storageFileName);
 
             if (deletion is not null)
             {
@@ -721,13 +692,12 @@ internal sealed class RecipePhotoService :
             _logger.LogWarning(
                 exception,
                 "Failed to remove a finalized photo for recipe {RecipeId}.",
-                recipeId);
+                recipeId
+            );
         }
     }
 
-    private void TryRestoreQuarantinedFile(
-        StagedRecipePhotoDeletion? stagedDeletion,
-        int photoId)
+    private void TryRestoreQuarantinedFile(StagedRecipePhotoDeletion? stagedDeletion, int photoId)
     {
         if (stagedDeletion is null)
         {
@@ -743,16 +713,17 @@ internal sealed class RecipePhotoService :
             _logger.LogWarning(
                 exception,
                 "Failed to restore quarantined content for photo {PhotoId}.",
-                photoId);
+                photoId
+            );
         }
     }
 
     private void RestorePreparedDeletions(
         IEnumerable<StagedRecipePhotoDeletion> stagedDeletions,
-        int recipeId)
+        int recipeId
+    )
     {
-        foreach (StagedRecipePhotoDeletion stagedDeletion
-            in stagedDeletions)
+        foreach (StagedRecipePhotoDeletion stagedDeletion in stagedDeletions)
         {
             try
             {
@@ -763,7 +734,8 @@ internal sealed class RecipePhotoService :
                 _logger.LogWarning(
                     exception,
                     "Failed to restore photo content while rolling back recipe {RecipeId} deletion.",
-                    recipeId);
+                    recipeId
+                );
             }
         }
     }

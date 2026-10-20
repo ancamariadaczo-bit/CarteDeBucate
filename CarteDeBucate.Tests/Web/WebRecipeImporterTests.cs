@@ -8,8 +8,7 @@ public class WebRecipeImporterTests
         using AuthenticationApiWebApplicationFactory factory = new();
         using IServiceScope scope = factory.Services.CreateScope();
 
-        IRecipeImporter importer =
-            scope.ServiceProvider.GetRequiredService<IRecipeImporter>();
+        IRecipeImporter importer = scope.ServiceProvider.GetRequiredService<IRecipeImporter>();
         IRecipeImporterService importerService =
             scope.ServiceProvider.GetRequiredService<IRecipeImporterService>();
 

@@ -3,21 +3,22 @@ using System.Net.Sockets;
 
 public sealed record RecipeImportDestinationValidationResult(
     bool IsAllowed,
-    IReadOnlyList<IPAddress> Addresses);
+    IReadOnlyList<IPAddress> Addresses
+);
 
 public sealed class RecipeImportDestinationPolicy
 {
     private readonly IHostAddressResolver _hostAddressResolver;
 
-    public RecipeImportDestinationPolicy(
-        IHostAddressResolver hostAddressResolver)
+    public RecipeImportDestinationPolicy(IHostAddressResolver hostAddressResolver)
     {
         _hostAddressResolver = hostAddressResolver;
     }
 
     public async Task<RecipeImportDestinationValidationResult> ValidateAsync(
         Uri destination,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ArgumentNullException.ThrowIfNull(destination);
 
@@ -28,16 +29,15 @@ public sealed class RecipeImportDestinationPolicy
 
         IPAddress[] addresses = await _hostAddressResolver.GetHostAddressesAsync(
             destination.IdnHost,
-            cancellationToken);
+            cancellationToken
+        );
 
         if (addresses.Length == 0 || addresses.Any(address => !IsPublicAddress(address)))
         {
             return Rejected();
         }
 
-        return new RecipeImportDestinationValidationResult(
-            true,
-            addresses.Distinct().ToArray());
+        return new RecipeImportDestinationValidationResult(true, addresses.Distinct().ToArray());
     }
 
     private static bool IsAllowedUri(Uri destination)
@@ -48,8 +48,7 @@ public sealed class RecipeImportDestinationPolicy
         }
 
         bool hasAllowedScheme =
-            destination.Scheme == Uri.UriSchemeHttp ||
-            destination.Scheme == Uri.UriSchemeHttps;
+            destination.Scheme == Uri.UriSchemeHttp || destination.Scheme == Uri.UriSchemeHttps;
 
         return hasAllowedScheme && destination.Port is 80 or 443;
     }
@@ -70,7 +69,7 @@ public sealed class RecipeImportDestinationPolicy
         {
             AddressFamily.InterNetwork => IsPublicIpv4Address(address),
             AddressFamily.InterNetworkV6 => IsPublicIpv6Address(address),
-            _ => false
+            _ => false,
         };
     }
 
@@ -150,36 +149,24 @@ public sealed class RecipeImportDestinationPolicy
             return false;
         }
 
-        bool isIetfSpecialPurposeBlock =
-            bytes[0] == 0x20 &&
-            bytes[1] == 0x01 &&
-            bytes[2] <= 0x01;
+        bool isIetfSpecialPurposeBlock = bytes[0] == 0x20 && bytes[1] == 0x01 && bytes[2] <= 0x01;
 
         bool isDocumentationBlock =
-            bytes[0] == 0x20 &&
-            bytes[1] == 0x01 &&
-            bytes[2] == 0x0d &&
-            bytes[3] == 0xb8;
+            bytes[0] == 0x20 && bytes[1] == 0x01 && bytes[2] == 0x0d && bytes[3] == 0xb8;
 
-        bool isSixToFour =
-            bytes[0] == 0x20 &&
-            bytes[1] == 0x02;
+        bool isSixToFour = bytes[0] == 0x20 && bytes[1] == 0x02;
 
         bool isAdditionalDocumentationBlock =
-            bytes[0] == 0x3f &&
-            bytes[1] == 0xff &&
-            (bytes[2] & 0xf0) == 0;
+            bytes[0] == 0x3f && bytes[1] == 0xff && (bytes[2] & 0xf0) == 0;
 
-        return !isIetfSpecialPurposeBlock &&
-            !isDocumentationBlock &&
-            !isSixToFour &&
-            !isAdditionalDocumentationBlock;
+        return !isIetfSpecialPurposeBlock
+            && !isDocumentationBlock
+            && !isSixToFour
+            && !isAdditionalDocumentationBlock;
     }
 
     private static RecipeImportDestinationValidationResult Rejected()
     {
-        return new RecipeImportDestinationValidationResult(
-            false,
-            Array.Empty<IPAddress>());
+        return new RecipeImportDestinationValidationResult(false, Array.Empty<IPAddress>());
     }
 }

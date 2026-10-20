@@ -37,9 +37,7 @@ public class FakeRecipeConsoleReader : IRecipeConsoleReader
     {
         ReadMenuOptionWasCalled = true;
 
-        return MenuOptionsToReturn.Count > 0
-            ? MenuOptionsToReturn.Dequeue()
-            : MenuKeys.Exit;
+        return MenuOptionsToReturn.Count > 0 ? MenuOptionsToReturn.Dequeue() : MenuKeys.Exit;
     }
 
     public bool AskForSaveConfirmation()
@@ -67,7 +65,9 @@ public class FakeRecipeConsoleReader : IRecipeConsoleReader
         ReadRecipeFromConsoleWasCalled = true;
 
         return RecipeToReturnFromRead
-            ?? throw new InvalidOperationException("No recipe was configured for ReadRecipeFromConsole.");
+            ?? throw new InvalidOperationException(
+                "No recipe was configured for ReadRecipeFromConsole."
+            );
     }
 
     public int? ReadRecipeIdToDelete()

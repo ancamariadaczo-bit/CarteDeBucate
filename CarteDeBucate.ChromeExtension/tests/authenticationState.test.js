@@ -1,9 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import {
-    resolveAuthenticationState
-} from "../auth/authenticationState.js";
+import { resolveAuthenticationState } from "../auth/authenticationState.js";
 
 test("resolveAuthenticationState returns false without checking the user when the token is absent", async () => {
     let currentUserRequestCount = 0;

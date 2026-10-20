@@ -16,15 +16,14 @@ public class CreateRecipeRequest : IValidatableObject
     [Required]
     public List<string> Steps { get; set; } = [];
 
-    public IEnumerable<ValidationResult> Validate(
-        ValidationContext validationContext)
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        if (!string.IsNullOrWhiteSpace(SourceUrl) &&
-            !UrlValidator.IsValidHttpUrl(SourceUrl))
+        if (!string.IsNullOrWhiteSpace(SourceUrl) && !UrlValidator.IsValidHttpUrl(SourceUrl))
         {
             yield return new ValidationResult(
                 AppTexts.RecipeSourceUrlInvalid,
-                new[] { nameof(SourceUrl) });
+                new[] { nameof(SourceUrl) }
+            );
         }
     }
 }

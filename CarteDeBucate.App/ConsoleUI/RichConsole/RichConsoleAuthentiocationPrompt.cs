@@ -16,7 +16,8 @@ public class RichConsoleAuthenticationPrompt : IAuthenticationPrompt
             string selectedOption = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
                     .Title("[bold blue]Authentication[/]")
-                    .AddChoices("Login", "Register", "Exit"));
+                    .AddChoices("Login", "Register", "Exit")
+            );
 
             switch (selectedOption)
             {
@@ -42,11 +43,7 @@ public class RichConsoleAuthenticationPrompt : IAuthenticationPrompt
                     break;
 
                 case "Exit":
-                    return new AuthenticationResult
-                    {
-                        IsSuccess = false,
-                        Message = "Exit requested."
-                    };
+                    return new AuthenticationResult { IsSuccess = false, Message = "Exit requested." };
             }
         }
     }
@@ -55,9 +52,7 @@ public class RichConsoleAuthenticationPrompt : IAuthenticationPrompt
     {
         string username = AnsiConsole.Ask<string>("Username:");
 
-        string password = AnsiConsole.Prompt(
-            new TextPrompt<string>("Password:")
-                .Secret());
+        string password = AnsiConsole.Prompt(new TextPrompt<string>("Password:").Secret());
 
         AuthenticationResult result = _authenticationService.Login(username, password);
 
@@ -70,9 +65,7 @@ public class RichConsoleAuthenticationPrompt : IAuthenticationPrompt
     {
         string username = AnsiConsole.Ask<string>("Username:");
 
-        string password = AnsiConsole.Prompt(
-            new TextPrompt<string>("Password:")
-                .Secret());
+        string password = AnsiConsole.Prompt(new TextPrompt<string>("Password:").Secret());
 
         AuthenticationResult result = _authenticationService.Register(username, password);
 

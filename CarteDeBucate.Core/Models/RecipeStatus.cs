@@ -5,5 +5,5 @@ public enum RecipeStatus
     Tried = 2,
     Favorite = 3,
     NeedsChanges = 4,
-    DoNotRepeat = 5
+    DoNotRepeat = 5,
 }

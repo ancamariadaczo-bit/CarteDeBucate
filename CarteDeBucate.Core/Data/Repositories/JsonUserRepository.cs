@@ -28,7 +28,8 @@ public class JsonUserRepository : IUserRepository
         List<User> users = LoadUsers();
 
         return users.FirstOrDefault(user =>
-            string.Equals(user.Username, username, StringComparison.OrdinalIgnoreCase));
+            string.Equals(user.Username, username, StringComparison.OrdinalIgnoreCase)
+        );
     }
 
     private List<User> LoadUsers()
@@ -50,10 +51,7 @@ public class JsonUserRepository : IUserRepository
 
     private void SaveUsers(List<User> users)
     {
-        JsonSerializerOptions options = new JsonSerializerOptions
-        {
-            WriteIndented = true
-        };
+        JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = true };
 
         string json = JsonSerializer.Serialize(users, options);
 

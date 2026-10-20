@@ -1,7 +1,4 @@
-import {
-    parseRecipePayload,
-    validateAndBuildEditedRecipe
-} from "../editLogic.js";
+import { parseRecipePayload, validateAndBuildEditedRecipe } from "../editLogic.js";
 
 export function initializeEditController({
     document,
@@ -88,14 +85,10 @@ export function initializeEditController({
 
         try {
             try {
-                const exists = await recipeExistsBySourceUrl(
-                    editedRecipe.sourceUrl
-                );
+                const exists = await recipeExistsBySourceUrl(editedRecipe.sourceUrl);
 
                 if (exists) {
-                    showSaveStatus(
-                        "This recipe is already saved in your cookbook."
-                    );
+                    showSaveStatus("This recipe is already saved in your cookbook.");
                     return;
                 }
             } catch (error) {
@@ -118,14 +111,9 @@ export function initializeEditController({
                 return;
             }
 
-            const reason = error instanceof Error
-                ? error.message
-                : "Unknown error.";
+            const reason = error instanceof Error ? error.message : "Unknown error.";
 
-            showSaveStatus(
-                `The recipe could not be saved. Reason: ${reason}`,
-                "error"
-            );
+            showSaveStatus(`The recipe could not be saved. Reason: ${reason}`, "error");
             reportError(error);
         } finally {
             isSaving = false;
@@ -147,8 +135,7 @@ export function initializeEditController({
             setAuthenticationState(true);
         } catch (error) {
             isAuthenticated = false;
-            authMessage.textContent =
-                "Sign in was not completed. Please try again.";
+            authMessage.textContent = "Sign in was not completed. Please try again.";
             reportError(error);
         } finally {
             isAuthenticating = false;
@@ -180,10 +167,7 @@ export function initializeEditController({
             steps: collectValues(".instruction-input")
         };
 
-        const validationResult = validateAndBuildEditedRecipe(
-            originalRecipe,
-            formValues
-        );
+        const validationResult = validateAndBuildEditedRecipe(originalRecipe, formValues);
 
         if (!validationResult.success) {
             showValidationErrors(validationResult.errors);
@@ -216,17 +200,13 @@ export function initializeEditController({
             sourceUrlInput.value = toEditableText(recipe.sourceUrl);
             imageUrlInput.value = toEditableText(recipe.imageUrl);
 
-            const ingredients = Array.isArray(recipe.ingredients)
-                ? recipe.ingredients
-                : [];
+            const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients : [];
 
             for (const ingredient of ingredients) {
                 appendIngredientRow(toEditableText(ingredient));
             }
 
-            const steps = Array.isArray(recipe.steps)
-                ? recipe.steps
-                : [];
+            const steps = Array.isArray(recipe.steps) ? recipe.steps : [];
 
             for (const step of steps) {
                 appendInstructionRow(toEditableText(step));
@@ -303,13 +283,11 @@ export function initializeEditController({
     }
 
     function hasEmptyField(selector) {
-        return Array.from(document.querySelectorAll(selector))
-            .some(field => !field.value.trim());
+        return Array.from(document.querySelectorAll(selector)).some(field => !field.value.trim());
     }
 
     function collectValues(selector) {
-        return Array.from(document.querySelectorAll(selector))
-            .map(field => field.value);
+        return Array.from(document.querySelectorAll(selector)).map(field => field.value);
     }
 
     function toEditableText(value) {
@@ -340,10 +318,7 @@ export function initializeEditController({
 
     async function handleExpiredSession(error) {
         setAuthenticationState(false);
-        showSaveStatus(
-            "Your session expired. Sign in again.",
-            "error"
-        );
+        showSaveStatus("Your session expired. Sign in again.", "error");
 
         try {
             await removeAccessToken();
@@ -357,17 +332,12 @@ export function initializeEditController({
     function updateUi() {
         const hasEditableRecipe = originalRecipe !== null;
 
-        authSection.hidden = !hasEditableRecipe
-            || !isAuthenticationResolved
-            || isAuthenticated;
+        authSection.hidden = !hasEditableRecipe || !isAuthenticationResolved || isAuthenticated;
 
         loginButton.disabled = isAuthenticating;
 
         if (hasEditableRecipe) {
-            saveButton.disabled = !isAuthenticationResolved
-                || !isAuthenticated
-                || isSaving
-                || isSaved;
+            saveButton.disabled = !isAuthenticationResolved || !isAuthenticated || isSaving || isSaved;
         }
     }
 

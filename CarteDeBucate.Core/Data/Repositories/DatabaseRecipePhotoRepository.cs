@@ -201,9 +201,7 @@ public class DatabaseRecipePhotoRepository : IRecipePhotoRepository
         return command.ExecuteNonQuery() == 1;
     }
 
-    private static SqliteCommand CreateAddCommand(
-        SqliteConnection connection,
-        RecipePhoto photo)
+    private static SqliteCommand CreateAddCommand(SqliteConnection connection, RecipePhoto photo)
     {
         SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
@@ -237,7 +235,8 @@ public class DatabaseRecipePhotoRepository : IRecipePhotoRepository
     private static SqliteCommand CreateAddForUserCommand(
         SqliteConnection connection,
         RecipePhoto photo,
-        int userId)
+        int userId
+    )
     {
         SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
@@ -296,9 +295,10 @@ public class DatabaseRecipePhotoRepository : IRecipePhotoRepository
             CreatedAtUtc = DateTime.Parse(
                 reader.GetString(reader.GetOrdinal("CreatedAtUtc")),
                 CultureInfo.InvariantCulture,
-                DateTimeStyles.RoundtripKind),
+                DateTimeStyles.RoundtripKind
+            ),
             DisplayOrder = reader.GetInt32(reader.GetOrdinal("DisplayOrder")),
-            Origin = (RecipePhotoOrigin)reader.GetInt32(reader.GetOrdinal("Origin"))
+            Origin = (RecipePhotoOrigin)reader.GetInt32(reader.GetOrdinal("Origin")),
         };
     }
 

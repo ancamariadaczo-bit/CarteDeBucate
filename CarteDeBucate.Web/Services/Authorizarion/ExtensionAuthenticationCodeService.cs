@@ -1,14 +1,11 @@
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 
-public class ExtensionAuthenticationCodeService
-    : IExtensionAuthenticationCodeService
+public class ExtensionAuthenticationCodeService : IExtensionAuthenticationCodeService
 {
     private readonly TimeProvider _timeProvider;
 
-    private readonly ConcurrentDictionary<
-        string,
-        ExtensionAuthenticationCodeData> _codes = new();
+    private readonly ConcurrentDictionary<string, ExtensionAuthenticationCodeData> _codes = new();
 
     public ExtensionAuthenticationCodeService(TimeProvider timeProvider)
     {
@@ -27,14 +24,13 @@ public class ExtensionAuthenticationCodeService
             }
         }
 
-        string code = Convert.ToHexString(
-            RandomNumberGenerator.GetBytes(32));
+        string code = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
 
         _codes[code] = new ExtensionAuthenticationCodeData
         {
             UserId = userId,
             Username = username,
-            ExpiresAt = now.AddMinutes(2)
+            ExpiresAt = now.AddMinutes(2),
         };
 
         return code;

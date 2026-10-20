@@ -21,10 +21,7 @@ test("manifest declares the Side Panel contract without broad page access", asyn
     assert.equal(manifest.permissions.includes("scripting"), true);
     assert.equal(manifest.permissions.includes("storage"), true);
     assert.equal(manifest.permissions.includes("tabs"), false);
-    assert.deepEqual(
-        manifest.host_permissions,
-        [`${new URL(API_BASE_URL).origin}/*`]
-    );
+    assert.deepEqual(manifest.host_permissions, [`${new URL(API_BASE_URL).origin}/*`]);
     assert.equal(manifest.host_permissions.includes("<all_urls>"), false);
     assert.equal(manifest.host_permissions.includes("http://*/*"), false);
     assert.equal(manifest.host_permissions.includes("https://*/*"), false);
@@ -45,18 +42,12 @@ test("service worker wires the action launcher while preserving LOGIN handling",
 
 test("Side Panel bootstrap synchronizes extraction and authentication storage", async () => {
     const source = await readFile(sidePanelScriptPath, "utf8");
-    const listenerIndex = source.indexOf(
-        "chrome.storage.onChanged.addListener(handleStorageChange)"
-    );
+    const listenerIndex = source.indexOf("chrome.storage.onChanged.addListener(handleStorageChange)");
     const initialConsumptionIndex = source.indexOf(
         "const initialConsumption = consumePendingRequests()"
     );
-    const authenticationIndex = source.lastIndexOf(
-        "resolveAuthenticationState({"
-    );
-    const awaitInitialConsumptionIndex = source.indexOf(
-        "await initialConsumption"
-    );
+    const authenticationIndex = source.lastIndexOf("resolveAuthenticationState({");
+    const awaitInitialConsumptionIndex = source.indexOf("await initialConsumption");
 
     assert.ok(listenerIndex >= 0);
     assert.ok(initialConsumptionIndex > listenerIndex);

@@ -18,7 +18,8 @@ public class RecipePhotoResultTests
     {
         RecipePhotoResult result = RecipePhotoResult.Failure(
             RecipePhotoResultCode.PhotoNotFound,
-            "Photo not found.");
+            "Photo not found."
+        );
 
         Assert.False(result.IsSuccess);
         Assert.Equal(RecipePhotoResultCode.PhotoNotFound, result.Code);
@@ -29,12 +30,9 @@ public class RecipePhotoResultTests
     [Theory]
     [InlineData(RecipePhotoResultCode.DeletedMetadataFileWasMissing)]
     [InlineData(RecipePhotoResultCode.CleanupPending)]
-    public void SuccessWithWarning_WithWarningCode_ShouldRemainSuccessful(
-        RecipePhotoResultCode code)
+    public void SuccessWithWarning_WithWarningCode_ShouldRemainSuccessful(RecipePhotoResultCode code)
     {
-        RecipePhotoResult result = RecipePhotoResult.SuccessWithWarning(
-            code,
-            "Completed with warning.");
+        RecipePhotoResult result = RecipePhotoResult.SuccessWithWarning(code, "Completed with warning.");
 
         Assert.True(result.IsSuccess);
         Assert.Equal(code, result.Code);
@@ -45,8 +43,7 @@ public class RecipePhotoResultTests
     public void Failure_WithSuccessCode_ShouldThrow()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            RecipePhotoResult.Failure(
-                RecipePhotoResultCode.Success,
-                "Invalid combination."));
+            RecipePhotoResult.Failure(RecipePhotoResultCode.Success, "Invalid combination.")
+        );
     }
 }

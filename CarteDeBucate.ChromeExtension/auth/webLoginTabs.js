@@ -1,8 +1,4 @@
-export async function refreshWebLoginTabs({
-    queryTabs,
-    reloadTab,
-    loginPageUrl
-}) {
+export async function refreshWebLoginTabs({ queryTabs, reloadTab, loginPageUrl }) {
     const expectedLoginUrl = new URL(loginPageUrl);
     const tabs = await queryTabs({});
 
@@ -21,8 +17,10 @@ function isWebLoginTab(tab, expectedLoginUrl) {
     try {
         const tabUrl = new URL(tab.url);
 
-        return tabUrl.origin === expectedLoginUrl.origin
-            && normalizePath(tabUrl.pathname) === normalizePath(expectedLoginUrl.pathname);
+        return (
+            tabUrl.origin === expectedLoginUrl.origin &&
+            normalizePath(tabUrl.pathname) === normalizePath(expectedLoginUrl.pathname)
+        );
     } catch {
         return false;
     }

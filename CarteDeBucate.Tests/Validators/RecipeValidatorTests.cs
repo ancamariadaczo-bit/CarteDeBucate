@@ -48,8 +48,7 @@ public class RecipeValidatorTests
     [InlineData("ftp://example.com/recipe")]
     [InlineData("/recipe/relative")]
     [InlineData("not a url")]
-    public void ValidateForSave_WithInvalidSourceUrl_ShouldReturnInvalidResult(
-        string sourceUrl)
+    public void ValidateForSave_WithInvalidSourceUrl_ShouldReturnInvalidResult(string sourceUrl)
     {
         Recipe recipe = CreateValidRecipe();
         recipe.SourceUrl = sourceUrl;
@@ -62,8 +61,7 @@ public class RecipeValidatorTests
     [Theory]
     [InlineData("http://example.com/recipe")]
     [InlineData("https://example.com/recipe")]
-    public void ValidateForSave_WithValidHttpSourceUrl_ShouldReturnValidResult(
-        string sourceUrl)
+    public void ValidateForSave_WithValidHttpSourceUrl_ShouldReturnValidResult(string sourceUrl)
     {
         Recipe recipe = CreateValidRecipe();
         recipe.SourceUrl = sourceUrl;
@@ -114,16 +112,8 @@ public class RecipeValidatorTests
             Name = "Banana bread",
             SourceUrl = "https://example.com/banana-bread",
             SavedAt = DateTime.Now,
-            Ingredients = new List<string>
-            {
-                "2 bananas",
-                "2 eggs"
-            },
-            Steps = new List<string>
-            {
-                "Mix ingredients.",
-                "Bake for 30 minutes."
-            }
+            Ingredients = new List<string> { "2 bananas", "2 eggs" },
+            Steps = new List<string> { "Mix ingredients.", "Bake for 30 minutes." },
         };
     }
 }

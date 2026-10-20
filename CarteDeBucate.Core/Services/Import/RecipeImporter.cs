@@ -5,22 +5,20 @@ public class RecipeImporter : IRecipeImporter
     private readonly RecipeHtmlImporter _htmlImporter;
     private readonly RecipePageDetector _pageDetector;
 
-    public RecipeImporter(
-        HttpClient httpClient,
-        RecipeImportDestinationPolicy destinationPolicy)
+    public RecipeImporter(HttpClient httpClient, RecipeImportDestinationPolicy destinationPolicy)
         : this(
             new RecipePageDownloader(httpClient, destinationPolicy),
             new RecipeJsonLdImporter(),
             new RecipeHtmlImporter(),
-            new RecipePageDetector())
-    {
-    }
+            new RecipePageDetector()
+        ) { }
 
     private RecipeImporter(
         RecipePageDownloader pageDownloader,
         RecipeJsonLdImporter jsonLdImporter,
         RecipeHtmlImporter htmlImporter,
-        RecipePageDetector pageDetector)
+        RecipePageDetector pageDetector
+    )
     {
         _pageDownloader = pageDownloader;
         _jsonLdImporter = jsonLdImporter;
@@ -53,14 +51,20 @@ public class RecipeImporter : IRecipeImporter
 
             Recipe? recipeFromJsonLd = _jsonLdImporter.TryImport(html, url);
 
-            if (recipeFromJsonLd != null && _pageDetector.LooksLikeRecipePage(html, url, recipeFromJsonLd))
+            if (
+                recipeFromJsonLd != null
+                && _pageDetector.LooksLikeRecipePage(html, url, recipeFromJsonLd)
+            )
             {
                 return Success(recipeFromJsonLd, AppTexts.ImportSuccessJsonLd);
             }
 
             Recipe? recipeFromVisibleHtml = _htmlImporter.TryImport(html, url);
 
-            if (recipeFromVisibleHtml != null && _pageDetector.LooksLikeRecipePage(html, url, recipeFromVisibleHtml))
+            if (
+                recipeFromVisibleHtml != null
+                && _pageDetector.LooksLikeRecipePage(html, url, recipeFromVisibleHtml)
+            )
             {
                 return Success(recipeFromVisibleHtml, AppTexts.ImportSuccessVisibleHtml);
             }
@@ -86,12 +90,10 @@ public class RecipeImporter : IRecipeImporter
 
         return new Recipe
         {
-            Name = string.IsNullOrWhiteSpace(title)
-                ? AppTexts.ImportedTitleNotFound
-                : title,
+            Name = string.IsNullOrWhiteSpace(title) ? AppTexts.ImportedTitleNotFound : title,
 
             SourceUrl = url.Trim(),
-            SavedAt = DateTime.Now
+            SavedAt = DateTime.Now,
         };
     }
 
@@ -101,16 +103,12 @@ public class RecipeImporter : IRecipeImporter
         {
             Success = true,
             Recipe = recipe,
-            Message = message
+            Message = message,
         };
     }
 
     private static RecipeImportResult Fail(string message)
     {
-        return new RecipeImportResult
-        {
-            Success = false,
-            Message = message
-        };
+        return new RecipeImportResult { Success = false, Message = message };
     }
 }

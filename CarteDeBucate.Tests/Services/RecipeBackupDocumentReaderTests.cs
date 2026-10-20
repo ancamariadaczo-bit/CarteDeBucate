@@ -32,14 +32,14 @@ public class RecipeBackupDocumentReaderTests
     public void DetectVersion_WithInvalidJson_ShouldThrowJsonException()
     {
         Assert.ThrowsAny<JsonException>(() =>
-            RecipeBackupDocumentReader.DetectVersion("not valid json"));
+            RecipeBackupDocumentReader.DetectVersion("not valid json")
+        );
     }
 
     [Fact]
     public void DetectVersion_WithScalarRoot_ShouldThrowJsonException()
     {
-        Assert.Throws<JsonException>(() =>
-            RecipeBackupDocumentReader.DetectVersion("42"));
+        Assert.Throws<JsonException>(() => RecipeBackupDocumentReader.DetectVersion("42"));
     }
 
     [Fact]
@@ -53,8 +53,7 @@ public class RecipeBackupDocumentReaderTests
             }
             """;
 
-        RecipeBackupDocument document =
-            RecipeBackupDocumentReader.ReadCurrentDocument(json);
+        RecipeBackupDocument document = RecipeBackupDocumentReader.ReadCurrentDocument(json);
 
         Assert.Equal(RecipeBackupVersions.Current, document.Version);
         Assert.Equal(DateTimeKind.Utc, document.ExportedAtUtc.Kind);
@@ -69,8 +68,7 @@ public class RecipeBackupDocumentReaderTests
     [InlineData("""{"version":-1,"exportedAtUtc":"2026-09-02T12:00:00Z","recipes":[]}""")]
     public void ReadCurrentDocument_WithUnsupportedVersion_ShouldThrowJsonException(string json)
     {
-        Assert.Throws<JsonException>(() =>
-            RecipeBackupDocumentReader.ReadCurrentDocument(json));
+        Assert.Throws<JsonException>(() => RecipeBackupDocumentReader.ReadCurrentDocument(json));
     }
 
     [Theory]
@@ -78,8 +76,7 @@ public class RecipeBackupDocumentReaderTests
     [InlineData("""{"version":2,"exportedAtUtc":"invalid","recipes":[]}""")]
     public void ReadCurrentDocument_WithInvalidExportDate_ShouldThrowJsonException(string json)
     {
-        Assert.Throws<JsonException>(() =>
-            RecipeBackupDocumentReader.ReadCurrentDocument(json));
+        Assert.Throws<JsonException>(() => RecipeBackupDocumentReader.ReadCurrentDocument(json));
     }
 
     [Theory]
@@ -87,7 +84,6 @@ public class RecipeBackupDocumentReaderTests
     [InlineData("""{"version":2,"exportedAtUtc":"2026-09-02T12:00:00Z","recipes":null}""")]
     public void ReadCurrentDocument_WithInvalidRecipes_ShouldThrowJsonException(string json)
     {
-        Assert.Throws<JsonException>(() =>
-            RecipeBackupDocumentReader.ReadCurrentDocument(json));
+        Assert.Throws<JsonException>(() => RecipeBackupDocumentReader.ReadCurrentDocument(json));
     }
 }
