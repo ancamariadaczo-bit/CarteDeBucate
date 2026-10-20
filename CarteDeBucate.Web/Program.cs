@@ -10,15 +10,36 @@ using CarteDeBucate.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-string configuredDatabasePath = builder.Configuration["DatabasePath"]
-    ?? throw new InvalidOperationException("DatabasePath is not configured.");
-string databasePath = Path.GetFullPath(configuredDatabasePath);
+string? configuredDatabasePath = builder.Configuration["DatabasePath"];
+
+if (string.IsNullOrWhiteSpace(configuredDatabasePath))
+{
+    throw new InvalidOperationException("DatabasePath is not configured.");
+}
+
+string databasePath = Path.IsPathFullyQualified(configuredDatabasePath)
+    ? Path.GetFullPath(configuredDatabasePath)
+    : Path.GetFullPath(configuredDatabasePath, builder.Environment.ContentRootPath);
+
+string databaseDirectoryPath = Path.GetDirectoryName(databasePath)
+    ?? throw new InvalidOperationException("DatabasePath must have a parent directory.");
+
+string? configuredRecipePhotosPath = builder.Configuration["RecipePhotosPath"];
+
+if (string.IsNullOrWhiteSpace(configuredRecipePhotosPath))
+{
+    throw new InvalidOperationException("RecipePhotosPath is not configured.");
+}
+
+string recipePhotosPath = Path.IsPathFullyQualified(configuredRecipePhotosPath)
+        ? Path.GetFullPath(configuredRecipePhotosPath)
+        : Path.GetFullPath(configuredRecipePhotosPath, databaseDirectoryPath);
+
 WebAppSettings webAppSettings = builder.Configuration.Get<WebAppSettings>()
     ?? new WebAppSettings();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-
 
 string[] allowedOrigins =
     builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
@@ -65,8 +86,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
                 ValidateLifetime = true,
 
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(
-                    Encoding.UTF8.GetBytes(jwtKey))
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
             };
         });
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
@@ -82,6 +102,43 @@ builder.Services.AddScoped<IRecipeRepository>(serviceProvider =>
         serviceProvider.GetRequiredService<ILogger<DatabaseRecipeRepository>>()));
 builder.Services.AddScoped<IUserRepository>(_ =>
     AppServiceFactory.CreateDatabaseUserRepository(databasePath));
+
+builder.Services.AddScoped<IRecipePhotoService>(serviceProvider =>
+{
+    IRecipeRepository recipeRepository =
+        serviceProvider.GetRequiredService<IRecipeRepository>();
+
+    ICurrentUserContext currentUserContext =
+        serviceProvider.GetRequiredService<ICurrentUserContext>();
+
+    ILoggerFactory loggerFactory =
+        serviceProvider.GetRequiredService<ILoggerFactory>();
+
+    return AppServiceFactory.CreateDatabaseRecipePhotoService(
+        databasePath,
+        recipePhotosPath,
+        recipeRepository,
+        currentUserContext,
+        loggerFactory);
+});
+
+builder.Services.AddScoped<IRecipePhotoReconciliationService>(
+    serviceProvider =>
+    {
+        IRecipeRepository recipeRepository =
+            serviceProvider.GetRequiredService<IRecipeRepository>();
+
+        ILoggerFactory loggerFactory =
+            serviceProvider.GetRequiredService<ILoggerFactory>();
+
+        return AppServiceFactory
+            .CreateDatabaseRecipePhotoReconciliationService(
+                databasePath,
+                recipePhotosPath,
+                recipeRepository,
+                loggerFactory);
+    });
+
 builder.Services.AddScoped<IRecipeLibraryService>(serviceProvider =>
 {
     IRecipeRepository recipeRepository =

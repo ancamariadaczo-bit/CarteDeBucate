@@ -23,6 +23,7 @@ public class AccountController : Controller
         _logger = logger;
     }
 
+    [HttpGet]
     public IActionResult Login(string? returnUrl = null)
     {
         if (User.Identity?.IsAuthenticated == true)
@@ -142,26 +143,19 @@ public class AccountController : Controller
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Name, user.Username)
         ];
-        ClaimsIdentity identity = new ClaimsIdentity(
-            claims,
-            CookieAuthenticationDefaults.AuthenticationScheme);
+        ClaimsIdentity identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         ClaimsPrincipal principal = new ClaimsPrincipal(identity);
 
-        await HttpContext.SignInAsync(
-            CookieAuthenticationDefaults.AuthenticationScheme,
-            principal);
+        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
     }
 
     private IActionResult RedirectAfterAuthentication(string? returnUrl)
     {
-        if (!string.IsNullOrWhiteSpace(returnUrl)
-            && Url?.IsLocalUrl(returnUrl) == true)
+        if (!string.IsNullOrWhiteSpace(returnUrl) && Url?.IsLocalUrl(returnUrl) == true)
         {
             return LocalRedirect(returnUrl);
         }
 
-        return RedirectToAction(
-            nameof(RecipesController.Index),
-            "Recipes");
+        return RedirectToAction(nameof(RecipesController.Index), "Recipes");
     }
 }

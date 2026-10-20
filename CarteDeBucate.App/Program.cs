@@ -2,14 +2,18 @@
 
 AppSettings appSettings = AppSettings.Load();
 
-AppServiceFactory.EnsureDatabaseIsUpToDate(appSettings);
+AppServiceFactory.EnsureDatabaseIsUpToDate(
+    appSettings.CurrentStorageMode,
+    appSettings.DatabasePath);
 
 IRecipeConsoleReader recipeReader = new RecipeConsoleReader();
 IRecipeConsoleWriter recipeWriter = new RecipeConsoleWriter();
 
 ICurrentUserContext currentUserContext = new CurrentUserContext();
 IRecipeRepository recipeRepository = AppServiceFactory.CreateRecipeRepository(
-    appSettings,
+    appSettings.CurrentStorageMode,
+    appSettings.RecipesFilePath,
+    appSettings.DatabasePath,
     NullLogger<DatabaseRecipeRepository>.Instance);
 
 IRecipeLibraryService recipeLibraryService =
@@ -32,7 +36,11 @@ IRecipeBackupService backupService =
     AppServiceFactory.CreateRecipeBackupService(recipeRepository, currentUserContext);
 
 IAuthenticationService authenticationService =
-    AppServiceFactory.CreateAuthenticationService(appSettings, currentUserContext);
+    AppServiceFactory.CreateAuthenticationService(
+        appSettings.CurrentStorageMode,
+        appSettings.UsersFilePath,
+        appSettings.DatabasePath,
+        currentUserContext);
 
 if (appSettings.AuthenticationEnabled)
 {

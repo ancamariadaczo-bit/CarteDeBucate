@@ -1,17 +1,30 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
-using System.Text.Json;
 
 public class AppServiceFactoryTests
 {
     [Fact]
+    public void FactoryMethods_ShouldNotReceiveAppSettings()
+    {
+        MethodInfo[] factoryMethods = typeof(AppServiceFactory).GetMethods(
+            BindingFlags.Public
+            | BindingFlags.NonPublic
+            | BindingFlags.Static
+            | BindingFlags.DeclaredOnly);
+
+        Assert.DoesNotContain(
+            factoryMethods.SelectMany(method => method.GetParameters()),
+            parameter => parameter.ParameterType == typeof(AppSettings));
+    }
+
+    [Fact]
     public void CreateRecipeRepository_WithJsonStorage_ShouldCreateJsonRepository()
     {
-        AppSettings settings = LoadSettings(StorageMode.Json);
-
         IRecipeRepository repository = AppServiceFactory.CreateRecipeRepository(
-            settings,
+            StorageMode.Json,
+            "recipes.json",
+            "recipes.db",
             NullLogger<DatabaseRecipeRepository>.Instance);
 
         Assert.IsType<JsonRecipeRepository>(repository);
@@ -20,10 +33,10 @@ public class AppServiceFactoryTests
     [Fact]
     public void CreateRecipeRepository_WithDatabaseStorage_ShouldCreateDatabaseRepository()
     {
-        AppSettings settings = LoadSettings(StorageMode.Database);
-
         IRecipeRepository repository = AppServiceFactory.CreateRecipeRepository(
-            settings,
+            StorageMode.Database,
+            "recipes.json",
+            "recipes.db",
             NullLogger<DatabaseRecipeRepository>.Instance);
 
         Assert.IsType<DatabaseRecipeRepository>(repository);
@@ -39,99 +52,6 @@ public class AppServiceFactoryTests
     }
 
     [Fact]
-    public void ResolveDatabaseRecipePhotosPath_WithAbsoluteDatabasePathAndRelativePhotoPath_ShouldUseDatabaseDirectory()
-    {
-        string databaseDirectoryPath = Path.Combine(
-            Path.GetTempPath(),
-            $"service-factory-tests-{Guid.NewGuid():N}");
-        string databasePath = Path.Combine(
-            databaseDirectoryPath,
-            "recipes.db");
-        AppSettings settings = LoadSettings(
-            StorageMode.Database,
-            databasePath,
-            "recipe-photos");
-
-        string result =
-            AppServiceFactory.ResolveDatabaseRecipePhotosPath(settings);
-
-        Assert.Equal(
-            Path.Combine(databaseDirectoryPath, "recipe-photos"),
-            result);
-        Assert.True(Path.IsPathFullyQualified(result));
-    }
-
-    [Fact]
-    public void ResolveDatabaseRecipePhotosPath_WithRelativePaths_ShouldUseAbsoluteDatabaseDirectory()
-    {
-        string databasePath = Path.Combine(
-            "data",
-            "recipes.db");
-        string recipePhotosPath = Path.Combine(
-            "photos",
-            "recipes");
-        AppSettings settings = LoadSettings(
-            StorageMode.Database,
-            databasePath,
-            recipePhotosPath);
-
-        string result =
-            AppServiceFactory.ResolveDatabaseRecipePhotosPath(settings);
-
-        string expectedPath = Path.GetFullPath(
-            Path.Combine("data", recipePhotosPath));
-        Assert.Equal(expectedPath, result);
-        Assert.True(Path.IsPathFullyQualified(result));
-    }
-
-    [Fact]
-    public void ResolveDatabaseRecipePhotosPath_WithAbsolutePhotoPath_ShouldUsePhotoPathDirectly()
-    {
-        string absolutePhotoPath = Path.Combine(
-            Path.GetTempPath(),
-            $"recipe-photos-{Guid.NewGuid():N}");
-        AppSettings settings = LoadSettings(
-            StorageMode.Database,
-            Path.Combine("data", "recipes.db"),
-            absolutePhotoPath);
-
-        string result =
-            AppServiceFactory.ResolveDatabaseRecipePhotosPath(settings);
-
-        Assert.Equal(Path.GetFullPath(absolutePhotoPath), result);
-    }
-
-    [Fact]
-    public void ResolveDatabaseRecipePhotosPath_WithPathSegments_ShouldNormalizeResult()
-    {
-        string basePath = Path.Combine(
-            Path.GetTempPath(),
-            $"service-factory-tests-{Guid.NewGuid():N}");
-        string databasePath = Path.Combine(
-            basePath,
-            "database",
-            "nested",
-            "..",
-            "recipes.db");
-        string recipePhotosPath = Path.Combine(
-            "photos",
-            "nested",
-            "..",
-            "final");
-        AppSettings settings = LoadSettings(
-            StorageMode.Database,
-            databasePath,
-            recipePhotosPath);
-
-        string result =
-            AppServiceFactory.ResolveDatabaseRecipePhotosPath(settings);
-
-        Assert.Equal(
-            Path.Combine(basePath, "database", "photos", "final"),
-            result);
-    }
-
-    [Fact]
     public void CreateDatabaseRecipePhotoStorage_ShouldPassAbsoluteRootToStorage()
     {
         string databaseDirectoryPath = Path.Combine(
@@ -140,15 +60,11 @@ public class AppServiceFactoryTests
         string expectedRootPath = Path.Combine(
             databaseDirectoryPath,
             "recipe-photos");
-        AppSettings settings = LoadSettings(
-            StorageMode.Database,
-            Path.Combine(databaseDirectoryPath, "recipes.db"),
-            "recipe-photos");
-
         try
         {
             IRecipePhotoStorage storage =
-                AppServiceFactory.CreateDatabaseRecipePhotoStorage(settings);
+                AppServiceFactory.CreateDatabaseRecipePhotoStorage(
+                    expectedRootPath);
 
             Assert.IsType<FileSystemRecipePhotoStorage>(storage);
             Assert.True(Directory.Exists(expectedRootPath));
@@ -169,34 +85,16 @@ public class AppServiceFactoryTests
     }
 
     [Fact]
-    public void ResolveDatabaseRecipePhotosPath_ShouldNotCreateDirectories()
-    {
-        string basePath = Path.Combine(
-            Path.GetTempPath(),
-            $"service-factory-tests-{Guid.NewGuid():N}");
-        string expectedRootPath = Path.Combine(basePath, "recipe-photos");
-        AppSettings settings = LoadSettings(
-            StorageMode.Database,
-            Path.Combine(basePath, "recipes.db"),
-            "recipe-photos");
-
-        string result =
-            AppServiceFactory.ResolveDatabaseRecipePhotosPath(settings);
-
-        Assert.Equal(expectedRootPath, result);
-        Assert.False(Directory.Exists(basePath));
-        Assert.False(Directory.Exists(result));
-    }
-
-    [Fact]
     public void CreateDatabaseRecipePhotoService_ShouldComposeDefaultDependencies()
     {
         string databaseDirectoryPath = Path.Combine(
             Path.GetTempPath(),
             $"service-factory-tests-{Guid.NewGuid():N}");
-        AppSettings settings = LoadSettings(
-            StorageMode.Database,
-            Path.Combine(databaseDirectoryPath, "recipes.db"),
+        string databasePath = Path.Combine(
+            databaseDirectoryPath,
+            "recipes.db");
+        string recipePhotosPath = Path.Combine(
+            databaseDirectoryPath,
             "recipe-photos");
         FakeRecipeRepository recipeRepository = new();
         CurrentUserContext currentUserContext = new();
@@ -206,7 +104,8 @@ public class AppServiceFactoryTests
         {
             IRecipePhotoService service =
                 AppServiceFactory.CreateDatabaseRecipePhotoService(
-                    settings,
+                    databasePath,
+                    recipePhotosPath,
                     recipeRepository,
                     currentUserContext,
                     loggerFactory);
@@ -274,9 +173,11 @@ public class AppServiceFactoryTests
         string databaseDirectoryPath = Path.Combine(
             Path.GetTempPath(),
             $"service-factory-tests-{Guid.NewGuid():N}");
-        AppSettings settings = LoadSettings(
-            StorageMode.Database,
-            Path.Combine(databaseDirectoryPath, "recipes.db"),
+        string databasePath = Path.Combine(
+            databaseDirectoryPath,
+            "recipes.db");
+        string recipePhotosPath = Path.Combine(
+            databaseDirectoryPath,
             "recipe-photos");
         RecipePhotoOptions options = new()
         {
@@ -298,7 +199,8 @@ public class AppServiceFactoryTests
         {
             IRecipePhotoService service =
                 AppServiceFactory.CreateDatabaseRecipePhotoService(
-                    settings,
+                    databasePath,
+                    recipePhotosPath,
                     new FakeRecipeRepository(),
                     null,
                     options,
@@ -332,37 +234,16 @@ public class AppServiceFactoryTests
     }
 
     [Fact]
-    public void CreateDatabaseRecipePhotoService_WithJsonStorage_ShouldThrowWithoutCreatingStorage()
-    {
-        string databaseDirectoryPath = Path.Combine(
-            Path.GetTempPath(),
-            $"service-factory-tests-{Guid.NewGuid():N}");
-        AppSettings settings = LoadSettings(
-            StorageMode.Json,
-            Path.Combine(databaseDirectoryPath, "recipes.db"),
-            "recipe-photos");
-        RecordingLoggerFactory loggerFactory = new();
-
-        Assert.Throws<InvalidOperationException>(() =>
-            AppServiceFactory.CreateDatabaseRecipePhotoService(
-                settings,
-                new FakeRecipeRepository(),
-                null,
-                loggerFactory));
-
-        Assert.False(Directory.Exists(databaseDirectoryPath));
-        Assert.Equal(0, loggerFactory.CreateLoggerCallCount);
-    }
-
-    [Fact]
     public void CreateDatabaseRecipePhotoReconciliationService_ShouldComposeWithoutRunning()
     {
         string databaseDirectoryPath = Path.Combine(
             Path.GetTempPath(),
             $"service-factory-tests-{Guid.NewGuid():N}");
-        AppSettings settings = LoadSettings(
-            StorageMode.Database,
-            Path.Combine(databaseDirectoryPath, "recipes.db"),
+        string databasePath = Path.Combine(
+            databaseDirectoryPath,
+            "recipes.db");
+        string recipePhotosPath = Path.Combine(
+            databaseDirectoryPath,
             "recipe-photos");
         FakeRecipeRepository recipeRepository = new();
         RecordingLoggerFactory loggerFactory = new();
@@ -372,7 +253,8 @@ public class AppServiceFactoryTests
             IRecipePhotoReconciliationService service =
                 AppServiceFactory
                     .CreateDatabaseRecipePhotoReconciliationService(
-                        settings,
+                        databasePath,
+                        recipePhotosPath,
                         recipeRepository,
                         loggerFactory);
 
@@ -424,9 +306,11 @@ public class AppServiceFactoryTests
         string databaseDirectoryPath = Path.Combine(
             Path.GetTempPath(),
             $"service-factory-tests-{Guid.NewGuid():N}");
-        AppSettings settings = LoadSettings(
-            StorageMode.Database,
-            Path.Combine(databaseDirectoryPath, "recipes.db"),
+        string databasePath = Path.Combine(
+            databaseDirectoryPath,
+            "recipes.db");
+        string recipePhotosPath = Path.Combine(
+            databaseDirectoryPath,
             "recipe-photos");
         FakeRecipeRepository recipeRepository = new();
         RecipePhotoOptions options = new()
@@ -449,7 +333,8 @@ public class AppServiceFactoryTests
             IRecipePhotoReconciliationService service =
                 AppServiceFactory
                     .CreateDatabaseRecipePhotoReconciliationService(
-                        settings,
+                        databasePath,
+                        recipePhotosPath,
                         recipeRepository,
                         options,
                         timeProvider,
@@ -480,36 +365,12 @@ public class AppServiceFactoryTests
     }
 
     [Fact]
-    public void CreateDatabaseRecipePhotoReconciliationService_WithJsonStorage_ShouldThrowWithoutRunning()
-    {
-        string databaseDirectoryPath = Path.Combine(
-            Path.GetTempPath(),
-            $"service-factory-tests-{Guid.NewGuid():N}");
-        AppSettings settings = LoadSettings(
-            StorageMode.Json,
-            Path.Combine(databaseDirectoryPath, "recipes.db"),
-            "recipe-photos");
-        FakeRecipeRepository recipeRepository = new();
-        RecordingLoggerFactory loggerFactory = new();
-
-        Assert.Throws<InvalidOperationException>(() =>
-            AppServiceFactory
-                .CreateDatabaseRecipePhotoReconciliationService(
-                    settings,
-                    recipeRepository,
-                    loggerFactory));
-
-        Assert.False(Directory.Exists(databaseDirectoryPath));
-        Assert.False(recipeRepository.GetAllRecipesWasCalled);
-        Assert.Equal(0, loggerFactory.CreateLoggerCallCount);
-    }
-
-    [Fact]
     public void CreateUserRepository_WithJsonStorage_ShouldCreateJsonRepository()
     {
-        AppSettings settings = LoadSettings(StorageMode.Json);
-
-        IUserRepository repository = AppServiceFactory.CreateUserRepository(settings);
+        IUserRepository repository = AppServiceFactory.CreateUserRepository(
+            StorageMode.Json,
+            "users.json",
+            "recipes.db");
 
         Assert.IsType<JsonUserRepository>(repository);
     }
@@ -517,9 +378,10 @@ public class AppServiceFactoryTests
     [Fact]
     public void CreateUserRepository_WithDatabaseStorage_ShouldCreateDatabaseRepository()
     {
-        AppSettings settings = LoadSettings(StorageMode.Database);
-
-        IUserRepository repository = AppServiceFactory.CreateUserRepository(settings);
+        IUserRepository repository = AppServiceFactory.CreateUserRepository(
+            StorageMode.Database,
+            "users.json",
+            "recipes.db");
 
         Assert.IsType<DatabaseUserRepository>(repository);
     }
@@ -580,9 +442,11 @@ public class AppServiceFactoryTests
         string databaseDirectoryPath = Path.Combine(
             Path.GetTempPath(),
             $"service-factory-tests-{Guid.NewGuid():N}");
-        AppSettings settings = LoadSettings(
-            StorageMode.Database,
-            Path.Combine(databaseDirectoryPath, "recipes.db"),
+        string databasePath = Path.Combine(
+            databaseDirectoryPath,
+            "recipes.db");
+        string recipePhotosPath = Path.Combine(
+            databaseDirectoryPath,
             "recipe-photos");
         FakeRecipeRepository recipeRepository = new();
         CurrentUserContext currentUserContext = new();
@@ -592,7 +456,8 @@ public class AppServiceFactoryTests
         {
             IRecipeLibraryService service =
                 AppServiceFactory.CreateDatabaseRecipeLibraryService(
-                    settings,
+                    databasePath,
+                    recipePhotosPath,
                     recipeRepository,
                     currentUserContext,
                     loggerFactory);
@@ -643,29 +508,6 @@ public class AppServiceFactoryTests
     }
 
     [Fact]
-    public void CreateDatabaseRecipeLibraryService_WithJsonStorage_ShouldThrowWithoutPhotoFallback()
-    {
-        string databaseDirectoryPath = Path.Combine(
-            Path.GetTempPath(),
-            $"service-factory-tests-{Guid.NewGuid():N}");
-        AppSettings settings = LoadSettings(
-            StorageMode.Json,
-            Path.Combine(databaseDirectoryPath, "recipes.db"),
-            "recipe-photos");
-        RecordingLoggerFactory loggerFactory = new();
-
-        Assert.Throws<InvalidOperationException>(() =>
-            AppServiceFactory.CreateDatabaseRecipeLibraryService(
-                settings,
-                new FakeRecipeRepository(),
-                new CurrentUserContext(),
-                loggerFactory));
-
-        Assert.False(Directory.Exists(databaseDirectoryPath));
-        Assert.Equal(0, loggerFactory.CreateLoggerCallCount);
-    }
-
-    [Fact]
     public void CreateAuthenticationService_ShouldUseProvidedRepository()
     {
         FakeUserRepository repository = new FakeUserRepository();
@@ -678,37 +520,6 @@ public class AppServiceFactoryTests
         Assert.True(result.IsSuccess);
         Assert.True(repository.AddWasCalled);
         Assert.True(currentUserContext.IsAuthenticated);
-    }
-
-    private static AppSettings LoadSettings(
-        StorageMode storageMode,
-        string? databasePath = null,
-        string? recipePhotosPath = null)
-    {
-        string tempDirectory = Path.Combine(
-            Path.GetTempPath(),
-            $"service-factory-tests-{Guid.NewGuid()}");
-        Directory.CreateDirectory(tempDirectory);
-
-        try
-        {
-            string configurationFilePath = Path.Combine(tempDirectory, "appsettings.json");
-
-            string json = JsonSerializer.Serialize(new
-            {
-                StorageMode = storageMode.ToString(),
-                DatabasePath = databasePath,
-                RecipePhotosPath = recipePhotosPath
-            });
-
-            File.WriteAllText(configurationFilePath, json);
-
-            return AppSettings.Load(configurationFilePath);
-        }
-        finally
-        {
-            Directory.Delete(tempDirectory, recursive: true);
-        }
     }
 
     private static T GetPrivateField<T>(

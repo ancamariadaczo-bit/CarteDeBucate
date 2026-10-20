@@ -23,8 +23,7 @@ public class JwtTokenService : IJwtTokenService
         string audience = _configuration["Jwt:Audience"]
             ?? throw new InvalidOperationException("Jwt:Audience is not configured.");
 
-        int expirationMinutes =
-            _configuration.GetValue<int>("Jwt:ExpirationMinutes");
+        int expirationMinutes = _configuration.GetValue<int>("Jwt:ExpirationMinutes");
 
         var claims = new List<Claim>
         {
@@ -33,12 +32,9 @@ public class JwtTokenService : IJwtTokenService
             new(ClaimTypes.Name, username)
         };
 
-        var signingKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(key));
+        var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
 
-        var signingCredentials = new SigningCredentials(
-            signingKey,
-            SecurityAlgorithms.HmacSha256);
+        var signingCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
             issuer: issuer,
@@ -47,7 +43,6 @@ public class JwtTokenService : IJwtTokenService
             expires: DateTime.UtcNow.AddMinutes(expirationMinutes),
             signingCredentials: signingCredentials);
 
-        return new JwtSecurityTokenHandler()
-            .WriteToken(token);
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }

@@ -28,11 +28,9 @@ public class AuthenticationApiController : ControllerBase
     [HttpGet("me")]
     public IActionResult GetCurrentUser()
     {
-        string? userId =
-            User.FindFirstValue(ClaimTypes.NameIdentifier);
+        string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        string? username =
-            User.FindFirstValue(ClaimTypes.Name);
+        string? username = User.FindFirstValue(ClaimTypes.Name);
 
         return Ok(new
         {
@@ -41,27 +39,20 @@ public class AuthenticationApiController : ControllerBase
         });
     }
 
-    [Authorize(
-        AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
     [HttpGet("extension-complete")]
     public IActionResult CompleteExtensionAuthentication()
     {
-        string? userId =
-            User.FindFirstValue(ClaimTypes.NameIdentifier);
+        string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        string? username =
-            User.FindFirstValue(ClaimTypes.Name);
+        string? username = User.FindFirstValue(ClaimTypes.Name);
 
-        if (string.IsNullOrWhiteSpace(userId) ||
-            string.IsNullOrWhiteSpace(username))
+        if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(username))
         {
             return Unauthorized();
         }
 
-        string code =
-            _extensionAuthenticationCodeService.CreateCode(
-                userId,
-                username);
+        string code = _extensionAuthenticationCodeService.CreateCode(userId, username);
 
         string redirectUrl =
             _configuration["ChromeExtension:AuthenticationRedirectUrl"]
@@ -97,10 +88,7 @@ public class AuthenticationApiController : ControllerBase
             });
         }
 
-        string accessToken =
-            _jwtTokenService.CreateToken(
-                codeData.UserId,
-                codeData.Username);
+        string accessToken = _jwtTokenService.CreateToken(codeData.UserId, codeData.Username);
 
         return Ok(new
         {

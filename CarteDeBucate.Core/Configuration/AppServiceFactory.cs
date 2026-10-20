@@ -2,14 +2,14 @@ using Microsoft.Extensions.Logging;
 
 public static class AppServiceFactory
 {
-    public static void EnsureDatabaseIsUpToDate(AppSettings settings)
+    public static void EnsureDatabaseIsUpToDate(StorageMode storageMode, string databasePath)
     {
-        if (settings.CurrentStorageMode != StorageMode.Database)
+        if (storageMode != StorageMode.Database)
         {
             return;
         }
 
-        EnsureDatabaseIsUpToDate(settings.DatabasePath);
+        EnsureDatabaseIsUpToDate(databasePath);
     }
 
     public static void EnsureDatabaseIsUpToDate(string databasePath)
@@ -22,13 +22,15 @@ public static class AppServiceFactory
     }
 
     public static IRecipeRepository CreateRecipeRepository(
-        AppSettings settings,
+        StorageMode storageMode,
+        string recipesFilePath,
+        string databasePath,
         ILogger<DatabaseRecipeRepository> logger)
     {
-        return settings.CurrentStorageMode switch
+        return storageMode switch
         {
-            StorageMode.Json => new JsonRecipeRepository(settings.RecipesFilePath),
-            StorageMode.Database => new DatabaseRecipeRepository(settings.DatabasePath, logger),
+            StorageMode.Json => new JsonRecipeRepository(recipesFilePath),
+            StorageMode.Database => new DatabaseRecipeRepository(databasePath, logger),
             _ => throw new InvalidOperationException(AppTexts.UnknownStorageModeError)
         };
     }
@@ -47,45 +49,21 @@ public static class AppServiceFactory
     }
 
     internal static IRecipePhotoStorage CreateDatabaseRecipePhotoStorage(
-        AppSettings settings)
+        string recipePhotosPath)
     {
-        ArgumentNullException.ThrowIfNull(settings);
-
-        string rootPath = ResolveDatabaseRecipePhotosPath(settings);
-
-        return new FileSystemRecipePhotoStorage(rootPath);
-    }
-
-    internal static string ResolveDatabaseRecipePhotosPath(
-        AppSettings settings)
-    {
-        ArgumentNullException.ThrowIfNull(settings);
-
-        string normalizedDatabasePath = Path.GetFullPath(
-            settings.DatabasePath);
-        string databaseDirectoryPath = Path.GetDirectoryName(
-            normalizedDatabasePath)
-            ?? throw new InvalidOperationException(
-                "The database path must have a parent directory.");
-
-        if (Path.IsPathFullyQualified(settings.RecipePhotosPath))
-        {
-            return Path.GetFullPath(settings.RecipePhotosPath);
-        }
-
-        return Path.GetFullPath(
-            settings.RecipePhotosPath,
-            databaseDirectoryPath);
+        return new FileSystemRecipePhotoStorage(recipePhotosPath);
     }
 
     public static IRecipePhotoService CreateDatabaseRecipePhotoService(
-        AppSettings settings,
+        string databasePath,
+        string recipePhotosPath,
         IRecipeRepository recipeRepository,
         ICurrentUserContext? currentUserContext,
         ILoggerFactory loggerFactory)
     {
         return CreateDatabaseRecipePhotoService(
-            settings,
+            databasePath,
+            recipePhotosPath,
             recipeRepository,
             currentUserContext,
             new RecipePhotoOptions(),
@@ -94,29 +72,23 @@ public static class AppServiceFactory
     }
 
     public static IRecipePhotoService CreateDatabaseRecipePhotoService(
-        AppSettings settings,
+        string databasePath,
+        string recipePhotosPath,
         IRecipeRepository recipeRepository,
         ICurrentUserContext? currentUserContext,
         RecipePhotoOptions options,
         TimeProvider timeProvider,
         ILoggerFactory loggerFactory)
     {
-        ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(recipeRepository);
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(timeProvider);
         ArgumentNullException.ThrowIfNull(loggerFactory);
 
-        if (settings.CurrentStorageMode != StorageMode.Database)
-        {
-            throw new InvalidOperationException(
-                "Recipe photos require database storage.");
-        }
-
         IRecipePhotoRepository photoRepository =
-            CreateDatabaseRecipePhotoRepository(settings.DatabasePath);
+            CreateDatabaseRecipePhotoRepository(databasePath);
         IRecipePhotoStorage storage =
-            CreateDatabaseRecipePhotoStorage(settings);
+            CreateDatabaseRecipePhotoStorage(recipePhotosPath);
         RecipePhotoValidator validator = new();
         RecipePhotoFileNameNormalizer fileNameNormalizer = new();
         ILogger<RecipePhotoService> logger =
@@ -136,12 +108,14 @@ public static class AppServiceFactory
 
     public static IRecipePhotoReconciliationService
         CreateDatabaseRecipePhotoReconciliationService(
-            AppSettings settings,
+            string databasePath,
+            string recipePhotosPath,
             IRecipeRepository recipeRepository,
             ILoggerFactory loggerFactory)
     {
         return CreateDatabaseRecipePhotoReconciliationService(
-            settings,
+            databasePath,
+            recipePhotosPath,
             recipeRepository,
             new RecipePhotoOptions(),
             TimeProvider.System,
@@ -150,28 +124,22 @@ public static class AppServiceFactory
 
     public static IRecipePhotoReconciliationService
         CreateDatabaseRecipePhotoReconciliationService(
-            AppSettings settings,
+            string databasePath,
+            string recipePhotosPath,
             IRecipeRepository recipeRepository,
             RecipePhotoOptions options,
             TimeProvider timeProvider,
             ILoggerFactory loggerFactory)
     {
-        ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(recipeRepository);
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(timeProvider);
         ArgumentNullException.ThrowIfNull(loggerFactory);
 
-        if (settings.CurrentStorageMode != StorageMode.Database)
-        {
-            throw new InvalidOperationException(
-                "Recipe photo reconciliation requires database storage.");
-        }
-
         IRecipePhotoStorage storage =
-            CreateDatabaseRecipePhotoStorage(settings);
+            CreateDatabaseRecipePhotoStorage(recipePhotosPath);
         IRecipePhotoRepository photoRepository =
-            CreateDatabaseRecipePhotoRepository(settings.DatabasePath);
+            CreateDatabaseRecipePhotoRepository(databasePath);
         ILogger<RecipePhotoReconciliationService> logger =
             loggerFactory.CreateLogger<RecipePhotoReconciliationService>();
 
@@ -184,12 +152,15 @@ public static class AppServiceFactory
             logger);
     }
 
-    public static IUserRepository CreateUserRepository(AppSettings settings)
+    public static IUserRepository CreateUserRepository(
+        StorageMode storageMode,
+        string usersFilePath,
+        string databasePath)
     {
-        return settings.CurrentStorageMode switch
+        return storageMode switch
         {
-            StorageMode.Json => new JsonUserRepository(settings.UsersFilePath),
-            StorageMode.Database => new DatabaseUserRepository(settings.DatabasePath),
+            StorageMode.Json => new JsonUserRepository(usersFilePath),
+            StorageMode.Database => new DatabaseUserRepository(databasePath),
             _ => throw new InvalidOperationException(AppTexts.UnknownStorageModeError)
         };
     }
@@ -218,13 +189,15 @@ public static class AppServiceFactory
     }
 
     public static IRecipeLibraryService CreateDatabaseRecipeLibraryService(
-        AppSettings settings,
+        string databasePath,
+        string recipePhotosPath,
         IRecipeRepository recipeRepository,
         ICurrentUserContext? currentUserContext,
         ILoggerFactory loggerFactory)
     {
         return CreateDatabaseRecipeLibraryService(
-            settings,
+            databasePath,
+            recipePhotosPath,
             recipeRepository,
             currentUserContext,
             new RecipePhotoOptions(),
@@ -233,14 +206,14 @@ public static class AppServiceFactory
     }
 
     public static IRecipeLibraryService CreateDatabaseRecipeLibraryService(
-        AppSettings settings,
+        string databasePath,
+        string recipePhotosPath,
         IRecipeRepository recipeRepository,
         ICurrentUserContext? currentUserContext,
         RecipePhotoOptions photoOptions,
         TimeProvider timeProvider,
         ILoggerFactory loggerFactory)
     {
-        ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(recipeRepository);
         ArgumentNullException.ThrowIfNull(photoOptions);
         ArgumentNullException.ThrowIfNull(timeProvider);
@@ -248,7 +221,8 @@ public static class AppServiceFactory
 
         IRecipePhotoService photoService =
             CreateDatabaseRecipePhotoService(
-                settings,
+                databasePath,
+                recipePhotosPath,
                 recipeRepository,
                 currentUserContext,
                 photoOptions,
@@ -273,9 +247,15 @@ public static class AppServiceFactory
     }
 
     public static IAuthenticationService CreateAuthenticationService(
-        AppSettings settings, ICurrentUserContext currentUserContext)
+        StorageMode storageMode,
+        string usersFilePath,
+        string databasePath,
+        ICurrentUserContext currentUserContext)
     {
-        IUserRepository userRepository = CreateUserRepository(settings);
+        IUserRepository userRepository = CreateUserRepository(
+            storageMode,
+            usersFilePath,
+            databasePath);
 
         return CreateAuthenticationService(userRepository, currentUserContext);
     }
