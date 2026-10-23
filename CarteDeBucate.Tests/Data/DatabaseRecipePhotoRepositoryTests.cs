@@ -10,7 +10,8 @@ public class DatabaseRecipePhotoRepositoryTests
         WithInitializedDatabase(databasePath =>
         {
             int recipeId = InsertRecipe(databasePath);
-            DatabaseRecipePhotoRepository repository = new DatabaseRecipePhotoRepository(databasePath);
+            DatabaseRecipePhotoRepository repository =
+                new DatabaseRecipePhotoRepository(databasePath);
             RecipePhoto photo = CreatePhoto(recipeId, "stored-photo.jpg");
 
             repository.Add(photo);
@@ -32,8 +33,7 @@ public class DatabaseRecipePhotoRepositoryTests
             DateTime parsedCreatedAtUtc = DateTime.Parse(
                 storedPhoto.CreatedAtUtc,
                 CultureInfo.InvariantCulture,
-                DateTimeStyles.RoundtripKind
-            );
+                DateTimeStyles.RoundtripKind);
 
             Assert.Equal(DateTimeKind.Utc, parsedCreatedAtUtc.Kind);
             Assert.Equal(photo.CreatedAtUtc, parsedCreatedAtUtc);
@@ -45,10 +45,12 @@ public class DatabaseRecipePhotoRepositoryTests
     {
         WithInitializedDatabase(databasePath =>
         {
-            DatabaseRecipePhotoRepository repository = new DatabaseRecipePhotoRepository(databasePath);
+            DatabaseRecipePhotoRepository repository =
+                new DatabaseRecipePhotoRepository(databasePath);
             RecipePhoto photo = CreatePhoto(999, "missing-recipe.jpg");
 
-            SqliteException exception = Assert.Throws<SqliteException>(() => repository.Add(photo));
+            SqliteException exception = Assert.Throws<SqliteException>(() =>
+                repository.Add(photo));
 
             Assert.Equal(19, exception.SqliteErrorCode);
             Assert.Equal(0, photo.Id);
@@ -61,15 +63,15 @@ public class DatabaseRecipePhotoRepositoryTests
         WithInitializedDatabase(databasePath =>
         {
             int recipeId = InsertRecipe(databasePath);
-            DatabaseRecipePhotoRepository repository = new DatabaseRecipePhotoRepository(databasePath);
+            DatabaseRecipePhotoRepository repository =
+                new DatabaseRecipePhotoRepository(databasePath);
             RecipePhoto firstPhoto = CreatePhoto(recipeId, "duplicate-photo.jpg");
             RecipePhoto secondPhoto = CreatePhoto(recipeId, "duplicate-photo.jpg");
 
             repository.Add(firstPhoto);
 
             SqliteException exception = Assert.Throws<SqliteException>(() =>
-                repository.Add(secondPhoto)
-            );
+                repository.Add(secondPhoto));
 
             Assert.Equal(19, exception.SqliteErrorCode);
             Assert.Equal(0, secondPhoto.Id);
@@ -83,7 +85,8 @@ public class DatabaseRecipePhotoRepositoryTests
         {
             int userId = InsertUser(databasePath, "photo-owner");
             int recipeId = InsertRecipe(databasePath, userId);
-            DatabaseRecipePhotoRepository repository = new DatabaseRecipePhotoRepository(databasePath);
+            DatabaseRecipePhotoRepository repository =
+                new DatabaseRecipePhotoRepository(databasePath);
             RecipePhoto photo = CreatePhoto(recipeId, "owner-photo.jpg");
 
             bool wasAdded = repository.AddForUser(photo, userId);
@@ -106,7 +109,8 @@ public class DatabaseRecipePhotoRepositoryTests
             int ownerId = InsertUser(databasePath, "photo-owner");
             int otherUserId = InsertUser(databasePath, "other-user");
             int recipeId = InsertRecipe(databasePath, ownerId);
-            DatabaseRecipePhotoRepository repository = new DatabaseRecipePhotoRepository(databasePath);
+            DatabaseRecipePhotoRepository repository =
+                new DatabaseRecipePhotoRepository(databasePath);
             RecipePhoto photo = CreatePhoto(recipeId, "other-user-photo.jpg");
 
             bool wasAdded = repository.AddForUser(photo, otherUserId);
@@ -123,7 +127,8 @@ public class DatabaseRecipePhotoRepositoryTests
         WithInitializedDatabase(databasePath =>
         {
             int userId = InsertUser(databasePath, "photo-owner");
-            DatabaseRecipePhotoRepository repository = new DatabaseRecipePhotoRepository(databasePath);
+            DatabaseRecipePhotoRepository repository =
+                new DatabaseRecipePhotoRepository(databasePath);
             RecipePhoto photo = CreatePhoto(999, "missing-recipe-for-user.jpg");
 
             bool wasAdded = repository.AddForUser(photo, userId);
@@ -140,7 +145,8 @@ public class DatabaseRecipePhotoRepositoryTests
         WithInitializedDatabase(databasePath =>
         {
             int recipeId = InsertRecipe(databasePath);
-            DatabaseRecipePhotoRepository repository = new DatabaseRecipePhotoRepository(databasePath);
+            DatabaseRecipePhotoRepository repository =
+                new DatabaseRecipePhotoRepository(databasePath);
             RecipePhoto expectedPhoto = CreatePhoto(recipeId, "get-by-id.jpg");
             repository.Add(expectedPhoto);
 
@@ -165,7 +171,8 @@ public class DatabaseRecipePhotoRepositoryTests
     {
         WithInitializedDatabase(databasePath =>
         {
-            DatabaseRecipePhotoRepository repository = new DatabaseRecipePhotoRepository(databasePath);
+            DatabaseRecipePhotoRepository repository =
+                new DatabaseRecipePhotoRepository(databasePath);
 
             RecipePhoto? photo = repository.GetById(999);
 
@@ -180,7 +187,8 @@ public class DatabaseRecipePhotoRepositoryTests
         {
             int userId = InsertUser(databasePath, "photo-owner");
             int recipeId = InsertRecipe(databasePath, userId);
-            DatabaseRecipePhotoRepository repository = new DatabaseRecipePhotoRepository(databasePath);
+            DatabaseRecipePhotoRepository repository =
+                new DatabaseRecipePhotoRepository(databasePath);
             RecipePhoto expectedPhoto = CreatePhoto(recipeId, "owned-photo.jpg");
             repository.Add(expectedPhoto);
 
@@ -200,7 +208,8 @@ public class DatabaseRecipePhotoRepositoryTests
             int ownerId = InsertUser(databasePath, "photo-owner");
             int otherUserId = InsertUser(databasePath, "other-user");
             int recipeId = InsertRecipe(databasePath, ownerId);
-            DatabaseRecipePhotoRepository repository = new DatabaseRecipePhotoRepository(databasePath);
+            DatabaseRecipePhotoRepository repository =
+                new DatabaseRecipePhotoRepository(databasePath);
             RecipePhoto photo = CreatePhoto(recipeId, "other-owner-photo.jpg");
             repository.Add(photo);
 
@@ -217,7 +226,8 @@ public class DatabaseRecipePhotoRepositoryTests
         {
             int userId = InsertUser(databasePath, "authenticated-user");
             int recipeId = InsertRecipe(databasePath);
-            DatabaseRecipePhotoRepository repository = new DatabaseRecipePhotoRepository(databasePath);
+            DatabaseRecipePhotoRepository repository =
+                new DatabaseRecipePhotoRepository(databasePath);
             RecipePhoto photo = CreatePhoto(recipeId, "unowned-recipe-photo.jpg");
             repository.Add(photo);
 
@@ -233,7 +243,8 @@ public class DatabaseRecipePhotoRepositoryTests
         WithInitializedDatabase(databasePath =>
         {
             int recipeId = InsertRecipe(databasePath);
-            DatabaseRecipePhotoRepository repository = new DatabaseRecipePhotoRepository(databasePath);
+            DatabaseRecipePhotoRepository repository =
+                new DatabaseRecipePhotoRepository(databasePath);
 
             List<RecipePhoto> photos = repository.GetByRecipeId(recipeId);
 
@@ -248,7 +259,8 @@ public class DatabaseRecipePhotoRepositoryTests
         {
             int requestedRecipeId = InsertRecipe(databasePath);
             int otherRecipeId = InsertRecipe(databasePath);
-            DatabaseRecipePhotoRepository repository = new DatabaseRecipePhotoRepository(databasePath);
+            DatabaseRecipePhotoRepository repository =
+                new DatabaseRecipePhotoRepository(databasePath);
             RecipePhoto requestedPhoto = CreatePhoto(requestedRecipeId, "requested-recipe.jpg");
             RecipePhoto otherPhoto = CreatePhoto(otherRecipeId, "other-recipe.jpg");
             repository.Add(requestedPhoto);
@@ -268,7 +280,8 @@ public class DatabaseRecipePhotoRepositoryTests
         WithInitializedDatabase(databasePath =>
         {
             int recipeId = InsertRecipe(databasePath);
-            DatabaseRecipePhotoRepository repository = new DatabaseRecipePhotoRepository(databasePath);
+            DatabaseRecipePhotoRepository repository =
+                new DatabaseRecipePhotoRepository(databasePath);
 
             RecipePhoto firstPhoto = CreatePhoto(recipeId, "first.jpg");
             firstPhoto.DisplayOrder = 1;
@@ -286,8 +299,7 @@ public class DatabaseRecipePhotoRepositoryTests
 
             Assert.Equal(
                 new[] { firstPhoto.Id, secondPhoto.Id, thirdPhoto.Id },
-                photos.Select(photo => photo.Id).ToArray()
-            );
+                photos.Select(photo => photo.Id).ToArray());
         });
     }
 
@@ -300,7 +312,8 @@ public class DatabaseRecipePhotoRepositoryTests
             int otherUserId = InsertUser(databasePath, "other-user");
             int ownerRecipeId = InsertRecipe(databasePath, ownerId);
             int otherRecipeId = InsertRecipe(databasePath, otherUserId);
-            DatabaseRecipePhotoRepository repository = new DatabaseRecipePhotoRepository(databasePath);
+            DatabaseRecipePhotoRepository repository =
+                new DatabaseRecipePhotoRepository(databasePath);
 
             RecipePhoto secondOwnerPhoto = CreatePhoto(ownerRecipeId, "owner-second.jpg");
             secondOwnerPhoto.DisplayOrder = 2;
@@ -314,16 +327,14 @@ public class DatabaseRecipePhotoRepositoryTests
             otherPhoto.DisplayOrder = 0;
             repository.Add(otherPhoto);
 
-            List<RecipePhoto> ownerPhotos = repository.GetByRecipeIdAndUserId(ownerRecipeId, ownerId);
-            List<RecipePhoto> otherUserResult = repository.GetByRecipeIdAndUserId(
-                ownerRecipeId,
-                otherUserId
-            );
+            List<RecipePhoto> ownerPhotos =
+                repository.GetByRecipeIdAndUserId(ownerRecipeId, ownerId);
+            List<RecipePhoto> otherUserResult =
+                repository.GetByRecipeIdAndUserId(ownerRecipeId, otherUserId);
 
             Assert.Equal(
                 new[] { firstOwnerPhoto.Id, secondOwnerPhoto.Id },
-                ownerPhotos.Select(photo => photo.Id).ToArray()
-            );
+                ownerPhotos.Select(photo => photo.Id).ToArray());
             Assert.Empty(otherUserResult);
         });
     }
@@ -334,7 +345,8 @@ public class DatabaseRecipePhotoRepositoryTests
         WithInitializedDatabase(databasePath =>
         {
             int recipeId = InsertRecipe(databasePath);
-            DatabaseRecipePhotoRepository repository = new DatabaseRecipePhotoRepository(databasePath);
+            DatabaseRecipePhotoRepository repository =
+                new DatabaseRecipePhotoRepository(databasePath);
             RecipePhoto photo = CreatePhoto(recipeId, "delete-photo.jpg");
             repository.Add(photo);
 
@@ -350,7 +362,8 @@ public class DatabaseRecipePhotoRepositoryTests
     {
         WithInitializedDatabase(databasePath =>
         {
-            DatabaseRecipePhotoRepository repository = new DatabaseRecipePhotoRepository(databasePath);
+            DatabaseRecipePhotoRepository repository =
+                new DatabaseRecipePhotoRepository(databasePath);
 
             bool wasDeleted = repository.Delete(999);
 
@@ -365,7 +378,8 @@ public class DatabaseRecipePhotoRepositoryTests
         {
             int userId = InsertUser(databasePath, "photo-owner");
             int recipeId = InsertRecipe(databasePath, userId);
-            DatabaseRecipePhotoRepository repository = new DatabaseRecipePhotoRepository(databasePath);
+            DatabaseRecipePhotoRepository repository =
+                new DatabaseRecipePhotoRepository(databasePath);
             RecipePhoto photo = CreatePhoto(recipeId, "delete-owned-photo.jpg");
             repository.Add(photo);
 
@@ -384,7 +398,8 @@ public class DatabaseRecipePhotoRepositoryTests
             int ownerId = InsertUser(databasePath, "photo-owner");
             int otherUserId = InsertUser(databasePath, "other-user");
             int recipeId = InsertRecipe(databasePath, ownerId);
-            DatabaseRecipePhotoRepository repository = new DatabaseRecipePhotoRepository(databasePath);
+            DatabaseRecipePhotoRepository repository =
+                new DatabaseRecipePhotoRepository(databasePath);
             RecipePhoto photo = CreatePhoto(recipeId, "keep-other-owner-photo.jpg");
             repository.Add(photo);
 
@@ -400,10 +415,12 @@ public class DatabaseRecipePhotoRepositoryTests
     {
         WithInitializedDatabase(databasePath =>
         {
-            DatabaseRecipePhotoRepository repository = new DatabaseRecipePhotoRepository(databasePath);
+            DatabaseRecipePhotoRepository repository =
+                new DatabaseRecipePhotoRepository(databasePath);
             RecipePhoto photo = CreatePhoto(999, "orphan-photo.jpg");
 
-            SqliteException exception = Assert.Throws<SqliteException>(() => repository.Add(photo));
+            SqliteException exception = Assert.Throws<SqliteException>(() =>
+                repository.Add(photo));
 
             Assert.Equal(787, exception.SqliteExtendedErrorCode);
             Assert.Equal(0L, CountRecipePhotos(databasePath));
@@ -415,25 +432,28 @@ public class DatabaseRecipePhotoRepositoryTests
     {
         WithInitializedDatabase(databasePath =>
         {
-            DatabaseRecipeRepository recipeRepository = new DatabaseRecipeRepository(
-                databasePath,
-                NullLogger<DatabaseRecipeRepository>.Instance
-            );
-            DatabaseRecipePhotoRepository photoRepository = new DatabaseRecipePhotoRepository(
-                databasePath
-            );
+            DatabaseRecipeRepository recipeRepository =
+                new DatabaseRecipeRepository(
+                    databasePath,
+                    NullLogger<DatabaseRecipeRepository>.Instance);
+            DatabaseRecipePhotoRepository photoRepository =
+                new DatabaseRecipePhotoRepository(databasePath);
 
-            Recipe deletedRecipe = CreateRecipe("Deleted recipe", "https://example.com/deleted-recipe");
+            Recipe deletedRecipe = CreateRecipe(
+                "Deleted recipe",
+                "https://example.com/deleted-recipe");
             Recipe remainingRecipe = CreateRecipe(
                 "Remaining recipe",
-                "https://example.com/remaining-recipe"
-            );
+                "https://example.com/remaining-recipe");
             recipeRepository.AddRecipe(deletedRecipe);
             recipeRepository.AddRecipe(remainingRecipe);
 
-            RecipePhoto firstDeletedPhoto = CreatePhoto(deletedRecipe.Id, "first-deleted-photo.jpg");
-            RecipePhoto secondDeletedPhoto = CreatePhoto(deletedRecipe.Id, "second-deleted-photo.jpg");
-            RecipePhoto remainingPhoto = CreatePhoto(remainingRecipe.Id, "remaining-photo.jpg");
+            RecipePhoto firstDeletedPhoto =
+                CreatePhoto(deletedRecipe.Id, "first-deleted-photo.jpg");
+            RecipePhoto secondDeletedPhoto =
+                CreatePhoto(deletedRecipe.Id, "second-deleted-photo.jpg");
+            RecipePhoto remainingPhoto =
+                CreatePhoto(remainingRecipe.Id, "remaining-photo.jpg");
             photoRepository.Add(firstDeletedPhoto);
             photoRepository.Add(secondDeletedPhoto);
             photoRepository.Add(remainingPhoto);
@@ -443,9 +463,8 @@ public class DatabaseRecipePhotoRepositoryTests
             Assert.Null(recipeRepository.GetRecipeById(deletedRecipe.Id));
             Assert.Empty(photoRepository.GetByRecipeId(deletedRecipe.Id));
 
-            RecipePhoto persistedRemainingPhoto = Assert.Single(
-                photoRepository.GetByRecipeId(remainingRecipe.Id)
-            );
+            RecipePhoto persistedRemainingPhoto =
+                Assert.Single(photoRepository.GetByRecipeId(remainingRecipe.Id));
             Assert.Equal(remainingPhoto.Id, persistedRemainingPhoto.Id);
         });
     }
@@ -459,9 +478,17 @@ public class DatabaseRecipePhotoRepositoryTests
             OriginalFileName = "Sunday cake.jpg",
             ContentType = "image/jpeg",
             FileSize = 12_345,
-            CreatedAtUtc = new DateTime(2026, 9, 7, 10, 11, 12, 345, DateTimeKind.Utc).AddTicks(6_789),
+            CreatedAtUtc = new DateTime(
+                2026,
+                9,
+                7,
+                10,
+                11,
+                12,
+                345,
+                DateTimeKind.Utc).AddTicks(6_789),
             DisplayOrder = 3,
-            Origin = RecipePhotoOrigin.UserUpload,
+            Origin = RecipePhotoOrigin.UserUpload
         };
     }
 
@@ -474,7 +501,7 @@ public class DatabaseRecipePhotoRepositoryTests
             SavedAt = DateTime.UtcNow,
             Notes = "Integration test recipe",
             Ingredients = new List<string>(),
-            Steps = new List<string>(),
+            Steps = new List<string>()
         };
     }
 
@@ -513,8 +540,7 @@ public class DatabaseRecipePhotoRepositoryTests
         command.Parameters.AddWithValue("@SavedAt", DateTime.UtcNow.ToString("O"));
         command.Parameters.AddWithValue(
             "@UserId",
-            userId.HasValue ? userId.Value : (object)DBNull.Value
-        );
+            userId.HasValue ? userId.Value : (object)DBNull.Value);
 
         return Convert.ToInt32(command.ExecuteScalar());
     }
@@ -561,15 +587,13 @@ public class DatabaseRecipePhotoRepositoryTests
             reader.GetInt64(5),
             reader.GetString(6),
             reader.GetInt32(7),
-            reader.GetInt32(8)
-        );
+            reader.GetInt32(8));
     }
 
     private static SqliteConnection OpenConnection(string databasePath)
     {
-        SqliteConnection connection = new SqliteConnection(
-            SqliteConnectionStringFactory.Create(databasePath)
-        );
+        SqliteConnection connection =
+            new SqliteConnection(SqliteConnectionStringFactory.Create(databasePath));
         connection.Open();
 
         return connection;
@@ -577,7 +601,9 @@ public class DatabaseRecipePhotoRepositoryTests
 
     private static void WithInitializedDatabase(Action<string> test)
     {
-        string databasePath = Path.Combine(Path.GetTempPath(), $"recipe-photos-{Guid.NewGuid()}.db");
+        string databasePath = Path.Combine(
+            Path.GetTempPath(),
+            $"recipe-photos-{Guid.NewGuid()}.db");
 
         try
         {
@@ -604,6 +630,5 @@ public class DatabaseRecipePhotoRepositoryTests
         long FileSize,
         string CreatedAtUtc,
         int DisplayOrder,
-        int Origin
-    );
+        int Origin);
 }

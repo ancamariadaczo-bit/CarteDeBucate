@@ -6,8 +6,7 @@ public sealed class RecipePhotoContentResult
         string message,
         Stream? content,
         string contentType,
-        string originalFileName
-    )
+        string originalFileName)
     {
         IsSuccess = isSuccess;
         Code = code;
@@ -37,8 +36,7 @@ public sealed class RecipePhotoContentResult
         Stream content,
         string contentType,
         string originalFileName,
-        string message
-    )
+        string message)
     {
         ArgumentNullException.ThrowIfNull(content);
 
@@ -48,31 +46,34 @@ public sealed class RecipePhotoContentResult
             message,
             content,
             contentType,
-            originalFileName
-        );
+            originalFileName);
     }
 
-    public static RecipePhotoContentResult Failure(RecipePhotoResultCode code, string message)
+    public static RecipePhotoContentResult Failure(
+        RecipePhotoResultCode code,
+        string message)
     {
         EnsureFailureCode(code);
 
-        return new RecipePhotoContentResult(false, code, message, null, string.Empty, string.Empty);
+        return new RecipePhotoContentResult(
+            false,
+            code,
+            message,
+            null,
+            string.Empty,
+            string.Empty);
     }
 
     private static void EnsureFailureCode(RecipePhotoResultCode code)
     {
-        if (
-            code
-            is RecipePhotoResultCode.Success
-                or RecipePhotoResultCode.DeletedMetadataFileWasMissing
-                or RecipePhotoResultCode.CleanupPending
-        )
+        if (code is RecipePhotoResultCode.Success
+            or RecipePhotoResultCode.DeletedMetadataFileWasMissing
+            or RecipePhotoResultCode.CleanupPending)
         {
             throw new ArgumentOutOfRangeException(
                 nameof(code),
                 code,
-                "A success code cannot be used for a failure result."
-            );
+                "A success code cannot be used for a failure result.");
         }
     }
 }

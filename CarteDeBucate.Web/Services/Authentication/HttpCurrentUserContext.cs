@@ -14,15 +14,14 @@ public class HttpCurrentUserContext : ICurrentUserContext
 
     public bool IsAuthenticated =>
         _httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated == true
-        || _currentRequestUser is not null;
+            || _currentRequestUser is not null;
 
     public int? UserId
     {
         get
         {
-            string? userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirstValue(
-                ClaimTypes.NameIdentifier
-            );
+            string? userIdClaim = _httpContextAccessor.HttpContext?.User
+                .FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (int.TryParse(userIdClaim, out int userId))
             {

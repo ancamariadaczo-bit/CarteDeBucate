@@ -10,34 +10,40 @@ public sealed class RecipePhotoReconciliationServiceInventoryTests
             Recipes =
             [
                 new Recipe { Id = 10, Name = "Recipe 10" },
-                new Recipe { Id = 20, Name = "Recipe 20" },
-            ],
+                new Recipe { Id = 20, Name = "Recipe 20" }
+            ]
         };
         InventoryPhotoRepository photoRepository = new();
         photoRepository.PhotosByRecipeId[10] =
         [
             CreatePhoto(10, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg"),
-            CreatePhoto(10, "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.png"),
+            CreatePhoto(10, "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.png")
         ];
         photoRepository.PhotosByRecipeId[20] =
         [
-            CreatePhoto(20, "cccccccccccccccccccccccccccccccc.webp"),
+            CreatePhoto(20, "cccccccccccccccccccccccccccccccc.webp")
         ];
         InventoryStorage storage = new();
         RecipePhotoReconciliationService service = CreateService(
             storage,
             recipeRepository,
-            photoRepository
-        );
+            photoRepository);
 
-        HashSet<string> storageFileNames = service.BuildKnownStorageFileNames();
+        HashSet<string> storageFileNames =
+            service.BuildKnownStorageFileNames();
 
         Assert.True(recipeRepository.GetAllRecipesWasCalled);
         Assert.Equal(new[] { 10, 20 }, photoRepository.RequestedRecipeIds);
         Assert.Equal(3, storageFileNames.Count);
-        Assert.Contains("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg", storageFileNames);
-        Assert.Contains("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.png", storageFileNames);
-        Assert.Contains("cccccccccccccccccccccccccccccccc.webp", storageFileNames);
+        Assert.Contains(
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg",
+            storageFileNames);
+        Assert.Contains(
+            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.png",
+            storageFileNames);
+        Assert.Contains(
+            "cccccccccccccccccccccccccccccccc.webp",
+            storageFileNames);
         Assert.False(storage.WasAccessed);
     }
 
@@ -46,7 +52,8 @@ public sealed class RecipePhotoReconciliationServiceInventoryTests
     {
         FakeRecipeRepository recipeRepository = new()
         {
-            ExceptionToThrowOnGetAllRecipes = new InvalidOperationException("database failed"),
+            ExceptionToThrowOnGetAllRecipes =
+                new InvalidOperationException("database failed")
         };
         InventoryPhotoRepository photoRepository = new();
         InventoryStorage storage = new();
@@ -55,8 +62,7 @@ public sealed class RecipePhotoReconciliationServiceInventoryTests
             storage,
             recipeRepository,
             photoRepository,
-            logger
-        );
+            logger);
 
         RecipePhotoReconciliationReport report = service.Reconcile();
 
@@ -75,19 +81,24 @@ public sealed class RecipePhotoReconciliationServiceInventoryTests
             Recipes =
             [
                 new Recipe { Id = 10, Name = "Recipe 10" },
-                new Recipe { Id = 20, Name = "Recipe 20" },
-            ],
+                new Recipe { Id = 20, Name = "Recipe 20" }
+            ]
         };
-        InventoryPhotoRepository photoRepository = new() { FailureRecipeId = 20 };
-        photoRepository.PhotosByRecipeId[10] = [CreatePhoto(10, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg")];
+        InventoryPhotoRepository photoRepository = new()
+        {
+            FailureRecipeId = 20
+        };
+        photoRepository.PhotosByRecipeId[10] =
+        [
+            CreatePhoto(10, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg")
+        ];
         InventoryStorage storage = new();
         RecordingLogger logger = new();
         RecipePhotoReconciliationService service = CreateService(
             storage,
             recipeRepository,
             photoRepository,
-            logger
-        );
+            logger);
 
         RecipePhotoReconciliationReport report = service.Reconcile();
 
@@ -101,8 +112,7 @@ public sealed class RecipePhotoReconciliationServiceInventoryTests
         InventoryStorage storage,
         FakeRecipeRepository recipeRepository,
         InventoryPhotoRepository photoRepository,
-        RecordingLogger? logger = null
-    )
+        RecordingLogger? logger = null)
     {
         return new RecipePhotoReconciliationService(
             storage,
@@ -110,18 +120,26 @@ public sealed class RecipePhotoReconciliationServiceInventoryTests
             photoRepository,
             new RecipePhotoOptions(),
             TimeProvider.System,
-            logger ?? new RecordingLogger()
-        );
+            logger ?? new RecordingLogger());
     }
 
-    private static RecipePhoto CreatePhoto(int recipeId, string storageFileName)
+    private static RecipePhoto CreatePhoto(
+        int recipeId,
+        string storageFileName)
     {
-        return new RecipePhoto { RecipeId = recipeId, StorageFileName = storageFileName };
+        return new RecipePhoto
+        {
+            RecipeId = recipeId,
+            StorageFileName = storageFileName
+        };
     }
 
     private sealed class InventoryPhotoRepository : IRecipePhotoRepository
     {
-        public Dictionary<int, List<RecipePhoto>> PhotosByRecipeId { get; } = [];
+        public Dictionary<int, List<RecipePhoto>> PhotosByRecipeId
+        {
+            get;
+        } = [];
 
         public List<int> RequestedRecipeIds { get; } = [];
 
@@ -156,10 +174,16 @@ public sealed class RecipePhotoReconciliationServiceInventoryTests
                 throw new InvalidOperationException("database failed");
             }
 
-            return PhotosByRecipeId.TryGetValue(recipeId, out List<RecipePhoto>? photos) ? photos : [];
+            return PhotosByRecipeId.TryGetValue(
+                recipeId,
+                out List<RecipePhoto>? photos)
+                    ? photos
+                    : [];
         }
 
-        public List<RecipePhoto> GetByRecipeIdAndUserId(int recipeId, int userId)
+        public List<RecipePhoto> GetByRecipeIdAndUserId(
+            int recipeId,
+            int userId)
         {
             throw new NotImplementedException();
         }
@@ -182,8 +206,7 @@ public sealed class RecipePhotoReconciliationServiceInventoryTests
         public Task<StagedRecipePhotoUpload> StageUploadAsync(
             Stream content,
             long maximumBytes,
-            CancellationToken cancellationToken = default
-        )
+            CancellationToken cancellationToken = default)
         {
             WasAccessed = true;
             throw new NotImplementedException();
@@ -195,7 +218,9 @@ public sealed class RecipePhotoReconciliationServiceInventoryTests
             throw new NotImplementedException();
         }
 
-        public string FinalizeUpload(StagedRecipePhotoUpload upload, RecipePhotoFormat format)
+        public string FinalizeUpload(
+            StagedRecipePhotoUpload upload,
+            RecipePhotoFormat format)
         {
             WasAccessed = true;
             throw new NotImplementedException();
@@ -219,44 +244,51 @@ public sealed class RecipePhotoReconciliationServiceInventoryTests
             throw new NotImplementedException();
         }
 
-        public StagedRecipePhotoDeletion? MoveToQuarantine(string storageFileName)
+        public StagedRecipePhotoDeletion? MoveToQuarantine(
+            string storageFileName)
         {
             WasAccessed = true;
             throw new NotImplementedException();
         }
 
-        public void RestoreFromQuarantine(StagedRecipePhotoDeletion deletion)
+        public void RestoreFromQuarantine(
+            StagedRecipePhotoDeletion deletion)
         {
             WasAccessed = true;
             throw new NotImplementedException();
         }
 
-        public void DeleteFromQuarantine(StagedRecipePhotoDeletion deletion)
+        public void DeleteFromQuarantine(
+            StagedRecipePhotoDeletion deletion)
         {
             WasAccessed = true;
             throw new NotImplementedException();
         }
 
-        public RecipePhotoStorageInventory<StagedRecipePhotoUploadInventoryItem> GetStagedUploads()
+        public RecipePhotoStorageInventory<StagedRecipePhotoUploadInventoryItem>
+            GetStagedUploads()
         {
             WasAccessed = true;
             throw new NotImplementedException();
         }
 
-        public RecipePhotoStorageInventory<StagedRecipePhotoDeletionInventoryItem> GetQuarantinedDeletions()
+        public RecipePhotoStorageInventory<StagedRecipePhotoDeletionInventoryItem>
+            GetQuarantinedDeletions()
         {
             WasAccessed = true;
             throw new NotImplementedException();
         }
 
-        public RecipePhotoStorageInventory<RecipePhotoStorageFileInventoryItem> GetFinalFiles()
+        public RecipePhotoStorageInventory<RecipePhotoStorageFileInventoryItem>
+            GetFinalFiles()
         {
             WasAccessed = true;
             throw new NotImplementedException();
         }
     }
 
-    private sealed class RecordingLogger : ILogger<RecipePhotoReconciliationService>
+    private sealed class RecordingLogger :
+        ILogger<RecipePhotoReconciliationService>
     {
         public List<LogLevel> Levels { get; } = [];
 
@@ -276,8 +308,7 @@ public sealed class RecipePhotoReconciliationServiceInventoryTests
             EventId eventId,
             TState state,
             Exception? exception,
-            Func<TState, Exception?, string> formatter
-        )
+            Func<TState, Exception?, string> formatter)
         {
             Levels.Add(logLevel);
         }

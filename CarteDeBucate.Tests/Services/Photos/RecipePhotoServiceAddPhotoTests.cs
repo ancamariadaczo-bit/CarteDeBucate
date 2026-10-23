@@ -2,7 +2,8 @@ using Microsoft.Extensions.Logging;
 
 public sealed class RecipePhotoServiceAddPhotoTests
 {
-    private static readonly DateTimeOffset CreatedAt = new(2026, 10, 8, 10, 30, 0, TimeSpan.Zero);
+    private static readonly DateTimeOffset CreatedAt =
+        new(2026, 10, 8, 10, 30, 0, TimeSpan.Zero);
 
     [Fact]
     public async Task AddPhotoAsync_WithValidPhoto_ShouldPersistNormalizedMetadata()
@@ -16,12 +17,15 @@ public sealed class RecipePhotoServiceAddPhotoTests
                 {
                     Id = 1,
                     RecipeId = 10,
-                    DisplayOrder = 4,
-                },
-            ],
+                    DisplayOrder = 4
+                }
+            ]
         };
         AddPhotoStorage storage = new();
-        RecipePhotoService service = CreateService(recipeRepository, photoRepository, storage);
+        RecipePhotoService service = CreateService(
+            recipeRepository,
+            photoRepository,
+            storage);
         byte[] content = JpegContent();
         using MemoryStream source = new(content);
 
@@ -31,15 +35,15 @@ public sealed class RecipePhotoServiceAddPhotoTests
             originalFileName: @"C:\photos\prajitura.jpeg",
             declaredContentType: " IMAGE/JPEG ",
             declaredLength: 1,
-            RecipePhotoOrigin.UserUpload
-        );
+            RecipePhotoOrigin.UserUpload);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(RecipePhotoResultCode.Success, result.Code);
         Assert.NotNull(result.Photo);
         Assert.True(photoRepository.AddWasCalled);
         Assert.False(photoRepository.AddForUserWasCalled);
-        RecipePhoto savedPhoto = Assert.IsType<RecipePhoto>(photoRepository.AddedPhoto);
+        RecipePhoto savedPhoto = Assert.IsType<RecipePhoto>(
+            photoRepository.AddedPhoto);
         Assert.Equal(10, savedPhoto.RecipeId);
         Assert.Equal(storage.FinalStorageFileName, savedPhoto.StorageFileName);
         Assert.Equal("prajitura.jpg", savedPhoto.OriginalFileName);
@@ -58,7 +62,10 @@ public sealed class RecipePhotoServiceAddPhotoTests
         FakeRecipeRepository recipeRepository = CreateRecipeRepository();
         AddPhotoRepository photoRepository = new();
         AddPhotoStorage storage = new();
-        RecipePhotoService service = CreateService(recipeRepository, photoRepository, storage);
+        RecipePhotoService service = CreateService(
+            recipeRepository,
+            photoRepository,
+            storage);
         using NonSeekableReadStream source = new(JpegContent());
 
         RecipePhotoResult result = await service.AddPhotoAsync(
@@ -67,8 +74,7 @@ public sealed class RecipePhotoServiceAddPhotoTests
             "photo.jpg",
             "image/jpeg",
             declaredLength: null,
-            RecipePhotoOrigin.RecipeSource
-        );
+            RecipePhotoOrigin.RecipeSource);
 
         Assert.True(result.IsSuccess);
         Assert.False(source.IsDisposed);
@@ -81,21 +87,25 @@ public sealed class RecipePhotoServiceAddPhotoTests
         FakeRecipeRepository recipeRepository = CreateRecipeRepository();
         AddPhotoRepository photoRepository = new()
         {
-            Photos = Enumerable
-                .Range(1, 20)
+            Photos = Enumerable.Range(1, 20)
                 .Select(index => new RecipePhoto
                 {
                     Id = index,
                     RecipeId = 10,
-                    DisplayOrder = index - 1,
+                    DisplayOrder = index - 1
                 })
-                .ToList(),
+                .ToList()
         };
         AddPhotoStorage storage = new();
-        RecipePhotoService service = CreateService(recipeRepository, photoRepository, storage);
+        RecipePhotoService service = CreateService(
+            recipeRepository,
+            photoRepository,
+            storage);
         using MemoryStream source = new(JpegContent());
 
-        RecipePhotoResult result = await AddValidPhotoAsync(service, source);
+        RecipePhotoResult result = await AddValidPhotoAsync(
+            service,
+            source);
 
         Assert.False(result.IsSuccess);
         Assert.Equal(RecipePhotoResultCode.PhotoLimitReached, result.Code);
@@ -105,18 +115,20 @@ public sealed class RecipePhotoServiceAddPhotoTests
     [Fact]
     public async Task AddPhotoAsync_WithAnotherUsersRecipe_ShouldReturnNotFound()
     {
-        FakeRecipeRepository recipeRepository = CreateRecipeRepository(userId: 9);
+        FakeRecipeRepository recipeRepository =
+            CreateRecipeRepository(userId: 9);
         AddPhotoRepository photoRepository = new() { OwnerUserId = 9 };
         AddPhotoStorage storage = new();
         RecipePhotoService service = CreateService(
             recipeRepository,
             photoRepository,
             storage,
-            CreateCurrentUser(userId: 7)
-        );
+            CreateCurrentUser(userId: 7));
         using MemoryStream source = new(JpegContent());
 
-        RecipePhotoResult result = await AddValidPhotoAsync(service, source);
+        RecipePhotoResult result = await AddValidPhotoAsync(
+            service,
+            source);
 
         Assert.False(result.IsSuccess);
         Assert.Equal(RecipePhotoResultCode.RecipeNotFound, result.Code);
@@ -128,13 +140,15 @@ public sealed class RecipePhotoServiceAddPhotoTests
     public async Task AddPhotoAsync_WithInvalidContent_ShouldAbandonStaging(
         byte[] content,
         string declaredContentType,
-        RecipePhotoResultCode expectedCode
-    )
+        RecipePhotoResultCode expectedCode)
     {
         FakeRecipeRepository recipeRepository = CreateRecipeRepository();
         AddPhotoRepository photoRepository = new();
         AddPhotoStorage storage = new();
-        RecipePhotoService service = CreateService(recipeRepository, photoRepository, storage);
+        RecipePhotoService service = CreateService(
+            recipeRepository,
+            photoRepository,
+            storage);
         using MemoryStream source = new(content);
 
         RecipePhotoResult result = await service.AddPhotoAsync(
@@ -143,8 +157,7 @@ public sealed class RecipePhotoServiceAddPhotoTests
             "photo.jpg",
             declaredContentType,
             content.Length,
-            RecipePhotoOrigin.UserUpload
-        );
+            RecipePhotoOrigin.UserUpload);
 
         Assert.False(result.IsSuccess);
         Assert.Equal(expectedCode, result.Code);
@@ -159,7 +172,10 @@ public sealed class RecipePhotoServiceAddPhotoTests
         FakeRecipeRepository recipeRepository = CreateRecipeRepository();
         AddPhotoRepository photoRepository = new();
         AddPhotoStorage storage = new();
-        RecipePhotoService service = CreateService(recipeRepository, photoRepository, storage);
+        RecipePhotoService service = CreateService(
+            recipeRepository,
+            photoRepository,
+            storage);
         using MemoryStream source = new(JpegContent());
 
         RecipePhotoResult result = await service.AddPhotoAsync(
@@ -168,8 +184,7 @@ public sealed class RecipePhotoServiceAddPhotoTests
             "photo.jpg",
             "image/jpeg",
             declaredLength: 6,
-            RecipePhotoOrigin.UserUpload
-        );
+            RecipePhotoOrigin.UserUpload);
 
         Assert.False(result.IsSuccess);
         Assert.Equal(RecipePhotoResultCode.FileTooLarge, result.Code);
@@ -182,7 +197,10 @@ public sealed class RecipePhotoServiceAddPhotoTests
         FakeRecipeRepository recipeRepository = CreateRecipeRepository();
         AddPhotoRepository photoRepository = new();
         AddPhotoStorage storage = new();
-        RecipePhotoService service = CreateService(recipeRepository, photoRepository, storage);
+        RecipePhotoService service = CreateService(
+            recipeRepository,
+            photoRepository,
+            storage);
         byte[] oversizedContent = [.. JpegContent(), 0x02];
         using MemoryStream source = new(oversizedContent);
 
@@ -192,8 +210,7 @@ public sealed class RecipePhotoServiceAddPhotoTests
             "photo.jpg",
             "image/jpeg",
             declaredLength: 1,
-            RecipePhotoOrigin.UserUpload
-        );
+            RecipePhotoOrigin.UserUpload);
 
         Assert.False(result.IsSuccess);
         Assert.Equal(RecipePhotoResultCode.FileTooLarge, result.Code);
@@ -207,14 +224,16 @@ public sealed class RecipePhotoServiceAddPhotoTests
         FakeRecipeRepository recipeRepository = CreateRecipeRepository();
         AddPhotoRepository photoRepository = new();
         AddPhotoStorage storage = new();
-        RecipePhotoService service = CreateService(recipeRepository, photoRepository, storage);
+        RecipePhotoService service = CreateService(
+            recipeRepository,
+            photoRepository,
+            storage);
         using MemoryStream source = new(JpegContent());
         using CancellationTokenSource cancellation = new();
         cancellation.Cancel();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-            AddValidPhotoAsync(service, source, cancellation.Token)
-        );
+            AddValidPhotoAsync(service, source, cancellation.Token));
 
         Assert.False(photoRepository.AddWasCalled);
         Assert.True(source.CanRead);
@@ -225,11 +244,19 @@ public sealed class RecipePhotoServiceAddPhotoTests
     {
         FakeRecipeRepository recipeRepository = CreateRecipeRepository();
         AddPhotoRepository photoRepository = new();
-        AddPhotoStorage storage = new() { FinalizeException = new IOException("finalization failed") };
-        RecipePhotoService service = CreateService(recipeRepository, photoRepository, storage);
+        AddPhotoStorage storage = new()
+        {
+            FinalizeException = new IOException("finalization failed")
+        };
+        RecipePhotoService service = CreateService(
+            recipeRepository,
+            photoRepository,
+            storage);
         using MemoryStream source = new(JpegContent());
 
-        RecipePhotoResult result = await AddValidPhotoAsync(service, source);
+        RecipePhotoResult result = await AddValidPhotoAsync(
+            service,
+            source);
 
         Assert.False(result.IsSuccess);
         Assert.Equal(RecipePhotoResultCode.StorageFailure, result.Code);
@@ -244,13 +271,18 @@ public sealed class RecipePhotoServiceAddPhotoTests
         FakeRecipeRepository recipeRepository = CreateRecipeRepository();
         AddPhotoRepository photoRepository = new()
         {
-            AddException = new InvalidOperationException("database failed"),
+            AddException = new InvalidOperationException("database failed")
         };
         AddPhotoStorage storage = new();
-        RecipePhotoService service = CreateService(recipeRepository, photoRepository, storage);
+        RecipePhotoService service = CreateService(
+            recipeRepository,
+            photoRepository,
+            storage);
         using MemoryStream source = new(JpegContent());
 
-        RecipePhotoResult result = await AddValidPhotoAsync(service, source);
+        RecipePhotoResult result = await AddValidPhotoAsync(
+            service,
+            source);
 
         Assert.False(result.IsSuccess);
         Assert.Equal(RecipePhotoResultCode.PersistenceFailure, result.Code);
@@ -262,18 +294,24 @@ public sealed class RecipePhotoServiceAddPhotoTests
     public async Task AddPhotoAsync_WhenAddForUserIsRefused_ShouldReturnRecipeNotFoundAndCleanup()
     {
         const int userId = 7;
-        FakeRecipeRepository recipeRepository = CreateRecipeRepository(userId);
-        AddPhotoRepository photoRepository = new() { OwnerUserId = userId, AddForUserResult = false };
+        FakeRecipeRepository recipeRepository =
+            CreateRecipeRepository(userId);
+        AddPhotoRepository photoRepository = new()
+        {
+            OwnerUserId = userId,
+            AddForUserResult = false
+        };
         AddPhotoStorage storage = new();
         RecipePhotoService service = CreateService(
             recipeRepository,
             photoRepository,
             storage,
-            CreateCurrentUser(userId)
-        );
+            CreateCurrentUser(userId));
         using MemoryStream source = new(JpegContent());
 
-        RecipePhotoResult result = await AddValidPhotoAsync(service, source);
+        RecipePhotoResult result = await AddValidPhotoAsync(
+            service,
+            source);
 
         Assert.False(result.IsSuccess);
         Assert.Equal(RecipePhotoResultCode.RecipeNotFound, result.Code);
@@ -288,22 +326,24 @@ public sealed class RecipePhotoServiceAddPhotoTests
         FakeRecipeRepository recipeRepository = CreateRecipeRepository();
         AddPhotoRepository photoRepository = new()
         {
-            AddException = new InvalidOperationException("database failed"),
+            AddException = new InvalidOperationException("database failed")
         };
         AddPhotoStorage storage = new()
         {
-            DeleteFromQuarantineException = new IOException("cleanup failed"),
+            DeleteFromQuarantineException =
+                new IOException("cleanup failed")
         };
         RecordingLogger logger = new();
         RecipePhotoService service = CreateService(
             recipeRepository,
             photoRepository,
             storage,
-            logger: logger
-        );
+            logger: logger);
         using MemoryStream source = new(JpegContent());
 
-        RecipePhotoResult result = await AddValidPhotoAsync(service, source);
+        RecipePhotoResult result = await AddValidPhotoAsync(
+            service,
+            source);
 
         Assert.False(result.IsSuccess);
         Assert.Equal(RecipePhotoResultCode.PersistenceFailure, result.Code);
@@ -316,13 +356,21 @@ public sealed class RecipePhotoServiceAddPhotoTests
         FakeRecipeRepository recipeRepository = CreateRecipeRepository();
         AddPhotoRepository photoRepository = new();
         using CancellationTokenSource cancellation = new();
-        AddPhotoStorage storage = new() { AfterStage = cancellation.Cancel };
-        RecipePhotoService service = CreateService(recipeRepository, photoRepository, storage);
+        AddPhotoStorage storage = new()
+        {
+            AfterStage = cancellation.Cancel
+        };
+        RecipePhotoService service = CreateService(
+            recipeRepository,
+            photoRepository,
+            storage);
         using MemoryStream source = new(JpegContent());
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-            AddValidPhotoAsync(service, source, cancellation.Token)
-        );
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => AddValidPhotoAsync(
+                service,
+                source,
+                cancellation.Token));
 
         Assert.True(cancellation.IsCancellationRequested);
         Assert.True(storage.AbandonUploadWasCalled);
@@ -336,11 +384,20 @@ public sealed class RecipePhotoServiceAddPhotoTests
         FakeRecipeRepository recipeRepository = CreateRecipeRepository();
         AddPhotoRepository photoRepository = new();
         using CancellationTokenSource cancellation = new();
-        AddPhotoStorage storage = new() { AfterFinalize = cancellation.Cancel };
-        RecipePhotoService service = CreateService(recipeRepository, photoRepository, storage);
+        AddPhotoStorage storage = new()
+        {
+            AfterFinalize = cancellation.Cancel
+        };
+        RecipePhotoService service = CreateService(
+            recipeRepository,
+            photoRepository,
+            storage);
         using MemoryStream source = new(JpegContent());
 
-        RecipePhotoResult result = await AddValidPhotoAsync(service, source, cancellation.Token);
+        RecipePhotoResult result = await AddValidPhotoAsync(
+            service,
+            source,
+            cancellation.Token);
 
         Assert.True(cancellation.IsCancellationRequested);
         Assert.True(result.IsSuccess);
@@ -348,18 +405,25 @@ public sealed class RecipePhotoServiceAddPhotoTests
         Assert.False(storage.MoveToQuarantineWasCalled);
     }
 
-    public static TheoryData<byte[], string, RecipePhotoResultCode> InvalidPhotoContent =>
-        new()
+    public static TheoryData<byte[], string, RecipePhotoResultCode>
+        InvalidPhotoContent => new()
         {
-            { [], "image/jpeg", RecipePhotoResultCode.EmptyContent },
-            { [0x01, 0x02, 0x03], "image/jpeg", RecipePhotoResultCode.InvalidContent },
+            {
+                [],
+                "image/jpeg",
+                RecipePhotoResultCode.EmptyContent
+            },
+            {
+                [0x01, 0x02, 0x03],
+                "image/jpeg",
+                RecipePhotoResultCode.InvalidContent
+            }
         };
 
     private static async Task<RecipePhotoResult> AddValidPhotoAsync(
         RecipePhotoService service,
         Stream source,
-        CancellationToken cancellationToken = default
-    )
+        CancellationToken cancellationToken = default)
     {
         return await service.AddPhotoAsync(
             10,
@@ -368,8 +432,7 @@ public sealed class RecipePhotoServiceAddPhotoTests
             "image/jpeg",
             declaredLength: null,
             RecipePhotoOrigin.UserUpload,
-            cancellationToken
-        );
+            cancellationToken);
     }
 
     private static RecipePhotoService CreateService(
@@ -377,8 +440,7 @@ public sealed class RecipePhotoServiceAddPhotoTests
         AddPhotoRepository photoRepository,
         AddPhotoStorage storage,
         ICurrentUserContext? currentUserContext = null,
-        RecordingLogger? logger = null
-    )
+        RecordingLogger? logger = null)
     {
         return new RecipePhotoService(
             storage,
@@ -387,13 +449,17 @@ public sealed class RecipePhotoServiceAddPhotoTests
             currentUserContext,
             new RecipePhotoValidator(),
             new RecipePhotoFileNameNormalizer(),
-            new RecipePhotoOptions { MaxFileSizeBytes = 5, MaxPhotosPerRecipe = 20 },
+            new RecipePhotoOptions
+            {
+                MaxFileSizeBytes = 5,
+                MaxPhotosPerRecipe = 20
+            },
             new FixedTimeProvider(CreatedAt),
-            logger ?? new RecordingLogger()
-        );
+            logger ?? new RecordingLogger());
     }
 
-    private static FakeRecipeRepository CreateRecipeRepository(int? userId = null)
+    private static FakeRecipeRepository CreateRecipeRepository(
+        int? userId = null)
     {
         return new FakeRecipeRepository
         {
@@ -403,16 +469,20 @@ public sealed class RecipePhotoServiceAddPhotoTests
                 {
                     Id = 10,
                     Name = "Recipe 10",
-                    UserId = userId,
-                },
-            ],
+                    UserId = userId
+                }
+            ]
         };
     }
 
     private static CurrentUserContext CreateCurrentUser(int userId)
     {
         CurrentUserContext context = new();
-        context.SetCurrentUser(new User { Id = userId, Username = $"user-{userId}" });
+        context.SetCurrentUser(new User
+        {
+            Id = userId,
+            Username = $"user-{userId}"
+        });
         return context;
     }
 
@@ -483,12 +553,18 @@ public sealed class RecipePhotoServiceAddPhotoTests
 
         public List<RecipePhoto> GetByRecipeId(int recipeId)
         {
-            return Photos.Where(photo => photo.RecipeId == recipeId).ToList();
+            return Photos
+                .Where(photo => photo.RecipeId == recipeId)
+                .ToList();
         }
 
-        public List<RecipePhoto> GetByRecipeIdAndUserId(int recipeId, int userId)
+        public List<RecipePhoto> GetByRecipeIdAndUserId(
+            int recipeId,
+            int userId)
         {
-            return OwnerUserId == userId ? GetByRecipeId(recipeId) : [];
+            return OwnerUserId == userId
+                ? GetByRecipeId(recipeId)
+                : [];
         }
 
         public bool Delete(int photoId)
@@ -504,8 +580,10 @@ public sealed class RecipePhotoServiceAddPhotoTests
 
     private sealed class AddPhotoStorage : IRecipePhotoStorage
     {
-        private static readonly string StagedToken = "11111111111111111111111111111111";
-        private static readonly string DeletionToken = "22222222222222222222222222222222";
+        private static readonly string StagedToken =
+            "11111111111111111111111111111111";
+        private static readonly string DeletionToken =
+            "22222222222222222222222222222222";
 
         private byte[] _stagedContent = [];
 
@@ -531,13 +609,13 @@ public sealed class RecipePhotoServiceAddPhotoTests
 
         public bool DeleteFromQuarantineWasCalled { get; private set; }
 
-        public string FinalStorageFileName { get; private set; } = string.Empty;
+        public string FinalStorageFileName { get; private set; } =
+            string.Empty;
 
         public async Task<StagedRecipePhotoUpload> StageUploadAsync(
             Stream content,
             long maximumBytes,
-            CancellationToken cancellationToken = default
-        )
+            CancellationToken cancellationToken = default)
         {
             StageUploadWasCalled = true;
             cancellationToken.ThrowIfCancellationRequested();
@@ -552,12 +630,15 @@ public sealed class RecipePhotoServiceAddPhotoTests
 
             if (stagedContent.Length > maximumBytes)
             {
-                throw new RecipePhotoStorageLimitExceededException(maximumBytes);
+                throw new RecipePhotoStorageLimitExceededException(
+                    maximumBytes);
             }
 
             _stagedContent = stagedContent.ToArray();
             AfterStage?.Invoke();
-            return new StagedRecipePhotoUpload(StagedToken, _stagedContent.Length);
+            return new StagedRecipePhotoUpload(
+                StagedToken,
+                _stagedContent.Length);
         }
 
         public Stream OpenStagedUpload(StagedRecipePhotoUpload upload)
@@ -566,7 +647,9 @@ public sealed class RecipePhotoServiceAddPhotoTests
             return new MemoryStream(_stagedContent, writable: false);
         }
 
-        public string FinalizeUpload(StagedRecipePhotoUpload upload, RecipePhotoFormat format)
+        public string FinalizeUpload(
+            StagedRecipePhotoUpload upload,
+            RecipePhotoFormat format)
         {
             FinalizeUploadWasCalled = true;
 
@@ -575,8 +658,10 @@ public sealed class RecipePhotoServiceAddPhotoTests
                 throw FinalizeException;
             }
 
-            string extension = RecipePhotoFormats.GetCanonicalExtension(format)!;
-            FinalStorageFileName = "33333333333333333333333333333333" + extension;
+            string extension = RecipePhotoFormats
+                .GetCanonicalExtension(format)!;
+            FinalStorageFileName =
+                "33333333333333333333333333333333" + extension;
             AfterFinalize?.Invoke();
             return FinalStorageFileName;
         }
@@ -597,18 +682,21 @@ public sealed class RecipePhotoServiceAddPhotoTests
             throw new NotImplementedException();
         }
 
-        public StagedRecipePhotoDeletion? MoveToQuarantine(string storageFileName)
+        public StagedRecipePhotoDeletion? MoveToQuarantine(
+            string storageFileName)
         {
             MoveToQuarantineWasCalled = true;
             return new StagedRecipePhotoDeletion(DeletionToken);
         }
 
-        public void RestoreFromQuarantine(StagedRecipePhotoDeletion deletion)
+        public void RestoreFromQuarantine(
+            StagedRecipePhotoDeletion deletion)
         {
             throw new NotImplementedException();
         }
 
-        public void DeleteFromQuarantine(StagedRecipePhotoDeletion deletion)
+        public void DeleteFromQuarantine(
+            StagedRecipePhotoDeletion deletion)
         {
             DeleteFromQuarantineWasCalled = true;
 
@@ -618,17 +706,20 @@ public sealed class RecipePhotoServiceAddPhotoTests
             }
         }
 
-        public RecipePhotoStorageInventory<StagedRecipePhotoUploadInventoryItem> GetStagedUploads()
+        public RecipePhotoStorageInventory<StagedRecipePhotoUploadInventoryItem>
+            GetStagedUploads()
         {
             throw new NotImplementedException();
         }
 
-        public RecipePhotoStorageInventory<StagedRecipePhotoDeletionInventoryItem> GetQuarantinedDeletions()
+        public RecipePhotoStorageInventory<StagedRecipePhotoDeletionInventoryItem>
+            GetQuarantinedDeletions()
         {
             throw new NotImplementedException();
         }
 
-        public RecipePhotoStorageInventory<RecipePhotoStorageFileInventoryItem> GetFinalFiles()
+        public RecipePhotoStorageInventory<RecipePhotoStorageFileInventoryItem>
+            GetFinalFiles()
         {
             throw new NotImplementedException();
         }
@@ -659,17 +750,21 @@ public sealed class RecipePhotoServiceAddPhotoTests
             set => throw new NotSupportedException();
         }
 
-        public override void Flush() { }
+        public override void Flush()
+        {
+        }
 
-        public override int Read(byte[] buffer, int offset, int count)
+        public override int Read(
+            byte[] buffer,
+            int offset,
+            int count)
         {
             return _inner.Read(buffer, offset, count);
         }
 
         public override ValueTask<int> ReadAsync(
             Memory<byte> buffer,
-            CancellationToken cancellationToken = default
-        )
+            CancellationToken cancellationToken = default)
         {
             return _inner.ReadAsync(buffer, cancellationToken);
         }
@@ -737,8 +832,7 @@ public sealed class RecipePhotoServiceAddPhotoTests
             EventId eventId,
             TState state,
             Exception? exception,
-            Func<TState, Exception?, string> formatter
-        )
+            Func<TState, Exception?, string> formatter)
         {
             Levels.Add(logLevel);
         }

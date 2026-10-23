@@ -3,7 +3,10 @@ import test from "node:test";
 import { createDom } from "./helpers/createDom.js";
 import { loadClassicScript } from "./helpers/loadClassicScript.js";
 
-const extractorPath = new URL("../extractors/recipeExtractor.js", import.meta.url);
+const extractorPath = new URL(
+    "../extractors/recipeExtractor.js",
+    import.meta.url
+);
 
 const jsonLdRecipe = {
     name: "JSON-LD Recipe",

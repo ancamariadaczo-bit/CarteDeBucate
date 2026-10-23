@@ -2,7 +2,8 @@ using System.Text.Json;
 
 public sealed class FileSystemRecipePhotoStorageQuarantineTests : IDisposable
 {
-    private static readonly DateTimeOffset QuarantinedAt = new(2026, 10, 7, 10, 30, 0, TimeSpan.Zero);
+    private static readonly DateTimeOffset QuarantinedAt =
+        new(2026, 10, 7, 10, 30, 0, TimeSpan.Zero);
 
     private readonly string _rootPath;
     private readonly string _quarantinePath;
@@ -12,14 +13,14 @@ public sealed class FileSystemRecipePhotoStorageQuarantineTests : IDisposable
     {
         _rootPath = Path.Combine(
             Path.GetTempPath(),
-            $"recipe-photo-quarantine-tests-{Guid.NewGuid():N}"
-        );
-        _quarantinePath = Path.Combine(_rootPath, FileSystemRecipePhotoStorage.QuarantineDirectoryName);
+            $"recipe-photo-quarantine-tests-{Guid.NewGuid():N}");
+        _quarantinePath = Path.Combine(
+            _rootPath,
+            FileSystemRecipePhotoStorage.QuarantineDirectoryName);
         _storage = new FileSystemRecipePhotoStorage(
             _rootPath,
             Guid.NewGuid,
-            new FixedTimeProvider(QuarantinedAt)
-        );
+            new FixedTimeProvider(QuarantinedAt));
     }
 
     [Fact]
@@ -28,23 +29,34 @@ public sealed class FileSystemRecipePhotoStorageQuarantineTests : IDisposable
         byte[] content = [1, 2, 3];
         string storageFileName = await CreateFinalFileAsync(content);
 
-        StagedRecipePhotoDeletion? deletion = _storage.MoveToQuarantine(storageFileName);
+        StagedRecipePhotoDeletion? deletion =
+            _storage.MoveToQuarantine(storageFileName);
 
         Assert.NotNull(deletion);
         Assert.False(_storage.FinalFileExists(storageFileName));
 
-        string directoryPath = Assert.Single(Directory.GetDirectories(_quarantinePath));
+        string directoryPath = Assert.Single(
+            Directory.GetDirectories(_quarantinePath));
         Assert.Equal(deletion.Token, Path.GetFileName(directoryPath));
-        Assert.Equal(content, File.ReadAllBytes(Path.Combine(directoryPath, storageFileName)));
+        Assert.Equal(
+            content,
+            File.ReadAllBytes(
+                Path.Combine(directoryPath, storageFileName)));
 
         using JsonDocument descriptor = JsonDocument.Parse(
-            File.ReadAllText(Path.Combine(directoryPath, "descriptor.json"))
-        );
+            File.ReadAllText(
+                Path.Combine(directoryPath, "descriptor.json")));
         JsonElement root = descriptor.RootElement;
 
-        Assert.Equal(deletion.Token, root.GetProperty("token").GetString());
-        Assert.Equal(storageFileName, root.GetProperty("storageFileName").GetString());
-        Assert.Equal(QuarantinedAt.UtcDateTime, root.GetProperty("quarantinedAtUtc").GetDateTime());
+        Assert.Equal(
+            deletion.Token,
+            root.GetProperty("token").GetString());
+        Assert.Equal(
+            storageFileName,
+            root.GetProperty("storageFileName").GetString());
+        Assert.Equal(
+            QuarantinedAt.UtcDateTime,
+            root.GetProperty("quarantinedAtUtc").GetDateTime());
     }
 
     [Fact]
@@ -52,9 +64,11 @@ public sealed class FileSystemRecipePhotoStorageQuarantineTests : IDisposable
     {
         byte[] content = [1, 2, 3];
         string storageFileName = await CreateFinalFileAsync(content);
-        using Stream openContent = _storage.OpenFinalFile(storageFileName)!;
+        using Stream openContent =
+            _storage.OpenFinalFile(storageFileName)!;
 
-        StagedRecipePhotoDeletion? deletion = _storage.MoveToQuarantine(storageFileName);
+        StagedRecipePhotoDeletion? deletion =
+            _storage.MoveToQuarantine(storageFileName);
         using MemoryStream result = new();
         openContent.CopyTo(result);
 
@@ -68,12 +82,15 @@ public sealed class FileSystemRecipePhotoStorageQuarantineTests : IDisposable
     {
         byte[] content = [1, 2, 3];
         string storageFileName = await CreateFinalFileAsync(content);
-        StagedRecipePhotoDeletion deletion = _storage.MoveToQuarantine(storageFileName)!;
+        StagedRecipePhotoDeletion deletion =
+            _storage.MoveToQuarantine(storageFileName)!;
 
         _storage.RestoreFromQuarantine(deletion);
 
         Assert.True(_storage.FinalFileExists(storageFileName));
-        Assert.Equal(content, File.ReadAllBytes(Path.Combine(_rootPath, storageFileName)));
+        Assert.Equal(
+            content,
+            File.ReadAllBytes(Path.Combine(_rootPath, storageFileName)));
         Assert.Empty(Directory.GetDirectories(_quarantinePath));
     }
 
@@ -82,12 +99,15 @@ public sealed class FileSystemRecipePhotoStorageQuarantineTests : IDisposable
     {
         byte[] content = [1, 2, 3];
         string storageFileName = await CreateFinalFileAsync(content);
-        StagedRecipePhotoDeletion deletion = _storage.MoveToQuarantine(storageFileName)!;
+        StagedRecipePhotoDeletion deletion =
+            _storage.MoveToQuarantine(storageFileName)!;
         FileSystemRecipePhotoStorage restartedStorage = new(_rootPath);
 
         restartedStorage.RestoreFromQuarantine(deletion);
 
-        Assert.Equal(content, File.ReadAllBytes(Path.Combine(_rootPath, storageFileName)));
+        Assert.Equal(
+            content,
+            File.ReadAllBytes(Path.Combine(_rootPath, storageFileName)));
         Assert.Empty(Directory.GetDirectories(_quarantinePath));
     }
 
@@ -95,7 +115,8 @@ public sealed class FileSystemRecipePhotoStorageQuarantineTests : IDisposable
     public async Task DeleteFromQuarantine_ShouldDeleteContentPermanently()
     {
         string storageFileName = await CreateFinalFileAsync([1]);
-        StagedRecipePhotoDeletion deletion = _storage.MoveToQuarantine(storageFileName)!;
+        StagedRecipePhotoDeletion deletion =
+            _storage.MoveToQuarantine(storageFileName)!;
 
         _storage.DeleteFromQuarantine(deletion);
 
@@ -106,9 +127,11 @@ public sealed class FileSystemRecipePhotoStorageQuarantineTests : IDisposable
     [Fact]
     public void MoveToQuarantine_WhenFinalFileIsMissing_ShouldReturnNull()
     {
-        const string missingStorageFileName = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg";
+        const string missingStorageFileName =
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg";
 
-        StagedRecipePhotoDeletion? result = _storage.MoveToQuarantine(missingStorageFileName);
+        StagedRecipePhotoDeletion? result =
+            _storage.MoveToQuarantine(missingStorageFileName);
 
         Assert.Null(result);
         Assert.Empty(Directory.GetDirectories(_quarantinePath));
@@ -119,34 +142,45 @@ public sealed class FileSystemRecipePhotoStorageQuarantineTests : IDisposable
     {
         StagedRecipePhotoDeletion invalidDeletion = new("../outside");
 
-        Assert.Throws<ArgumentException>(() => _storage.RestoreFromQuarantine(invalidDeletion));
-        Assert.Throws<ArgumentException>(() => _storage.DeleteFromQuarantine(invalidDeletion));
+        Assert.Throws<ArgumentException>(() =>
+            _storage.RestoreFromQuarantine(invalidDeletion));
+        Assert.Throws<ArgumentException>(() =>
+            _storage.DeleteFromQuarantine(invalidDeletion));
     }
 
     [Fact]
     public async Task RestoreFromQuarantine_WhenFinalFileExists_ShouldNotOverwrite()
     {
         byte[] quarantinedContent = [1, 2, 3];
-        string storageFileName = await CreateFinalFileAsync(quarantinedContent);
-        StagedRecipePhotoDeletion deletion = _storage.MoveToQuarantine(storageFileName)!;
+        string storageFileName = await CreateFinalFileAsync(
+            quarantinedContent);
+        StagedRecipePhotoDeletion deletion =
+            _storage.MoveToQuarantine(storageFileName)!;
         byte[] existingContent = [9, 9, 9];
-        File.WriteAllBytes(Path.Combine(_rootPath, storageFileName), existingContent);
+        File.WriteAllBytes(
+            Path.Combine(_rootPath, storageFileName),
+            existingContent);
 
-        Assert.Throws<IOException>(() => _storage.RestoreFromQuarantine(deletion));
+        Assert.Throws<IOException>(() =>
+            _storage.RestoreFromQuarantine(deletion));
 
-        Assert.Equal(existingContent, File.ReadAllBytes(Path.Combine(_rootPath, storageFileName)));
-        string directoryPath = Assert.Single(Directory.GetDirectories(_quarantinePath));
+        Assert.Equal(
+            existingContent,
+            File.ReadAllBytes(Path.Combine(_rootPath, storageFileName)));
+        string directoryPath = Assert.Single(
+            Directory.GetDirectories(_quarantinePath));
         Assert.Equal(
             quarantinedContent,
-            File.ReadAllBytes(Path.Combine(directoryPath, storageFileName))
-        );
+            File.ReadAllBytes(
+                Path.Combine(directoryPath, storageFileName)));
     }
 
     [Fact]
     public async Task RestoreFromQuarantine_WhenRepeated_ShouldRemainSuccessful()
     {
         string storageFileName = await CreateFinalFileAsync([1]);
-        StagedRecipePhotoDeletion deletion = _storage.MoveToQuarantine(storageFileName)!;
+        StagedRecipePhotoDeletion deletion =
+            _storage.MoveToQuarantine(storageFileName)!;
 
         _storage.RestoreFromQuarantine(deletion);
         _storage.RestoreFromQuarantine(deletion);
@@ -158,7 +192,8 @@ public sealed class FileSystemRecipePhotoStorageQuarantineTests : IDisposable
     public async Task DeleteFromQuarantine_WhenRepeated_ShouldRemainSuccessful()
     {
         string storageFileName = await CreateFinalFileAsync([1]);
-        StagedRecipePhotoDeletion deletion = _storage.MoveToQuarantine(storageFileName)!;
+        StagedRecipePhotoDeletion deletion =
+            _storage.MoveToQuarantine(storageFileName)!;
 
         _storage.DeleteFromQuarantine(deletion);
         _storage.DeleteFromQuarantine(deletion);
@@ -179,10 +214,11 @@ public sealed class FileSystemRecipePhotoStorageQuarantineTests : IDisposable
         using MemoryStream source = new(content);
         StagedRecipePhotoUpload upload = await _storage.StageUploadAsync(
             source,
-            maximumBytes: content.Length
-        );
+            maximumBytes: content.Length);
 
-        return _storage.FinalizeUpload(upload, RecipePhotoFormat.Jpeg);
+        return _storage.FinalizeUpload(
+            upload,
+            RecipePhotoFormat.Jpeg);
     }
 
     private sealed class FixedTimeProvider : TimeProvider

@@ -49,7 +49,9 @@ public class FakeRecipeRepository : IRecipeRepository
     {
         GetAllRecipeSummariesWasCalled = true;
 
-        return Recipes.Select(ToRecipeSummary).ToList();
+        return Recipes
+            .Select(ToRecipeSummary)
+            .ToList();
     }
 
     public List<Recipe> GetAllRecipes()
@@ -82,7 +84,9 @@ public class FakeRecipeRepository : IRecipeRepository
 
     public List<Recipe> GetRecipesByUserId(int userId)
     {
-        return Recipes.Where(recipe => recipe.UserId == userId).ToList();
+        return Recipes
+            .Where(recipe => recipe.UserId == userId)
+            .ToList();
     }
 
     public List<RecipeSummary> GetRecipeSummariesByUserId(int userId)
@@ -90,21 +94,22 @@ public class FakeRecipeRepository : IRecipeRepository
         GetRecipeSummariesByUserIdWasCalled = true;
         UserIdPassedToGetRecipeSummariesByUserId = userId;
 
-        return Recipes.Where(recipe => recipe.UserId == userId).Select(ToRecipeSummary).ToList();
+        return Recipes
+            .Where(recipe => recipe.UserId == userId)
+            .Select(ToRecipeSummary)
+            .ToList();
     }
 
-    public PagedResult<RecipeSummary> GetRecipeSummariesPageByUserId(
-        int userId,
-        int pageNumber,
-        int pageSize
-    )
+    public PagedResult<RecipeSummary> GetRecipeSummariesPageByUserId(int userId, int pageNumber, int pageSize)
     {
         GetRecipeSummariesPageByUserIdWasCalled = true;
         UserIdPassedToGetRecipeSummariesPageByUserId = userId;
         PageNumberPassedToGetRecipeSummariesPage = pageNumber;
         PageSizePassedToGetRecipeSummariesPage = pageSize;
 
-        List<Recipe> recipesForUser = Recipes.Where(recipe => recipe.UserId == userId).ToList();
+        List<Recipe> recipesForUser = Recipes
+            .Where(recipe => recipe.UserId == userId)
+            .ToList();
 
         return CreateRecipeSummariesPage(recipesForUser, pageNumber, pageSize);
     }
@@ -115,15 +120,16 @@ public class FakeRecipeRepository : IRecipeRepository
         SearchTextPassedToSearchRecipes = searchText;
         UserIdPassedToSearchRecipes = userId;
 
-        return FilterRecipesBySearchText(searchText, userId).Select(ToRecipeSummary).ToList();
+        return FilterRecipesBySearchText(searchText, userId)
+            .Select(ToRecipeSummary)
+            .ToList();
     }
 
     public PagedResult<RecipeSummary> SearchRecipesPage(
         string searchText,
         int? userId,
         int pageNumber,
-        int pageSize
-    )
+        int pageSize)
     {
         SearchRecipesPageWasCalled = true;
         SearchTextPassedToSearchRecipesPage = searchText;
@@ -134,8 +140,7 @@ public class FakeRecipeRepository : IRecipeRepository
         return CreateRecipeSummariesPage(
             FilterRecipesBySearchText(searchText, userId),
             pageNumber,
-            pageSize
-        );
+            pageSize);
     }
 
     public bool HasRecipes()
@@ -157,7 +162,9 @@ public class FakeRecipeRepository : IRecipeRepository
     {
         GetRecipeByIdAndUserIdWasCalled = true;
 
-        return Recipes.FirstOrDefault(recipe => recipe.Id == recipeId && recipe.UserId == userId);
+        return Recipes.FirstOrDefault(recipe =>
+            recipe.Id == recipeId &&
+            recipe.UserId == userId);
     }
 
     public void AddRecipe(Recipe recipe)
@@ -225,7 +232,9 @@ public class FakeRecipeRepository : IRecipeRepository
             return true;
         }
 
-        return Recipes.Any(recipe => recipe.UserId == userId && recipe.SourceUrl == sourceUrl);
+        return Recipes.Any(recipe =>
+            recipe.UserId == userId &&
+            recipe.SourceUrl == sourceUrl);
     }
 
     public void DeleteRecipe(int recipeId)
@@ -258,8 +267,8 @@ public class FakeRecipeRepository : IRecipeRepository
         }
 
         Recipe? existingRecipe = Recipes.FirstOrDefault(recipe =>
-            recipe.Id == recipeId && recipe.UserId == userId
-        );
+            recipe.Id == recipeId &&
+            recipe.UserId == userId);
 
         if (existingRecipe != null)
         {
@@ -276,17 +285,18 @@ public class FakeRecipeRepository : IRecipeRepository
             SourceUrl = recipe.SourceUrl,
             SavedAt = recipe.SavedAt,
             Status = recipe.Status,
-            UserId = recipe.UserId,
+            UserId = recipe.UserId
         };
     }
 
     private PagedResult<RecipeSummary> CreateRecipeSummariesPage(
         IEnumerable<Recipe> recipes,
         int pageNumber,
-        int pageSize
-    )
+        int pageSize)
     {
-        List<Recipe> orderedRecipes = recipes.OrderByDescending(recipe => recipe.SavedAt).ToList();
+        List<Recipe> orderedRecipes = recipes
+            .OrderByDescending(recipe => recipe.SavedAt)
+            .ToList();
 
         int totalItems = orderedRecipes.Count;
         int normalizedPageNumber = Math.Max(1, pageNumber);
@@ -298,24 +308,24 @@ public class FakeRecipeRepository : IRecipeRepository
             .Select(ToRecipeSummary)
             .ToList();
 
-        return new PagedResult<RecipeSummary>(items, pageNumber, pageSize, totalItems);
+        return new PagedResult<RecipeSummary>(
+            items,
+            pageNumber,
+            pageSize,
+            totalItems);
     }
 
     private IEnumerable<Recipe> FilterRecipesBySearchText(string searchText, int? userId)
     {
-        return Recipes.Where(recipe =>
-            (!userId.HasValue || recipe.UserId == userId.Value)
-            && (
-                (recipe.Name ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase)
-                || (recipe.SourceUrl ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase)
-                || (recipe.Notes ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase)
-                || recipe.Ingredients.Any(ingredient =>
-                    ingredient.Contains(searchText, StringComparison.OrdinalIgnoreCase)
-                )
-                || recipe.Steps.Any(step =>
-                    step.Contains(searchText, StringComparison.OrdinalIgnoreCase)
-                )
-            )
-        );
+        return Recipes
+            .Where(recipe =>
+                (!userId.HasValue || recipe.UserId == userId.Value) &&
+                ((recipe.Name ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                (recipe.SourceUrl ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                (recipe.Notes ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                recipe.Ingredients.Any(ingredient =>
+                    ingredient.Contains(searchText, StringComparison.OrdinalIgnoreCase)) ||
+                recipe.Steps.Any(step =>
+                    step.Contains(searchText, StringComparison.OrdinalIgnoreCase))));
     }
 }

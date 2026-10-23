@@ -26,8 +26,7 @@ public class RecipesController : Controller
     public RecipesController(
         IRecipeLibraryService recipeLibraryService,
         IRecipeImporterService recipeImporterService,
-        ILogger<RecipesController> logger
-    )
+        ILogger<RecipesController> logger)
     {
         _recipeLibraryService = recipeLibraryService;
         _recipeImporterService = recipeImporterService;
@@ -50,30 +49,35 @@ public class RecipesController : Controller
             recipes = pagedResult.Items;
         }
 
-        if (pagedResult.TotalPages > 0 && pagedResult.PageNumber > pagedResult.TotalPages)
+        if (pagedResult.TotalPages > 0 &&
+            pagedResult.PageNumber > pagedResult.TotalPages)
         {
             return RedirectToAction(
                 nameof(Index),
-                new { pageNumber = pagedResult.TotalPages, searchText }
-            );
+                new
+                {
+                    pageNumber = pagedResult.TotalPages,
+                    searchText
+                });
         }
 
-        return View(
-            new RecipeIndexViewModel
-            {
-                Recipes = recipes,
-                SearchText = searchText ?? "",
-                PageNumber = pagedResult?.PageNumber ?? 1,
-                PageSize = pagedResult?.PageSize ?? PageSize,
-                TotalItems = pagedResult?.TotalItems ?? recipes.Count,
-                TotalPages = pagedResult?.TotalPages ?? 0,
-                HasPreviousPage = pagedResult?.HasPreviousPage ?? false,
-                HasNextPage = pagedResult?.HasNextPage ?? false,
-            }
-        );
+        return View(new RecipeIndexViewModel
+        {
+            Recipes = recipes,
+            SearchText = searchText ?? "",
+            PageNumber = pagedResult?.PageNumber ?? 1,
+            PageSize = pagedResult?.PageSize ?? PageSize,
+            TotalItems = pagedResult?.TotalItems ?? recipes.Count,
+            TotalPages = pagedResult?.TotalPages ?? 0,
+            HasPreviousPage = pagedResult?.HasPreviousPage ?? false,
+            HasNextPage = pagedResult?.HasNextPage ?? false
+        });
     }
 
-    public IActionResult Details(int id, int pageNumber = 1, string? searchText = null)
+    public IActionResult Details(
+        int id,
+        int pageNumber = 1,
+        string? searchText = null)
     {
         Recipe? recipe = _recipeLibraryService.GetRecipeById(id);
 
@@ -121,15 +125,16 @@ public class RecipesController : Controller
 
         TempData[SuccessMessageKey] = result.Message;
 
-        return RedirectToAction(nameof(Details), new { id = result.Recipe.Id });
+        return RedirectToAction(
+            nameof(Details),
+            new { id = result.Recipe.Id });
     }
 
     public IActionResult Edit(
         int id,
         string? returnTo = null,
         int pageNumber = 1,
-        string? searchText = null
-    )
+        string? searchText = null)
     {
         Recipe? recipe = _recipeLibraryService.GetRecipeById(id);
 
@@ -152,8 +157,7 @@ public class RecipesController : Controller
         RecipeFormViewModel model,
         string? returnTo = null,
         int pageNumber = 1,
-        string? searchText = null
-    )
+        string? searchText = null)
     {
         if (id != model.Id)
         {
@@ -185,7 +189,9 @@ public class RecipesController : Controller
 
         if (IsReturnToIndex(returnTo))
         {
-            return RedirectToAction(nameof(Index), new { pageNumber, searchText });
+            return RedirectToAction(
+                nameof(Index),
+                new { pageNumber, searchText });
         }
 
         return RedirectToAction(
@@ -194,17 +200,15 @@ public class RecipesController : Controller
             {
                 id = model.Id,
                 pageNumber,
-                searchText,
-            }
-        );
+                searchText
+            });
     }
 
     public IActionResult Delete(
         int id,
         string? returnTo = null,
         int pageNumber = 1,
-        string? searchText = null
-    )
+        string? searchText = null)
     {
         Recipe? recipe = _recipeLibraryService.GetRecipeById(id);
 
@@ -226,8 +230,7 @@ public class RecipesController : Controller
         int id,
         string? returnTo = null,
         int pageNumber = 1,
-        string? searchText = null
-    )
+        string? searchText = null)
     {
         RecipeSaveResult result = _recipeLibraryService.DeleteRecipe(id);
 
@@ -252,20 +255,28 @@ public class RecipesController : Controller
 
         if (IsReturnToIndex(returnTo))
         {
-            return RedirectToAction(nameof(Index), new { pageNumber, searchText });
+            return RedirectToAction(
+                nameof(Index),
+                new { pageNumber, searchText });
         }
 
-        return RedirectToAction(nameof(Index), new { pageNumber, searchText });
+        return RedirectToAction(
+            nameof(Index),
+            new { pageNumber, searchText });
     }
 
     private void SetEditCancelAction(string? returnTo)
     {
-        ViewData[EditCancelActionKey] = IsReturnToIndex(returnTo) ? nameof(Index) : nameof(Details);
+        ViewData[EditCancelActionKey] = IsReturnToIndex(returnTo)
+            ? nameof(Index)
+            : nameof(Details);
     }
 
     private void SetDeleteCancelAction(string? returnTo)
     {
-        ViewData[DeleteCancelActionKey] = IsReturnToIndex(returnTo) ? nameof(Index) : nameof(Details);
+        ViewData[DeleteCancelActionKey] = IsReturnToIndex(returnTo)
+            ? nameof(Index)
+            : nameof(Details);
     }
 
     private void SetPageNumber(int pageNumber)
@@ -280,7 +291,10 @@ public class RecipesController : Controller
 
     private static bool IsReturnToIndex(string? returnTo)
     {
-        return string.Equals(returnTo, ReturnToIndexValue, StringComparison.OrdinalIgnoreCase);
+        return string.Equals(
+            returnTo,
+            ReturnToIndexValue,
+            StringComparison.OrdinalIgnoreCase);
     }
 
     private IActionResult RecipeNotFound()
@@ -301,20 +315,20 @@ public class RecipesController : Controller
     {
         _logger.LogInformation("Recipe URL import started");
 
-        RecipeImportResult importResult = await _recipeImporterService.ImportRecipeFromUrlAsync(
-            url ?? ""
-        );
+        RecipeImportResult importResult =
+            await _recipeImporterService.ImportRecipeFromUrlAsync(url ?? "");
 
         if (!importResult.Success)
         {
             _logger.LogWarning(
                 "Recipe URL import failed. Reason: {FailureReason}",
-                importResult.Message
-            );
+                importResult.Message);
 
             if (IsMissingImportedRecipeDetails(importResult.Message))
             {
-                ModelState.AddModelError("url", ImportMissingRequiredDetailsMessage);
+                ModelState.AddModelError(
+                    "url",
+                    ImportMissingRequiredDetailsMessage);
                 ViewData[ShowManualAddRecipeLinkKey] = true;
             }
             else
@@ -327,7 +341,8 @@ public class RecipesController : Controller
 
         if (importResult.Recipe == null)
         {
-            _logger.LogWarning("Recipe URL import reported success without returning a recipe");
+            _logger.LogWarning(
+                "Recipe URL import reported success without returning a recipe");
 
             TempData[SuccessMessageKey] =
                 "Rețeta a fost importată, dar pagina de detalii nu a putut fi deschisă. Verifică lista de rețete.";
@@ -341,12 +356,13 @@ public class RecipesController : Controller
         {
             _logger.LogWarning(
                 "Imported recipe could not be saved. Reason: {FailureReason}",
-                result.Message
-            );
+                result.Message);
 
             if (IsMissingImportedRecipeDetails(result.Message))
             {
-                ModelState.AddModelError("url", ImportMissingRequiredDetailsMessage);
+                ModelState.AddModelError(
+                    "url",
+                    ImportMissingRequiredDetailsMessage);
                 ViewData[ShowManualAddRecipeLinkKey] = true;
             }
             else
@@ -360,8 +376,7 @@ public class RecipesController : Controller
         if (result.Recipe == null)
         {
             _logger.LogWarning(
-                "Imported recipe save reported success without returning the saved recipe"
-            );
+                "Imported recipe save reported success without returning the saved recipe");
 
             TempData[SuccessMessageKey] =
                 "Rețeta a fost importată, dar pagina de detalii nu a putut fi deschisă. Verifică lista de rețete.";
@@ -374,10 +389,11 @@ public class RecipesController : Controller
 
         _logger.LogInformation(
             "Recipe URL import completed successfully. Recipe identifier: {RecipeId}",
-            result.Recipe.Id
-        );
+            result.Recipe.Id);
 
-        return RedirectToAction(nameof(Details), new { id = result.Recipe.Id });
+        return RedirectToAction(
+            nameof(Details),
+            new { id = result.Recipe.Id });
     }
 
     private static bool IsMissingImportedRecipeDetails(string message)

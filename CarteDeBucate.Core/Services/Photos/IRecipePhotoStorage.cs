@@ -3,12 +3,13 @@ internal interface IRecipePhotoStorage
     Task<StagedRecipePhotoUpload> StageUploadAsync(
         Stream content,
         long maximumBytes,
-        CancellationToken cancellationToken = default
-    );
+        CancellationToken cancellationToken = default);
 
     Stream OpenStagedUpload(StagedRecipePhotoUpload upload);
 
-    string FinalizeUpload(StagedRecipePhotoUpload upload, RecipePhotoFormat format);
+    string FinalizeUpload(
+        StagedRecipePhotoUpload upload,
+        RecipePhotoFormat format);
 
     void AbandonUpload(StagedRecipePhotoUpload upload);
 
@@ -22,9 +23,12 @@ internal interface IRecipePhotoStorage
 
     void DeleteFromQuarantine(StagedRecipePhotoDeletion deletion);
 
-    RecipePhotoStorageInventory<StagedRecipePhotoUploadInventoryItem> GetStagedUploads();
+    RecipePhotoStorageInventory<StagedRecipePhotoUploadInventoryItem>
+        GetStagedUploads();
 
-    RecipePhotoStorageInventory<StagedRecipePhotoDeletionInventoryItem> GetQuarantinedDeletions();
+    RecipePhotoStorageInventory<StagedRecipePhotoDeletionInventoryItem>
+        GetQuarantinedDeletions();
 
-    RecipePhotoStorageInventory<RecipePhotoStorageFileInventoryItem> GetFinalFiles();
+    RecipePhotoStorageInventory<RecipePhotoStorageFileInventoryItem>
+        GetFinalFiles();
 }

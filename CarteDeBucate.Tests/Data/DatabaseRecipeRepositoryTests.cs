@@ -69,15 +69,14 @@ public class DatabaseRecipeRepositoryTests
         try
         {
             DatabaseRecipeRepository repository = CreateRepository(databasePath);
-            Recipe firstRecipe = CreateTestRecipe(sourceUrl: "https://example.com/first-batch-recipe");
+            Recipe firstRecipe = CreateTestRecipe(
+                sourceUrl: "https://example.com/first-batch-recipe");
             Recipe invalidSecondRecipe = CreateTestRecipe(
                 sourceUrl: "https://example.com/invalid-batch-recipe",
-                userId: 999
-            );
+                userId: 999);
 
             Assert.Throws<SqliteException>(() =>
-                repository.AddRecipes(new[] { firstRecipe, invalidSecondRecipe })
-            );
+                repository.AddRecipes(new[] { firstRecipe, invalidSecondRecipe }));
 
             Assert.Empty(repository.GetAllRecipes());
             Assert.Equal(0, firstRecipe.Id);
@@ -151,8 +150,7 @@ public class DatabaseRecipeRepositoryTests
             Recipe firstUserRecipe = CreateTestRecipe(userId: 1);
             Recipe secondUserRecipe = CreateTestRecipe(
                 sourceUrl: "https://example.com/other-user-recipe",
-                userId: 2
-            );
+                userId: 2);
 
             AddUser(databasePath, 1);
             AddUser(databasePath, 2);
@@ -217,8 +215,7 @@ public class DatabaseRecipeRepositoryTests
             Recipe firstUserRecipe = CreateTestRecipe(userId: 1);
             Recipe secondUserRecipe = CreateTestRecipe(
                 sourceUrl: "https://example.com/other-user-recipe",
-                userId: 2
-            );
+                userId: 2);
 
             AddUser(databasePath, 1);
             AddUser(databasePath, 2);
@@ -246,12 +243,12 @@ public class DatabaseRecipeRepositoryTests
         {
             DatabaseRecipeRepository repository = CreateRepository(databasePath);
             repository.AddRecipe(CreateTestRecipe(name: "First"));
-            repository.AddRecipe(
-                CreateTestRecipe(name: "Second", sourceUrl: "https://example.com/second")
-            );
-            repository.AddRecipe(
-                CreateTestRecipe(name: "Third", sourceUrl: "https://example.com/third")
-            );
+            repository.AddRecipe(CreateTestRecipe(
+                name: "Second",
+                sourceUrl: "https://example.com/second"));
+            repository.AddRecipe(CreateTestRecipe(
+                name: "Third",
+                sourceUrl: "https://example.com/third"));
 
             PagedResult<RecipeSummary> result = repository.GetRecipeSummariesPage(2, 2);
 
@@ -277,20 +274,17 @@ public class DatabaseRecipeRepositoryTests
 
             Recipe notesRecipe = CreateTestRecipe(
                 name: "Chocolate cake",
-                sourceUrl: "https://example.com/chocolate-cake"
-            );
+                sourceUrl: "https://example.com/chocolate-cake");
             notesRecipe.Notes = "Serve with raspberries.";
 
             Recipe ingredientRecipe = CreateTestRecipe(
                 name: "Breakfast bowl",
-                sourceUrl: "https://example.com/breakfast-bowl"
-            );
+                sourceUrl: "https://example.com/breakfast-bowl");
             ingredientRecipe.Ingredients = new List<string> { "Greek yogurt", "Honey" };
 
             Recipe stepRecipe = CreateTestRecipe(
                 name: "Simple salad",
-                sourceUrl: "https://example.com/simple-salad"
-            );
+                sourceUrl: "https://example.com/simple-salad");
             stepRecipe.Steps = new List<string> { "Toast the walnuts.", "Mix everything." };
 
             repository.AddRecipe(notesRecipe);
@@ -328,13 +322,11 @@ public class DatabaseRecipeRepositoryTests
             Recipe firstUserRecipe = CreateTestRecipe(
                 name: "Banana bread",
                 sourceUrl: "https://example.com/banana-bread",
-                userId: 1
-            );
+                userId: 1);
             Recipe secondUserRecipe = CreateTestRecipe(
                 name: "Banana pancakes",
                 sourceUrl: "https://example.com/banana-pancakes",
-                userId: 2
-            );
+                userId: 2);
 
             AddUser(databasePath, 1);
             AddUser(databasePath, 2);
@@ -365,22 +357,17 @@ public class DatabaseRecipeRepositoryTests
             AddUser(databasePath, 2);
 
             repository.AddRecipe(CreateTestRecipe(name: "Banana bread", userId: 1));
-            repository.AddRecipe(
-                CreateTestRecipe(
-                    name: "Banana cake",
-                    sourceUrl: "https://example.com/banana-cake",
-                    userId: 1
-                )
-            );
-            repository.AddRecipe(
-                CreateTestRecipe(
-                    name: "Banana pancakes",
-                    sourceUrl: "https://example.com/banana-pancakes",
-                    userId: 2
-                )
-            );
+            repository.AddRecipe(CreateTestRecipe(
+                name: "Banana cake",
+                sourceUrl: "https://example.com/banana-cake",
+                userId: 1));
+            repository.AddRecipe(CreateTestRecipe(
+                name: "Banana pancakes",
+                sourceUrl: "https://example.com/banana-pancakes",
+                userId: 2));
 
-            PagedResult<RecipeSummary> result = repository.SearchRecipesPage("banana", 1, 2, 1);
+            PagedResult<RecipeSummary> result =
+                repository.SearchRecipesPage("banana", 1, 2, 1);
 
             Assert.Single(result.Items);
             Assert.All(result.Items, recipe => Assert.Equal(1, recipe.UserId));
@@ -564,12 +551,8 @@ public class DatabaseRecipeRepositoryTests
             AddUser(databasePath, 1);
             repository.AddRecipe(CreateTestRecipe(userId: 1));
 
-            Assert.True(
-                repository.RecipeExistsBySourceUrlForUser(" HTTPS://EXAMPLE.COM/TEST-RECIPE ", 1)
-            );
-            Assert.False(
-                repository.RecipeExistsBySourceUrlForUser("https://example.com/test-recipe", 2)
-            );
+            Assert.True(repository.RecipeExistsBySourceUrlForUser(" HTTPS://EXAMPLE.COM/TEST-RECIPE ", 1));
+            Assert.False(repository.RecipeExistsBySourceUrlForUser("https://example.com/test-recipe", 2));
             Assert.False(repository.RecipeExistsBySourceUrlForUser("", 1));
         }
         finally
@@ -596,9 +579,18 @@ public class DatabaseRecipeRepositoryTests
             recipe.Notes = "Updated notes";
             recipe.SavedAt = new DateTime(2026, 5, 19, 10, 30, 0);
 
-            recipe.Ingredients = new List<string> { "300 g almond flour", "3 eggs", "1 pinch of salt" };
+            recipe.Ingredients = new List<string>
+            {
+                "300 g almond flour",
+                "3 eggs",
+                "1 pinch of salt"
+            };
 
-            recipe.Steps = new List<string> { "Mix everything.", "Bake until golden." };
+            recipe.Steps = new List<string>
+            {
+                "Mix everything.",
+                "Bake until golden."
+            };
 
             repository.UpdateRecipe(recipe);
 
@@ -679,8 +671,7 @@ public class DatabaseRecipeRepositoryTests
             Recipe changedRecipe = CreateTestRecipe(
                 name: "Should not be saved",
                 sourceUrl: "https://example.com/changed",
-                userId: 3
-            );
+                userId: 3);
             changedRecipe.Id = recipe.Id;
 
             repository.UpdateRecipeForUser(changedRecipe, 4);
@@ -779,7 +770,9 @@ public class DatabaseRecipeRepositoryTests
         DatabaseInitializer databaseInitializer = new DatabaseInitializer(databasePath);
         databaseInitializer.Initialize();
 
-        return new DatabaseRecipeRepository(databasePath, NullLogger<DatabaseRecipeRepository>.Instance);
+        return new DatabaseRecipeRepository(
+            databasePath,
+            NullLogger<DatabaseRecipeRepository>.Instance);
     }
 
     private static void AddUser(string databasePath, int userId)
@@ -805,8 +798,7 @@ public class DatabaseRecipeRepositoryTests
     private static Recipe CreateTestRecipe(
         string name = "Test recipe",
         string sourceUrl = "https://example.com/test-recipe",
-        int? userId = null
-    )
+        int? userId = null)
     {
         return new Recipe
         {
@@ -815,14 +807,24 @@ public class DatabaseRecipeRepositoryTests
             SavedAt = new DateTime(2026, 5, 19, 10, 0, 0),
             Notes = "Test notes",
             UserId = userId,
-            Ingredients = new List<string> { "200 g flour", "2 eggs" },
-            Steps = new List<string> { "Mix ingredients.", "Bake for 30 minutes." },
+            Ingredients = new List<string>
+            {
+                "200 g flour",
+                "2 eggs"
+            },
+            Steps = new List<string>
+            {
+                "Mix ingredients.",
+                "Bake for 30 minutes."
+            }
         };
     }
 
     private static string CreateTemporaryDatabasePath()
     {
-        return Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.db");
+        return Path.Combine(
+            Path.GetTempPath(),
+            $"{Guid.NewGuid()}.db");
     }
 
     private static void DeleteDatabaseFile(string databasePath)

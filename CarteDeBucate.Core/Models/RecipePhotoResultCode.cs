@@ -13,5 +13,5 @@ public enum RecipePhotoResultCode
     InvalidContent = 10,
     ContentFileMissing = 11,
     StorageFailure = 12,
-    PersistenceFailure = 13,
+    PersistenceFailure = 13
 }

@@ -15,8 +15,7 @@ public class ClassicConsoleRecipeApp : IRecipeApp
         IRecipeConsoleWriter writer,
         IRecipeImporterService importerService,
         IRecipeLibraryService recipeLibraryService,
-        IRecipeBackupService backupService
-    )
+        IRecipeBackupService backupService)
     {
         _reader = reader;
         _writer = writer;
@@ -94,11 +93,7 @@ public class ClassicConsoleRecipeApp : IRecipeApp
         return new List<MenuOption>
         {
             new MenuOption { Key = MenuKeys.AddRecipe, Text = AppTexts.MenuAddRecipe },
-            new MenuOption
-            {
-                Key = MenuKeys.ImportRecipeFromUrl,
-                Text = AppTexts.MenuImportRecipeFromUrl,
-            },
+            new MenuOption { Key = MenuKeys.ImportRecipeFromUrl, Text = AppTexts.MenuImportRecipeFromUrl },
             new MenuOption { Key = MenuKeys.ShowRecipes, Text = AppTexts.MenuShowRecipes },
             new MenuOption { Key = MenuKeys.SearchRecipe, Text = AppTexts.MenuSearchRecipe },
             new MenuOption { Key = MenuKeys.ViewRecipeDetails, Text = AppTexts.MenuViewRecipeDetails },
@@ -106,7 +101,7 @@ public class ClassicConsoleRecipeApp : IRecipeApp
             new MenuOption { Key = MenuKeys.DeleteRecipe, Text = AppTexts.MenuDeleteRecipe },
             new MenuOption { Key = MenuKeys.ExportBackup, Text = AppTexts.MenuExportBackup },
             new MenuOption { Key = MenuKeys.ImportBackup, Text = AppTexts.MenuImportBackup },
-            new MenuOption { Key = MenuKeys.Exit, Text = AppTexts.MenuExit },
+            new MenuOption { Key = MenuKeys.Exit, Text = AppTexts.MenuExit }
         };
     }
 
@@ -176,10 +171,8 @@ public class ClassicConsoleRecipeApp : IRecipeApp
 
         while (true)
         {
-            PagedResult<RecipeSummary> recipesPage = _recipeLibraryService.GetRecipeSummariesPage(
-                pageNumber,
-                PageSize
-            );
+            PagedResult<RecipeSummary> recipesPage =
+                _recipeLibraryService.GetRecipeSummariesPage(pageNumber, PageSize);
 
             if (recipesPage.Items.Count == 0)
             {
@@ -188,9 +181,10 @@ public class ClassicConsoleRecipeApp : IRecipeApp
             }
 
             _writer.DisplayRecipeList(recipesPage.Items);
-            _writer.DisplayMessage(
-                string.Format(AppTexts.PaginationStatus, recipesPage.PageNumber, recipesPage.TotalPages)
-            );
+            _writer.DisplayMessage(string.Format(
+                AppTexts.PaginationStatus,
+                recipesPage.PageNumber,
+                recipesPage.TotalPages));
 
             PaginationAction paginationAction = _reader.ReadPaginationAction();
 
@@ -242,29 +236,23 @@ public class ClassicConsoleRecipeApp : IRecipeApp
 
         while (true)
         {
-            PagedResult<RecipeSummary> searchResultsPage = _recipeLibraryService.SearchRecipesPage(
-                searchText,
-                pageNumber,
-                PageSize
-            );
+            PagedResult<RecipeSummary> searchResultsPage =
+                _recipeLibraryService.SearchRecipesPage(searchText, pageNumber, PageSize);
 
             _writer.DisplaySearchResults(searchResultsPage.Items);
-            _writer.DisplayMessage(
-                string.Format(AppTexts.SearchResultsTotal, searchResultsPage.TotalItems)
-            );
+            _writer.DisplayMessage(string.Format(
+                AppTexts.SearchResultsTotal,
+                searchResultsPage.TotalItems));
 
             if (searchResultsPage.TotalItems == 0)
             {
                 return;
             }
 
-            _writer.DisplayMessage(
-                string.Format(
-                    AppTexts.PaginationStatus,
-                    searchResultsPage.PageNumber,
-                    searchResultsPage.TotalPages
-                )
-            );
+            _writer.DisplayMessage(string.Format(
+                AppTexts.PaginationStatus,
+                searchResultsPage.PageNumber,
+                searchResultsPage.TotalPages));
 
             PaginationAction paginationAction = _reader.ReadPaginationAction();
 

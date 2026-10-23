@@ -1,4 +1,7 @@
-import { recipeExistsBySourceUrl, saveRecipeToApi } from "./api/recipeApiClient.js";
+import {
+    recipeExistsBySourceUrl,
+    saveRecipeToApi
+} from "./api/recipeApiClient.js";
 import { getCurrentUser } from "./api/authenticationApiClient.js";
 import { getAccessToken, removeAccessToken } from "./auth/authStorage.js";
 import { resolveAuthenticationState } from "./auth/authenticationState.js";
@@ -24,7 +27,9 @@ async function login() {
     });
 
     if (!response?.success) {
-        throw new Error(response?.error ?? "Login failed.");
+        throw new Error(
+            response?.error ?? "Login failed."
+        );
     }
 }
 
@@ -41,12 +46,18 @@ const editorController = initializeEditController({
     saveRecipeToApi: async recipe => {
         const accessToken = await getAccessToken();
 
-        return saveRecipeToApi(recipe, accessToken);
+        return saveRecipeToApi(
+            recipe,
+            accessToken
+        );
     },
     recipeExistsBySourceUrl: async sourceUrl => {
         const accessToken = await getAccessToken();
 
-        return recipeExistsBySourceUrl(sourceUrl, accessToken);
+        return recipeExistsBySourceUrl(
+            sourceUrl,
+            accessToken
+        );
     },
     removeAccessToken,
     login,

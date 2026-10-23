@@ -67,60 +67,48 @@ test("parses only valid object payloads", () => {
 });
 
 test("requires Source URL and converts an empty optional Image URL to null", () => {
-    const missingSource = validateAndBuildEditedRecipe(
-        {},
-        {
-            name: "Soup",
-            sourceUrl: " ",
-            imageUrl: " ",
-            ingredients: ["Water"],
-            steps: ["Boil."]
-        }
-    );
+    const missingSource = validateAndBuildEditedRecipe({}, {
+        name: "Soup",
+        sourceUrl: " ",
+        imageUrl: " ",
+        ingredients: ["Water"],
+        steps: ["Boil."]
+    });
 
     assert.deepEqual(missingSource, {
         success: false,
         errors: ["Source URL is required."]
     });
 
-    const valid = validateAndBuildEditedRecipe(
-        {},
-        {
-            name: "Soup",
-            sourceUrl: " https://example.test/soup ",
-            imageUrl: " ",
-            ingredients: ["Water"],
-            steps: ["Boil."]
-        }
-    );
+    const valid = validateAndBuildEditedRecipe({}, {
+        name: "Soup",
+        sourceUrl: " https://example.test/soup ",
+        imageUrl: " ",
+        ingredients: ["Water"],
+        steps: ["Boil."]
+    });
 
     assert.equal(valid.recipe.imageUrl, null);
     assert.equal(valid.recipe.sourceUrl, "https://example.test/soup");
 });
 
 test("returns all existing validation messages together", () => {
-    assert.deepEqual(
-        validateAndBuildEditedRecipe(
-            {},
-            {
-                name: " ",
-                sourceUrl: "ftp://example.test/recipe",
-                imageUrl: "data:image/png;base64,abc",
-                ingredients: [" ", 10],
-                steps: ["\n  "]
-            }
-        ),
-        {
-            success: false,
-            errors: [
-                "Recipe name is required.",
-                "Source URL must be a valid HTTP or HTTPS URL.",
-                "Image URL must be a valid HTTP or HTTPS URL.",
-                "At least one ingredient is required.",
-                "At least one instruction is required."
-            ]
-        }
-    );
+    assert.deepEqual(validateAndBuildEditedRecipe({}, {
+        name: " ",
+        sourceUrl: "ftp://example.test/recipe",
+        imageUrl: "data:image/png;base64,abc",
+        ingredients: [" ", 10],
+        steps: ["\n  "]
+    }), {
+        success: false,
+        errors: [
+            "Recipe name is required.",
+            "Source URL must be a valid HTTP or HTTPS URL.",
+            "Image URL must be a valid HTTP or HTTPS URL.",
+            "At least one ingredient is required.",
+            "At least one instruction is required."
+        ]
+    });
 });
 
 test("preserves author and extra properties without modifying input data", () => {

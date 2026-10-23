@@ -4,20 +4,26 @@ import test from "node:test";
 import { createDom } from "./helpers/createDom.js";
 import { loadClassicScript } from "./helpers/loadClassicScript.js";
 
-const importerPath = new URL("../extractors/jsonLdImporter.js", import.meta.url);
+const importerPath = new URL(
+    "../extractors/jsonLdImporter.js",
+    import.meta.url
+);
 
 async function loadFixture(name) {
-    return JSON.parse(await readFile(new URL(`./fixtures/json-ld/${name}`, import.meta.url), "utf8"));
+    return JSON.parse(await readFile(
+        new URL(`./fixtures/json-ld/${name}`, import.meta.url),
+        "utf8"
+    ));
 }
 
 async function extractFromValues(values, url = "https://recipes.example.test/json-ld") {
-    const scripts = values
-        .map(value => {
-            const content = typeof value === "string" ? value : JSON.stringify(value);
+    const scripts = values.map(value => {
+        const content = typeof value === "string"
+            ? value
+            : JSON.stringify(value);
 
-            return `<script type="application/ld+json">${content}</script>`;
-        })
-        .join("");
+        return `<script type="application/ld+json">${content}</script>`;
+    }).join("");
 
     const context = createDom({
         html: `<!DOCTYPE html><html><body>${scripts}</body></html>`,
@@ -35,7 +41,9 @@ async function extractFromValues(values, url = "https://recipes.example.test/jso
 }
 
 function toPlain(value) {
-    return value === null || value === undefined ? value : JSON.parse(JSON.stringify(value));
+    return value === null || value === undefined
+        ? value
+        : JSON.parse(JSON.stringify(value));
 }
 
 test("returns null when the page has no JSON-LD scripts", async () => {
@@ -121,12 +129,10 @@ test("skips incomplete recipes and returns the first complete JSON-LD candidate"
     const scenarios = [
         {
             name: "same @graph",
-            values: [
-                {
-                    "@context": "https://schema.org",
-                    "@graph": [incompleteRecipe, completeRecipe]
-                }
-            ]
+            values: [{
+                "@context": "https://schema.org",
+                "@graph": [incompleteRecipe, completeRecipe]
+            }]
         },
         {
             name: "later JSON-LD script",
@@ -150,16 +156,13 @@ test("skips incomplete recipes and returns the first complete JSON-LD candidate"
 });
 
 test("keeps the first incomplete JSON-LD candidate when no complete recipe exists", async () => {
-    const { result, cleanup } = await extractFromValues([
-        {
-            "@type": "Recipe",
-            name: "Incomplete recipe"
-        },
-        {
-            "@type": "Recipe",
-            recipeIngredient: ["Water"]
-        }
-    ]);
+    const { result, cleanup } = await extractFromValues([{
+        "@type": "Recipe",
+        name: "Incomplete recipe"
+    }, {
+        "@type": "Recipe",
+        recipeIngredient: ["Water"]
+    }]);
 
     try {
         assert.equal(result.name, "Incomplete recipe");
@@ -179,13 +182,11 @@ test("normalizes string, object, and array author values", async t => {
 
     for (const scenario of scenarios) {
         await t.test(JSON.stringify(scenario.author), async () => {
-            const { result, cleanup } = await extractFromValues([
-                {
-                    "@type": "Recipe",
-                    name: "Recipe",
-                    author: scenario.author
-                }
-            ]);
+            const { result, cleanup } = await extractFromValues([{
+                "@type": "Recipe",
+                name: "Recipe",
+                author: scenario.author
+            }]);
 
             try {
                 assert.equal(result.author, scenario.expected);
@@ -198,17 +199,20 @@ test("normalizes string, object, and array author values", async t => {
 
 test("normalizes string, object, and array image values", async t => {
     const expected = "https://images.example.test/recipe.jpg";
-    const scenarios = [expected, { url: expected }, { contentUrl: expected }, [{ url: expected }]];
+    const scenarios = [
+        expected,
+        { url: expected },
+        { contentUrl: expected },
+        [{ url: expected }]
+    ];
 
     for (const image of scenarios) {
         await t.test(JSON.stringify(image), async () => {
-            const { result, cleanup } = await extractFromValues([
-                {
-                    "@type": "Recipe",
-                    name: "Recipe",
-                    image
-                }
-            ]);
+            const { result, cleanup } = await extractFromValues([{
+                "@type": "Recipe",
+                name: "Recipe",
+                image
+            }]);
 
             try {
                 assert.equal(result.imageUrl, expected);
@@ -252,13 +256,11 @@ test("resolves relative images and skips unsafe image candidates", async t => {
 
     for (const scenario of scenarios) {
         await t.test(scenario.name, async () => {
-            const { result, cleanup } = await extractFromValues([
-                {
-                    "@type": "Recipe",
-                    name: "Recipe",
-                    image: scenario.image
-                }
-            ]);
+            const { result, cleanup } = await extractFromValues([{
+                "@type": "Recipe",
+                name: "Recipe",
+                image: scenario.image
+            }]);
 
             try {
                 assert.equal(result.imageUrl, scenario.expected);
@@ -270,13 +272,11 @@ test("resolves relative images and skips unsafe image candidates", async t => {
 });
 
 test("rejects JSON-LD images that do not use HTTP or HTTPS", async () => {
-    const { result, cleanup } = await extractFromValues([
-        {
-            "@type": "Recipe",
-            name: "Recipe",
-            image: ["javascript:alert(1)", "data:image/png;base64,AA=="]
-        }
-    ]);
+    const { result, cleanup } = await extractFromValues([{
+        "@type": "Recipe",
+        name: "Recipe",
+        image: ["javascript:alert(1)", "data:image/png;base64,AA=="]
+    }]);
 
     try {
         assert.equal(result.imageUrl, null);

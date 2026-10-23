@@ -3,7 +3,10 @@ import test from "node:test";
 import { createDom, createDomFromFile } from "./helpers/createDom.js";
 import { loadClassicScript } from "./helpers/loadClassicScript.js";
 
-const importerPath = new URL("../extractors/htmlImporter.js", import.meta.url);
+const importerPath = new URL(
+    "../extractors/htmlImporter.js",
+    import.meta.url
+);
 
 async function extractFromHtml(html, url = "https://recipes.example.test/html") {
     const context = createDom({ html, url, runScripts: true });
@@ -16,10 +19,10 @@ async function extractFromHtml(html, url = "https://recipes.example.test/html") 
 }
 
 async function extractFromFixture(name, url) {
-    const context = await createDomFromFile(new URL(`./fixtures/html/${name}`, import.meta.url), {
-        url,
-        runScripts: true
-    });
+    const context = await createDomFromFile(
+        new URL(`./fixtures/html/${name}`, import.meta.url),
+        { url, runScripts: true }
+    );
     await loadClassicScript(context.window, importerPath);
 
     return {
@@ -29,7 +32,9 @@ async function extractFromFixture(name, url) {
 }
 
 function toPlain(value) {
-    return value === null ? null : JSON.parse(JSON.stringify(value));
+    return value === null
+        ? null
+        : JSON.parse(JSON.stringify(value));
 }
 
 test("extracts structured fields, cleans whitespace, and removes duplicates", async () => {
@@ -362,17 +367,17 @@ test("returns null when any required recipe data is missing", async t => {
 });
 
 test("uses the document URL as sourceUrl", async () => {
-    const context = await extractFromHtml(
-        `
+    const context = await extractFromHtml(`
         <h1>Recipe</h1>
         <span itemprop="recipeIngredient">Water</span>
         <span itemprop="recipeInstructions">Boil.</span>
-    `,
-        "https://recipes.example.test/original?portion=2"
-    );
+    `, "https://recipes.example.test/original?portion=2");
 
     try {
-        assert.equal(context.result.sourceUrl, "https://recipes.example.test/original?portion=2");
+        assert.equal(
+            context.result.sourceUrl,
+            "https://recipes.example.test/original?portion=2"
+        );
     } finally {
         context.cleanup();
     }

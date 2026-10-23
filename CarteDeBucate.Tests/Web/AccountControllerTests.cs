@@ -15,7 +15,8 @@ public class AccountControllerTests
     [Fact]
     public void LoginGet_ShouldReturnViewWithReturnUrl()
     {
-        AccountController controller = CreateController(new FakeAuthenticationService());
+        AccountController controller = CreateController(
+            new FakeAuthenticationService());
 
         IActionResult result = controller.Login("/Recipes/Create");
 
@@ -29,13 +30,16 @@ public class AccountControllerTests
     {
         AccountController controller = CreateController(
             new FakeAuthenticationService(),
-            user: CreateAuthenticatedUser()
-        );
+            user: CreateAuthenticatedUser());
 
-        IActionResult result = controller.Login("/api/authentication/extension-complete");
+        IActionResult result = controller.Login(
+            "/api/authentication/extension-complete");
 
-        LocalRedirectResult redirectResult = Assert.IsType<LocalRedirectResult>(result);
-        Assert.Equal("/api/authentication/extension-complete", redirectResult.Url);
+        LocalRedirectResult redirectResult =
+            Assert.IsType<LocalRedirectResult>(result);
+        Assert.Equal(
+            "/api/authentication/extension-complete",
+            redirectResult.Url);
     }
 
     [Fact]
@@ -43,12 +47,12 @@ public class AccountControllerTests
     {
         AccountController controller = CreateController(
             new FakeAuthenticationService(),
-            user: CreateAuthenticatedUser()
-        );
+            user: CreateAuthenticatedUser());
 
         IActionResult result = controller.Login();
 
-        RedirectToActionResult redirectResult = Assert.IsType<RedirectToActionResult>(result);
+        RedirectToActionResult redirectResult =
+            Assert.IsType<RedirectToActionResult>(result);
         Assert.Equal(nameof(RecipesController.Index), redirectResult.ActionName);
         Assert.Equal("Recipes", redirectResult.ControllerName);
     }
@@ -58,12 +62,12 @@ public class AccountControllerTests
     {
         AccountController controller = CreateController(
             new FakeAuthenticationService(),
-            user: CreateAuthenticatedUser()
-        );
+            user: CreateAuthenticatedUser());
 
         IActionResult result = controller.Login("https://example.test/steal-cookie");
 
-        RedirectToActionResult redirectResult = Assert.IsType<RedirectToActionResult>(result);
+        RedirectToActionResult redirectResult =
+            Assert.IsType<RedirectToActionResult>(result);
         Assert.Equal(nameof(RecipesController.Index), redirectResult.ActionName);
         Assert.Equal("Recipes", redirectResult.ControllerName);
     }
@@ -91,8 +95,8 @@ public class AccountControllerTests
             LoginResult = new AuthenticationResult
             {
                 IsSuccess = false,
-                Message = "Invalid username or password.",
-            },
+                Message = "Invalid username or password."
+            }
         };
         AccountController controller = CreateController(authenticationService);
         LoginViewModel model = CreateLoginModel();
@@ -112,36 +116,35 @@ public class AccountControllerTests
     {
         FakeAuthenticationService authenticationService = new FakeAuthenticationService
         {
-            LoginResult = CreateSuccessfulAuthenticationResult(),
+            LoginResult = CreateSuccessfulAuthenticationResult()
         };
-        TestHttpAuthenticationService httpAuthenticationService = new TestHttpAuthenticationService();
+        TestHttpAuthenticationService httpAuthenticationService =
+            new TestHttpAuthenticationService();
         AccountController controller = CreateController(
             authenticationService,
-            httpAuthenticationService: httpAuthenticationService
-        );
+            httpAuthenticationService: httpAuthenticationService);
 
         IActionResult result = await controller.Login(CreateLoginModel());
 
-        RedirectToActionResult redirectResult = Assert.IsType<RedirectToActionResult>(result);
+        RedirectToActionResult redirectResult =
+            Assert.IsType<RedirectToActionResult>(result);
         Assert.Equal(nameof(RecipesController.Index), redirectResult.ActionName);
         Assert.Equal("Recipes", redirectResult.ControllerName);
         Assert.True(httpAuthenticationService.SignInWasCalled);
         Assert.Equal(
             CookieAuthenticationDefaults.AuthenticationScheme,
-            httpAuthenticationService.SignInScheme
-        );
+            httpAuthenticationService.SignInScheme);
         Assert.Equal(
             "12",
-            httpAuthenticationService
-                .SignedInPrincipal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)
-                ?.Value
-        );
+            httpAuthenticationService.SignedInPrincipal?.FindFirst(
+                System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
     }
 
     [Fact]
     public void RegisterGet_ShouldReturnViewWithEmptyModel()
     {
-        AccountController controller = CreateController(new FakeAuthenticationService());
+        AccountController controller = CreateController(
+            new FakeAuthenticationService());
 
         IActionResult result = controller.Register();
 
@@ -169,23 +172,24 @@ public class AccountControllerTests
     {
         FakeAuthenticationService authenticationService = new FakeAuthenticationService
         {
-            RegisterResult = CreateSuccessfulAuthenticationResult(),
+            RegisterResult = CreateSuccessfulAuthenticationResult()
         };
-        TestHttpAuthenticationService httpAuthenticationService = new TestHttpAuthenticationService();
+        TestHttpAuthenticationService httpAuthenticationService =
+            new TestHttpAuthenticationService();
         AccountController controller = CreateController(
             authenticationService,
-            httpAuthenticationService: httpAuthenticationService
-        );
+            httpAuthenticationService: httpAuthenticationService);
         RegisterViewModel model = new RegisterViewModel
         {
             Username = "anca",
             Password = "secret-password",
-            ConfirmPassword = "secret-password",
+            ConfirmPassword = "secret-password"
         };
 
         IActionResult result = await controller.Register(model);
 
-        RedirectToActionResult redirectResult = Assert.IsType<RedirectToActionResult>(result);
+        RedirectToActionResult redirectResult =
+            Assert.IsType<RedirectToActionResult>(result);
         Assert.Equal(nameof(RecipesController.Index), redirectResult.ActionName);
         Assert.Equal("Recipes", redirectResult.ControllerName);
         Assert.True(authenticationService.RegisterWasCalled);
@@ -196,27 +200,31 @@ public class AccountControllerTests
     public async Task Logout_ShouldSignOutAndRedirectToLogin()
     {
         FakeAuthenticationService authenticationService = new FakeAuthenticationService();
-        TestHttpAuthenticationService httpAuthenticationService = new TestHttpAuthenticationService();
+        TestHttpAuthenticationService httpAuthenticationService =
+            new TestHttpAuthenticationService();
         AccountController controller = CreateController(
             authenticationService,
-            httpAuthenticationService: httpAuthenticationService
-        );
+            httpAuthenticationService: httpAuthenticationService);
 
         IActionResult result = await controller.Logout();
 
-        RedirectToActionResult redirectResult = Assert.IsType<RedirectToActionResult>(result);
+        RedirectToActionResult redirectResult =
+            Assert.IsType<RedirectToActionResult>(result);
         Assert.Equal(nameof(AccountController.Login), redirectResult.ActionName);
         Assert.True(authenticationService.LogoutWasCalled);
         Assert.True(httpAuthenticationService.SignOutWasCalled);
         Assert.Equal(
             CookieAuthenticationDefaults.AuthenticationScheme,
-            httpAuthenticationService.SignOutScheme
-        );
+            httpAuthenticationService.SignOutScheme);
     }
 
     private static LoginViewModel CreateLoginModel()
     {
-        return new LoginViewModel { Username = "anca", Password = "secret-password" };
+        return new LoginViewModel
+        {
+            Username = "anca",
+            Password = "secret-password"
+        };
     }
 
     private static AuthenticationResult CreateSuccessfulAuthenticationResult()
@@ -225,16 +233,22 @@ public class AccountControllerTests
         {
             IsSuccess = true,
             Message = "Login successful.",
-            User = new User { Id = 12, Username = "anca" },
+            User = new User
+            {
+                Id = 12,
+                Username = "anca"
+            }
         };
     }
 
     private static ClaimsPrincipal CreateAuthenticatedUser()
     {
         ClaimsIdentity identity = new ClaimsIdentity(
-            [new Claim(ClaimTypes.NameIdentifier, "12"), new Claim(ClaimTypes.Name, "anca")],
-            CookieAuthenticationDefaults.AuthenticationScheme
-        );
+            [
+                new Claim(ClaimTypes.NameIdentifier, "12"),
+                new Claim(ClaimTypes.Name, "anca")
+            ],
+            CookieAuthenticationDefaults.AuthenticationScheme);
 
         return new ClaimsPrincipal(identity);
     }
@@ -242,28 +256,30 @@ public class AccountControllerTests
     private static AccountController CreateController(
         FakeAuthenticationService authenticationService,
         TestHttpAuthenticationService? httpAuthenticationService = null,
-        ClaimsPrincipal? user = null
-    )
+        ClaimsPrincipal? user = null)
     {
         ServiceCollection services = new ServiceCollection();
         httpAuthenticationService ??= new TestHttpAuthenticationService();
         services.AddSingleton<Microsoft.AspNetCore.Authentication.IAuthenticationService>(
-            httpAuthenticationService
-        );
+            httpAuthenticationService);
 
         DefaultHttpContext httpContext = new DefaultHttpContext
         {
             RequestServices = services.BuildServiceProvider(),
-            User = user ?? new ClaimsPrincipal(),
+            User = user ?? new ClaimsPrincipal()
         };
         AccountController controller = new AccountController(
             authenticationService,
-            NullLogger<AccountController>.Instance
-        )
+            NullLogger<AccountController>.Instance)
         {
-            ControllerContext = new ControllerContext { HttpContext = httpContext },
-            TempData = new TempDataDictionary(httpContext, new TestTempDataProvider()),
-            Url = new TestUrlHelper(),
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = httpContext
+            },
+            TempData = new TempDataDictionary(
+                httpContext,
+                new TestTempDataProvider()),
+            Url = new TestUrlHelper()
         };
 
         return controller;
@@ -276,7 +292,11 @@ public class AccountControllerTests
             return new Dictionary<string, object>();
         }
 
-        public void SaveTempData(HttpContext context, IDictionary<string, object> values) { }
+        public void SaveTempData(
+            HttpContext context,
+            IDictionary<string, object> values)
+        {
+        }
     }
 
     private sealed class TestUrlHelper : IUrlHelper
@@ -324,7 +344,9 @@ public class AccountControllerTests
 
         public System.Security.Claims.ClaimsPrincipal? SignedInPrincipal { get; private set; }
 
-        public Task<AuthenticateResult> AuthenticateAsync(HttpContext context, string? scheme)
+        public Task<AuthenticateResult> AuthenticateAsync(
+            HttpContext context,
+            string? scheme)
         {
             return Task.FromResult(AuthenticateResult.NoResult());
         }
@@ -332,8 +354,7 @@ public class AccountControllerTests
         public Task ChallengeAsync(
             HttpContext context,
             string? scheme,
-            AuthenticationProperties? properties
-        )
+            AuthenticationProperties? properties)
         {
             return Task.CompletedTask;
         }
@@ -341,8 +362,7 @@ public class AccountControllerTests
         public Task ForbidAsync(
             HttpContext context,
             string? scheme,
-            AuthenticationProperties? properties
-        )
+            AuthenticationProperties? properties)
         {
             return Task.CompletedTask;
         }
@@ -351,8 +371,7 @@ public class AccountControllerTests
             HttpContext context,
             string? scheme,
             System.Security.Claims.ClaimsPrincipal principal,
-            AuthenticationProperties? properties
-        )
+            AuthenticationProperties? properties)
         {
             SignInWasCalled = true;
             SignInScheme = scheme;
@@ -364,8 +383,7 @@ public class AccountControllerTests
         public Task SignOutAsync(
             HttpContext context,
             string? scheme,
-            AuthenticationProperties? properties
-        )
+            AuthenticationProperties? properties)
         {
             SignOutWasCalled = true;
             SignOutScheme = scheme;

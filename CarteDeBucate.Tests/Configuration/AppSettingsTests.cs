@@ -45,8 +45,7 @@ public class AppSettingsTests
                   "RecipePhotosPath": "custom-recipe-photos",
                   "AuthenticationEnabled": true
                 }
-                """
-            );
+                """);
 
             AppSettings settings = AppSettings.Load(filePath);
 
@@ -85,8 +84,7 @@ public class AppSettingsTests
                   "RecipePhotosPath": "   ",
                   "AuthenticationEnabled": "not-a-bool"
                 }
-                """
-            );
+                """);
 
             AppSettings settings = AppSettings.Load(filePath);
 

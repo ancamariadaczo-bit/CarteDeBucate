@@ -19,14 +19,12 @@ public class RecipeHtmlImporter
         List<string> ingredients = ExtractSectionItems(
             document,
             startKeywords: RecipeImportKeywords.IngredientSectionStartKeywords,
-            stopKeywords: RecipeImportKeywords.IngredientSectionStopKeywords
-        );
+            stopKeywords: RecipeImportKeywords.IngredientSectionStopKeywords);
 
         List<string> steps = ExtractSectionItems(
             document,
             startKeywords: RecipeImportKeywords.StepsSectionStartKeywords,
-            stopKeywords: RecipeImportKeywords.StepsSectionStopKeywords
-        );
+            stopKeywords: RecipeImportKeywords.StepsSectionStopKeywords);
 
         if (ingredients.Count == 0 && steps.Count == 0)
         {
@@ -35,12 +33,14 @@ public class RecipeHtmlImporter
 
         return new Recipe
         {
-            Name = string.IsNullOrWhiteSpace(title) ? AppTexts.ImportedTitleNotFound : title,
+            Name = string.IsNullOrWhiteSpace(title)
+                ? AppTexts.ImportedTitleNotFound
+                : title,
 
             SourceUrl = url.Trim(),
             Ingredients = ingredients,
             Steps = steps,
-            SavedAt = DateTime.Now,
+            SavedAt = DateTime.Now
         };
     }
 
@@ -49,8 +49,7 @@ public class RecipeHtmlImporter
         Match match = Regex.Match(
             html,
             @"<title>\s*(.*?)\s*</title>",
-            RegexOptions.IgnoreCase | RegexOptions.Singleline
-        );
+            RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
         if (!match.Success)
         {
@@ -77,11 +76,7 @@ public class RecipeHtmlImporter
         return CleanText(h1.InnerText);
     }
 
-    private static List<string> ExtractSectionItems(
-        HtmlDocument document,
-        string[] startKeywords,
-        string[] stopKeywords
-    )
+    private static List<string> ExtractSectionItems(HtmlDocument document, string[] startKeywords, string[] stopKeywords)
     {
         List<string> items = new List<string>();
 
@@ -116,8 +111,8 @@ public class RecipeHtmlImporter
 
     private static HtmlNode? FindSectionStartNode(HtmlDocument document, string[] keywords)
     {
-        IEnumerable<HtmlNode> candidateNodes = document
-            .DocumentNode.Descendants()
+        IEnumerable<HtmlNode> candidateNodes = document.DocumentNode
+            .Descendants()
             .Where(node => RecipeImportConstants.SectionCandidateTags.Contains(node.Name));
 
         foreach (HtmlNode node in candidateNodes)
@@ -188,8 +183,7 @@ public class RecipeHtmlImporter
             node.InnerHtml,
             @"<br\s*/?>",
             "\n",
-            RegexOptions.IgnoreCase
-        );
+            RegexOptions.IgnoreCase);
 
         string plainText = HtmlEntity.DeEntitize(Regex.Replace(htmlWithLineBreaks, "<.*?>", " "));
 
@@ -212,7 +206,8 @@ public class RecipeHtmlImporter
     {
         string normalizedText = TextHelper.NormalizeForSearch(text);
 
-        return keywords.Any(keyword => normalizedText.Contains(TextHelper.NormalizeForSearch(keyword)));
+        return keywords.Any(keyword =>
+            normalizedText.Contains(TextHelper.NormalizeForSearch(keyword)));
     }
 
     private static string CleanText(string text)

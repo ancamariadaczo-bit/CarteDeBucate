@@ -7,7 +7,7 @@ public static class SqliteConnectionStringFactory
         SqliteConnectionStringBuilder builder = new SqliteConnectionStringBuilder
         {
             DataSource = databasePath,
-            ForeignKeys = true,
+            ForeignKeys = true
         };
 
         return builder.ToString();

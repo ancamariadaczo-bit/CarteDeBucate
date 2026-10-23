@@ -4,19 +4,22 @@
 // Write your JavaScript code.
 
 document.addEventListener("DOMContentLoaded", () => {
-    const editableForms = document.querySelectorAll("form[data-track-unsaved-changes='true']");
-    const importRecipeForm = document.querySelector("form[data-import-recipe-form='true']");
+    const editableForms = document.querySelectorAll(
+        "form[data-track-unsaved-changes='true']");
+    const importRecipeForm = document.querySelector(
+        "form[data-import-recipe-form='true']");
 
-    editableForms.forEach(form => {
+    editableForms.forEach((form) => {
         form.dataset.hasUnsavedChanges = "false";
 
         form.addEventListener("input", markFormAsChanged);
         form.addEventListener("change", markFormAsChanged);
         form.addEventListener("submit", clearChangesBeforeValidSubmit);
 
-        const navigationLinks = form.querySelectorAll("a[data-confirm-unsaved-changes='true']");
+        const navigationLinks = form.querySelectorAll(
+            "a[data-confirm-unsaved-changes='true']");
 
-        navigationLinks.forEach(link => {
+        navigationLinks.forEach((link) => {
             link.addEventListener("click", confirmNavigationWithUnsavedChanges);
         });
     });
@@ -26,7 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-window.addEventListener("beforeunload", event => {
+window.addEventListener("beforeunload", (event) => {
     if (!hasUnsavedChanges()) {
         return;
     }
@@ -52,15 +55,15 @@ function clearChangesBeforeValidSubmit(event) {
 }
 
 function confirmNavigationWithUnsavedChanges(event) {
-    const form = event.currentTarget.closest("form[data-track-unsaved-changes='true']");
+    const form = event.currentTarget.closest(
+        "form[data-track-unsaved-changes='true']");
 
     if (form === null || form.dataset.hasUnsavedChanges !== "true") {
         return;
     }
 
     const shouldLeave = window.confirm(
-        "Ai modificări nesalvate. Dacă părăsești pagina, modificările se vor pierde."
-    );
+        "Ai modificări nesalvate. Dacă părăsești pagina, modificările se vor pierde.");
 
     if (!shouldLeave) {
         event.preventDefault();
@@ -74,14 +77,17 @@ function showImportLoadingState(event) {
         return;
     }
 
-    const submitButton = form.querySelector("button[data-import-submit-button='true']");
+    const submitButton = form.querySelector(
+        "button[data-import-submit-button='true']");
 
     if (submitButton === null) {
         return;
     }
 
-    const submitText = submitButton.querySelector("[data-import-submit-text='true']");
-    const spinner = submitButton.querySelector("[data-import-submit-spinner='true']");
+    const submitText = submitButton.querySelector(
+        "[data-import-submit-text='true']");
+    const spinner = submitButton.querySelector(
+        "[data-import-submit-spinner='true']");
 
     submitButton.disabled = true;
 
@@ -101,13 +107,13 @@ function isEditableFormField(element) {
 
     const tagName = element.tagName.toLowerCase();
 
-    return tagName === "input" || tagName === "textarea" || tagName === "select";
+    return tagName === "input"
+        || tagName === "textarea"
+        || tagName === "select";
 }
 
 function hasUnsavedChanges() {
-    return (
-        document.querySelector(
-            "form[data-track-unsaved-changes='true'][data-has-unsaved-changes='true']"
-        ) !== null
-    );
+    return document.querySelector(
+        "form[data-track-unsaved-changes='true'][data-has-unsaved-changes='true']")
+        !== null;
 }

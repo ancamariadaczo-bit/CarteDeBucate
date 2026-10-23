@@ -13,9 +13,8 @@ public class RegisterViewModelTests
 
         Assert.Contains(
             results,
-            result =>
-                HasError(result, nameof(RegisterViewModel.Username), "Username-ul este obligatoriu.")
-        );
+            result => HasError(result, nameof(RegisterViewModel.Username),
+                "Username-ul este obligatoriu."));
     }
 
     [Fact]
@@ -28,8 +27,8 @@ public class RegisterViewModelTests
 
         Assert.Contains(
             results,
-            result => HasError(result, nameof(RegisterViewModel.Password), "Parola este obligatorie.")
-        );
+            result => HasError(result, nameof(RegisterViewModel.Password),
+                "Parola este obligatorie."));
     }
 
     [Fact]
@@ -42,13 +41,8 @@ public class RegisterViewModelTests
 
         Assert.Contains(
             results,
-            result =>
-                HasError(
-                    result,
-                    nameof(RegisterViewModel.ConfirmPassword),
-                    "Confirmarea parolei este obligatorie."
-                )
-        );
+            result => HasError(result, nameof(RegisterViewModel.ConfirmPassword),
+                "Confirmarea parolei este obligatorie."));
     }
 
     [Fact]
@@ -61,8 +55,8 @@ public class RegisterViewModelTests
 
         Assert.Contains(
             results,
-            result => HasError(result, nameof(RegisterViewModel.ConfirmPassword), "Parolele nu coincid.")
-        );
+            result => HasError(result, nameof(RegisterViewModel.ConfirmPassword),
+                "Parolele nu coincid."));
     }
 
     [Fact]
@@ -81,7 +75,7 @@ public class RegisterViewModelTests
         {
             Username = "anca",
             Password = "password",
-            ConfirmPassword = "password",
+            ConfirmPassword = "password"
         };
     }
 
@@ -90,13 +84,21 @@ public class RegisterViewModelTests
         ValidationContext context = new ValidationContext(model);
         List<ValidationResult> results = new List<ValidationResult>();
 
-        Validator.TryValidateObject(model, context, results, validateAllProperties: true);
+        Validator.TryValidateObject(
+            model,
+            context,
+            results,
+            validateAllProperties: true);
 
         return results;
     }
 
-    private static bool HasError(ValidationResult result, string memberName, string errorMessage)
+    private static bool HasError(
+        ValidationResult result,
+        string memberName,
+        string errorMessage)
     {
-        return result.ErrorMessage == errorMessage && result.MemberNames.Contains(memberName);
+        return result.ErrorMessage == errorMessage
+            && result.MemberNames.Contains(memberName);
     }
 }

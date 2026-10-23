@@ -10,7 +10,9 @@ public class AuthenticationService : IAuthenticationService
     private readonly ICurrentUserContext? _currentUserContext;
 
     public AuthenticationService(IUserRepository userRepository)
-        : this(userRepository, null) { }
+        : this(userRepository, null)
+    {
+    }
 
     public AuthenticationService(IUserRepository userRepository, ICurrentUserContext? currentUserContext)
     {
@@ -26,12 +28,20 @@ public class AuthenticationService : IAuthenticationService
 
         if (string.IsNullOrWhiteSpace(username))
         {
-            return new AuthenticationResult { IsSuccess = false, Message = "Username is required." };
+            return new AuthenticationResult
+            {
+                IsSuccess = false,
+                Message = "Username is required."
+            };
         }
 
         if (string.IsNullOrWhiteSpace(password))
         {
-            return new AuthenticationResult { IsSuccess = false, Message = "Password is required." };
+            return new AuthenticationResult
+            {
+                IsSuccess = false,
+                Message = "Password is required."
+            };
         }
 
         User? existingUser = _userRepository.GetByUsername(username);
@@ -41,7 +51,7 @@ public class AuthenticationService : IAuthenticationService
             return new AuthenticationResult
             {
                 IsSuccess = false,
-                Message = "This username already exists.",
+                Message = "This username already exists."
             };
         }
 
@@ -52,15 +62,14 @@ public class AuthenticationService : IAuthenticationService
             salt,
             Iterations,
             HashAlgorithmName.SHA256,
-            HashSize
-        );
+            HashSize);
 
         User user = new User
         {
             Username = username,
             PasswordHash = Convert.ToBase64String(hash),
             PasswordSalt = Convert.ToBase64String(salt),
-            CreatedAt = DateTime.Now,
+            CreatedAt = DateTime.Now
         };
 
         _userRepository.Add(user);
@@ -71,7 +80,7 @@ public class AuthenticationService : IAuthenticationService
         {
             IsSuccess = true,
             Message = "User registered successfully.",
-            User = user,
+            User = user
         };
     }
 
@@ -81,12 +90,20 @@ public class AuthenticationService : IAuthenticationService
 
         if (string.IsNullOrWhiteSpace(username))
         {
-            return new AuthenticationResult { IsSuccess = false, Message = "Username is required." };
+            return new AuthenticationResult
+            {
+                IsSuccess = false,
+                Message = "Username is required."
+            };
         }
 
         if (string.IsNullOrWhiteSpace(password))
         {
-            return new AuthenticationResult { IsSuccess = false, Message = "Password is required." };
+            return new AuthenticationResult
+            {
+                IsSuccess = false,
+                Message = "Password is required."
+            };
         }
 
         User? user = _userRepository.GetByUsername(username);
@@ -96,7 +113,7 @@ public class AuthenticationService : IAuthenticationService
             return new AuthenticationResult
             {
                 IsSuccess = false,
-                Message = "Invalid username or password.",
+                Message = "Invalid username or password."
             };
         }
 
@@ -107,7 +124,7 @@ public class AuthenticationService : IAuthenticationService
             return new AuthenticationResult
             {
                 IsSuccess = false,
-                Message = "Invalid username or password.",
+                Message = "Invalid username or password."
             };
         }
 
@@ -117,7 +134,7 @@ public class AuthenticationService : IAuthenticationService
         {
             IsSuccess = true,
             Message = "Login successful.",
-            User = user,
+            User = user
         };
     }
 
@@ -126,11 +143,7 @@ public class AuthenticationService : IAuthenticationService
         _currentUserContext?.Clear();
     }
 
-    private static bool VerifyPassword(
-        string password,
-        string storedPasswordHash,
-        string storedPasswordSalt
-    )
+    private static bool VerifyPassword(string password, string storedPasswordHash, string storedPasswordSalt)
     {
         byte[] salt = Convert.FromBase64String(storedPasswordSalt);
 
@@ -139,8 +152,7 @@ public class AuthenticationService : IAuthenticationService
             salt,
             Iterations,
             HashAlgorithmName.SHA256,
-            HashSize
-        );
+            HashSize);
 
         string passwordHash = Convert.ToBase64String(hash);
 

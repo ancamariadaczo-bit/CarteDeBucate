@@ -54,7 +54,9 @@ public class FakeRichConsoleReader : IRichConsoleReader
     {
         ReadSearchTextWasCalled = true;
 
-        return SearchTextsToReturn.Count > 0 ? SearchTextsToReturn.Dequeue() : SearchText;
+        return SearchTextsToReturn.Count > 0
+            ? SearchTextsToReturn.Dequeue()
+            : SearchText;
     }
 
     public bool ConfirmKeepImportedIngredients()

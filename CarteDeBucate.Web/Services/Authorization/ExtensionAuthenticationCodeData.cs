@@ -1,3 +1,4 @@
+
 public class ExtensionAuthenticationCodeData
 {
     public required string UserId { get; init; }

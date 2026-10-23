@@ -3,7 +3,8 @@ using System.Reflection;
 
 public class ExtensionAuthenticationCodeServiceTests
 {
-    private static readonly DateTimeOffset InitialTime = new(2026, 9, 18, 10, 0, 0, TimeSpan.Zero);
+    private static readonly DateTimeOffset InitialTime =
+        new(2026, 9, 18, 10, 0, 0, TimeSpan.Zero);
 
     [Fact]
     public void CreateCode_ShouldReturnNonEmptyDistinctCryptographicCodes()
@@ -54,7 +55,8 @@ public class ExtensionAuthenticationCodeServiceTests
         TestTimeProvider timeProvider = new(InitialTime);
         ExtensionAuthenticationCodeService service = new(timeProvider);
 
-        ExtensionAuthenticationCodeData? result = service.ConsumeCode("UNKNOWN-CODE");
+        ExtensionAuthenticationCodeData? result =
+            service.ConsumeCode("UNKNOWN-CODE");
 
         Assert.Null(result);
     }
@@ -81,7 +83,8 @@ public class ExtensionAuthenticationCodeServiceTests
         timeProvider.Advance(TimeSpan.FromMinutes(1));
 
         service.CreateCode("user-2", "chef-two");
-        ExtensionAuthenticationCodeData? result = service.ConsumeCode(existingCode);
+        ExtensionAuthenticationCodeData? result =
+            service.ConsumeCode(existingCode);
 
         Assert.NotNull(result);
         Assert.Equal("user-1", result.UserId);
@@ -93,9 +96,8 @@ public class ExtensionAuthenticationCodeServiceTests
         TestTimeProvider timeProvider = new(InitialTime);
         ExtensionAuthenticationCodeService service = new(timeProvider);
         string expiredCode = service.CreateCode("user-1", "chef-one");
-        ConcurrentDictionary<string, ExtensionAuthenticationCodeData> storedCodes = GetStoredCodes(
-            service
-        );
+        ConcurrentDictionary<string, ExtensionAuthenticationCodeData> storedCodes =
+            GetStoredCodes(service);
         Assert.Contains(expiredCode, storedCodes.Keys);
         timeProvider.Advance(TimeSpan.FromMinutes(2));
 
@@ -105,22 +107,19 @@ public class ExtensionAuthenticationCodeServiceTests
         Assert.Contains(newCode, storedCodes.Keys);
     }
 
-    private static ConcurrentDictionary<string, ExtensionAuthenticationCodeData> GetStoredCodes(
-        ExtensionAuthenticationCodeService service
-    )
+    private static ConcurrentDictionary<string, ExtensionAuthenticationCodeData>
+        GetStoredCodes(ExtensionAuthenticationCodeService service)
     {
         FieldInfo codesField =
             typeof(ExtensionAuthenticationCodeService).GetField(
                 "_codes",
-                BindingFlags.Instance | BindingFlags.NonPublic
-            )
+                BindingFlags.Instance | BindingFlags.NonPublic)
             ?? throw new InvalidOperationException(
-                "The authentication code storage field was not found."
-            );
+                "The authentication code storage field was not found.");
 
-        return Assert.IsType<ConcurrentDictionary<string, ExtensionAuthenticationCodeData>>(
-            codesField.GetValue(service)
-        );
+        return Assert.IsType<
+            ConcurrentDictionary<string, ExtensionAuthenticationCodeData>>(
+                codesField.GetValue(service));
     }
 
     private sealed class TestTimeProvider(DateTimeOffset utcNow) : TimeProvider

@@ -63,7 +63,9 @@ public class DatabaseMigratorTests
             migrator.ApplyMigrations();
 
             Assert.True(TableExists(databasePath, "RecipePhotos"));
-            Assert.True(IndexExists(databasePath, "IX_RecipePhotos_RecipeId_DisplayOrder_Id"));
+            Assert.True(IndexExists(
+                databasePath,
+                "IX_RecipePhotos_RecipeId_DisplayOrder_Id"));
         }
         finally
         {

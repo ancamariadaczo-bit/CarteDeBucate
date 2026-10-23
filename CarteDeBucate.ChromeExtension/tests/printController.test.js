@@ -17,16 +17,20 @@ const recipe = {
     steps: ["Boil.", "Serve."]
 };
 
-async function setupPrint({ recipePayload = JSON.stringify(recipe), imageComplete } = {}) {
+async function setupPrint({
+    recipePayload = JSON.stringify(recipe),
+    imageComplete
+} = {}) {
     const context = await createDomFromFile(printHtmlPath);
     const browser = createBrowserEffectsMock();
     const timers = createControlledTimers();
 
     if (imageComplete !== undefined) {
-        Object.defineProperty(context.window.HTMLImageElement.prototype, "complete", {
-            configurable: true,
-            get: () => imageComplete
-        });
+        Object.defineProperty(
+            context.window.HTMLImageElement.prototype,
+            "complete",
+            { configurable: true, get: () => imageComplete }
+        );
     }
 
     initializePrintController({
@@ -87,8 +91,16 @@ test("rejects corrupted or structurally invalid recipe payloads", async () => {
             );
             assert.equal(context.browser.calls.print, 0, scenario.name);
             assert.equal(context.timers.pending().length, 0, scenario.name);
-            assert.equal(context.document.getElementById("recipeSummary"), null, scenario.name);
-            assert.equal(context.document.getElementById("stepsSection"), null, scenario.name);
+            assert.equal(
+                context.document.getElementById("recipeSummary"),
+                null,
+                scenario.name
+            );
+            assert.equal(
+                context.document.getElementById("stepsSection"),
+                null,
+                scenario.name
+            );
         } finally {
             context.cleanup();
         }
@@ -101,7 +113,10 @@ test("renders the complete recipe using the real print page", async () => {
     try {
         assert.equal(context.document.title, "Soup");
         assert.equal(context.document.querySelector("#recipeSummary h1").textContent, "Soup");
-        assert.equal(context.document.querySelector(".recipe-source a").href, recipe.sourceUrl);
+        assert.equal(
+            context.document.querySelector(".recipe-source a").href,
+            recipe.sourceUrl
+        );
         assert.equal(context.document.querySelector("#imageSection img").src, recipe.imageUrl);
         assert.deepEqual(
             [...context.document.querySelectorAll("#recipeSummary ul li")].map(item => item.textContent),
@@ -172,20 +187,13 @@ test("waits for image load and then applies the 200 ms print delay", async () =>
 
     try {
         assert.equal(context.browser.calls.print, 0);
-        assert.deepEqual(
-            context.timers.pending().map(task => task.delay),
-            [10000]
-        );
+        assert.deepEqual(context.timers.pending().map(task => task.delay), [10000]);
 
-        context.document
-            .querySelector("#imageSection img")
+        context.document.querySelector("#imageSection img")
             .dispatchEvent(new context.window.Event("load"));
         await flushPromises();
 
-        assert.deepEqual(
-            context.timers.pending().map(task => task.delay),
-            [200]
-        );
+        assert.deepEqual(context.timers.pending().map(task => task.delay), [200]);
         context.timers.runByDelay(200);
         assert.equal(context.browser.calls.print, 1);
     } finally {
@@ -197,8 +205,7 @@ test("continues after image error and displays the existing failure message", as
     const context = await setupPrint({ imageComplete: false });
 
     try {
-        context.document
-            .querySelector("#imageSection img")
+        context.document.querySelector("#imageSection img")
             .dispatchEvent(new context.window.Event("error"));
         await flushPromises();
 
@@ -221,10 +228,7 @@ test("continues after the controlled 10 second timeout without waiting in real t
         assert.equal(context.timers.runByDelay(10000), 1);
         await flushPromises();
 
-        assert.deepEqual(
-            context.timers.pending().map(task => task.delay),
-            [200]
-        );
+        assert.deepEqual(context.timers.pending().map(task => task.delay), [200]);
         context.timers.runByDelay(200);
         assert.equal(context.browser.calls.print, 1);
     } finally {

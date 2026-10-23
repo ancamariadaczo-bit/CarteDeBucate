@@ -92,11 +92,9 @@ test("saveAccessToken stores the token under the accessToken key", async () => {
     try {
         await saveAccessToken("new-access-token");
 
-        assert.deepEqual(storage.calls.set, [
-            {
-                accessToken: "new-access-token"
-            }
-        ]);
+        assert.deepEqual(storage.calls.set, [{
+            accessToken: "new-access-token"
+        }]);
         assert.equal(storage.storedValues.accessToken, "new-access-token");
     } finally {
         storage.restore();
@@ -112,7 +110,10 @@ test("removeAccessToken removes the accessToken key", async () => {
         await removeAccessToken();
 
         assert.deepEqual(storage.calls.remove, ["accessToken"]);
-        assert.equal(Object.hasOwn(storage.storedValues, "accessToken"), false);
+        assert.equal(
+            Object.hasOwn(storage.storedValues, "accessToken"),
+            false
+        );
     } finally {
         storage.restore();
     }
@@ -177,7 +178,10 @@ test("storage changes expose authentication updates from other extension context
     for (const scenario of scenarios) {
         await t.test(scenario.name, () => {
             assert.equal(
-                getAuthenticationStateFromStorageChange(scenario.changes, scenario.areaName),
+                getAuthenticationStateFromStorageChange(
+                    scenario.changes,
+                    scenario.areaName
+                ),
                 scenario.expected
             );
         });

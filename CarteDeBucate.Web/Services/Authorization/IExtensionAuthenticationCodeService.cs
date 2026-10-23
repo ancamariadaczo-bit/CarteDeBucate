@@ -1,3 +1,4 @@
+
 public interface IExtensionAuthenticationCodeService
 {
     string CreateCode(string userId, string username);

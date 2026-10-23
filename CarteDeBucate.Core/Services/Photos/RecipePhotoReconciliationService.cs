@@ -1,10 +1,12 @@
 using Microsoft.Extensions.Logging;
 
-internal sealed class RecipePhotoReconciliationService : IRecipePhotoReconciliationService
+internal sealed class RecipePhotoReconciliationService :
+    IRecipePhotoReconciliationService
 {
-    private static readonly StringComparer StorageFileNameComparer = OperatingSystem.IsWindows()
-        ? StringComparer.OrdinalIgnoreCase
-        : StringComparer.Ordinal;
+    private static readonly StringComparer StorageFileNameComparer =
+        OperatingSystem.IsWindows()
+            ? StringComparer.OrdinalIgnoreCase
+            : StringComparer.Ordinal;
 
     private readonly IRecipePhotoStorage _storage;
     private readonly IRecipeRepository _recipeRepository;
@@ -19,8 +21,7 @@ internal sealed class RecipePhotoReconciliationService : IRecipePhotoReconciliat
         IRecipePhotoRepository photoRepository,
         RecipePhotoOptions options,
         TimeProvider timeProvider,
-        ILogger<RecipePhotoReconciliationService> logger
-    )
+        ILogger<RecipePhotoReconciliationService> logger)
     {
         ArgumentNullException.ThrowIfNull(storage);
         ArgumentNullException.ThrowIfNull(recipeRepository);
@@ -34,14 +35,14 @@ internal sealed class RecipePhotoReconciliationService : IRecipePhotoReconciliat
             throw new ArgumentOutOfRangeException(
                 nameof(options.ReconciliationMinimumAge),
                 options.ReconciliationMinimumAge,
-                "The reconciliation minimum age cannot be negative."
-            );
+                "The reconciliation minimum age cannot be negative.");
         }
 
         _storage = storage;
         _recipeRepository = recipeRepository;
         _photoRepository = photoRepository;
-        _reconciliationMinimumAge = options.ReconciliationMinimumAge;
+        _reconciliationMinimumAge =
+            options.ReconciliationMinimumAge;
         _timeProvider = timeProvider;
         _logger = logger;
     }
@@ -59,19 +60,25 @@ internal sealed class RecipePhotoReconciliationService : IRecipePhotoReconciliat
         {
             report.FailedCount++;
             _logger.LogError(
-                "Recipe photo reconciliation stopped because metadata "
-                    + "could not be read. Error type: {ExceptionType}.",
-                exception.GetType().Name
-            );
+                "Recipe photo reconciliation stopped because metadata " +
+                "could not be read. Error type: {ExceptionType}.",
+                exception.GetType().Name);
 
             return report;
         }
 
-        DateTime reconciliationCutoffUtc = GetReconciliationCutoffUtc();
+        DateTime reconciliationCutoffUtc =
+            GetReconciliationCutoffUtc();
 
         CleanupStagedUploads(report, reconciliationCutoffUtc);
-        ReconcileQuarantinedDeletions(knownStorageFileNames, report, reconciliationCutoffUtc);
-        ReportOrphanedFinalFiles(knownStorageFileNames, report, reconciliationCutoffUtc);
+        ReconcileQuarantinedDeletions(
+            knownStorageFileNames,
+            report,
+            reconciliationCutoffUtc);
+        ReportOrphanedFinalFiles(
+            knownStorageFileNames,
+            report,
+            reconciliationCutoffUtc);
 
         return report;
     }
@@ -88,10 +95,10 @@ internal sealed class RecipePhotoReconciliationService : IRecipePhotoReconciliat
 
     private void CleanupStagedUploads(
         RecipePhotoReconciliationReport report,
-        DateTime reconciliationCutoffUtc
-    )
+        DateTime reconciliationCutoffUtc)
     {
-        RecipePhotoStorageInventory<StagedRecipePhotoUploadInventoryItem> inventory;
+        RecipePhotoStorageInventory<StagedRecipePhotoUploadInventoryItem>
+            inventory;
 
         try
         {
@@ -101,17 +108,20 @@ internal sealed class RecipePhotoReconciliationService : IRecipePhotoReconciliat
         {
             report.FailedCount++;
             _logger.LogError(
-                "Staged recipe photo uploads could not be inventoried. "
-                    + "Error type: {ExceptionType}.",
-                exception.GetType().Name
-            );
+                "Staged recipe photo uploads could not be inventoried. " +
+                "Error type: {ExceptionType}.",
+                exception.GetType().Name);
 
             return;
         }
 
-        ReportInvalidInventoryEntries(inventory.InvalidEntryCount, report, "staged recipe photo upload");
+        ReportInvalidInventoryEntries(
+            inventory.InvalidEntryCount,
+            report,
+            "staged recipe photo upload");
 
-        foreach (StagedRecipePhotoUploadInventoryItem item in inventory.Items)
+        foreach (StagedRecipePhotoUploadInventoryItem item in
+                 inventory.Items)
         {
             if (item.LastModifiedAtUtc >= reconciliationCutoffUtc)
             {
@@ -128,10 +138,9 @@ internal sealed class RecipePhotoReconciliationService : IRecipePhotoReconciliat
             {
                 report.FailedCount++;
                 _logger.LogError(
-                    "A staged recipe photo upload could not be deleted. "
-                        + "Error type: {ExceptionType}.",
-                    exception.GetType().Name
-                );
+                    "A staged recipe photo upload could not be deleted. " +
+                    "Error type: {ExceptionType}.",
+                    exception.GetType().Name);
             }
         }
     }
@@ -139,10 +148,10 @@ internal sealed class RecipePhotoReconciliationService : IRecipePhotoReconciliat
     private void ReconcileQuarantinedDeletions(
         HashSet<string> knownStorageFileNames,
         RecipePhotoReconciliationReport report,
-        DateTime reconciliationCutoffUtc
-    )
+        DateTime reconciliationCutoffUtc)
     {
-        RecipePhotoStorageInventory<StagedRecipePhotoDeletionInventoryItem> inventory;
+        RecipePhotoStorageInventory<StagedRecipePhotoDeletionInventoryItem>
+            inventory;
 
         try
         {
@@ -152,10 +161,9 @@ internal sealed class RecipePhotoReconciliationService : IRecipePhotoReconciliat
         {
             report.FailedCount++;
             _logger.LogError(
-                "Quarantined recipe photo deletions could not be "
-                    + "inventoried. Error type: {ExceptionType}.",
-                exception.GetType().Name
-            );
+                "Quarantined recipe photo deletions could not be " +
+                "inventoried. Error type: {ExceptionType}.",
+                exception.GetType().Name);
 
             return;
         }
@@ -163,10 +171,10 @@ internal sealed class RecipePhotoReconciliationService : IRecipePhotoReconciliat
         ReportInvalidInventoryEntries(
             inventory.InvalidEntryCount,
             report,
-            "quarantined recipe photo deletion"
-        );
+            "quarantined recipe photo deletion");
 
-        foreach (StagedRecipePhotoDeletionInventoryItem item in inventory.Items)
+        foreach (StagedRecipePhotoDeletionInventoryItem item in
+                 inventory.Items)
         {
             if (item.QuarantinedAtUtc >= reconciliationCutoffUtc)
             {
@@ -187,8 +195,7 @@ internal sealed class RecipePhotoReconciliationService : IRecipePhotoReconciliat
 
     private void RestoreQuarantinedDeletion(
         StagedRecipePhotoDeletionInventoryItem item,
-        RecipePhotoReconciliationReport report
-    )
+        RecipePhotoReconciliationReport report)
     {
         try
         {
@@ -200,15 +207,13 @@ internal sealed class RecipePhotoReconciliationService : IRecipePhotoReconciliat
             report.FailedCount++;
             _logger.LogError(
                 "A quarantined recipe photo could not be restored. Error type: {ExceptionType}.",
-                exception.GetType().Name
-            );
+                exception.GetType().Name);
         }
     }
 
     private void DeleteQuarantinedDeletion(
         StagedRecipePhotoDeletionInventoryItem item,
-        RecipePhotoReconciliationReport report
-    )
+        RecipePhotoReconciliationReport report)
     {
         try
         {
@@ -220,18 +225,17 @@ internal sealed class RecipePhotoReconciliationService : IRecipePhotoReconciliat
             report.FailedCount++;
             _logger.LogError(
                 "A quarantined recipe photo could not be deleted. Error type: {ExceptionType}.",
-                exception.GetType().Name
-            );
+                exception.GetType().Name);
         }
     }
 
     private void ReportOrphanedFinalFiles(
         HashSet<string> knownStorageFileNames,
         RecipePhotoReconciliationReport report,
-        DateTime reconciliationCutoffUtc
-    )
+        DateTime reconciliationCutoffUtc)
     {
-        RecipePhotoStorageInventory<RecipePhotoStorageFileInventoryItem> inventory;
+        RecipePhotoStorageInventory<RecipePhotoStorageFileInventoryItem>
+            inventory;
 
         try
         {
@@ -242,15 +246,18 @@ internal sealed class RecipePhotoReconciliationService : IRecipePhotoReconciliat
             report.FailedCount++;
             _logger.LogError(
                 "Final recipe photo files could not be inventoried. Error type: {ExceptionType}.",
-                exception.GetType().Name
-            );
+                exception.GetType().Name);
 
             return;
         }
 
-        ReportInvalidInventoryEntries(inventory.InvalidEntryCount, report, "final recipe photo file");
+        ReportInvalidInventoryEntries(
+            inventory.InvalidEntryCount,
+            report,
+            "final recipe photo file");
 
-        foreach (RecipePhotoStorageFileInventoryItem item in inventory.Items)
+        foreach (RecipePhotoStorageFileInventoryItem item in
+                 inventory.Items)
         {
             if (item.LastModifiedAtUtc >= reconciliationCutoffUtc)
             {
@@ -266,16 +273,14 @@ internal sealed class RecipePhotoReconciliationService : IRecipePhotoReconciliat
             report.OrphanedCount++;
             _logger.LogWarning(
                 "The final recipe photo file {StorageFileName} is not referenced by metadata.",
-                item.StorageFileName
-            );
+                item.StorageFileName);
         }
     }
 
     private void ReportInvalidInventoryEntries(
         int invalidEntryCount,
         RecipePhotoReconciliationReport report,
-        string inventoryEntryDescription
-    )
+        string inventoryEntryDescription)
     {
         if (invalidEntryCount == 0)
         {
@@ -284,22 +289,23 @@ internal sealed class RecipePhotoReconciliationService : IRecipePhotoReconciliat
 
         report.FailedCount += invalidEntryCount;
         _logger.LogWarning(
-            "The recipe photo storage inventory contains "
-                + "{InvalidEntryCount} invalid "
-                + "{InventoryEntryDescription} entries.",
+            "The recipe photo storage inventory contains " +
+            "{InvalidEntryCount} invalid " +
+            "{InventoryEntryDescription} entries.",
             invalidEntryCount,
-            inventoryEntryDescription
-        );
+            inventoryEntryDescription);
     }
 
     internal HashSet<string> BuildKnownStorageFileNames()
     {
-        HashSet<string> storageFileNames = new(StorageFileNameComparer);
+        HashSet<string> storageFileNames = new(
+            StorageFileNameComparer);
         List<Recipe> recipes = _recipeRepository.GetAllRecipes();
 
         foreach (Recipe recipe in recipes)
         {
-            List<RecipePhoto> photos = _photoRepository.GetByRecipeId(recipe.Id);
+            List<RecipePhoto> photos =
+                _photoRepository.GetByRecipeId(recipe.Id);
 
             foreach (RecipePhoto photo in photos)
             {

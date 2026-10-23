@@ -7,9 +7,14 @@ public sealed class RecipePhotoServiceSkeletonTests
     {
         Recipe recipe = CreateRecipe(id: 10, userId: null);
         RecipePhoto photo = CreatePhoto(id: 20, recipeId: recipe.Id);
-        FakeRecipeRepository recipeRepository = new() { Recipes = [recipe] };
+        FakeRecipeRepository recipeRepository = new()
+        {
+            Recipes = [recipe]
+        };
         SkeletonPhotoRepository photoRepository = new(photo, userId: null);
-        RecipePhotoService service = CreateService(recipeRepository, photoRepository);
+        RecipePhotoService service = CreateService(
+            recipeRepository,
+            photoRepository);
 
         Recipe? resultRecipe = service.GetRecipeInCurrentContext(recipe.Id);
         RecipePhoto? resultPhoto = service.GetPhotoInCurrentContext(photo.Id);
@@ -29,14 +34,16 @@ public sealed class RecipePhotoServiceSkeletonTests
         const int userId = 7;
         Recipe recipe = CreateRecipe(id: 10, userId);
         RecipePhoto photo = CreatePhoto(id: 20, recipeId: recipe.Id);
-        FakeRecipeRepository recipeRepository = new() { Recipes = [recipe] };
+        FakeRecipeRepository recipeRepository = new()
+        {
+            Recipes = [recipe]
+        };
         SkeletonPhotoRepository photoRepository = new(photo, userId);
         CurrentUserContext currentUserContext = CreateCurrentUser(userId);
         RecipePhotoService service = CreateService(
             recipeRepository,
             photoRepository,
-            currentUserContext
-        );
+            currentUserContext);
 
         Recipe? resultRecipe = service.GetRecipeInCurrentContext(recipe.Id);
         RecipePhoto? resultPhoto = service.GetPhotoInCurrentContext(photo.Id);
@@ -57,14 +64,17 @@ public sealed class RecipePhotoServiceSkeletonTests
         const int otherUserId = 9;
         Recipe recipe = CreateRecipe(id: 10, userId: otherUserId);
         RecipePhoto photo = CreatePhoto(id: 20, recipeId: recipe.Id);
-        FakeRecipeRepository recipeRepository = new() { Recipes = [recipe] };
+        FakeRecipeRepository recipeRepository = new()
+        {
+            Recipes = [recipe]
+        };
         SkeletonPhotoRepository photoRepository = new(photo, otherUserId);
-        CurrentUserContext currentUserContext = CreateCurrentUser(currentUserId);
+        CurrentUserContext currentUserContext =
+            CreateCurrentUser(currentUserId);
         RecipePhotoService service = CreateService(
             recipeRepository,
             photoRepository,
-            currentUserContext
-        );
+            currentUserContext);
 
         Recipe? resultRecipe = service.GetRecipeInCurrentContext(recipe.Id);
         RecipePhoto? resultPhoto = service.GetPhotoInCurrentContext(photo.Id);
@@ -79,11 +89,19 @@ public sealed class RecipePhotoServiceSkeletonTests
     public void ToPhotoInfo_ShouldMapPublicMetadataWithoutStorageFileName()
     {
         RecipePhoto photo = CreatePhoto(id: 20, recipeId: 10);
-        photo.StorageFileName = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg";
+        photo.StorageFileName =
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg";
         photo.OriginalFileName = "prajitura.jpg";
         photo.ContentType = "image/jpeg";
         photo.FileSize = 1234;
-        photo.CreatedAtUtc = new DateTime(2026, 10, 8, 9, 30, 0, DateTimeKind.Utc);
+        photo.CreatedAtUtc = new DateTime(
+            2026,
+            10,
+            8,
+            9,
+            30,
+            0,
+            DateTimeKind.Utc);
         photo.DisplayOrder = 3;
         photo.Origin = RecipePhotoOrigin.UserUpload;
 
@@ -103,8 +121,7 @@ public sealed class RecipePhotoServiceSkeletonTests
     private static RecipePhotoService CreateService(
         FakeRecipeRepository recipeRepository,
         SkeletonPhotoRepository photoRepository,
-        ICurrentUserContext? currentUserContext = null
-    )
+        ICurrentUserContext? currentUserContext = null)
     {
         return new RecipePhotoService(
             new UnusedPhotoStorage(),
@@ -115,14 +132,17 @@ public sealed class RecipePhotoServiceSkeletonTests
             new RecipePhotoFileNameNormalizer(),
             new RecipePhotoOptions(),
             TimeProvider.System,
-            NullLogger<RecipePhotoService>.Instance
-        );
+            NullLogger<RecipePhotoService>.Instance);
     }
 
     private static CurrentUserContext CreateCurrentUser(int userId)
     {
         CurrentUserContext currentUserContext = new();
-        currentUserContext.SetCurrentUser(new User { Id = userId, Username = $"user-{userId}" });
+        currentUserContext.SetCurrentUser(new User
+        {
+            Id = userId,
+            Username = $"user-{userId}"
+        });
 
         return currentUserContext;
     }
@@ -133,13 +153,17 @@ public sealed class RecipePhotoServiceSkeletonTests
         {
             Id = id,
             Name = $"Recipe {id}",
-            UserId = userId,
+            UserId = userId
         };
     }
 
     private static RecipePhoto CreatePhoto(int id, int recipeId)
     {
-        return new RecipePhoto { Id = id, RecipeId = recipeId };
+        return new RecipePhoto
+        {
+            Id = id,
+            RecipeId = recipeId
+        };
     }
 
     private sealed class SkeletonPhotoRepository : IRecipePhotoRepository
@@ -177,7 +201,9 @@ public sealed class RecipePhotoServiceSkeletonTests
         {
             GetByIdAndUserIdWasCalled = true;
 
-            return _photo.Id == photoId && _userId == userId ? _photo : null;
+            return _photo.Id == photoId && _userId == userId
+                ? _photo
+                : null;
         }
 
         public List<RecipePhoto> GetByRecipeId(int recipeId)
@@ -185,7 +211,9 @@ public sealed class RecipePhotoServiceSkeletonTests
             throw new NotImplementedException();
         }
 
-        public List<RecipePhoto> GetByRecipeIdAndUserId(int recipeId, int userId)
+        public List<RecipePhoto> GetByRecipeIdAndUserId(
+            int recipeId,
+            int userId)
         {
             throw new NotImplementedException();
         }
@@ -206,8 +234,7 @@ public sealed class RecipePhotoServiceSkeletonTests
         public Task<StagedRecipePhotoUpload> StageUploadAsync(
             Stream content,
             long maximumBytes,
-            CancellationToken cancellationToken = default
-        )
+            CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
@@ -217,7 +244,9 @@ public sealed class RecipePhotoServiceSkeletonTests
             throw new NotImplementedException();
         }
 
-        public string FinalizeUpload(StagedRecipePhotoUpload upload, RecipePhotoFormat format)
+        public string FinalizeUpload(
+            StagedRecipePhotoUpload upload,
+            RecipePhotoFormat format)
         {
             throw new NotImplementedException();
         }
@@ -237,32 +266,38 @@ public sealed class RecipePhotoServiceSkeletonTests
             throw new NotImplementedException();
         }
 
-        public StagedRecipePhotoDeletion? MoveToQuarantine(string storageFileName)
+        public StagedRecipePhotoDeletion? MoveToQuarantine(
+            string storageFileName)
         {
             throw new NotImplementedException();
         }
 
-        public void RestoreFromQuarantine(StagedRecipePhotoDeletion deletion)
+        public void RestoreFromQuarantine(
+            StagedRecipePhotoDeletion deletion)
         {
             throw new NotImplementedException();
         }
 
-        public void DeleteFromQuarantine(StagedRecipePhotoDeletion deletion)
+        public void DeleteFromQuarantine(
+            StagedRecipePhotoDeletion deletion)
         {
             throw new NotImplementedException();
         }
 
-        public RecipePhotoStorageInventory<StagedRecipePhotoUploadInventoryItem> GetStagedUploads()
+        public RecipePhotoStorageInventory<StagedRecipePhotoUploadInventoryItem>
+            GetStagedUploads()
         {
             throw new NotImplementedException();
         }
 
-        public RecipePhotoStorageInventory<StagedRecipePhotoDeletionInventoryItem> GetQuarantinedDeletions()
+        public RecipePhotoStorageInventory<StagedRecipePhotoDeletionInventoryItem>
+            GetQuarantinedDeletions()
         {
             throw new NotImplementedException();
         }
 
-        public RecipePhotoStorageInventory<RecipePhotoStorageFileInventoryItem> GetFinalFiles()
+        public RecipePhotoStorageInventory<RecipePhotoStorageFileInventoryItem>
+            GetFinalFiles()
         {
             throw new NotImplementedException();
         }

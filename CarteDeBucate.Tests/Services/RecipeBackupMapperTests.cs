@@ -13,7 +13,7 @@ public class RecipeBackupMapperTests
             Ingredients = new List<string> { "Dovleac", "Sare" },
             Steps = new List<string> { "Fierbe", "Mixeaza" },
             Notes = "Se serveste calda.",
-            Status = RecipeStatus.Favorite,
+            Status = RecipeStatus.Favorite
         };
 
         RecipeBackupItem result = RecipeBackupMapper.ToBackupItem(recipe);
@@ -40,7 +40,7 @@ public class RecipeBackupMapperTests
             Ingredients = new List<string> { "Dovleac", "Sare" },
             Steps = new List<string> { "Fierbe", "Mixeaza" },
             Notes = "Se serveste calda.",
-            Status = RecipeStatus.Favorite,
+            Status = RecipeStatus.Favorite
         };
 
         Recipe result = RecipeBackupMapper.ToRecipe(backupItem);

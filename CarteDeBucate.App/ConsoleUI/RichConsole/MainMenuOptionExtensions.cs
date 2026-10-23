@@ -14,7 +14,7 @@ public static class MainMenuOptionExtensions
             MainMenuOption.ExportBackup => RichConsoleTexts.MenuExportBackup,
             MainMenuOption.ImportBackup => RichConsoleTexts.MenuImportBackup,
             MainMenuOption.Exit => RichConsoleTexts.MenuExit,
-            _ => option.ToString(),
+            _ => option.ToString()
         };
     }
 }

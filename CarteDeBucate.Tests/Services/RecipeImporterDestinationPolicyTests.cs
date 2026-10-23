@@ -7,14 +7,15 @@ public class RecipeImporterDestinationPolicyTests
     [InlineData("1.1.1.1")]
     [InlineData("2606:4700:4700::1111")]
     [InlineData("2001:4860:4860::8888")]
-    public async Task ValidateAsync_WithPublicAddress_ShouldAllowDestination(string address)
+    public async Task ValidateAsync_WithPublicAddress_ShouldAllowDestination(
+        string address)
     {
         FakeHostAddressResolver resolver = new FakeHostAddressResolver(address);
-        RecipeImportDestinationPolicy policy = new RecipeImportDestinationPolicy(resolver);
+        RecipeImportDestinationPolicy policy =
+            new RecipeImportDestinationPolicy(resolver);
 
-        RecipeImportDestinationValidationResult result = await policy.ValidateAsync(
-            new Uri("https://recipe.example")
-        );
+        RecipeImportDestinationValidationResult result =
+            await policy.ValidateAsync(new Uri("https://recipe.example"));
 
         Assert.True(result.IsAllowed);
         IPAddress approvedAddress = Assert.Single(result.Addresses);
@@ -43,14 +44,15 @@ public class RecipeImporterDestinationPolicyTests
     [InlineData("255.255.255.255")]
     [InlineData("2001:db8::1")]
     [InlineData("::ffff:192.168.0.1")]
-    public async Task ValidateAsync_WithNonPublicAddress_ShouldRejectDestination(string address)
+    public async Task ValidateAsync_WithNonPublicAddress_ShouldRejectDestination(
+        string address)
     {
         FakeHostAddressResolver resolver = new FakeHostAddressResolver(address);
-        RecipeImportDestinationPolicy policy = new RecipeImportDestinationPolicy(resolver);
+        RecipeImportDestinationPolicy policy =
+            new RecipeImportDestinationPolicy(resolver);
 
-        RecipeImportDestinationValidationResult result = await policy.ValidateAsync(
-            new Uri("https://recipe.example")
-        );
+        RecipeImportDestinationValidationResult result =
+            await policy.ValidateAsync(new Uri("https://recipe.example"));
 
         Assert.False(result.IsAllowed);
         Assert.Empty(result.Addresses);
@@ -59,12 +61,14 @@ public class RecipeImporterDestinationPolicyTests
     [Fact]
     public async Task ValidateAsync_WhenOneResolvedAddressIsNonPublic_ShouldRejectEntireHost()
     {
-        FakeHostAddressResolver resolver = new FakeHostAddressResolver("8.8.8.8", "10.0.0.1");
-        RecipeImportDestinationPolicy policy = new RecipeImportDestinationPolicy(resolver);
+        FakeHostAddressResolver resolver = new FakeHostAddressResolver(
+            "8.8.8.8",
+            "10.0.0.1");
+        RecipeImportDestinationPolicy policy =
+            new RecipeImportDestinationPolicy(resolver);
 
-        RecipeImportDestinationValidationResult result = await policy.ValidateAsync(
-            new Uri("https://mixed.example")
-        );
+        RecipeImportDestinationValidationResult result =
+            await policy.ValidateAsync(new Uri("https://mixed.example"));
 
         Assert.Equal("mixed.example", resolver.ResolvedHost);
         Assert.False(result.IsAllowed);
@@ -75,14 +79,15 @@ public class RecipeImporterDestinationPolicyTests
     [InlineData("ftp://recipe.example")]
     [InlineData("http://recipe.example:8080")]
     [InlineData("https://recipe.example:8443")]
-    public async Task ValidateAsync_WithDisallowedSchemeOrPort_ShouldRejectBeforeDns(string destination)
+    public async Task ValidateAsync_WithDisallowedSchemeOrPort_ShouldRejectBeforeDns(
+        string destination)
     {
         FakeHostAddressResolver resolver = new FakeHostAddressResolver("8.8.8.8");
-        RecipeImportDestinationPolicy policy = new RecipeImportDestinationPolicy(resolver);
+        RecipeImportDestinationPolicy policy =
+            new RecipeImportDestinationPolicy(resolver);
 
-        RecipeImportDestinationValidationResult result = await policy.ValidateAsync(
-            new Uri(destination)
-        );
+        RecipeImportDestinationValidationResult result =
+            await policy.ValidateAsync(new Uri(destination));
 
         Assert.False(result.IsAllowed);
         Assert.Empty(result.Addresses);
@@ -93,10 +98,13 @@ public class RecipeImporterDestinationPolicyTests
     public void HttpMessageHandler_ShouldDisableAutomaticRedirectsAndProxyResolution()
     {
         FakeHostAddressResolver resolver = new FakeHostAddressResolver("8.8.8.8");
-        RecipeImportDestinationPolicy policy = new RecipeImportDestinationPolicy(resolver);
-        using RecipeImportHttpMessageHandler handler = new RecipeImportHttpMessageHandler(policy);
+        RecipeImportDestinationPolicy policy =
+            new RecipeImportDestinationPolicy(resolver);
+        using RecipeImportHttpMessageHandler handler =
+            new RecipeImportHttpMessageHandler(policy);
 
-        SocketsHttpHandler socketsHandler = Assert.IsType<SocketsHttpHandler>(handler.InnerHandler);
+        SocketsHttpHandler socketsHandler =
+            Assert.IsType<SocketsHttpHandler>(handler.InnerHandler);
 
         Assert.False(socketsHandler.AllowAutoRedirect);
         Assert.False(socketsHandler.UseProxy);
@@ -109,12 +117,16 @@ public class RecipeImporterDestinationPolicyTests
 
         public FakeHostAddressResolver(params string[] addresses)
         {
-            _addresses = addresses.Select(IPAddress.Parse).ToArray();
+            _addresses = addresses
+                .Select(IPAddress.Parse)
+                .ToArray();
         }
 
         public string? ResolvedHost { get; private set; }
 
-        public Task<IPAddress[]> GetHostAddressesAsync(string host, CancellationToken cancellationToken)
+        public Task<IPAddress[]> GetHostAddressesAsync(
+            string host,
+            CancellationToken cancellationToken)
         {
             ResolvedHost = host;
 

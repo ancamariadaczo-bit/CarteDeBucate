@@ -42,7 +42,11 @@ public class ClassicConsoleAuthenticationPrompt : IAuthenticationPrompt
                     break;
 
                 case "3":
-                    return new AuthenticationResult { IsSuccess = false, Message = "Exit requested." };
+                    return new AuthenticationResult
+                    {
+                        IsSuccess = false,
+                        Message = "Exit requested."
+                    };
 
                 default:
                     Console.WriteLine("Invalid option.");

@@ -13,13 +13,12 @@ public class WebCurrentUserFilteringTests
             Recipes = new List<Recipe>
             {
                 CreateRecipe(1, userId: null, "https://example.com/global"),
-                CreateRecipe(2, userId: 7, "https://example.com/current-user"),
-            },
+                CreateRecipe(2, userId: 7, "https://example.com/current-user")
+            }
         };
         RecipeLibraryService service = new RecipeLibraryService(
             repository,
-            CreateAnonymousWebCurrentUserContext()
-        );
+            CreateAnonymousWebCurrentUserContext());
 
         List<RecipeSummary> recipes = service.GetRecipeSummaries();
 
@@ -38,8 +37,8 @@ public class WebCurrentUserFilteringTests
             {
                 CreateRecipe(1, userId: 7, "https://example.com/current-user"),
                 CreateRecipe(2, userId: 9, "https://example.com/other-user"),
-                CreateRecipe(3, userId: null, "https://example.com/global"),
-            },
+                CreateRecipe(3, userId: null, "https://example.com/global")
+            }
         };
         RecipeLibraryService service = CreateRecipeLibraryService(repository, userId: 7);
 
@@ -59,8 +58,8 @@ public class WebCurrentUserFilteringTests
             Recipes = new List<Recipe>
             {
                 CreateRecipe(1, userId: null, "https://example.com/global"),
-                CreateRecipe(2, userId: 7, "https://example.com/current-user"),
-            },
+                CreateRecipe(2, userId: 7, "https://example.com/current-user")
+            }
         };
         RecipeLibraryService service = CreateRecipeLibraryService(repository, userId: 7);
 
@@ -77,7 +76,9 @@ public class WebCurrentUserFilteringTests
         Recipe recipe = CreateRecipe(0, userId: null, "https://example.com/imported");
         FakeRecipeRepository repository = new FakeRecipeRepository();
         HttpCurrentUserContext currentUserContext = CreateWebCurrentUserContext(userId: 7);
-        RecipeLibraryService service = new RecipeLibraryService(repository, currentUserContext);
+        RecipeLibraryService service = new RecipeLibraryService(
+            repository,
+            currentUserContext);
 
         RecipeSaveResult result = service.SaveRecipe(recipe);
 
@@ -94,15 +95,15 @@ public class WebCurrentUserFilteringTests
             Recipes = new List<Recipe>
             {
                 CreateRecipe(1, userId: 7, "https://example.com/current-user"),
-                CreateRecipe(2, userId: 9, "https://example.com/other-user"),
-            },
+                CreateRecipe(2, userId: 9, "https://example.com/other-user")
+            }
         };
         RecipeLibraryService service = CreateRecipeLibraryService(repository, userId: 7);
 
         bool currentUserRecipeExists = service.RecipeExistsBySourceUrl(
-            "https://example.com/current-user"
-        );
-        bool otherUserRecipeExists = service.RecipeExistsBySourceUrl("https://example.com/other-user");
+            "https://example.com/current-user");
+        bool otherUserRecipeExists = service.RecipeExistsBySourceUrl(
+            "https://example.com/other-user");
 
         Assert.True(currentUserRecipeExists);
         Assert.False(otherUserRecipeExists);
@@ -120,13 +121,12 @@ public class WebCurrentUserFilteringTests
             {
                 CreateRecipe(1, userId: 7, "https://example.com/current-user"),
                 CreateRecipe(2, userId: 9, "https://example.com/other-user"),
-                CreateRecipe(3, userId: null, "https://example.com/global"),
-            },
+                CreateRecipe(3, userId: null, "https://example.com/global")
+            }
         };
         RecipeBackupService service = new RecipeBackupService(
             repository,
-            CreateWebCurrentUserContext(userId: 7)
-        );
+            CreateWebCurrentUserContext(userId: 7));
 
         RecipeBackupExportResult result = service.ExportToJsonContent();
 
@@ -135,22 +135,21 @@ public class WebCurrentUserFilteringTests
 
         using JsonDocument jsonDocument = JsonDocument.Parse(result.Json);
         JsonElement exportedRecipe = Assert.Single(
-            jsonDocument.RootElement.GetProperty("recipes").EnumerateArray()
-        );
+            jsonDocument.RootElement.GetProperty("recipes").EnumerateArray());
 
         Assert.False(exportedRecipe.TryGetProperty("userId", out _));
         Assert.Equal(
             "https://example.com/current-user",
-            exportedRecipe.GetProperty("sourceUrl").GetString()
-        );
+            exportedRecipe.GetProperty("sourceUrl").GetString());
     }
 
     private static RecipeLibraryService CreateRecipeLibraryService(
         FakeRecipeRepository repository,
-        int userId
-    )
+        int userId)
     {
-        return new RecipeLibraryService(repository, CreateWebCurrentUserContext(userId));
+        return new RecipeLibraryService(
+            repository,
+            CreateWebCurrentUserContext(userId));
     }
 
     private static HttpCurrentUserContext CreateWebCurrentUserContext(int userId)
@@ -158,23 +157,28 @@ public class WebCurrentUserFilteringTests
         Claim[] claims =
         {
             new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
-            new Claim(ClaimTypes.Name, "anca"),
+            new Claim(ClaimTypes.Name, "anca")
         };
         DefaultHttpContext httpContext = new DefaultHttpContext
         {
-            User = new ClaimsPrincipal(new ClaimsIdentity(claims, "Test")),
+            User = new ClaimsPrincipal(new ClaimsIdentity(claims, "Test"))
         };
 
-        return new HttpCurrentUserContext(new HttpContextAccessor { HttpContext = httpContext });
+        return new HttpCurrentUserContext(
+            new HttpContextAccessor
+            {
+                HttpContext = httpContext
+            });
     }
 
     private static HttpCurrentUserContext CreateAnonymousWebCurrentUserContext()
     {
         return new HttpCurrentUserContext(
-            new HttpContextAccessor { HttpContext = new DefaultHttpContext() }
-        );
+            new HttpContextAccessor
+            {
+                HttpContext = new DefaultHttpContext()
+            });
     }
-
     private static Recipe CreateRecipe(int id, int? userId, string sourceUrl)
     {
         return new Recipe
@@ -186,7 +190,7 @@ public class WebCurrentUserFilteringTests
             Steps = new List<string> { "Bake" },
             Notes = "",
             SavedAt = DateTime.Now,
-            UserId = userId,
+            UserId = userId
         };
     }
 }

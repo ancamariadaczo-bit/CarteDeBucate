@@ -37,12 +37,12 @@ public class HomeController : Controller
                 "Unhandled exception while processing {RequestMethod} {RequestPath}. Trace identifier: {TraceIdentifier}",
                 HttpContext.Request.Method,
                 exceptionFeature.Path,
-                HttpContext.TraceIdentifier
-            );
+                HttpContext.TraceIdentifier);
         }
 
-        return View(
-            new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier }
-        );
+        return View(new ErrorViewModel
+        {
+            RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+        });
     }
 }

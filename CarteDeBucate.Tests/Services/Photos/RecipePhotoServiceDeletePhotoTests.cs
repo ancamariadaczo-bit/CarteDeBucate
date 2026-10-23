@@ -9,16 +9,22 @@ public sealed class RecipePhotoServiceDeletePhotoTests
         RecipePhoto photo = CreatePhoto();
         DeletePhotoRepository photoRepository = new(photo, operations);
         DeletePhotoStorage storage = new(operations);
-        RecipePhotoService service = CreateService(photoRepository, storage);
+        RecipePhotoService service = CreateService(
+            photoRepository,
+            storage);
 
         RecipePhotoResult result = service.DeletePhoto(photo.Id);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(RecipePhotoResultCode.Success, result.Code);
         Assert.Equal(
-            new[] { "move-to-quarantine", "delete-metadata", "delete-from-quarantine" },
-            operations
-        );
+            new[]
+            {
+                "move-to-quarantine",
+                "delete-metadata",
+                "delete-from-quarantine"
+            },
+            operations);
         Assert.Null(result.Photo);
         Assert.DoesNotContain(storage.DeletionToken, result.Message);
     }
@@ -27,9 +33,13 @@ public sealed class RecipePhotoServiceDeletePhotoTests
     public void DeletePhoto_WithInvalidId_ShouldNotCallStorageOrRepository()
     {
         List<string> operations = [];
-        DeletePhotoRepository photoRepository = new(CreatePhoto(), operations);
+        DeletePhotoRepository photoRepository = new(
+            CreatePhoto(),
+            operations);
         DeletePhotoStorage storage = new(operations);
-        RecipePhotoService service = CreateService(photoRepository, storage);
+        RecipePhotoService service = CreateService(
+            photoRepository,
+            storage);
 
         RecipePhotoResult result = service.DeletePhoto(0);
 
@@ -45,13 +55,15 @@ public sealed class RecipePhotoServiceDeletePhotoTests
     {
         List<string> operations = [];
         RecipePhoto photo = CreatePhoto();
-        DeletePhotoRepository photoRepository = new(photo, operations) { OwnerUserId = 9 };
+        DeletePhotoRepository photoRepository = new(photo, operations)
+        {
+            OwnerUserId = 9
+        };
         DeletePhotoStorage storage = new(operations);
         RecipePhotoService service = CreateService(
             photoRepository,
             storage,
-            CreateCurrentUser(userId: 7)
-        );
+            CreateCurrentUser(userId: 7));
 
         RecipePhotoResult result = service.DeletePhoto(photo.Id);
 
@@ -67,14 +79,23 @@ public sealed class RecipePhotoServiceDeletePhotoTests
         List<string> operations = [];
         RecipePhoto photo = CreatePhoto();
         DeletePhotoRepository photoRepository = new(photo, operations);
-        DeletePhotoStorage storage = new(operations) { FileWasMissing = true };
-        RecipePhotoService service = CreateService(photoRepository, storage);
+        DeletePhotoStorage storage = new(operations)
+        {
+            FileWasMissing = true
+        };
+        RecipePhotoService service = CreateService(
+            photoRepository,
+            storage);
 
         RecipePhotoResult result = service.DeletePhoto(photo.Id);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(RecipePhotoResultCode.DeletedMetadataFileWasMissing, result.Code);
-        Assert.Equal(new[] { "move-to-quarantine", "delete-metadata" }, operations);
+        Assert.Equal(
+            RecipePhotoResultCode.DeletedMetadataFileWasMissing,
+            result.Code);
+        Assert.Equal(
+            new[] { "move-to-quarantine", "delete-metadata" },
+            operations);
     }
 
     [Fact]
@@ -84,19 +105,25 @@ public sealed class RecipePhotoServiceDeletePhotoTests
         RecipePhoto photo = CreatePhoto();
         DeletePhotoRepository photoRepository = new(photo, operations)
         {
-            DeleteException = new InvalidOperationException("database failed"),
+            DeleteException = new InvalidOperationException("database failed")
         };
         DeletePhotoStorage storage = new(operations);
-        RecipePhotoService service = CreateService(photoRepository, storage);
+        RecipePhotoService service = CreateService(
+            photoRepository,
+            storage);
 
         RecipePhotoResult result = service.DeletePhoto(photo.Id);
 
         Assert.False(result.IsSuccess);
         Assert.Equal(RecipePhotoResultCode.PersistenceFailure, result.Code);
         Assert.Equal(
-            new[] { "move-to-quarantine", "delete-metadata", "restore-from-quarantine" },
-            operations
-        );
+            new[]
+            {
+                "move-to-quarantine",
+                "delete-metadata",
+                "restore-from-quarantine"
+            },
+            operations);
     }
 
     [Fact]
@@ -108,10 +135,13 @@ public sealed class RecipePhotoServiceDeletePhotoTests
         DeletePhotoRepository photoRepository = new(photo, operations)
         {
             OwnerUserId = userId,
-            DeleteForUserResult = false,
+            DeleteForUserResult = false
         };
         DeletePhotoStorage storage = new(operations);
-        RecipePhotoService service = CreateService(photoRepository, storage, CreateCurrentUser(userId));
+        RecipePhotoService service = CreateService(
+            photoRepository,
+            storage,
+            CreateCurrentUser(userId));
 
         RecipePhotoResult result = service.DeletePhoto(photo.Id);
 
@@ -119,9 +149,13 @@ public sealed class RecipePhotoServiceDeletePhotoTests
         Assert.Equal(RecipePhotoResultCode.PhotoNotFound, result.Code);
         Assert.True(photoRepository.DeleteForUserWasCalled);
         Assert.Equal(
-            new[] { "move-to-quarantine", "delete-metadata-for-user", "restore-from-quarantine" },
-            operations
-        );
+            new[]
+            {
+                "move-to-quarantine",
+                "delete-metadata-for-user",
+                "restore-from-quarantine"
+            },
+            operations);
     }
 
     [Fact]
@@ -132,10 +166,14 @@ public sealed class RecipePhotoServiceDeletePhotoTests
         DeletePhotoRepository photoRepository = new(photo, operations);
         DeletePhotoStorage storage = new(operations)
         {
-            DeleteFromQuarantineException = new IOException("cleanup failed"),
+            DeleteFromQuarantineException =
+                new IOException("cleanup failed")
         };
         RecordingLogger logger = new();
-        RecipePhotoService service = CreateService(photoRepository, storage, logger: logger);
+        RecipePhotoService service = CreateService(
+            photoRepository,
+            storage,
+            logger: logger);
 
         RecipePhotoResult result = service.DeletePhoto(photo.Id);
 
@@ -143,9 +181,13 @@ public sealed class RecipePhotoServiceDeletePhotoTests
         Assert.Equal(RecipePhotoResultCode.CleanupPending, result.Code);
         Assert.Contains(LogLevel.Warning, logger.Levels);
         Assert.Equal(
-            new[] { "move-to-quarantine", "delete-metadata", "delete-from-quarantine" },
-            operations
-        );
+            new[]
+            {
+                "move-to-quarantine",
+                "delete-metadata",
+                "delete-from-quarantine"
+            },
+            operations);
     }
 
     [Fact]
@@ -156,10 +198,13 @@ public sealed class RecipePhotoServiceDeletePhotoTests
         DeletePhotoRepository photoRepository = new(photo, operations);
         DeletePhotoStorage storage = new(operations)
         {
-            MoveException = new IOException("storage failed"),
+            MoveException = new IOException("storage failed")
         };
         RecordingLogger logger = new();
-        RecipePhotoService service = CreateService(photoRepository, storage, logger: logger);
+        RecipePhotoService service = CreateService(
+            photoRepository,
+            storage,
+            logger: logger);
 
         RecipePhotoResult result = service.DeletePhoto(photo.Id);
 
@@ -173,8 +218,7 @@ public sealed class RecipePhotoServiceDeletePhotoTests
         DeletePhotoRepository photoRepository,
         DeletePhotoStorage storage,
         ICurrentUserContext? currentUserContext = null,
-        RecordingLogger? logger = null
-    )
+        RecordingLogger? logger = null)
     {
         return new RecipePhotoService(
             storage,
@@ -185,14 +229,17 @@ public sealed class RecipePhotoServiceDeletePhotoTests
             new RecipePhotoFileNameNormalizer(),
             new RecipePhotoOptions(),
             TimeProvider.System,
-            logger ?? new RecordingLogger()
-        );
+            logger ?? new RecordingLogger());
     }
 
     private static CurrentUserContext CreateCurrentUser(int userId)
     {
         CurrentUserContext context = new();
-        context.SetCurrentUser(new User { Id = userId, Username = $"user-{userId}" });
+        context.SetCurrentUser(new User
+        {
+            Id = userId,
+            Username = $"user-{userId}"
+        });
         return context;
     }
 
@@ -202,13 +249,21 @@ public sealed class RecipePhotoServiceDeletePhotoTests
         {
             Id = 20,
             RecipeId = 10,
-            StorageFileName = "33333333333333333333333333333333.jpg",
+            StorageFileName =
+                "33333333333333333333333333333333.jpg",
             OriginalFileName = "photo.jpg",
             ContentType = "image/jpeg",
             FileSize = 3,
-            CreatedAtUtc = new DateTime(2026, 10, 8, 10, 0, 0, DateTimeKind.Utc),
+            CreatedAtUtc = new DateTime(
+                2026,
+                10,
+                8,
+                10,
+                0,
+                0,
+                DateTimeKind.Utc),
             DisplayOrder = 0,
-            Origin = RecipePhotoOrigin.UserUpload,
+            Origin = RecipePhotoOrigin.UserUpload
         };
     }
 
@@ -217,7 +272,9 @@ public sealed class RecipePhotoServiceDeletePhotoTests
         private readonly RecipePhoto _photo;
         private readonly List<string> _operations;
 
-        public DeletePhotoRepository(RecipePhoto photo, List<string> operations)
+        public DeletePhotoRepository(
+            RecipePhoto photo,
+            List<string> operations)
         {
             _photo = photo;
             _operations = operations;
@@ -257,7 +314,9 @@ public sealed class RecipePhotoServiceDeletePhotoTests
         {
             GetByIdAndUserIdWasCalled = true;
 
-            return _photo.Id == photoId && OwnerUserId == userId ? _photo : null;
+            return _photo.Id == photoId && OwnerUserId == userId
+                ? _photo
+                : null;
         }
 
         public List<RecipePhoto> GetByRecipeId(int recipeId)
@@ -265,7 +324,9 @@ public sealed class RecipePhotoServiceDeletePhotoTests
             throw new NotImplementedException();
         }
 
-        public List<RecipePhoto> GetByRecipeIdAndUserId(int recipeId, int userId)
+        public List<RecipePhoto> GetByRecipeIdAndUserId(
+            int recipeId,
+            int userId)
         {
             throw new NotImplementedException();
         }
@@ -305,7 +366,8 @@ public sealed class RecipePhotoServiceDeletePhotoTests
             _operations = operations;
         }
 
-        public string DeletionToken { get; } = "22222222222222222222222222222222";
+        public string DeletionToken { get; } =
+            "22222222222222222222222222222222";
 
         public bool FileWasMissing { get; set; }
 
@@ -316,8 +378,7 @@ public sealed class RecipePhotoServiceDeletePhotoTests
         public Task<StagedRecipePhotoUpload> StageUploadAsync(
             Stream content,
             long maximumBytes,
-            CancellationToken cancellationToken = default
-        )
+            CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
@@ -327,7 +388,9 @@ public sealed class RecipePhotoServiceDeletePhotoTests
             throw new NotImplementedException();
         }
 
-        public string FinalizeUpload(StagedRecipePhotoUpload upload, RecipePhotoFormat format)
+        public string FinalizeUpload(
+            StagedRecipePhotoUpload upload,
+            RecipePhotoFormat format)
         {
             throw new NotImplementedException();
         }
@@ -347,7 +410,8 @@ public sealed class RecipePhotoServiceDeletePhotoTests
             throw new NotImplementedException();
         }
 
-        public StagedRecipePhotoDeletion? MoveToQuarantine(string storageFileName)
+        public StagedRecipePhotoDeletion? MoveToQuarantine(
+            string storageFileName)
         {
             _operations.Add("move-to-quarantine");
 
@@ -356,15 +420,19 @@ public sealed class RecipePhotoServiceDeletePhotoTests
                 throw MoveException;
             }
 
-            return FileWasMissing ? null : new StagedRecipePhotoDeletion(DeletionToken);
+            return FileWasMissing
+                ? null
+                : new StagedRecipePhotoDeletion(DeletionToken);
         }
 
-        public void RestoreFromQuarantine(StagedRecipePhotoDeletion deletion)
+        public void RestoreFromQuarantine(
+            StagedRecipePhotoDeletion deletion)
         {
             _operations.Add("restore-from-quarantine");
         }
 
-        public void DeleteFromQuarantine(StagedRecipePhotoDeletion deletion)
+        public void DeleteFromQuarantine(
+            StagedRecipePhotoDeletion deletion)
         {
             _operations.Add("delete-from-quarantine");
 
@@ -374,17 +442,20 @@ public sealed class RecipePhotoServiceDeletePhotoTests
             }
         }
 
-        public RecipePhotoStorageInventory<StagedRecipePhotoUploadInventoryItem> GetStagedUploads()
+        public RecipePhotoStorageInventory<StagedRecipePhotoUploadInventoryItem>
+            GetStagedUploads()
         {
             throw new NotImplementedException();
         }
 
-        public RecipePhotoStorageInventory<StagedRecipePhotoDeletionInventoryItem> GetQuarantinedDeletions()
+        public RecipePhotoStorageInventory<StagedRecipePhotoDeletionInventoryItem>
+            GetQuarantinedDeletions()
         {
             throw new NotImplementedException();
         }
 
-        public RecipePhotoStorageInventory<RecipePhotoStorageFileInventoryItem> GetFinalFiles()
+        public RecipePhotoStorageInventory<RecipePhotoStorageFileInventoryItem>
+            GetFinalFiles()
         {
             throw new NotImplementedException();
         }
@@ -410,8 +481,7 @@ public sealed class RecipePhotoServiceDeletePhotoTests
             EventId eventId,
             TState state,
             Exception? exception,
-            Func<TState, Exception?, string> formatter
-        )
+            Func<TState, Exception?, string> formatter)
         {
             Levels.Add(logLevel);
         }

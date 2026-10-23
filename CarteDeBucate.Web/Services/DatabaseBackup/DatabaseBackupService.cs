@@ -13,8 +13,7 @@ public class DatabaseBackupService : IDatabaseBackupService
     public DatabaseBackupService(
         ILogger<DatabaseBackupService> logger,
         string databasePath,
-        IWebHostEnvironment environment
-    )
+        IWebHostEnvironment environment)
     {
         _logger = logger;
         _databasePath = databasePath;
@@ -26,7 +25,7 @@ public class DatabaseBackupService : IDatabaseBackupService
         string connectionString = new SqliteConnectionStringBuilder
         {
             DataSource = _databasePath,
-            Mode = SqliteOpenMode.ReadOnly,
+            Mode = SqliteOpenMode.ReadOnly
         }.ToString();
 
         string backupDirectory = Path.Combine(_environment.ContentRootPath, "Backups");
@@ -43,9 +42,7 @@ public class DatabaseBackupService : IDatabaseBackupService
         try
         {
             await using (var sourceConnection = new SqliteConnection(connectionString))
-            await using (
-                var backupConnection = new SqliteConnection($"Data Source={temporaryBackupPath}")
-            )
+            await using (var backupConnection = new SqliteConnection($"Data Source={temporaryBackupPath}"))
             {
                 await sourceConnection.OpenAsync(cancellationToken);
                 await backupConnection.OpenAsync(cancellationToken);
@@ -66,8 +63,7 @@ public class DatabaseBackupService : IDatabaseBackupService
         _logger.LogInformation(
             "Database backup completed successfully. File: {BackupFile}, Size: {BackupSize} bytes.",
             backupFile.Name,
-            backupFile.Length
-        );
+            backupFile.Length);
     }
 
     private void TryDeleteTemporaryBackup(string temporaryBackupPath)
@@ -84,8 +80,7 @@ public class DatabaseBackupService : IDatabaseBackupService
             _logger.LogWarning(
                 exception,
                 "Could not delete incomplete database backup: {BackupPath}",
-                temporaryBackupPath
-            );
+                temporaryBackupPath);
         }
     }
 
@@ -102,10 +97,11 @@ public class DatabaseBackupService : IDatabaseBackupService
 
         DateTime cutoffDate = DateTime.UtcNow.AddDays(-RetentionDays);
 
-        FileInfo[] oldBackups = new DirectoryInfo(backupDirectory)
-            .GetFiles("*.db")
-            .Where(file => file.LastWriteTimeUtc < cutoffDate)
-            .ToArray();
+        FileInfo[] oldBackups =
+            new DirectoryInfo(backupDirectory)
+                .GetFiles("*.db")
+                .Where(file => file.LastWriteTimeUtc < cutoffDate)
+                .ToArray();
         int deletedBackupCount = 0;
 
         foreach (FileInfo backup in oldBackups)
@@ -119,17 +115,12 @@ public class DatabaseBackupService : IDatabaseBackupService
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(
-                    ex,
-                    "Could not delete old database backup: {BackupFile}",
-                    backup.Name
-                );
+                _logger.LogWarning(ex, "Could not delete old database backup: {BackupFile}", backup.Name);
             }
         }
 
         _logger.LogInformation(
             "Backup cleanup completed. Deleted {DeletedBackupCount} old backup(s).",
-            deletedBackupCount
-        );
+            deletedBackupCount);
     }
 }

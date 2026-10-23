@@ -7,9 +7,12 @@ public sealed class RecipePhotoDeletionCoordinatorTests
     {
         CoordinatorPhotoRepository photoRepository = new();
         CoordinatorPhotoStorage storage = new();
-        RecipePhotoService service = CreateService(photoRepository, storage);
+        RecipePhotoService service = CreateService(
+            photoRepository,
+            storage);
 
-        PreparedRecipePhotoDeletionBatch? batch = service.PrepareRecipeDeletion(10);
+        PreparedRecipePhotoDeletionBatch? batch =
+            service.PrepareRecipeDeletion(10);
 
         Assert.NotNull(batch);
         Assert.Equal(10, batch.RecipeId);
@@ -21,15 +24,23 @@ public sealed class RecipePhotoDeletionCoordinatorTests
     public void PrepareRecipeDeletion_WithOnePhoto_ShouldQuarantineItsContent()
     {
         RecipePhoto photo = CreatePhoto(20, "first.jpg");
-        CoordinatorPhotoRepository photoRepository = new() { Photos = [photo] };
+        CoordinatorPhotoRepository photoRepository = new()
+        {
+            Photos = [photo]
+        };
         CoordinatorPhotoStorage storage = new();
-        RecipePhotoService service = CreateService(photoRepository, storage);
+        RecipePhotoService service = CreateService(
+            photoRepository,
+            storage);
 
-        PreparedRecipePhotoDeletionBatch? batch = service.PrepareRecipeDeletion(10);
+        PreparedRecipePhotoDeletionBatch? batch =
+            service.PrepareRecipeDeletion(10);
 
         Assert.NotNull(batch);
         Assert.Single(batch.StagedDeletions);
-        Assert.Equal(new[] { "move:first.jpg" }, storage.Operations);
+        Assert.Equal(
+            new[] { "move:first.jpg" },
+            storage.Operations);
         Assert.True(photoRepository.GetByRecipeIdWasCalled);
     }
 
@@ -42,20 +53,27 @@ public sealed class RecipePhotoDeletionCoordinatorTests
             [
                 CreatePhoto(20, "first.jpg"),
                 CreatePhoto(21, "second.png"),
-                CreatePhoto(22, "third.webp"),
-            ],
+                CreatePhoto(22, "third.webp")
+            ]
         };
         CoordinatorPhotoStorage storage = new();
-        RecipePhotoService service = CreateService(photoRepository, storage);
+        RecipePhotoService service = CreateService(
+            photoRepository,
+            storage);
 
-        PreparedRecipePhotoDeletionBatch? batch = service.PrepareRecipeDeletion(10);
+        PreparedRecipePhotoDeletionBatch? batch =
+            service.PrepareRecipeDeletion(10);
 
         Assert.NotNull(batch);
         Assert.Equal(3, batch.StagedDeletions.Count);
         Assert.Equal(
-            new[] { "move:first.jpg", "move:second.png", "move:third.webp" },
-            storage.Operations
-        );
+            new[]
+            {
+                "move:first.jpg",
+                "move:second.png",
+                "move:third.webp"
+            },
+            storage.Operations);
     }
 
     [Fact]
@@ -63,18 +81,32 @@ public sealed class RecipePhotoDeletionCoordinatorTests
     {
         CoordinatorPhotoRepository photoRepository = new()
         {
-            Photos = [CreatePhoto(20, "missing.jpg"), CreatePhoto(21, "existing.png")],
+            Photos =
+            [
+                CreatePhoto(20, "missing.jpg"),
+                CreatePhoto(21, "existing.png")
+            ]
         };
         CoordinatorPhotoStorage storage = new();
         storage.MissingStorageFileNames.Add("missing.jpg");
         RecordingLogger logger = new();
-        RecipePhotoService service = CreateService(photoRepository, storage, logger);
+        RecipePhotoService service = CreateService(
+            photoRepository,
+            storage,
+            logger);
 
-        PreparedRecipePhotoDeletionBatch? batch = service.PrepareRecipeDeletion(10);
+        PreparedRecipePhotoDeletionBatch? batch =
+            service.PrepareRecipeDeletion(10);
 
         Assert.NotNull(batch);
         Assert.Single(batch.StagedDeletions);
-        Assert.Equal(new[] { "move:missing.jpg", "move:existing.png" }, storage.Operations);
+        Assert.Equal(
+            new[]
+            {
+                "move:missing.jpg",
+                "move:existing.png"
+            },
+            storage.Operations);
         Assert.Contains(LogLevel.Warning, logger.Levels);
     }
 
@@ -87,21 +119,33 @@ public sealed class RecipePhotoDeletionCoordinatorTests
             [
                 CreatePhoto(20, "first.jpg"),
                 CreatePhoto(21, "second.png"),
-                CreatePhoto(22, "third.webp"),
-            ],
+                CreatePhoto(22, "third.webp")
+            ]
         };
-        CoordinatorPhotoStorage storage = new() { MoveFailureStorageFileName = "second.png" };
+        CoordinatorPhotoStorage storage = new()
+        {
+            MoveFailureStorageFileName = "second.png"
+        };
         RecordingLogger logger = new();
-        RecipePhotoService service = CreateService(photoRepository, storage, logger);
+        RecipePhotoService service = CreateService(
+            photoRepository,
+            storage,
+            logger);
 
-        PreparedRecipePhotoDeletionBatch? batch = service.PrepareRecipeDeletion(10);
-        string firstRestoreOperation = $"restore:{CoordinatorPhotoStorage.TokenFor("first.jpg")}";
+        PreparedRecipePhotoDeletionBatch? batch =
+            service.PrepareRecipeDeletion(10);
+        string firstRestoreOperation =
+            $"restore:{CoordinatorPhotoStorage.TokenFor("first.jpg")}";
 
         Assert.Null(batch);
         Assert.Equal(
-            new[] { "move:first.jpg", "move:second.png", firstRestoreOperation },
-            storage.Operations
-        );
+            new[]
+            {
+                "move:first.jpg",
+                "move:second.png",
+                firstRestoreOperation
+            },
+            storage.Operations);
         Assert.Contains(LogLevel.Error, logger.Levels);
     }
 
@@ -114,19 +158,31 @@ public sealed class RecipePhotoDeletionCoordinatorTests
             [
                 CreatePhoto(20, "first.jpg"),
                 CreatePhoto(21, "second.png"),
-                CreatePhoto(22, "failure.webp"),
-            ],
+                CreatePhoto(22, "failure.webp")
+            ]
         };
-        CoordinatorPhotoStorage storage = new() { MoveFailureStorageFileName = "failure.webp" };
-        storage.RestoreFailureTokens.Add(CoordinatorPhotoStorage.TokenFor("first.jpg"));
+        CoordinatorPhotoStorage storage = new()
+        {
+            MoveFailureStorageFileName = "failure.webp"
+        };
+        storage.RestoreFailureTokens.Add(
+            CoordinatorPhotoStorage.TokenFor("first.jpg"));
         RecordingLogger logger = new();
-        RecipePhotoService service = CreateService(photoRepository, storage, logger);
+        RecipePhotoService service = CreateService(
+            photoRepository,
+            storage,
+            logger);
 
-        PreparedRecipePhotoDeletionBatch? batch = service.PrepareRecipeDeletion(10);
+        PreparedRecipePhotoDeletionBatch? batch =
+            service.PrepareRecipeDeletion(10);
 
         Assert.Null(batch);
-        Assert.Contains($"restore:{CoordinatorPhotoStorage.TokenFor("first.jpg")}", storage.Operations);
-        Assert.Contains($"restore:{CoordinatorPhotoStorage.TokenFor("second.png")}", storage.Operations);
+        Assert.Contains(
+            $"restore:{CoordinatorPhotoStorage.TokenFor("first.jpg")}",
+            storage.Operations);
+        Assert.Contains(
+            $"restore:{CoordinatorPhotoStorage.TokenFor("second.png")}",
+            storage.Operations);
         Assert.Contains(LogLevel.Warning, logger.Levels);
         Assert.Contains(LogLevel.Error, logger.Levels);
     }
@@ -135,12 +191,16 @@ public sealed class RecipePhotoDeletionCoordinatorTests
     public void ConfirmRecipeDeletion_ShouldDeleteEveryQuarantinedItem()
     {
         CoordinatorPhotoStorage storage = new();
-        RecipePhotoService service = CreateService(new CoordinatorPhotoRepository(), storage);
+        RecipePhotoService service = CreateService(
+            new CoordinatorPhotoRepository(),
+            storage);
         PreparedRecipePhotoDeletionBatch batch = CreateBatch();
 
         service.ConfirmRecipeDeletion(batch);
 
-        Assert.Equal(new[] { "delete:token-one", "delete:token-two" }, storage.Operations);
+        Assert.Equal(
+            new[] { "delete:token-one", "delete:token-two" },
+            storage.Operations);
     }
 
     [Fact]
@@ -149,11 +209,16 @@ public sealed class RecipePhotoDeletionCoordinatorTests
         CoordinatorPhotoStorage storage = new();
         storage.DeleteFailureTokens.Add("token-one");
         RecordingLogger logger = new();
-        RecipePhotoService service = CreateService(new CoordinatorPhotoRepository(), storage, logger);
+        RecipePhotoService service = CreateService(
+            new CoordinatorPhotoRepository(),
+            storage,
+            logger);
 
         service.ConfirmRecipeDeletion(CreateBatch());
 
-        Assert.Equal(new[] { "delete:token-one", "delete:token-two" }, storage.Operations);
+        Assert.Equal(
+            new[] { "delete:token-one", "delete:token-two" },
+            storage.Operations);
         Assert.Contains(LogLevel.Warning, logger.Levels);
     }
 
@@ -163,23 +228,34 @@ public sealed class RecipePhotoDeletionCoordinatorTests
         CoordinatorPhotoStorage storage = new();
         storage.RestoreFailureTokens.Add("token-one");
         RecordingLogger logger = new();
-        RecipePhotoService service = CreateService(new CoordinatorPhotoRepository(), storage, logger);
+        RecipePhotoService service = CreateService(
+            new CoordinatorPhotoRepository(),
+            storage,
+            logger);
 
         service.RestoreRecipeDeletion(CreateBatch());
 
-        Assert.Equal(new[] { "restore:token-one", "restore:token-two" }, storage.Operations);
+        Assert.Equal(
+            new[] { "restore:token-one", "restore:token-two" },
+            storage.Operations);
         Assert.Contains(LogLevel.Warning, logger.Levels);
     }
 
     private static RecipePhotoService CreateService(
         CoordinatorPhotoRepository photoRepository,
         CoordinatorPhotoStorage storage,
-        RecordingLogger? logger = null
-    )
+        RecordingLogger? logger = null)
     {
         FakeRecipeRepository recipeRepository = new()
         {
-            Recipes = [new Recipe { Id = 10, Name = "Recipe 10" }],
+            Recipes =
+            [
+                new Recipe
+                {
+                    Id = 10,
+                    Name = "Recipe 10"
+                }
+            ]
         };
 
         return new RecipePhotoService(
@@ -191,17 +267,18 @@ public sealed class RecipePhotoDeletionCoordinatorTests
             new RecipePhotoFileNameNormalizer(),
             new RecipePhotoOptions(),
             TimeProvider.System,
-            logger ?? new RecordingLogger()
-        );
+            logger ?? new RecordingLogger());
     }
 
-    private static RecipePhoto CreatePhoto(int id, string storageFileName)
+    private static RecipePhoto CreatePhoto(
+        int id,
+        string storageFileName)
     {
         return new RecipePhoto
         {
             Id = id,
             RecipeId = 10,
-            StorageFileName = storageFileName,
+            StorageFileName = storageFileName
         };
     }
 
@@ -209,8 +286,10 @@ public sealed class RecipePhotoDeletionCoordinatorTests
     {
         return new PreparedRecipePhotoDeletionBatch(
             10,
-            [new StagedRecipePhotoDeletion("token-one"), new StagedRecipePhotoDeletion("token-two")]
-        );
+            [
+                new StagedRecipePhotoDeletion("token-one"),
+                new StagedRecipePhotoDeletion("token-two")
+            ]);
     }
 
     private sealed class CoordinatorPhotoRepository : IRecipePhotoRepository
@@ -243,10 +322,14 @@ public sealed class RecipePhotoDeletionCoordinatorTests
         {
             GetByRecipeIdWasCalled = true;
 
-            return Photos.Where(photo => photo.RecipeId == recipeId).ToList();
+            return Photos
+                .Where(photo => photo.RecipeId == recipeId)
+                .ToList();
         }
 
-        public List<RecipePhoto> GetByRecipeIdAndUserId(int recipeId, int userId)
+        public List<RecipePhoto> GetByRecipeIdAndUserId(
+            int recipeId,
+            int userId)
         {
             throw new NotImplementedException();
         }
@@ -282,8 +365,7 @@ public sealed class RecipePhotoDeletionCoordinatorTests
         public Task<StagedRecipePhotoUpload> StageUploadAsync(
             Stream content,
             long maximumBytes,
-            CancellationToken cancellationToken = default
-        )
+            CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
@@ -293,7 +375,9 @@ public sealed class RecipePhotoDeletionCoordinatorTests
             throw new NotImplementedException();
         }
 
-        public string FinalizeUpload(StagedRecipePhotoUpload upload, RecipePhotoFormat format)
+        public string FinalizeUpload(
+            StagedRecipePhotoUpload upload,
+            RecipePhotoFormat format)
         {
             throw new NotImplementedException();
         }
@@ -313,7 +397,8 @@ public sealed class RecipePhotoDeletionCoordinatorTests
             throw new NotImplementedException();
         }
 
-        public StagedRecipePhotoDeletion? MoveToQuarantine(string storageFileName)
+        public StagedRecipePhotoDeletion? MoveToQuarantine(
+            string storageFileName)
         {
             Operations.Add($"move:{storageFileName}");
 
@@ -327,10 +412,12 @@ public sealed class RecipePhotoDeletionCoordinatorTests
                 return null;
             }
 
-            return new StagedRecipePhotoDeletion(TokenFor(storageFileName));
+            return new StagedRecipePhotoDeletion(
+                TokenFor(storageFileName));
         }
 
-        public void RestoreFromQuarantine(StagedRecipePhotoDeletion deletion)
+        public void RestoreFromQuarantine(
+            StagedRecipePhotoDeletion deletion)
         {
             Operations.Add($"restore:{deletion.Token}");
 
@@ -340,7 +427,8 @@ public sealed class RecipePhotoDeletionCoordinatorTests
             }
         }
 
-        public void DeleteFromQuarantine(StagedRecipePhotoDeletion deletion)
+        public void DeleteFromQuarantine(
+            StagedRecipePhotoDeletion deletion)
         {
             Operations.Add($"delete:{deletion.Token}");
 
@@ -350,17 +438,20 @@ public sealed class RecipePhotoDeletionCoordinatorTests
             }
         }
 
-        public RecipePhotoStorageInventory<StagedRecipePhotoUploadInventoryItem> GetStagedUploads()
+        public RecipePhotoStorageInventory<StagedRecipePhotoUploadInventoryItem>
+            GetStagedUploads()
         {
             throw new NotImplementedException();
         }
 
-        public RecipePhotoStorageInventory<StagedRecipePhotoDeletionInventoryItem> GetQuarantinedDeletions()
+        public RecipePhotoStorageInventory<StagedRecipePhotoDeletionInventoryItem>
+            GetQuarantinedDeletions()
         {
             throw new NotImplementedException();
         }
 
-        public RecipePhotoStorageInventory<RecipePhotoStorageFileInventoryItem> GetFinalFiles()
+        public RecipePhotoStorageInventory<RecipePhotoStorageFileInventoryItem>
+            GetFinalFiles()
         {
             throw new NotImplementedException();
         }
@@ -386,8 +477,7 @@ public sealed class RecipePhotoDeletionCoordinatorTests
             EventId eventId,
             TState state,
             Exception? exception,
-            Func<TState, Exception?, string> formatter
-        )
+            Func<TState, Exception?, string> formatter)
         {
             Levels.Add(logLevel);
         }

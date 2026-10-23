@@ -17,15 +17,23 @@ public static class RecipeImportConstants
     public const string H1Tag = "h1";
 
     public static readonly string[] SectionCandidateTags =
-    {
-        "h2",
-        "h3",
-        "h4",
-        "strong",
-        "b",
-        "p",
-        "div",
-    };
+{
+    "h2",
+    "h3",
+    "h4",
+    "strong",
+    "b",
+    "p",
+    "div"
+};
 
-    public static readonly string[] HeadingLikeTags = { "h1", "h2", "h3", "h4", "strong", "b" };
+public static readonly string[] HeadingLikeTags =
+{
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "strong",
+    "b"
+};
 }

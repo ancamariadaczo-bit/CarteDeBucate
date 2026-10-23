@@ -10,11 +10,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 
-public class AuthenticationPipelineTests : IClassFixture<AuthenticationApiWebApplicationFactory>
+public class AuthenticationPipelineTests
+    : IClassFixture<AuthenticationApiWebApplicationFactory>
 {
     private readonly AuthenticationApiWebApplicationFactory _factory;
 
-    public AuthenticationPipelineTests(AuthenticationApiWebApplicationFactory factory)
+    public AuthenticationPipelineTests(
+        AuthenticationApiWebApplicationFactory factory)
     {
         _factory = factory;
     }
@@ -26,8 +28,7 @@ public class AuthenticationPipelineTests : IClassFixture<AuthenticationApiWebApp
 
         HttpResponseMessage response = await client.PostAsJsonAsync(
             "/api/recipes",
-            CreateRecipeRequest()
-        );
+            CreateRecipeRequest());
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -36,15 +37,12 @@ public class AuthenticationPipelineTests : IClassFixture<AuthenticationApiWebApp
     public async Task CreateRecipe_WithInvalidToken_ShouldReturnUnauthorized()
     {
         using HttpClient client = CreateClient();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-            "Bearer",
-            "not-a-valid-jwt"
-        );
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", "not-a-valid-jwt");
 
         HttpResponseMessage response = await client.PostAsJsonAsync(
             "/api/recipes",
-            CreateRecipeRequest()
-        );
+            CreateRecipeRequest());
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -54,15 +52,14 @@ public class AuthenticationPipelineTests : IClassFixture<AuthenticationApiWebApp
     {
         _factory.SaveProbe.Reset();
         using HttpClient client = CreateClient();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-            "Bearer",
-            _factory.CreateToken("42", "chef")
-        );
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue(
+                "Bearer",
+                _factory.CreateToken("42", "chef"));
 
         HttpResponseMessage response = await client.PostAsJsonAsync(
             "/api/recipes",
-            CreateRecipeRequest()
-        );
+            CreateRecipeRequest());
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         Assert.True(_factory.SaveProbe.IsAuthenticated);
@@ -75,7 +72,8 @@ public class AuthenticationPipelineTests : IClassFixture<AuthenticationApiWebApp
     {
         using HttpClient client = CreateClient();
 
-        HttpResponseMessage response = await client.GetAsync(CreateRecipeExistsRequestUri());
+        HttpResponseMessage response = await client.GetAsync(
+            CreateRecipeExistsRequestUri());
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -84,12 +82,11 @@ public class AuthenticationPipelineTests : IClassFixture<AuthenticationApiWebApp
     public async Task RecipeExists_WithInvalidToken_ShouldReturnUnauthorized()
     {
         using HttpClient client = CreateClient();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-            "Bearer",
-            "not-a-valid-jwt"
-        );
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", "not-a-valid-jwt");
 
-        HttpResponseMessage response = await client.GetAsync(CreateRecipeExistsRequestUri());
+        HttpResponseMessage response = await client.GetAsync(
+            CreateRecipeExistsRequestUri());
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -100,19 +97,23 @@ public class AuthenticationPipelineTests : IClassFixture<AuthenticationApiWebApp
         _factory.ExistsProbe.Reset();
         _factory.ExistsProbe.ResultToReturn = true;
         using HttpClient client = CreateClient();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-            "Bearer",
-            _factory.CreateToken("42", "chef")
-        );
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue(
+                "Bearer",
+                _factory.CreateToken("42", "chef"));
 
-        HttpResponseMessage response = await client.GetAsync(CreateRecipeExistsRequestUri());
-        RecipeExistsResponse? result = await response.Content.ReadFromJsonAsync<RecipeExistsResponse>();
+        HttpResponseMessage response = await client.GetAsync(
+            CreateRecipeExistsRequestUri());
+        RecipeExistsResponse? result =
+            await response.Content.ReadFromJsonAsync<RecipeExistsResponse>();
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.NotNull(result);
         Assert.True(result.Exists);
         Assert.Equal(1, _factory.ExistsProbe.CallCount);
-        Assert.Equal("https://recipes.example.test/pipeline-soup", _factory.ExistsProbe.SourceUrl);
+        Assert.Equal(
+            "https://recipes.example.test/pipeline-soup",
+            _factory.ExistsProbe.SourceUrl);
         Assert.True(_factory.ExistsProbe.IsAuthenticated);
         Assert.Equal(42, _factory.ExistsProbe.UserId);
         Assert.Equal("chef", _factory.ExistsProbe.Username);
@@ -123,7 +124,8 @@ public class AuthenticationPipelineTests : IClassFixture<AuthenticationApiWebApp
     {
         using HttpClient client = CreateClient();
 
-        HttpResponseMessage response = await client.GetAsync("/api/authentication/me");
+        HttpResponseMessage response = await client.GetAsync(
+            "/api/authentication/me");
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -132,12 +134,13 @@ public class AuthenticationPipelineTests : IClassFixture<AuthenticationApiWebApp
     public async Task GetCurrentUser_WithValidToken_ShouldReturnTheTokenIdentity()
     {
         using HttpClient client = CreateClient();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-            "Bearer",
-            _factory.CreateToken("42", "chef")
-        );
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue(
+                "Bearer",
+                _factory.CreateToken("42", "chef"));
 
-        HttpResponseMessage response = await client.GetAsync("/api/authentication/me");
+        HttpResponseMessage response = await client.GetAsync(
+            "/api/authentication/me");
         CurrentUserResponse? currentUser =
             await response.Content.ReadFromJsonAsync<CurrentUserResponse>();
 
@@ -152,8 +155,7 @@ public class AuthenticationPipelineTests : IClassFixture<AuthenticationApiWebApp
     {
         using HttpClient client = CreateClient();
         using HttpRequestMessage request = CreateCorsPreflightRequest(
-            AuthenticationApiWebApplicationFactory.AllowedExtensionOrigin
-        );
+            AuthenticationApiWebApplicationFactory.AllowedExtensionOrigin);
 
         HttpResponseMessage response = await client.SendAsync(request);
 
@@ -161,13 +163,10 @@ public class AuthenticationPipelineTests : IClassFixture<AuthenticationApiWebApp
         Assert.True(
             response.Headers.TryGetValues(
                 "Access-Control-Allow-Origin",
-                out IEnumerable<string>? allowedOrigins
-            )
-        );
+                out IEnumerable<string>? allowedOrigins));
         Assert.Equal(
             AuthenticationApiWebApplicationFactory.AllowedExtensionOrigin,
-            Assert.Single(allowedOrigins)
-        );
+            Assert.Single(allowedOrigins));
     }
 
     [Fact]
@@ -175,8 +174,7 @@ public class AuthenticationPipelineTests : IClassFixture<AuthenticationApiWebApp
     {
         using HttpClient client = CreateClient();
         using HttpRequestMessage request = CreateCorsPreflightRequest(
-            "chrome-extension://unknown-extension-id"
-        );
+            "chrome-extension://unknown-extension-id");
 
         HttpResponseMessage response = await client.SendAsync(request);
 
@@ -185,13 +183,11 @@ public class AuthenticationPipelineTests : IClassFixture<AuthenticationApiWebApp
 
     private HttpClient CreateClient()
     {
-        return _factory.CreateClient(
-            new WebApplicationFactoryClientOptions
-            {
-                AllowAutoRedirect = false,
-                BaseAddress = new Uri("https://localhost"),
-            }
-        );
+        return _factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false,
+            BaseAddress = new Uri("https://localhost")
+        });
     }
 
     private static CreateRecipeRequest CreateRecipeRequest()
@@ -201,13 +197,14 @@ public class AuthenticationPipelineTests : IClassFixture<AuthenticationApiWebApp
             Name = "Pipeline soup",
             SourceUrl = "https://recipes.example.test/pipeline-soup",
             Ingredients = ["Water", "Salt"],
-            Steps = ["Boil.", "Serve."],
+            Steps = ["Boil.", "Serve."]
         };
     }
 
     private static string CreateRecipeExistsRequestUri()
     {
-        string sourceUrl = Uri.EscapeDataString("https://recipes.example.test/pipeline-soup");
+        string sourceUrl = Uri.EscapeDataString(
+            "https://recipes.example.test/pipeline-soup");
 
         return $"/api/recipes/exists?sourceUrl={sourceUrl}";
     }
@@ -234,9 +231,11 @@ public class AuthenticationPipelineTests : IClassFixture<AuthenticationApiWebApp
     }
 }
 
-public sealed class AuthenticationApiWebApplicationFactory : WebApplicationFactory<Program>
+public sealed class AuthenticationApiWebApplicationFactory
+    : WebApplicationFactory<Program>
 {
-    public const string AllowedExtensionOrigin = "chrome-extension://integration-test-extension-id";
+    public const string AllowedExtensionOrigin =
+        "chrome-extension://integration-test-extension-id";
 
     private const string TestJwtKey =
         "integration-test-signing-key-that-is-long-enough-for-hs256-1234567890";
@@ -250,8 +249,7 @@ public sealed class AuthenticationApiWebApplicationFactory : WebApplicationFacto
         _temporaryDirectory = Path.Combine(
             Path.GetTempPath(),
             "CarteDeBucate.AuthenticationPipelineTests",
-            Guid.NewGuid().ToString("N")
-        );
+            Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(_temporaryDirectory);
     }
 
@@ -264,7 +262,8 @@ public sealed class AuthenticationApiWebApplicationFactory : WebApplicationFacto
             .AddInMemoryCollection(CreateSettings())
             .Build();
 
-        return new JwtTokenService(configuration).CreateToken(userId, username);
+        return new JwtTokenService(configuration)
+            .CreateToken(userId, username);
     }
 
     protected override IHost CreateHost(IHostBuilder builder)
@@ -280,24 +279,20 @@ public sealed class AuthenticationApiWebApplicationFactory : WebApplicationFacto
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
-        builder.ConfigureAppConfiguration(
-            (_, configuration) =>
-            {
-                configuration.AddInMemoryCollection(CreateSettings());
-            }
-        );
+        builder.ConfigureAppConfiguration((_, configuration) =>
+        {
+            configuration.AddInMemoryCollection(CreateSettings());
+        });
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<IRecipeLibraryService>();
             services.AddSingleton(SaveProbe);
             services.AddSingleton(ExistsProbe);
-            services.AddScoped<IRecipeLibraryService>(
-                serviceProvider => new PipelineRecipeLibraryService(
+            services.AddScoped<IRecipeLibraryService>(serviceProvider =>
+                new PipelineRecipeLibraryService(
                     serviceProvider.GetRequiredService<ICurrentUserContext>(),
                     serviceProvider.GetRequiredService<RecipeSaveProbe>(),
-                    serviceProvider.GetRequiredService<RecipeExistsProbe>()
-                )
-            );
+                    serviceProvider.GetRequiredService<RecipeExistsProbe>()));
         });
     }
 
@@ -322,7 +317,7 @@ public sealed class AuthenticationApiWebApplicationFactory : WebApplicationFacto
             ["Jwt:ExpirationMinutes"] = "30",
             ["Cors:AllowedOrigins:0"] = AllowedExtensionOrigin,
             ["ChromeExtension:AuthenticationRedirectUrl"] =
-                "https://integration-test-extension-id.chromiumapp.org/authentication-callback",
+                "https://integration-test-extension-id.chromiumapp.org/authentication-callback"
         };
     }
 }
@@ -364,7 +359,9 @@ public sealed class RecipeExistsProbe
 
     public string? Username { get; private set; }
 
-    public bool Capture(string sourceUrl, ICurrentUserContext currentUserContext)
+    public bool Capture(
+        string sourceUrl,
+        ICurrentUserContext currentUserContext)
     {
         CallCount++;
         SourceUrl = sourceUrl;
@@ -395,8 +392,7 @@ public sealed class PipelineRecipeLibraryService : IRecipeLibraryService
     public PipelineRecipeLibraryService(
         ICurrentUserContext currentUserContext,
         RecipeSaveProbe saveProbe,
-        RecipeExistsProbe existsProbe
-    )
+        RecipeExistsProbe existsProbe)
     {
         _currentUserContext = currentUserContext;
         _saveProbe = saveProbe;
@@ -408,7 +404,9 @@ public sealed class PipelineRecipeLibraryService : IRecipeLibraryService
         _saveProbe.Capture(_currentUserContext);
         recipe.Id = 321;
 
-        return RecipeSaveResult.Success("Recipe saved successfully.", recipe);
+        return RecipeSaveResult.Success(
+            "Recipe saved successfully.",
+            recipe);
     }
 
     public List<RecipeSummary> GetRecipeSummaries()
@@ -416,7 +414,9 @@ public sealed class PipelineRecipeLibraryService : IRecipeLibraryService
         throw new NotSupportedException();
     }
 
-    public PagedResult<RecipeSummary> GetRecipeSummariesPage(int pageNumber, int pageSize)
+    public PagedResult<RecipeSummary> GetRecipeSummariesPage(
+        int pageNumber,
+        int pageSize)
     {
         throw new NotSupportedException();
     }
@@ -436,7 +436,10 @@ public sealed class PipelineRecipeLibraryService : IRecipeLibraryService
         throw new NotSupportedException();
     }
 
-    public PagedResult<RecipeSummary> SearchRecipesPage(string searchText, int pageNumber, int pageSize)
+    public PagedResult<RecipeSummary> SearchRecipesPage(
+        string searchText,
+        int pageNumber,
+        int pageSize)
     {
         throw new NotSupportedException();
     }

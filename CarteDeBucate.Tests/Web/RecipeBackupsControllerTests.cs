@@ -28,8 +28,8 @@ public class RecipeBackupsControllerTests
                 IsSuccess = true,
                 Message = "Exported.",
                 ExportedCount = 1,
-                Json = "[{\"Name\":\"Recipe\"}]",
-            },
+                Json = "[{\"Name\":\"Recipe\"}]"
+            }
         };
         RecipeBackupsController controller = CreateController(backupService);
 
@@ -39,7 +39,9 @@ public class RecipeBackupsControllerTests
         Assert.True(backupService.ExportToJsonContentWasCalled);
         Assert.Equal("application/json", fileResult.ContentType);
         Assert.EndsWith(".json", fileResult.FileDownloadName);
-        Assert.Equal("[{\"Name\":\"Recipe\"}]", Encoding.UTF8.GetString(fileResult.FileContents));
+        Assert.Equal(
+            "[{\"Name\":\"Recipe\"}]",
+            Encoding.UTF8.GetString(fileResult.FileContents));
     }
 
     [Fact]
@@ -50,14 +52,15 @@ public class RecipeBackupsControllerTests
             ExportContentResultToReturn = new RecipeBackupExportResult
             {
                 IsSuccess = false,
-                Message = "Export failed.",
-            },
+                Message = "Export failed."
+            }
         };
         RecipeBackupsController controller = CreateController(backupService);
 
         IActionResult result = controller.Export();
 
-        RedirectToActionResult redirectResult = Assert.IsType<RedirectToActionResult>(result);
+        RedirectToActionResult redirectResult =
+            Assert.IsType<RedirectToActionResult>(result);
         Assert.Equal(nameof(RecipeBackupsController.Index), redirectResult.ActionName);
         Assert.True(backupService.ExportToJsonContentWasCalled);
         Assert.Equal("Export failed.", controller.TempData["ErrorMessage"]);
@@ -71,10 +74,13 @@ public class RecipeBackupsControllerTests
 
         IActionResult result = await controller.Import(null);
 
-        RedirectToActionResult redirectResult = Assert.IsType<RedirectToActionResult>(result);
+        RedirectToActionResult redirectResult =
+            Assert.IsType<RedirectToActionResult>(result);
         Assert.Equal(nameof(RecipeBackupsController.Index), redirectResult.ActionName);
         Assert.False(backupService.ImportFromJsonContentWasCalled);
-        Assert.Equal("Selectează un fișier backup JSON.", controller.TempData["ErrorMessage"]);
+        Assert.Equal(
+            "Selectează un fișier backup JSON.",
+            controller.TempData["ErrorMessage"]);
     }
 
     [Fact]
@@ -87,7 +93,9 @@ public class RecipeBackupsControllerTests
         await controller.Import(backupFile);
 
         Assert.True(backupService.ImportFromJsonContentWasCalled);
-        Assert.Equal("[{\"Name\":\"Recipe\"}]", backupService.JsonPassedToImportFromJsonContent);
+        Assert.Equal(
+            "[{\"Name\":\"Recipe\"}]",
+            backupService.JsonPassedToImportFromJsonContent);
     }
 
     [Fact]
@@ -95,14 +103,19 @@ public class RecipeBackupsControllerTests
     {
         FakeRecipeBackupService backupService = new FakeRecipeBackupService
         {
-            ImportResultToReturn = new RecipeBackupResult { IsSuccess = true, Message = "Imported." },
+            ImportResultToReturn = new RecipeBackupResult
+            {
+                IsSuccess = true,
+                Message = "Imported."
+            }
         };
         RecipeBackupsController controller = CreateController(backupService);
         IFormFile backupFile = CreateFormFile("[]");
 
         IActionResult result = await controller.Import(backupFile);
 
-        RedirectToActionResult redirectResult = Assert.IsType<RedirectToActionResult>(result);
+        RedirectToActionResult redirectResult =
+            Assert.IsType<RedirectToActionResult>(result);
         Assert.Equal(nameof(RecipeBackupsController.Index), redirectResult.ActionName);
         Assert.Equal("Imported.", controller.TempData["SuccessMessage"]);
     }
@@ -115,15 +128,16 @@ public class RecipeBackupsControllerTests
             ImportResultToReturn = new RecipeBackupResult
             {
                 IsSuccess = false,
-                Message = "Import failed.",
-            },
+                Message = "Import failed."
+            }
         };
         RecipeBackupsController controller = CreateController(backupService);
         IFormFile backupFile = CreateFormFile("not json");
 
         IActionResult result = await controller.Import(backupFile);
 
-        RedirectToActionResult redirectResult = Assert.IsType<RedirectToActionResult>(result);
+        RedirectToActionResult redirectResult =
+            Assert.IsType<RedirectToActionResult>(result);
         Assert.Equal(nameof(RecipeBackupsController.Index), redirectResult.ActionName);
         Assert.Equal("Import failed.", controller.TempData["ErrorMessage"]);
     }
@@ -136,16 +150,21 @@ public class RecipeBackupsControllerTests
         return new FormFile(stream, 0, bytes.Length, "backupFile", "backup.json");
     }
 
-    private static RecipeBackupsController CreateController(IRecipeBackupService backupService)
+    private static RecipeBackupsController CreateController(
+        IRecipeBackupService backupService)
     {
         DefaultHttpContext httpContext = new DefaultHttpContext();
         RecipeBackupsController controller = new RecipeBackupsController(
             backupService,
-            NullLogger<RecipeBackupsController>.Instance
-        )
+            NullLogger<RecipeBackupsController>.Instance)
         {
-            ControllerContext = new ControllerContext { HttpContext = httpContext },
-            TempData = new TempDataDictionary(httpContext, new TestTempDataProvider()),
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = httpContext
+            },
+            TempData = new TempDataDictionary(
+                httpContext,
+                new TestTempDataProvider())
         };
 
         return controller;
@@ -158,6 +177,10 @@ public class RecipeBackupsControllerTests
             return new Dictionary<string, object>();
         }
 
-        public void SaveTempData(HttpContext context, IDictionary<string, object> values) { }
+        public void SaveTempData(
+            HttpContext context,
+            IDictionary<string, object> values)
+        {
+        }
     }
 }

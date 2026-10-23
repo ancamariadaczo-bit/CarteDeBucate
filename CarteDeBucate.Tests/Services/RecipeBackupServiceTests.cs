@@ -5,7 +5,9 @@ public class RecipeBackupServiceTests
     [Fact]
     public void ExportBackup_ShouldReturnAllRecipesAsJson()
     {
-        string tempFilePath = Path.Combine(Path.GetTempPath(), $"recipes-backup-{Guid.NewGuid()}.json");
+        string tempFilePath = Path.Combine(
+            Path.GetTempPath(),
+            $"recipes-backup-{Guid.NewGuid()}.json");
 
         try
         {
@@ -64,21 +66,17 @@ public class RecipeBackupServiceTests
 
         Assert.Equal(
             new[] { "version", "exportedAtUtc", "recipes" },
-            root.EnumerateObject().Select(property => property.Name).ToArray()
-        );
+            root.EnumerateObject().Select(property => property.Name).ToArray());
         Assert.Equal(RecipeBackupVersions.Current, root.GetProperty("version").GetInt32());
         Assert.Equal(DateTimeKind.Utc, root.GetProperty("exportedAtUtc").GetDateTime().Kind);
 
         JsonElement[] exportedRecipes = root.GetProperty("recipes").EnumerateArray().ToArray();
         Assert.Equal(2, exportedRecipes.Length);
-        Assert.All(
-            exportedRecipes,
-            exportedRecipe =>
-            {
-                Assert.False(exportedRecipe.TryGetProperty("id", out _));
-                Assert.False(exportedRecipe.TryGetProperty("userId", out _));
-            }
-        );
+        Assert.All(exportedRecipes, exportedRecipe =>
+        {
+            Assert.False(exportedRecipe.TryGetProperty("id", out _));
+            Assert.False(exportedRecipe.TryGetProperty("userId", out _));
+        });
         Assert.Equal(recipe.Name, exportedRecipes[0].GetProperty("name").GetString());
         Assert.Equal(recipe.SourceUrl, exportedRecipes[0].GetProperty("sourceUrl").GetString());
         Assert.DoesNotContain("\"format\"", result.Json, StringComparison.OrdinalIgnoreCase);
@@ -92,7 +90,11 @@ public class RecipeBackupServiceTests
         repository.Recipes.Add(CreateValidRecipe(2, "https://example.com/other-user"));
 
         CurrentUserContext currentUserContext = new CurrentUserContext();
-        currentUserContext.SetCurrentUser(new User { Id = 1, Username = "ana" });
+        currentUserContext.SetCurrentUser(new User
+        {
+            Id = 1,
+            Username = "ana"
+        });
 
         RecipeBackupService service = new RecipeBackupService(repository, currentUserContext);
 
@@ -109,14 +111,15 @@ public class RecipeBackupServiceTests
         Assert.False(exportedRecipe.TryGetProperty("userId", out _));
         Assert.Equal(
             "https://example.com/current-user",
-            exportedRecipe.GetProperty("sourceUrl").GetString()
-        );
+            exportedRecipe.GetProperty("sourceUrl").GetString());
     }
 
     [Fact]
     public void ImportBackup_WithNewRecipe_ShouldSaveRecipe()
     {
-        string tempFilePath = Path.Combine(Path.GetTempPath(), $"recipes-backup-{Guid.NewGuid()}.json");
+        string tempFilePath = Path.Combine(
+            Path.GetTempPath(),
+            $"recipes-backup-{Guid.NewGuid()}.json");
 
         try
         {
@@ -325,8 +328,7 @@ public class RecipeBackupServiceTests
     [InlineData(false)]
     [InlineData(true)]
     public void ImportFromJsonContent_WithInvalidUrl_ShouldRejectV1AndV2WithoutPersisting(
-        bool useVersionTwo
-    )
+        bool useVersionTwo)
     {
         Recipe invalidRecipe = CreateValidRecipe();
         invalidRecipe.SourceUrl = "javascript:alert(1)";
@@ -347,8 +349,7 @@ public class RecipeBackupServiceTests
     [InlineData(true)]
     [InlineData(false)]
     public void ImportFromJsonContent_WithEmptyIngredientsOrSteps_ShouldFailWithoutPersisting(
-        bool emptyIngredients
-    )
+        bool emptyIngredients)
     {
         Recipe invalidRecipe = CreateValidRecipe();
 
@@ -436,15 +437,15 @@ public class RecipeBackupServiceTests
     {
         Recipe existingRecipe = CreateValidRecipe(
             null,
-            "https://example.com/existing-before-failed-batch"
-        );
-        Recipe importedRecipe = CreateValidRecipe(null, "https://example.com/failed-batch");
+            "https://example.com/existing-before-failed-batch");
+        Recipe importedRecipe = CreateValidRecipe(
+            null,
+            "https://example.com/failed-batch");
         string json = JsonSerializer.Serialize(new[] { importedRecipe });
         FakeRecipeRepository repository = new FakeRecipeRepository();
         repository.Recipes.Add(existingRecipe);
-        repository.ExceptionToThrowOnAddRecipes = new InvalidOperationException(
-            "sensitive infrastructure details"
-        );
+        repository.ExceptionToThrowOnAddRecipes =
+            new InvalidOperationException("sensitive infrastructure details");
         RecipeBackupService service = new RecipeBackupService(repository);
 
         RecipeBackupResult result = service.ImportFromJsonContent(json);
@@ -491,7 +492,9 @@ public class RecipeBackupServiceTests
     [Fact]
     public void ImportBackup_WithExistingRecipe_ShouldSkipRecipe()
     {
-        string tempFilePath = Path.Combine(Path.GetTempPath(), $"recipes-backup-{Guid.NewGuid()}.json");
+        string tempFilePath = Path.Combine(
+            Path.GetTempPath(),
+            $"recipes-backup-{Guid.NewGuid()}.json");
 
         try
         {
@@ -558,8 +561,7 @@ public class RecipeBackupServiceTests
         string invalidFilePath = Path.Combine(
             Path.GetTempPath(),
             Guid.NewGuid().ToString(),
-            "recipes-backup.json"
-        );
+            "recipes-backup.json");
 
         FakeRecipeRepository repository = new FakeRecipeRepository();
 
@@ -587,11 +589,13 @@ public class RecipeBackupServiceTests
             Ingredients = new List<string> { "Banane" },
             Steps = new List<string> { "Coace" },
             Notes = "Test notes",
-            UserId = userId,
+            UserId = userId
         };
     }
 
-    private static string SerializeBackup(IReadOnlyCollection<Recipe> recipes, bool useVersionTwo)
+    private static string SerializeBackup(
+        IReadOnlyCollection<Recipe> recipes,
+        bool useVersionTwo)
     {
         if (!useVersionTwo)
         {
@@ -601,12 +605,14 @@ public class RecipeBackupServiceTests
         RecipeBackupDocument document = new RecipeBackupDocument
         {
             ExportedAtUtc = DateTime.UtcNow,
-            Recipes = recipes.Select(RecipeBackupMapper.ToBackupItem).ToList(),
+            Recipes = recipes
+                .Select(RecipeBackupMapper.ToBackupItem)
+                .ToList()
         };
 
-        return JsonSerializer.Serialize(
-            document,
-            new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }
-        );
+        return JsonSerializer.Serialize(document, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        });
     }
 }

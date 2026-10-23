@@ -15,6 +15,7 @@ public static class RecipeImportKeywords
         "pregătire",
         "reteta",
         "rețeta",
+
         // English
         "recipe",
         "ingredients",
@@ -30,22 +31,24 @@ public static class RecipeImportKeywords
         "cooking",
         "bake",
         "baking",
+
         // Structured data / JSON-LD
         "recipeingredient",
         "recipeinstructions",
         "cooktime",
         "preptime",
         "totaltime",
-        "recipeyield",
+        "recipeyield"
     };
 
     public static readonly string[] IngredientSectionStartKeywords =
     {
         // Romanian
         "ingrediente",
+
         // English
         "ingredients",
-        "ingredient",
+        "ingredient"
     };
 
     public static readonly string[] IngredientSectionStopKeywords =
@@ -59,6 +62,7 @@ public static class RecipeImportKeywords
         "pași",
         "pregatire",
         "pregătire",
+
         // English
         "instructions",
         "directions",
@@ -69,7 +73,7 @@ public static class RecipeImportKeywords
         "cook",
         "cooking",
         "bake",
-        "baking",
+        "baking"
     };
 
     public static readonly string[] StepsSectionStartKeywords =
@@ -83,6 +87,7 @@ public static class RecipeImportKeywords
         "pași",
         "pregatire",
         "pregătire",
+
         // English
         "instructions",
         "directions",
@@ -93,7 +98,7 @@ public static class RecipeImportKeywords
         "how to prepare",
         "how to cook",
         "make it",
-        "directions",
+        "directions"
     };
 
     public static readonly string[] StepsSectionStopKeywords =
@@ -105,6 +110,7 @@ public static class RecipeImportKeywords
         "comentarii",
         "alte retete",
         "alte rețete",
+
         // English
         "notes",
         "tips",
@@ -118,43 +124,43 @@ public static class RecipeImportKeywords
         "leave a comment",
         "recipe notes",
         "storage",
-        "serving suggestions",
+        "serving suggestions"
     };
 
     public static readonly string[] RecipeUrlKeywords =
-    {
-        "reteta",
-        "retete",
-        "recipe",
-        "recipes",
-        "food",
-        "cooking",
-        "baking",
-    };
+{
+    "reteta",
+    "retete",
+    "recipe",
+    "recipes",
+    "food",
+    "cooking",
+    "baking"
+};
     public static readonly string[] BlockedPageKeywords =
     {
-        "please wait while your request is being verified",
-        "checking your browser before accessing",
-        "verify you are human",
-        "checking if the site connection is secure",
-        "cf-browser-verification",
-        "cloudflare ray id",
-    };
+    "please wait while your request is being verified",
+    "checking your browser before accessing",
+    "verify you are human",
+    "checking if the site connection is secure",
+    "cf-browser-verification",
+    "cloudflare ray id"
+};
     public static readonly string[] StrongBlockedPageKeywords =
     {
-        "please wait while your request is being verified",
-        "checking your browser before accessing",
-        "checking if the site connection is secure",
-        "verify you are human",
-    };
+    "please wait while your request is being verified",
+    "checking your browser before accessing",
+    "checking if the site connection is secure",
+    "verify you are human"
+};
 
     public static readonly string[] CloudflareBlockedPageKeywords =
     {
-        "cloudflare ray id",
-        "attention required",
-        "access denied",
-        "error 1020",
-    };
+    "cloudflare ray id",
+    "attention required",
+    "access denied",
+    "error 1020"
+};
 
     public const int BlockedPageMinimumKeywordScore = 2;
 

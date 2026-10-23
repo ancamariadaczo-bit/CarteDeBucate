@@ -8,9 +8,21 @@ public static class RecipePhotoFormats
 
     private static readonly RecipePhotoFormatDefinition[] Definitions =
     [
-        new(RecipePhotoFormat.Jpeg, "image/jpeg", ".jpg", content => content.StartsWith(JpegSignature)),
-        new(RecipePhotoFormat.Png, "image/png", ".png", content => content.StartsWith(PngSignature)),
-        new(RecipePhotoFormat.WebP, "image/webp", ".webp", IsWebPSignature),
+        new(
+            RecipePhotoFormat.Jpeg,
+            "image/jpeg",
+            ".jpg",
+            content => content.StartsWith(JpegSignature)),
+        new(
+            RecipePhotoFormat.Png,
+            "image/png",
+            ".png",
+            content => content.StartsWith(PngSignature)),
+        new(
+            RecipePhotoFormat.WebP,
+            "image/webp",
+            ".webp",
+            IsWebPSignature)
     ];
 
     public static string? GetContentType(RecipePhotoFormat format)
@@ -23,19 +35,17 @@ public static class RecipePhotoFormats
         return FindDefinition(format)?.CanonicalExtension;
     }
 
-    public static RecipePhotoFormat GetFormatFromContentType(string? contentType)
+    public static RecipePhotoFormat GetFormatFromContentType(
+        string? contentType)
     {
         string normalizedContentType = contentType?.Trim() ?? string.Empty;
 
         foreach (RecipePhotoFormatDefinition definition in Definitions)
         {
-            if (
-                string.Equals(
-                    definition.ContentType,
-                    normalizedContentType,
-                    StringComparison.OrdinalIgnoreCase
-                )
-            )
+            if (string.Equals(
+                definition.ContentType,
+                normalizedContentType,
+                StringComparison.OrdinalIgnoreCase))
             {
                 return definition.Format;
             }
@@ -57,7 +67,8 @@ public static class RecipePhotoFormats
         return RecipePhotoFormat.Unknown;
     }
 
-    private static RecipePhotoFormatDefinition? FindDefinition(RecipePhotoFormat format)
+    private static RecipePhotoFormatDefinition? FindDefinition(
+        RecipePhotoFormat format)
     {
         foreach (RecipePhotoFormatDefinition definition in Definitions)
         {
@@ -81,6 +92,5 @@ public static class RecipePhotoFormats
         RecipePhotoFormat Format,
         string ContentType,
         string CanonicalExtension,
-        SignatureMatcher MatchesSignature
-    );
+        SignatureMatcher MatchesSignature);
 }

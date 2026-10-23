@@ -13,8 +13,7 @@ public class RecipeImporterPageDownloaderTests
     [InlineData(HttpStatusCode.TemporaryRedirect)]
     [InlineData(HttpStatusCode.PermanentRedirect)]
     public async Task DownloadAsync_WithPublicRedirect_ShouldFollowRedirect(
-        HttpStatusCode redirectStatus
-    )
+        HttpStatusCode redirectStatus)
     {
         List<Uri> requestedDestinations = [];
         FakeHttpMessageHandler messageHandler = new FakeHttpMessageHandler(request =>
@@ -23,22 +22,31 @@ public class RecipeImporterPageDownloaderTests
 
             if (request.RequestUri!.AbsolutePath == "/start")
             {
-                return CreateRedirectResponse(redirectStatus, "https://second.example/final");
+                return CreateRedirectResponse(
+                    redirectStatus,
+                    "https://second.example/final");
             }
 
             return CreateOkResponse("recipe html");
         });
         FakeHostAddressResolver resolver = new FakeHostAddressResolver();
-        RecipePageDownloader downloader = CreateDownloader(messageHandler, resolver);
+        RecipePageDownloader downloader = CreateDownloader(
+            messageHandler,
+            resolver);
 
-        string html = await downloader.DownloadAsync(new Uri("https://first.example/start"));
+        string html = await downloader.DownloadAsync(
+            new Uri("https://first.example/start"));
 
         Assert.Equal("recipe html", html);
         Assert.Equal(
-            [new Uri("https://first.example/start"), new Uri("https://second.example/final")],
-            requestedDestinations
-        );
-        Assert.Equal(["first.example", "second.example"], resolver.ResolvedHosts);
+            [
+                new Uri("https://first.example/start"),
+                new Uri("https://second.example/final")
+            ],
+            requestedDestinations);
+        Assert.Equal(
+            ["first.example", "second.example"],
+            resolver.ResolvedHosts);
     }
 
     [Fact]
@@ -55,9 +63,12 @@ public class RecipeImporterPageDownloaderTests
         });
         RecipePageDownloader downloader = CreateDownloader(messageHandler);
 
-        await downloader.DownloadAsync(new Uri("https://recipe.example/path/start"));
+        await downloader.DownloadAsync(
+            new Uri("https://recipe.example/path/start"));
 
-        Assert.Equal(new Uri("https://recipe.example/final"), requestedDestinations[1]);
+        Assert.Equal(
+            new Uri("https://recipe.example/final"),
+            requestedDestinations[1]);
     }
 
     [Fact]
@@ -68,13 +79,14 @@ public class RecipeImporterPageDownloaderTests
         {
             requestCount++;
 
-            return CreateRedirectResponse(HttpStatusCode.Redirect, "https://127.0.0.1/internal");
+            return CreateRedirectResponse(
+                HttpStatusCode.Redirect,
+                "https://127.0.0.1/internal");
         });
         RecipePageDownloader downloader = CreateDownloader(messageHandler);
 
         await Assert.ThrowsAsync<HttpRequestException>(() =>
-            downloader.DownloadAsync(new Uri("https://recipe.example/start"))
-        );
+            downloader.DownloadAsync(new Uri("https://recipe.example/start")));
 
         Assert.Equal(1, requestCount);
     }
@@ -87,13 +99,14 @@ public class RecipeImporterPageDownloaderTests
         {
             requestCount++;
 
-            return CreateRedirectResponse(HttpStatusCode.Redirect, $"/redirect-{requestCount}");
+            return CreateRedirectResponse(
+                HttpStatusCode.Redirect,
+                $"/redirect-{requestCount}");
         });
         RecipePageDownloader downloader = CreateDownloader(messageHandler);
 
         await Assert.ThrowsAsync<HttpRequestException>(() =>
-            downloader.DownloadAsync(new Uri("https://recipe.example/start"))
-        );
+            downloader.DownloadAsync(new Uri("https://recipe.example/start")));
 
         Assert.Equal(6, requestCount);
     }
@@ -101,14 +114,12 @@ public class RecipeImporterPageDownloaderTests
     [Fact]
     public async Task DownloadAsync_WithRedirectWithoutLocation_ShouldRejectResponse()
     {
-        FakeHttpMessageHandler messageHandler = new FakeHttpMessageHandler(_ => new HttpResponseMessage(
-            HttpStatusCode.Redirect
-        ));
+        FakeHttpMessageHandler messageHandler = new FakeHttpMessageHandler(_ =>
+            new HttpResponseMessage(HttpStatusCode.Redirect));
         RecipePageDownloader downloader = CreateDownloader(messageHandler);
 
         await Assert.ThrowsAsync<HttpRequestException>(() =>
-            downloader.DownloadAsync(new Uri("https://recipe.example/start"))
-        );
+            downloader.DownloadAsync(new Uri("https://recipe.example/start")));
     }
 
     [Fact]
@@ -119,13 +130,14 @@ public class RecipeImporterPageDownloaderTests
         {
             requestCount++;
 
-            return CreateRedirectResponse(HttpStatusCode.Redirect, "http://recipe.example/insecure");
+            return CreateRedirectResponse(
+                HttpStatusCode.Redirect,
+                "http://recipe.example/insecure");
         });
         RecipePageDownloader downloader = CreateDownloader(messageHandler);
 
         await Assert.ThrowsAsync<HttpRequestException>(() =>
-            downloader.DownloadAsync(new Uri("https://recipe.example/start"))
-        );
+            downloader.DownloadAsync(new Uri("https://recipe.example/start")));
 
         Assert.Equal(1, requestCount);
     }
@@ -134,65 +146,62 @@ public class RecipeImporterPageDownloaderTests
     public async Task DownloadAsync_WithDeclaredContentLengthAboveLimit_ShouldRejectResponse()
     {
         ByteArrayContent oversizedContent = new ByteArrayContent(
-            new byte[MaximumResponseSizeInBytes + 1]
-        );
-        FakeHttpMessageHandler messageHandler = new FakeHttpMessageHandler(_ => new HttpResponseMessage(
-            HttpStatusCode.OK
-        )
-        {
-            Content = oversizedContent,
-        });
+            new byte[MaximumResponseSizeInBytes + 1]);
+        FakeHttpMessageHandler messageHandler = new FakeHttpMessageHandler(_ =>
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = oversizedContent
+            });
         RecipePageDownloader downloader = CreateDownloader(messageHandler);
 
         await Assert.ThrowsAsync<HttpRequestException>(() =>
-            downloader.DownloadAsync(new Uri("https://recipe.example/large"))
-        );
+            downloader.DownloadAsync(new Uri("https://recipe.example/large")));
     }
 
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task DownloadAsync_WhenStreamExceedsLimit_ShouldStopReading(bool hasFalseContentLength)
+    public async Task DownloadAsync_WhenStreamExceedsLimit_ShouldStopReading(
+        bool hasFalseContentLength)
     {
         UnknownLengthHttpContent oversizedContent = new UnknownLengthHttpContent(
-            new byte[MaximumResponseSizeInBytes + 1]
-        );
+            new byte[MaximumResponseSizeInBytes + 1]);
 
         if (hasFalseContentLength)
         {
             oversizedContent.Headers.ContentLength = 1;
         }
 
-        FakeHttpMessageHandler messageHandler = new FakeHttpMessageHandler(_ => new HttpResponseMessage(
-            HttpStatusCode.OK
-        )
-        {
-            Content = oversizedContent,
-        });
+        FakeHttpMessageHandler messageHandler = new FakeHttpMessageHandler(_ =>
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = oversizedContent
+            });
         RecipePageDownloader downloader = CreateDownloader(messageHandler);
 
         await Assert.ThrowsAsync<HttpRequestException>(() =>
-            downloader.DownloadAsync(new Uri("https://recipe.example/large"))
-        );
+            downloader.DownloadAsync(new Uri("https://recipe.example/large")));
     }
 
     [Fact]
     public async Task DownloadAsync_WithDeclaredCharset_ShouldDecodeContentCorrectly()
     {
         Encoding encoding = Encoding.Latin1;
-        ByteArrayContent content = new ByteArrayContent(encoding.GetBytes("Recipe café"));
-        content.Headers.ContentType = new MediaTypeHeaderValue("text/html") { CharSet = "iso-8859-1" };
-        FakeHttpMessageHandler messageHandler = new FakeHttpMessageHandler(_ => new HttpResponseMessage(
-            HttpStatusCode.OK
-        )
+        ByteArrayContent content = new ByteArrayContent(
+            encoding.GetBytes("Recipe café"));
+        content.Headers.ContentType = new MediaTypeHeaderValue("text/html")
         {
-            Content = content,
-        });
+            CharSet = "iso-8859-1"
+        };
+        FakeHttpMessageHandler messageHandler = new FakeHttpMessageHandler(_ =>
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = content
+            });
         RecipePageDownloader downloader = CreateDownloader(messageHandler);
 
         string downloadedContent = await downloader.DownloadAsync(
-            new Uri("https://recipe.example/encoded")
-        );
+            new Uri("https://recipe.example/encoded"));
 
         Assert.Equal("Recipe café", downloadedContent);
     }
@@ -200,20 +209,17 @@ public class RecipeImporterPageDownloaderTests
     [Fact]
     public async Task DownloadAsync_WhenResponseBodyStalls_ShouldCancelAtOverallDeadline()
     {
-        FakeHttpMessageHandler messageHandler = new FakeHttpMessageHandler(_ => new HttpResponseMessage(
-            HttpStatusCode.OK
-        )
-        {
-            Content = new NeverCompletingHttpContent(),
-        });
+        FakeHttpMessageHandler messageHandler = new FakeHttpMessageHandler(_ =>
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new NeverCompletingHttpContent()
+            });
         RecipePageDownloader downloader = CreateDownloader(
             messageHandler,
-            downloadTimeout: TimeSpan.FromMilliseconds(100)
-        );
+            downloadTimeout: TimeSpan.FromMilliseconds(100));
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-            downloader.DownloadAsync(new Uri("https://recipe.example/slow"))
-        );
+            downloader.DownloadAsync(new Uri("https://recipe.example/slow")));
     }
 
     [Fact]
@@ -229,21 +235,22 @@ public class RecipeImporterPageDownloaderTests
     private static RecipePageDownloader CreateDownloader(
         HttpMessageHandler messageHandler,
         IHostAddressResolver? hostAddressResolver = null,
-        TimeSpan? downloadTimeout = null
-    )
+        TimeSpan? downloadTimeout = null)
     {
         HttpClient httpClient = new HttpClient(messageHandler);
         httpClient.Timeout = System.Threading.Timeout.InfiniteTimeSpan;
-        RecipeImportDestinationPolicy policy = new RecipeImportDestinationPolicy(
-            hostAddressResolver ?? new FakeHostAddressResolver()
-        );
+        RecipeImportDestinationPolicy policy =
+            new RecipeImportDestinationPolicy(
+                hostAddressResolver ?? new FakeHostAddressResolver());
 
         return downloadTimeout.HasValue
             ? new RecipePageDownloader(httpClient, policy, downloadTimeout.Value)
             : new RecipePageDownloader(httpClient, policy);
     }
 
-    private static HttpResponseMessage CreateRedirectResponse(HttpStatusCode statusCode, string location)
+    private static HttpResponseMessage CreateRedirectResponse(
+        HttpStatusCode statusCode,
+        string location)
     {
         HttpResponseMessage response = new HttpResponseMessage(statusCode);
         response.Headers.Location = new Uri(location, UriKind.RelativeOrAbsolute);
@@ -253,14 +260,19 @@ public class RecipeImporterPageDownloaderTests
 
     private static HttpResponseMessage CreateOkResponse(string content)
     {
-        return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(content) };
+        return new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(content)
+        };
     }
 
     private sealed class FakeHostAddressResolver : IHostAddressResolver
     {
         public List<string> ResolvedHosts { get; } = [];
 
-        public Task<IPAddress[]> GetHostAddressesAsync(string host, CancellationToken cancellationToken)
+        public Task<IPAddress[]> GetHostAddressesAsync(
+            string host,
+            CancellationToken cancellationToken)
         {
             ResolvedHosts.Add(host);
 
@@ -281,7 +293,9 @@ public class RecipeImporterPageDownloaderTests
             _content = content;
         }
 
-        protected override Task SerializeToStreamAsync(Stream stream, TransportContext? context)
+        protected override Task SerializeToStreamAsync(
+            Stream stream,
+            TransportContext? context)
         {
             return stream.WriteAsync(_content, 0, _content.Length);
         }
@@ -303,7 +317,9 @@ public class RecipeImporterPageDownloaderTests
 
     private sealed class NeverCompletingHttpContent : HttpContent
     {
-        protected override Task SerializeToStreamAsync(Stream stream, TransportContext? context)
+        protected override Task SerializeToStreamAsync(
+            Stream stream,
+            TransportContext? context)
         {
             throw new NotSupportedException();
         }
@@ -334,7 +350,9 @@ public class RecipeImporterPageDownloaderTests
             set => throw new NotSupportedException();
         }
 
-        public override void Flush() { }
+        public override void Flush()
+        {
+        }
 
         public override int Read(byte[] buffer, int offset, int count)
         {
@@ -343,10 +361,11 @@ public class RecipeImporterPageDownloaderTests
 
         public override async ValueTask<int> ReadAsync(
             Memory<byte> buffer,
-            CancellationToken cancellationToken = default
-        )
+            CancellationToken cancellationToken = default)
         {
-            await Task.Delay(System.Threading.Timeout.InfiniteTimeSpan, cancellationToken);
+            await Task.Delay(
+                System.Threading.Timeout.InfiniteTimeSpan,
+                cancellationToken);
 
             return 0;
         }

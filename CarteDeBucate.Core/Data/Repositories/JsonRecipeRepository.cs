@@ -1,5 +1,5 @@
-using System.Linq;
 using System.Text.Json;
+using System.Linq;
 
 public class JsonRecipeRepository : IRecipeRepository
 {
@@ -33,7 +33,10 @@ public class JsonRecipeRepository : IRecipeRepository
     {
         List<Recipe> recipes = GetAllRecipes();
 
-        return recipes.OrderByDescending(recipe => recipe.SavedAt).Select(ToRecipeSummary).ToList();
+        return recipes
+            .OrderByDescending(recipe => recipe.SavedAt)
+            .Select(ToRecipeSummary)
+            .ToList();
     }
 
     public Recipe? GetRecipeById(int recipeId)
@@ -47,7 +50,9 @@ public class JsonRecipeRepository : IRecipeRepository
     {
         List<Recipe> recipes = GetAllRecipes();
 
-        return recipes.Where(recipe => recipe.UserId == userId).ToList();
+        return recipes
+            .Where(recipe => recipe.UserId == userId)
+            .ToList();
     }
 
     public List<RecipeSummary> GetRecipeSummariesByUserId(int userId)
@@ -71,10 +76,11 @@ public class JsonRecipeRepository : IRecipeRepository
     public PagedResult<RecipeSummary> GetRecipeSummariesPageByUserId(
         int userId,
         int pageNumber,
-        int pageSize
-    )
+        int pageSize)
     {
-        List<Recipe> recipes = GetAllRecipes().Where(recipe => recipe.UserId == userId).ToList();
+        List<Recipe> recipes = GetAllRecipes()
+            .Where(recipe => recipe.UserId == userId)
+            .ToList();
 
         return CreateRecipeSummariesPage(recipes, pageNumber, pageSize);
     }
@@ -98,12 +104,15 @@ public class JsonRecipeRepository : IRecipeRepository
         string searchText,
         int? userId,
         int pageNumber,
-        int pageSize
-    )
+        int pageSize)
     {
         if (string.IsNullOrWhiteSpace(searchText))
         {
-            return new PagedResult<RecipeSummary>(new List<RecipeSummary>(), pageNumber, pageSize, 0);
+            return new PagedResult<RecipeSummary>(
+                new List<RecipeSummary>(),
+                pageNumber,
+                pageSize,
+                0);
         }
 
         List<Recipe> recipes = GetAllRecipes();
@@ -111,8 +120,7 @@ public class JsonRecipeRepository : IRecipeRepository
         return CreateRecipeSummariesPage(
             FilterRecipesBySearchText(recipes, searchText, userId),
             pageNumber,
-            pageSize
-        );
+            pageSize);
     }
 
     public bool HasRecipes()
@@ -133,7 +141,9 @@ public class JsonRecipeRepository : IRecipeRepository
     {
         List<Recipe> recipes = GetAllRecipes();
 
-        return recipes.FirstOrDefault(recipe => recipe.Id == recipeId && recipe.UserId == userId);
+        return recipes.FirstOrDefault(recipe =>
+            recipe.Id == recipeId &&
+            recipe.UserId == userId);
     }
 
     public void AddRecipe(Recipe recipe)
@@ -170,14 +180,16 @@ public class JsonRecipeRepository : IRecipeRepository
             insertedRecipes.Add((recipe, generatedId));
         }
 
-        JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = true };
+        JsonSerializerOptions options = new JsonSerializerOptions
+        {
+            WriteIndented = true
+        };
         string json = JsonSerializer.Serialize(allRecipes, options);
         string targetPath = Path.GetFullPath(_filePath);
         string directoryPath = Path.GetDirectoryName(targetPath)!;
         string temporaryFilePath = Path.Combine(
             directoryPath,
-            $".{Path.GetFileName(targetPath)}.{Guid.NewGuid():N}.tmp"
-        );
+            $".{Path.GetFileName(targetPath)}.{Guid.NewGuid():N}.tmp");
 
         try
         {
@@ -219,8 +231,8 @@ public class JsonRecipeRepository : IRecipeRepository
         List<Recipe> recipes = GetAllRecipes();
 
         int recipeIndex = recipes.FindIndex(existingRecipe =>
-            existingRecipe.Id == recipe.Id && existingRecipe.UserId == userId
-        );
+            existingRecipe.Id == recipe.Id &&
+            existingRecipe.UserId == userId);
 
         if (recipeIndex == -1)
         {
@@ -243,8 +255,9 @@ public class JsonRecipeRepository : IRecipeRepository
         List<Recipe> recipes = GetAllRecipes();
 
         return recipes.Any(existingRecipe =>
-            existingRecipe.SourceUrl.Trim().Equals(sourceUrl.Trim(), StringComparison.OrdinalIgnoreCase)
-        );
+            existingRecipe.SourceUrl.Trim().Equals(
+                sourceUrl.Trim(),
+                StringComparison.OrdinalIgnoreCase));
     }
 
     public bool RecipeExistsBySourceUrlForUser(string sourceUrl, int userId)
@@ -257,16 +270,18 @@ public class JsonRecipeRepository : IRecipeRepository
         List<Recipe> recipes = GetAllRecipes();
 
         return recipes.Any(existingRecipe =>
-            existingRecipe.UserId == userId
-            && existingRecipe
-                .SourceUrl.Trim()
-                .Equals(sourceUrl.Trim(), StringComparison.OrdinalIgnoreCase)
-        );
+            existingRecipe.UserId == userId &&
+            existingRecipe.SourceUrl.Trim().Equals(
+                sourceUrl.Trim(),
+                StringComparison.OrdinalIgnoreCase));
     }
 
     private void SaveRecipes(List<Recipe> recipes)
     {
-        JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = true };
+        JsonSerializerOptions options = new JsonSerializerOptions
+        {
+            WriteIndented = true
+        };
 
         string json = JsonSerializer.Serialize(recipes, options);
 
@@ -277,7 +292,8 @@ public class JsonRecipeRepository : IRecipeRepository
     {
         List<Recipe> recipes = GetAllRecipes();
 
-        Recipe? recipeToDelete = recipes.FirstOrDefault(recipe => recipe.Id == recipeId);
+        Recipe? recipeToDelete = recipes
+            .FirstOrDefault(recipe => recipe.Id == recipeId);
 
         if (recipeToDelete == null)
         {
@@ -293,9 +309,10 @@ public class JsonRecipeRepository : IRecipeRepository
     {
         List<Recipe> recipes = GetAllRecipes();
 
-        Recipe? recipeToDelete = recipes.FirstOrDefault(recipe =>
-            recipe.Id == recipeId && recipe.UserId == userId
-        );
+        Recipe? recipeToDelete = recipes
+            .FirstOrDefault(recipe =>
+                recipe.Id == recipeId &&
+                recipe.UserId == userId);
 
         if (recipeToDelete == null)
         {
@@ -329,7 +346,7 @@ public class JsonRecipeRepository : IRecipeRepository
             Steps = new List<string>(recipe.Steps),
             Notes = recipe.Notes,
             Status = recipe.Status,
-            UserId = recipe.UserId,
+            UserId = recipe.UserId
         };
     }
 
@@ -342,17 +359,18 @@ public class JsonRecipeRepository : IRecipeRepository
             SourceUrl = recipe.SourceUrl,
             SavedAt = recipe.SavedAt,
             Status = recipe.Status,
-            UserId = recipe.UserId,
+            UserId = recipe.UserId
         };
     }
 
     private PagedResult<RecipeSummary> CreateRecipeSummariesPage(
         IEnumerable<Recipe> recipes,
         int pageNumber,
-        int pageSize
-    )
+        int pageSize)
     {
-        List<Recipe> orderedRecipes = recipes.OrderByDescending(recipe => recipe.SavedAt).ToList();
+        List<Recipe> orderedRecipes = recipes
+            .OrderByDescending(recipe => recipe.SavedAt)
+            .ToList();
 
         int totalItems = orderedRecipes.Count;
         int normalizedPageNumber = Math.Max(1, pageNumber);
@@ -364,28 +382,27 @@ public class JsonRecipeRepository : IRecipeRepository
             .Select(ToRecipeSummary)
             .ToList();
 
-        return new PagedResult<RecipeSummary>(items, pageNumber, pageSize, totalItems);
+        return new PagedResult<RecipeSummary>(
+            items,
+            pageNumber,
+            pageSize,
+            totalItems);
     }
 
     private IEnumerable<Recipe> FilterRecipesBySearchText(
         IEnumerable<Recipe> recipes,
         string searchText,
-        int? userId
-    )
+        int? userId)
     {
-        return recipes.Where(recipe =>
-            (!userId.HasValue || recipe.UserId == userId.Value)
-            && (
-                (recipe.Name ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase)
-                || (recipe.SourceUrl ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase)
-                || (recipe.Notes ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase)
-                || recipe.Ingredients.Any(ingredient =>
-                    ingredient.Contains(searchText, StringComparison.OrdinalIgnoreCase)
-                )
-                || recipe.Steps.Any(step =>
-                    step.Contains(searchText, StringComparison.OrdinalIgnoreCase)
-                )
-            )
-        );
+        return recipes
+            .Where(recipe =>
+                (!userId.HasValue || recipe.UserId == userId.Value) &&
+                ((recipe.Name ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                (recipe.SourceUrl ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                (recipe.Notes ?? "").Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                recipe.Ingredients.Any(ingredient =>
+                    ingredient.Contains(searchText, StringComparison.OrdinalIgnoreCase)) ||
+                recipe.Steps.Any(step =>
+                    step.Contains(searchText, StringComparison.OrdinalIgnoreCase))));
     }
 }

@@ -14,7 +14,7 @@ public static class RecipeStatusPresentation
             RecipeStatus.Favorite => "Favorită",
             RecipeStatus.NeedsChanges => "Necesită modificări",
             RecipeStatus.DoNotRepeat => "Nu mai repet",
-            _ => status.ToString(),
+            _ => status.ToString()
         };
     }
 
@@ -28,7 +28,7 @@ public static class RecipeStatusPresentation
             RecipeStatus.Favorite => "text-bg-warning",
             RecipeStatus.NeedsChanges => "text-bg-dark",
             RecipeStatus.DoNotRepeat => "text-bg-danger",
-            _ => "text-bg-secondary",
+            _ => "text-bg-secondary"
         };
     }
 
@@ -39,7 +39,7 @@ public static class RecipeStatusPresentation
             {
                 Text = GetLabel(status),
                 Value = status.ToString(),
-                Selected = status == selectedStatus,
+                Selected = status == selectedStatus
             })
             .ToList();
     }

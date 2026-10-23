@@ -13,16 +13,15 @@ public class RichConsoleDisplay : IRichConsoleDisplay
     {
         AnsiConsole.Clear();
 
-        AnsiConsole.Write(new FigletText(RichConsoleTexts.AppTitle).Centered().Color(Color.Green));
+        AnsiConsole.Write(
+            new FigletText(RichConsoleTexts.AppTitle)
+                .Centered()
+                .Color(Color.Green));
 
         AnsiConsole.WriteLine();
     }
 
-    public void ShowRecipes(
-        List<RecipeSummary> recipes,
-        string? title = null,
-        string? emptyMessage = null
-    )
+    public void ShowRecipes(List<RecipeSummary> recipes, string? title = null, string? emptyMessage = null)
     {
         if (recipes.Count == 0)
         {
@@ -45,8 +44,7 @@ public class RichConsoleDisplay : IRichConsoleDisplay
             table.AddRow(
                 Markup.Escape(recipe.Name ?? RichConsoleTexts.EmptyValue),
                 Markup.Escape(recipe.SourceUrl ?? RichConsoleTexts.EmptyValue),
-                Markup.Escape(recipe.SavedAt.ToString(RichConsoleTexts.SavedAtDateFormat))
-            );
+                Markup.Escape(recipe.SavedAt.ToString(RichConsoleTexts.SavedAtDateFormat)));
 
             if (index < recipes.Count - 1)
             {
@@ -66,19 +64,16 @@ public class RichConsoleDisplay : IRichConsoleDisplay
         metadata.AddRow(RichConsoleTexts.SourceColumn, Markup.Escape(recipe.SourceUrl));
         metadata.AddRow(
             RichConsoleTexts.SavedAtColumn,
-            Markup.Escape(recipe.SavedAt.ToString(RichConsoleTexts.SavedAtDateFormat))
-        );
+            Markup.Escape(recipe.SavedAt.ToString(RichConsoleTexts.SavedAtDateFormat)));
 
         if (!string.IsNullOrWhiteSpace(recipe.Notes))
         {
             metadata.AddRow(RichConsoleTexts.NotesRow, Markup.Escape(recipe.Notes));
         }
 
-        AnsiConsole.Write(
-            new Panel(metadata)
-                .Header(Markup.Escape(title ?? RichConsoleTexts.RecipeDetailsTitle))
-                .Border(BoxBorder.Rounded)
-        );
+        AnsiConsole.Write(new Panel(metadata)
+            .Header(Markup.Escape(title ?? RichConsoleTexts.RecipeDetailsTitle))
+            .Border(BoxBorder.Rounded));
 
         WriteListSection(RichConsoleTexts.IngredientsTitle, recipe.Ingredients, false);
         WriteListSection(RichConsoleTexts.StepsTitle, recipe.Steps, true);
@@ -120,7 +115,9 @@ public class RichConsoleDisplay : IRichConsoleDisplay
 
     private static Table CreateListTable(List<string> values, bool isNumbered)
     {
-        Table table = new Table().Border(TableBorder.Simple).HideHeaders();
+        Table table = new Table()
+            .Border(TableBorder.Simple)
+            .HideHeaders();
 
         table.AddColumn(isNumbered ? RichConsoleTexts.NumberColumn : RichConsoleTexts.EmptyColumn);
         table.AddColumn(RichConsoleTexts.TextColumn);
@@ -129,10 +126,7 @@ public class RichConsoleDisplay : IRichConsoleDisplay
         {
             table.AddRow(
                 RichConsoleTexts.EmptyColumn,
-                Markup.Escape(
-                    isNumbered ? RichConsoleTexts.NoStepsFound : RichConsoleTexts.NoIngredientsFound
-                )
-            );
+                Markup.Escape(isNumbered ? RichConsoleTexts.NoStepsFound : RichConsoleTexts.NoIngredientsFound));
             return table;
         }
 
@@ -140,8 +134,7 @@ public class RichConsoleDisplay : IRichConsoleDisplay
         {
             table.AddRow(
                 isNumbered ? (index + 1).ToString() : RichConsoleTexts.BulletPrefix,
-                Markup.Escape(values[index])
-            );
+                Markup.Escape(values[index]));
         }
 
         return table;

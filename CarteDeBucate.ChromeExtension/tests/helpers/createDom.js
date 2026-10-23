@@ -9,7 +9,9 @@ export function createDom({
     const options = { url };
 
     if (runScripts) {
-        options.runScripts = runScripts === true ? "outside-only" : runScripts;
+        options.runScripts = runScripts === true
+            ? "outside-only"
+            : runScripts;
     }
 
     const dom = new JSDOM(html, options);

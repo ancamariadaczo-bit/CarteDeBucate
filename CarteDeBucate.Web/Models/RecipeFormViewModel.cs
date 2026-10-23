@@ -41,7 +41,7 @@ public class RecipeFormViewModel
             Notes = recipe.Notes,
             Status = recipe.Status,
             SavedAt = recipe.SavedAt,
-            UserId = recipe.UserId,
+            UserId = recipe.UserId
         };
     }
 
@@ -57,7 +57,7 @@ public class RecipeFormViewModel
             Notes = Notes ?? "",
             Status = Status,
             SavedAt = SavedAt,
-            UserId = UserId,
+            UserId = UserId
         };
     }
 
@@ -66,8 +66,7 @@ public class RecipeFormViewModel
         return (text ?? "")
             .Split(
                 ["\r\n", "\r", "\n"],
-                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
-            )
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .ToList();
     }
 }

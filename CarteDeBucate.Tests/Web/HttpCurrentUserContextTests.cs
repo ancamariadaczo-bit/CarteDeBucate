@@ -9,7 +9,7 @@ public class HttpCurrentUserContextTests
     {
         HttpContextAccessor httpContextAccessor = new HttpContextAccessor
         {
-            HttpContext = new DefaultHttpContext(),
+            HttpContext = new DefaultHttpContext()
         };
         HttpCurrentUserContext context = CreateContext(httpContextAccessor);
 
@@ -23,7 +23,7 @@ public class HttpCurrentUserContextTests
     {
         HttpContextAccessor httpContextAccessor = new HttpContextAccessor
         {
-            HttpContext = CreateHttpContextWithUser("12", "anca"),
+            HttpContext = CreateHttpContextWithUser("12", "anca")
         };
         HttpCurrentUserContext context = CreateContext(httpContextAccessor);
 
@@ -37,11 +37,15 @@ public class HttpCurrentUserContextTests
     {
         HttpContextAccessor httpContextAccessor = new HttpContextAccessor
         {
-            HttpContext = new DefaultHttpContext(),
+            HttpContext = new DefaultHttpContext()
         };
         HttpCurrentUserContext context = CreateContext(httpContextAccessor);
 
-        context.SetCurrentUser(new User { Id = 21, Username = "maria" });
+        context.SetCurrentUser(new User
+        {
+            Id = 21,
+            Username = "maria"
+        });
 
         Assert.True(context.IsAuthenticated);
         Assert.Equal(21, context.UserId);
@@ -53,10 +57,14 @@ public class HttpCurrentUserContextTests
     {
         HttpContextAccessor httpContextAccessor = new HttpContextAccessor
         {
-            HttpContext = new DefaultHttpContext(),
+            HttpContext = new DefaultHttpContext()
         };
         HttpCurrentUserContext context = CreateContext(httpContextAccessor);
-        context.SetCurrentUser(new User { Id = 21, Username = "maria" });
+        context.SetCurrentUser(new User
+        {
+            Id = 21,
+            Username = "maria"
+        });
 
         context.Clear();
 
@@ -75,11 +83,14 @@ public class HttpCurrentUserContextTests
         Claim[] claims =
         {
             new Claim(ClaimTypes.NameIdentifier, userId),
-            new Claim(ClaimTypes.Name, username),
+            new Claim(ClaimTypes.Name, username)
         };
         ClaimsIdentity identity = new ClaimsIdentity(claims, "Test");
         ClaimsPrincipal user = new ClaimsPrincipal(identity);
-        DefaultHttpContext httpContext = new DefaultHttpContext { User = user };
+        DefaultHttpContext httpContext = new DefaultHttpContext
+        {
+            User = user
+        };
 
         return httpContext;
     }

@@ -194,11 +194,9 @@ public class RecipeConsoleReader : IRecipeConsoleReader
         {
             string value = Console.ReadLine() ?? "";
 
-            if (
-                value
-                    .Trim()
-                    .Equals(AppTexts.FinishMultilineInputCommand, StringComparison.OrdinalIgnoreCase)
-            )
+            if (value.Trim().Equals(
+                AppTexts.FinishMultilineInputCommand,
+                StringComparison.OrdinalIgnoreCase))
             {
                 break;
             }
@@ -241,7 +239,7 @@ public class RecipeConsoleReader : IRecipeConsoleReader
         {
             "n" => PaginationAction.NextPage,
             "p" => PaginationAction.PreviousPage,
-            _ => PaginationAction.BackToMenu,
+            _ => PaginationAction.BackToMenu
         };
     }
 

@@ -1,10 +1,10 @@
-using System.Text;
-using CarteDeBucate.Web.BackgroundServices;
-using CarteDeBucate.Web.Services;
 using CarteDeBucate.Web.Services.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using CarteDeBucate.Web.BackgroundServices;
+using CarteDeBucate.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,8 +19,7 @@ string databasePath = Path.IsPathFullyQualified(configuredDatabasePath)
     ? Path.GetFullPath(configuredDatabasePath)
     : Path.GetFullPath(configuredDatabasePath, builder.Environment.ContentRootPath);
 
-string databaseDirectoryPath =
-    Path.GetDirectoryName(databasePath)
+string databaseDirectoryPath = Path.GetDirectoryName(databasePath)
     ?? throw new InvalidOperationException("DatabasePath must have a parent directory.");
 
 string? configuredRecipePhotosPath = builder.Configuration["RecipePhotosPath"];
@@ -37,33 +36,30 @@ string recipePhotosPath = Path.IsPathFullyQualified(configuredRecipePhotosPath)
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-string[] allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+string[] allowedOrigins =
+    builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(
-        "ChromeExtension",
-        policy =>
-        {
-            policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod();
-        }
-    );
+    options.AddPolicy("ChromeExtension", policy =>
+    {
+        policy
+            .WithOrigins(allowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
 });
 
-string jwtKey =
-    builder.Configuration["Jwt:Key"]
+string jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("Jwt:Key is not configured.");
 
-string jwtIssuer =
-    builder.Configuration["Jwt:Issuer"]
+string jwtIssuer = builder.Configuration["Jwt:Issuer"]
     ?? throw new InvalidOperationException("Jwt:Issuer is not configured.");
 
-string jwtAudience =
-    builder.Configuration["Jwt:Audience"]
+string jwtAudience = builder.Configuration["Jwt:Audience"]
     ?? throw new InvalidOperationException("Jwt:Audience is not configured.");
 
-builder
-    .Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
         options.LoginPath = "/Account/Login";
@@ -85,10 +81,9 @@ builder
                 ValidateLifetime = true,
 
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
             };
-        }
-    );
+        });
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
 builder.Services.AddSingleton<IExtensionAuthenticationCodeService, ExtensionAuthenticationCodeService>();
@@ -97,89 +92,101 @@ builder.Services.AddScoped<ICurrentUserContext, HttpCurrentUserContext>();
 builder.Services.AddScoped<IRecipeRepository>(serviceProvider =>
     AppServiceFactory.CreateDatabaseRecipeRepository(
         databasePath,
-        serviceProvider.GetRequiredService<ILogger<DatabaseRecipeRepository>>()
-    )
-);
+        serviceProvider.GetRequiredService<ILogger<DatabaseRecipeRepository>>()));
 builder.Services.AddScoped<IUserRepository>(_ =>
-    AppServiceFactory.CreateDatabaseUserRepository(databasePath)
-);
+    AppServiceFactory.CreateDatabaseUserRepository(databasePath));
 
 builder.Services.AddScoped<IRecipePhotoService>(serviceProvider =>
 {
-    IRecipeRepository recipeRepository = serviceProvider.GetRequiredService<IRecipeRepository>();
+    IRecipeRepository recipeRepository =
+        serviceProvider.GetRequiredService<IRecipeRepository>();
 
-    ICurrentUserContext currentUserContext = serviceProvider.GetRequiredService<ICurrentUserContext>();
+    ICurrentUserContext currentUserContext =
+        serviceProvider.GetRequiredService<ICurrentUserContext>();
 
-    ILoggerFactory loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+    ILoggerFactory loggerFactory =
+        serviceProvider.GetRequiredService<ILoggerFactory>();
 
     return AppServiceFactory.CreateDatabaseRecipePhotoService(
         databasePath,
         recipePhotosPath,
         recipeRepository,
         currentUserContext,
-        loggerFactory
-    );
+        loggerFactory);
 });
 
-builder.Services.AddScoped<IRecipePhotoReconciliationService>(serviceProvider =>
-{
-    IRecipeRepository recipeRepository = serviceProvider.GetRequiredService<IRecipeRepository>();
+builder.Services.AddScoped<IRecipePhotoReconciliationService>(
+    serviceProvider =>
+    {
+        IRecipeRepository recipeRepository =
+            serviceProvider.GetRequiredService<IRecipeRepository>();
 
-    ILoggerFactory loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+        ILoggerFactory loggerFactory =
+            serviceProvider.GetRequiredService<ILoggerFactory>();
 
-    return AppServiceFactory.CreateDatabaseRecipePhotoReconciliationService(
-        databasePath,
-        recipePhotosPath,
-        recipeRepository,
-        loggerFactory
-    );
-});
+        return AppServiceFactory
+            .CreateDatabaseRecipePhotoReconciliationService(
+                databasePath,
+                recipePhotosPath,
+                recipeRepository,
+                loggerFactory);
+    });
 
 builder.Services.AddScoped<IRecipeLibraryService>(serviceProvider =>
 {
-    IRecipeRepository recipeRepository = serviceProvider.GetRequiredService<IRecipeRepository>();
-    ICurrentUserContext currentUserContext = serviceProvider.GetRequiredService<ICurrentUserContext>();
+    IRecipeRepository recipeRepository =
+        serviceProvider.GetRequiredService<IRecipeRepository>();
+    ICurrentUserContext currentUserContext =
+        serviceProvider.GetRequiredService<ICurrentUserContext>();
 
-    return AppServiceFactory.CreateRecipeLibraryService(recipeRepository, currentUserContext);
+    return AppServiceFactory.CreateRecipeLibraryService(
+        recipeRepository,
+        currentUserContext);
 });
 builder.Services.AddSingleton<IHostAddressResolver, DnsHostAddressResolver>();
 builder.Services.AddSingleton<RecipeImportDestinationPolicy>();
-builder
-    .Services.AddHttpClient<IRecipeImporter, RecipeImporter>(
-        RecipeImporterHttpClientConfiguration.Configure
-    )
-    .ConfigurePrimaryHttpMessageHandler(serviceProvider => new RecipeImportHttpMessageHandler(
-        serviceProvider.GetRequiredService<RecipeImportDestinationPolicy>()
-    ));
+builder.Services
+    .AddHttpClient<IRecipeImporter, RecipeImporter>(
+        RecipeImporterHttpClientConfiguration.Configure)
+    .ConfigurePrimaryHttpMessageHandler(serviceProvider =>
+        new RecipeImportHttpMessageHandler(
+            serviceProvider.GetRequiredService<RecipeImportDestinationPolicy>()));
 builder.Services.AddScoped<IRecipeImporterService, RecipeImporterService>();
 builder.Services.AddScoped<IRecipeBackupService>(serviceProvider =>
 {
-    IRecipeRepository recipeRepository = serviceProvider.GetRequiredService<IRecipeRepository>();
-    ICurrentUserContext currentUserContext = serviceProvider.GetRequiredService<ICurrentUserContext>();
+    IRecipeRepository recipeRepository =
+        serviceProvider.GetRequiredService<IRecipeRepository>();
+    ICurrentUserContext currentUserContext =
+        serviceProvider.GetRequiredService<ICurrentUserContext>();
 
-    return AppServiceFactory.CreateRecipeBackupService(recipeRepository, currentUserContext);
+    return AppServiceFactory.CreateRecipeBackupService(
+        recipeRepository,
+        currentUserContext);
 });
 builder.Services.AddScoped<IAuthenticationService>(serviceProvider =>
 {
-    IUserRepository userRepository = serviceProvider.GetRequiredService<IUserRepository>();
-    ICurrentUserContext currentUserContext = serviceProvider.GetRequiredService<ICurrentUserContext>();
+    IUserRepository userRepository =
+        serviceProvider.GetRequiredService<IUserRepository>();
+    ICurrentUserContext currentUserContext =
+        serviceProvider.GetRequiredService<ICurrentUserContext>();
 
-    return AppServiceFactory.CreateAuthenticationService(userRepository, currentUserContext);
+    return AppServiceFactory.CreateAuthenticationService(
+        userRepository,
+        currentUserContext);
 });
 
-builder.Services.AddSingleton<IDatabaseBackupService>(serviceProvider => new DatabaseBackupService(
-    serviceProvider.GetRequiredService<ILogger<DatabaseBackupService>>(),
-    databasePath,
-    serviceProvider.GetRequiredService<IWebHostEnvironment>()
-));
+builder.Services.AddSingleton<IDatabaseBackupService>(serviceProvider =>
+    new DatabaseBackupService(
+        serviceProvider.GetRequiredService<ILogger<DatabaseBackupService>>(),
+        databasePath,
+        serviceProvider.GetRequiredService<IWebHostEnvironment>()));
 builder.Services.AddHostedService<DatabaseBackupWorker>();
 
 var app = builder.Build();
 
 app.Logger.LogInformation(
     "Application starting in {EnvironmentName} environment",
-    app.Environment.EnvironmentName
-);
+    app.Environment.EnvironmentName);
 
 try
 {
@@ -193,8 +200,7 @@ catch (Exception exception)
 {
     app.Logger.LogCritical(
         exception,
-        "Application startup failed while initializing or migrating the database"
-    );
+        "Application startup failed while initializing or migrating the database");
 
     throw;
 }
@@ -202,13 +208,11 @@ catch (Exception exception)
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler(
-        new ExceptionHandlerOptions
-        {
-            ExceptionHandlingPath = "/Home/Error",
-            SuppressDiagnosticsCallback = _ => true,
-        }
-    );
+    app.UseExceptionHandler(new ExceptionHandlerOptions
+    {
+        ExceptionHandlingPath = "/Home/Error",
+        SuppressDiagnosticsCallback = _ => true
+    });
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
@@ -225,9 +229,14 @@ app.MapStaticAssets();
 
 app.MapControllers();
 
-app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}")
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
+
 
 app.Run();
 
-public partial class Program { }
+public partial class Program
+{
+}

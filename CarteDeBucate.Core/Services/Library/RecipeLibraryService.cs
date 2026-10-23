@@ -9,20 +9,30 @@ public class RecipeLibraryService : IRecipeLibraryService
     private readonly ILogger<RecipeLibraryService> _logger;
 
     public RecipeLibraryService(IRecipeRepository recipeRepository)
-        : this(recipeRepository, null, null, NullLogger<RecipeLibraryService>.Instance) { }
+        : this(
+            recipeRepository,
+            null,
+            null,
+            NullLogger<RecipeLibraryService>.Instance)
+    {
+    }
 
     public RecipeLibraryService(
         IRecipeRepository recipeRepository,
-        ICurrentUserContext? currentUserContext
-    )
-        : this(recipeRepository, currentUserContext, null, NullLogger<RecipeLibraryService>.Instance) { }
+        ICurrentUserContext? currentUserContext)
+        : this(
+            recipeRepository,
+            currentUserContext,
+            null,
+            NullLogger<RecipeLibraryService>.Instance)
+    {
+    }
 
     internal RecipeLibraryService(
         IRecipeRepository recipeRepository,
         ICurrentUserContext? currentUserContext,
         IRecipePhotoDeletionCoordinator? photoDeletionCoordinator,
-        ILogger<RecipeLibraryService> logger
-    )
+        ILogger<RecipeLibraryService> logger)
     {
         ArgumentNullException.ThrowIfNull(logger);
 
@@ -49,8 +59,7 @@ public class RecipeLibraryService : IRecipeLibraryService
             return _recipeRepository.GetRecipeSummariesPageByUserId(
                 CurrentUserId.Value,
                 pageNumber,
-                pageSize
-            );
+                pageSize);
         }
 
         return _recipeRepository.GetRecipeSummariesPage(pageNumber, pageSize);
@@ -91,14 +100,25 @@ public class RecipeLibraryService : IRecipeLibraryService
         return _recipeRepository.SearchRecipes(searchText, CurrentUserId);
     }
 
-    public PagedResult<RecipeSummary> SearchRecipesPage(string searchText, int pageNumber, int pageSize)
+    public PagedResult<RecipeSummary> SearchRecipesPage(
+        string searchText,
+        int pageNumber,
+        int pageSize)
     {
         if (string.IsNullOrWhiteSpace(searchText))
         {
-            return new PagedResult<RecipeSummary>(new List<RecipeSummary>(), pageNumber, pageSize, 0);
+            return new PagedResult<RecipeSummary>(
+                new List<RecipeSummary>(),
+                pageNumber,
+                pageSize,
+                0);
         }
 
-        return _recipeRepository.SearchRecipesPage(searchText, CurrentUserId, pageNumber, pageSize);
+        return _recipeRepository.SearchRecipesPage(
+            searchText,
+            CurrentUserId,
+            pageNumber,
+            pageSize);
     }
 
     public bool RecipeExistsBySourceUrl(string sourceUrl)
@@ -114,8 +134,7 @@ public class RecipeLibraryService : IRecipeLibraryService
         {
             return _recipeRepository.RecipeExistsBySourceUrlForUser(
                 normalizedSourceUrl,
-                CurrentUserId.Value
-            );
+                CurrentUserId.Value);
         }
 
         return _recipeRepository.RecipeExistsBySourceUrl(normalizedSourceUrl);
@@ -133,7 +152,8 @@ public class RecipeLibraryService : IRecipeLibraryService
             return RecipeSaveResult.Fail(message);
         }
 
-        if (!string.IsNullOrWhiteSpace(recipe.SourceUrl) && RecipeExistsBySourceUrl(recipe.SourceUrl))
+        if (!string.IsNullOrWhiteSpace(recipe.SourceUrl) &&
+            RecipeExistsBySourceUrl(recipe.SourceUrl))
         {
             return RecipeSaveResult.Fail(AppTexts.RecipeAlreadyExists);
         }
@@ -186,7 +206,8 @@ public class RecipeLibraryService : IRecipeLibraryService
             return RecipeSaveResult.Fail(AppTexts.InvalidRecipeId);
         }
 
-        RecipeSummary? recipe = GetRecipeSummaries().FirstOrDefault(recipe => recipe.Id == recipeId);
+        RecipeSummary? recipe = GetRecipeSummaries()
+            .FirstOrDefault(recipe => recipe.Id == recipeId);
 
         if (recipe == null)
         {
@@ -211,8 +232,7 @@ public class RecipeLibraryService : IRecipeLibraryService
             _logger.LogError(
                 exception,
                 "Failed to prepare photo content for recipe {RecipeId} deletion.",
-                recipeId
-            );
+                recipeId);
 
             return RecipeSaveResult.Fail(AppTexts.RecipeDeletionFailed);
         }
@@ -221,8 +241,7 @@ public class RecipeLibraryService : IRecipeLibraryService
         {
             _logger.LogError(
                 "Photo content could not be prepared for recipe {RecipeId} deletion.",
-                recipeId
-            );
+                recipeId);
 
             return RecipeSaveResult.Fail(AppTexts.RecipeDeletionFailed);
         }
@@ -233,7 +252,10 @@ public class RecipeLibraryService : IRecipeLibraryService
         }
         catch (Exception exception)
         {
-            _logger.LogError(exception, "Failed to delete recipe {RecipeId} metadata.", recipeId);
+            _logger.LogError(
+                exception,
+                "Failed to delete recipe {RecipeId} metadata.",
+                recipeId);
 
             try
             {
@@ -244,8 +266,7 @@ public class RecipeLibraryService : IRecipeLibraryService
                 _logger.LogError(
                     restoreException,
                     "Failed to restore photo content for recipe {RecipeId}.",
-                    recipeId
-                );
+                    recipeId);
             }
 
             return RecipeSaveResult.Fail(AppTexts.RecipeDeletionFailed);
@@ -260,8 +281,7 @@ public class RecipeLibraryService : IRecipeLibraryService
             _logger.LogWarning(
                 exception,
                 "Photo cleanup is pending for deleted recipe {RecipeId}.",
-                recipeId
-            );
+                recipeId);
         }
 
         return RecipeSaveResult.Success(AppTexts.RecipeDeleted);
@@ -273,7 +293,9 @@ public class RecipeLibraryService : IRecipeLibraryService
     {
         if (CurrentUserId.HasValue)
         {
-            _recipeRepository.DeleteRecipeForUser(recipeId, CurrentUserId.Value);
+            _recipeRepository.DeleteRecipeForUser(
+                recipeId,
+                CurrentUserId.Value);
         }
         else
         {
@@ -285,4 +307,5 @@ public class RecipeLibraryService : IRecipeLibraryService
     {
         recipe.SourceUrl = recipe.SourceUrl?.Trim() ?? string.Empty;
     }
+
 }

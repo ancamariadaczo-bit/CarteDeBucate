@@ -7,10 +7,14 @@ public static class RecipeBackupMapper
             Name = recipe.Name,
             SourceUrl = recipe.SourceUrl,
             SavedAt = recipe.SavedAt,
-            Ingredients = recipe.Ingredients is null ? null! : new List<string>(recipe.Ingredients),
-            Steps = recipe.Steps is null ? null! : new List<string>(recipe.Steps),
+            Ingredients = recipe.Ingredients is null
+                ? null!
+                : new List<string>(recipe.Ingredients),
+            Steps = recipe.Steps is null
+                ? null!
+                : new List<string>(recipe.Steps),
             Notes = recipe.Notes,
-            Status = recipe.Status,
+            Status = recipe.Status
         };
     }
 
@@ -25,9 +29,11 @@ public static class RecipeBackupMapper
             Ingredients = backupItem.Ingredients is null
                 ? null!
                 : new List<string>(backupItem.Ingredients),
-            Steps = backupItem.Steps is null ? null! : new List<string>(backupItem.Steps),
+            Steps = backupItem.Steps is null
+                ? null!
+                : new List<string>(backupItem.Steps),
             Notes = backupItem.Notes,
-            Status = backupItem.Status,
+            Status = backupItem.Status
         };
     }
 }

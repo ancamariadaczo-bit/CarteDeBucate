@@ -14,11 +14,17 @@ public class FakeAuthenticationService : IAuthenticationService
 
     public string? PasswordPassedToRegister { get; private set; }
 
-    public AuthenticationResult LoginResult { get; set; } =
-        new AuthenticationResult { IsSuccess = false, Message = "Invalid username or password." };
+    public AuthenticationResult LoginResult { get; set; } = new AuthenticationResult
+    {
+        IsSuccess = false,
+        Message = "Invalid username or password."
+    };
 
-    public AuthenticationResult RegisterResult { get; set; } =
-        new AuthenticationResult { IsSuccess = false, Message = "This username already exists." };
+    public AuthenticationResult RegisterResult { get; set; } = new AuthenticationResult
+    {
+        IsSuccess = false,
+        Message = "This username already exists."
+    };
 
     public bool IsLoggedIn { get; set; }
 

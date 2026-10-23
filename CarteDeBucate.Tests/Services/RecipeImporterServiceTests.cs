@@ -11,8 +11,8 @@ public class RecipeServiceTests
             {
                 Success = true,
                 Recipe = recipe,
-                Message = "Import successful.",
-            },
+                Message = "Import successful."
+            }
         };
 
         RecipeImporterService service = new RecipeImporterService(importer);
@@ -49,8 +49,16 @@ public class RecipeServiceTests
             SourceUrl = "https://example.com/banana-bread",
             SavedAt = new DateTime(2026, 1, 1),
             UserId = userId,
-            Ingredients = new List<string> { "2 bananas", "2 eggs" },
-            Steps = new List<string> { "Mix ingredients.", "Bake for 30 minutes." },
+            Ingredients = new List<string>
+            {
+                "2 bananas",
+                "2 eggs"
+            },
+            Steps = new List<string>
+            {
+                "Mix ingredients.",
+                "Bake for 30 minutes."
+            }
         };
     }
 }

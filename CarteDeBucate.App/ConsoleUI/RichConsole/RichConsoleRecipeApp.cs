@@ -14,16 +14,16 @@ public class RichConsoleRecipeApp : IRecipeApp
     public RichConsoleRecipeApp(
         IRecipeImporterService importerService,
         IRecipeLibraryService recipeLibraryService,
-        IRecipeBackupService backupService
-    )
+        IRecipeBackupService backupService)
         : this(
             importerService,
             recipeLibraryService,
             backupService,
             new RichConsoleMenu(),
             new RichConsoleDisplay(),
-            new RichConsoleReader()
-        ) { }
+            new RichConsoleReader())
+    {
+    }
 
     public RichConsoleRecipeApp(
         IRecipeImporterService importerService,
@@ -31,8 +31,7 @@ public class RichConsoleRecipeApp : IRecipeApp
         IRecipeBackupService backupService,
         IRichConsoleMenu menu,
         IRichConsoleDisplay display,
-        IRichConsoleReader reader
-    )
+        IRichConsoleReader reader)
     {
         _importerService = importerService;
         _recipeLibraryService = recipeLibraryService;
@@ -133,12 +132,9 @@ public class RichConsoleRecipeApp : IRecipeApp
                 return false;
             }
 
-            RecipeImportResult importResult = await AnsiConsole
-                .Status()
-                .StartAsync(
-                    AppTexts.ImportingRecipe,
-                    async _ => await _importerService.ImportRecipeFromUrlAsync(url)
-                );
+            RecipeImportResult importResult = await AnsiConsole.Status()
+                .StartAsync(AppTexts.ImportingRecipe, async _ =>
+                    await _importerService.ImportRecipeFromUrlAsync(url));
 
             if (importResult.Success)
             {
@@ -202,10 +198,8 @@ public class RichConsoleRecipeApp : IRecipeApp
 
         while (true)
         {
-            PagedResult<RecipeSummary> recipesPage = _recipeLibraryService.GetRecipeSummariesPage(
-                pageNumber,
-                PageSize
-            );
+            PagedResult<RecipeSummary> recipesPage =
+                _recipeLibraryService.GetRecipeSummariesPage(pageNumber, PageSize);
 
             if (recipesPage.Items.Count == 0)
             {
@@ -214,9 +208,10 @@ public class RichConsoleRecipeApp : IRecipeApp
             }
 
             _display.ShowRecipes(recipesPage.Items);
-            _display.ShowInfo(
-                string.Format(AppTexts.PaginationStatus, recipesPage.PageNumber, recipesPage.TotalPages)
-            );
+            _display.ShowInfo(string.Format(
+                AppTexts.PaginationStatus,
+                recipesPage.PageNumber,
+                recipesPage.TotalPages));
 
             PaginationAction paginationAction = _reader.ReadPaginationAction();
 
@@ -283,31 +278,23 @@ public class RichConsoleRecipeApp : IRecipeApp
 
         while (true)
         {
-            PagedResult<RecipeSummary> searchResultsPage = _recipeLibraryService.SearchRecipesPage(
-                searchText,
-                pageNumber,
-                PageSize
-            );
+            PagedResult<RecipeSummary> searchResultsPage =
+                _recipeLibraryService.SearchRecipesPage(searchText, pageNumber, PageSize);
 
-            _display.ShowRecipes(
-                searchResultsPage.Items,
-                AppTexts.SearchResults,
-                AppTexts.NoSearchResults
-            );
-            _display.ShowInfo(string.Format(AppTexts.SearchResultsTotal, searchResultsPage.TotalItems));
+            _display.ShowRecipes(searchResultsPage.Items, AppTexts.SearchResults, AppTexts.NoSearchResults);
+            _display.ShowInfo(string.Format(
+                AppTexts.SearchResultsTotal,
+                searchResultsPage.TotalItems));
 
             if (searchResultsPage.TotalItems == 0)
             {
                 return;
             }
 
-            _display.ShowInfo(
-                string.Format(
-                    AppTexts.PaginationStatus,
-                    searchResultsPage.PageNumber,
-                    searchResultsPage.TotalPages
-                )
-            );
+            _display.ShowInfo(string.Format(
+                AppTexts.PaginationStatus,
+                searchResultsPage.PageNumber,
+                searchResultsPage.TotalPages));
 
             PaginationAction paginationAction = _reader.ReadPaginationAction();
 
@@ -342,10 +329,7 @@ public class RichConsoleRecipeApp : IRecipeApp
 
     private bool ViewRecipeDetails()
     {
-        RecipeSummary? selectedRecipe = SelectExistingRecipe(
-            RichConsoleTexts.SelectRecipeToView,
-            out bool returnedToMainMenu
-        );
+        RecipeSummary? selectedRecipe = SelectExistingRecipe(RichConsoleTexts.SelectRecipeToView, out bool returnedToMainMenu);
 
         if (selectedRecipe == null)
         {
@@ -366,10 +350,7 @@ public class RichConsoleRecipeApp : IRecipeApp
 
     private bool EditRecipe()
     {
-        RecipeSummary? selectedRecipe = SelectExistingRecipe(
-            RichConsoleTexts.SelectRecipeToEdit,
-            out bool returnedToMainMenu
-        );
+        RecipeSummary? selectedRecipe = SelectExistingRecipe(RichConsoleTexts.SelectRecipeToEdit, out bool returnedToMainMenu);
 
         if (selectedRecipe == null)
         {
@@ -402,18 +383,14 @@ public class RichConsoleRecipeApp : IRecipeApp
 
     private bool DeleteRecipe()
     {
-        RecipeSummary? selectedRecipe = SelectExistingRecipe(
-            RichConsoleTexts.SelectRecipeToDelete,
-            out bool returnedToMainMenu
-        );
+        RecipeSummary? selectedRecipe = SelectExistingRecipe(RichConsoleTexts.SelectRecipeToDelete, out bool returnedToMainMenu);
 
         if (selectedRecipe == null)
         {
             return !returnedToMainMenu;
         }
 
-        RecipeSummary? recipe = _recipeLibraryService
-            .GetRecipeSummaries()
+        RecipeSummary? recipe = _recipeLibraryService.GetRecipeSummaries()
             .FirstOrDefault(recipe => recipe.Id == selectedRecipe.Id);
 
         if (recipe == null)

@@ -10,7 +10,9 @@ public class RecipeStatusPresentationTests
     [InlineData(RecipeStatus.Favorite, "Favorită")]
     [InlineData(RecipeStatus.NeedsChanges, "Necesită modificări")]
     [InlineData(RecipeStatus.DoNotRepeat, "Nu mai repet")]
-    public void GetLabel_ShouldReturnRomanianLabel(RecipeStatus status, string expectedLabel)
+    public void GetLabel_ShouldReturnRomanianLabel(
+        RecipeStatus status,
+        string expectedLabel)
     {
         string label = RecipeStatusPresentation.GetLabel(status);
 
@@ -24,7 +26,9 @@ public class RecipeStatusPresentationTests
     [InlineData(RecipeStatus.Favorite, "text-bg-warning")]
     [InlineData(RecipeStatus.NeedsChanges, "text-bg-dark")]
     [InlineData(RecipeStatus.DoNotRepeat, "text-bg-danger")]
-    public void GetBadgeClass_ShouldReturnClassForEveryStatus(RecipeStatus status, string expectedClass)
+    public void GetBadgeClass_ShouldReturnClassForEveryStatus(
+        RecipeStatus status,
+        string expectedClass)
     {
         string badgeClass = RecipeStatusPresentation.GetBadgeClass(status);
 
@@ -34,7 +38,8 @@ public class RecipeStatusPresentationTests
     [Fact]
     public void GetSelectList_ShouldContainAllStatusesAndSelectCurrentStatus()
     {
-        List<SelectListItem> items = RecipeStatusPresentation.GetSelectList(RecipeStatus.Favorite);
+        List<SelectListItem> items =
+            RecipeStatusPresentation.GetSelectList(RecipeStatus.Favorite);
 
         Assert.Equal(Enum.GetValues<RecipeStatus>().Length, items.Count);
         SelectListItem selectedItem = Assert.Single(items, item => item.Selected);

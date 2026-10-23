@@ -6,10 +6,9 @@ internal static class RecipeBackupJson
     public const string ExportedAtUtcPropertyName = "exportedAtUtc";
     public const string RecipesPropertyName = "recipes";
 
-    public static JsonSerializerOptions SerializerOptions { get; } =
-        new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true,
-        };
+    public static JsonSerializerOptions SerializerOptions { get; } = new JsonSerializerOptions
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = true
+    };
 }

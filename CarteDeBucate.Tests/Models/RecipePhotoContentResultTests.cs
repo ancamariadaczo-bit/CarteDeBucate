@@ -9,8 +9,7 @@ public class RecipePhotoContentResultTests
             content,
             "image/jpeg",
             "photo.jpg",
-            "Loaded."
-        );
+            "Loaded.");
 
         Assert.True(result.IsSuccess);
         Assert.Equal(RecipePhotoResultCode.Success, result.Code);
@@ -25,8 +24,7 @@ public class RecipePhotoContentResultTests
     {
         RecipePhotoContentResult result = RecipePhotoContentResult.Failure(
             RecipePhotoResultCode.ContentFileMissing,
-            "Content file is missing."
-        );
+            "Content file is missing.");
 
         Assert.False(result.IsSuccess);
         Assert.Equal(RecipePhotoResultCode.ContentFileMissing, result.Code);

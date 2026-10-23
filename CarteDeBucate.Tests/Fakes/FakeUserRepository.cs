@@ -10,7 +10,9 @@ public class FakeUserRepository : IUserRepository
     {
         if (user.Id == 0)
         {
-            user.Id = Users.Count == 0 ? 1 : Users.Max(existingUser => existingUser.Id) + 1;
+            user.Id = Users.Count == 0
+                ? 1
+                : Users.Max(existingUser => existingUser.Id) + 1;
         }
 
         AddWasCalled = true;
@@ -21,7 +23,6 @@ public class FakeUserRepository : IUserRepository
     public User? GetByUsername(string username)
     {
         return Users.FirstOrDefault(user =>
-            string.Equals(user.Username, username, StringComparison.OrdinalIgnoreCase)
-        );
+            string.Equals(user.Username, username, StringComparison.OrdinalIgnoreCase));
     }
 }

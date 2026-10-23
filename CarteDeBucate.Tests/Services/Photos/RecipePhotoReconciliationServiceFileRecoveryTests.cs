@@ -2,12 +2,17 @@ using Microsoft.Extensions.Logging;
 
 public sealed class RecipePhotoReconciliationServiceFileRecoveryTests
 {
-    private const string KnownStorageFileName = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg";
-    private const string UnreferencedStorageFileName = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.png";
-    private const string OrphanedStorageFileName = "cccccccccccccccccccccccccccccccc.webp";
-    private const string NewOrphanStorageFileName = "dddddddddddddddddddddddddddddddd.jpg";
+    private const string KnownStorageFileName =
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.jpg";
+    private const string UnreferencedStorageFileName =
+        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.png";
+    private const string OrphanedStorageFileName =
+        "cccccccccccccccccccccccccccccccc.webp";
+    private const string NewOrphanStorageFileName =
+        "dddddddddddddddddddddddddddddddd.jpg";
 
-    private static readonly DateTimeOffset UtcNow = new(2026, 10, 12, 12, 0, 0, TimeSpan.Zero);
+    private static readonly DateTimeOffset UtcNow =
+        new(2026, 10, 12, 12, 0, 0, TimeSpan.Zero);
 
     [Fact]
     public void Reconcile_WithQuarantineEntryNewerThanThreshold_ShouldSkipIt()
@@ -15,10 +20,11 @@ public sealed class RecipePhotoReconciliationServiceFileRecoveryTests
         ReconciliationStorage storage = new();
         StagedRecipePhotoDeletionInventoryItem item = CreateQuarantineItem(
             KnownStorageFileName,
-            UtcNow.UtcDateTime.AddHours(-23)
-        );
+            UtcNow.UtcDateTime.AddHours(-23));
         storage.QuarantinedDeletions.Add(item);
-        RecipePhotoReconciliationService service = CreateService(storage, [KnownStorageFileName]);
+        RecipePhotoReconciliationService service = CreateService(
+            storage,
+            [KnownStorageFileName]);
 
         RecipePhotoReconciliationReport report = service.Reconcile();
 
@@ -36,17 +42,20 @@ public sealed class RecipePhotoReconciliationServiceFileRecoveryTests
         ReconciliationStorage storage = new();
         StagedRecipePhotoDeletionInventoryItem item = CreateQuarantineItem(
             KnownStorageFileName,
-            UtcNow.UtcDateTime.AddHours(-25)
-        );
+            UtcNow.UtcDateTime.AddHours(-25));
         storage.QuarantinedDeletions.Add(item);
-        RecipePhotoReconciliationService service = CreateService(storage, [KnownStorageFileName]);
+        RecipePhotoReconciliationService service = CreateService(
+            storage,
+            [KnownStorageFileName]);
 
         RecipePhotoReconciliationReport report = service.Reconcile();
 
         Assert.Equal(1, report.RestoredCount);
         Assert.Equal(0, report.DeletedCount);
         Assert.Equal(0, report.FailedCount);
-        Assert.Same(item.Deletion, Assert.Single(storage.RestoredDeletions));
+        Assert.Same(
+            item.Deletion,
+            Assert.Single(storage.RestoredDeletions));
         Assert.Empty(storage.DeletedDeletions);
     }
 
@@ -56,8 +65,7 @@ public sealed class RecipePhotoReconciliationServiceFileRecoveryTests
         ReconciliationStorage storage = new();
         StagedRecipePhotoDeletionInventoryItem item = CreateQuarantineItem(
             UnreferencedStorageFileName,
-            UtcNow.UtcDateTime.AddHours(-25)
-        );
+            UtcNow.UtcDateTime.AddHours(-25));
         storage.QuarantinedDeletions.Add(item);
         RecipePhotoReconciliationService service = CreateService(storage);
 
@@ -66,14 +74,19 @@ public sealed class RecipePhotoReconciliationServiceFileRecoveryTests
         Assert.Equal(1, report.DeletedCount);
         Assert.Equal(0, report.RestoredCount);
         Assert.Equal(0, report.FailedCount);
-        Assert.Same(item.Deletion, Assert.Single(storage.DeletedDeletions));
+        Assert.Same(
+            item.Deletion,
+            Assert.Single(storage.DeletedDeletions));
         Assert.Empty(storage.RestoredDeletions);
     }
 
     [Fact]
     public void Reconcile_WithInvalidQuarantineDescriptor_ShouldReportFailure()
     {
-        ReconciliationStorage storage = new() { InvalidQuarantineEntryCount = 1 };
+        ReconciliationStorage storage = new()
+        {
+            InvalidQuarantineEntryCount = 1
+        };
         RecipePhotoReconciliationService service = CreateService(storage);
 
         RecipePhotoReconciliationReport report = service.Reconcile();
@@ -91,16 +104,14 @@ public sealed class RecipePhotoReconciliationServiceFileRecoveryTests
         ReconciliationStorage storage = new();
         StagedRecipePhotoDeletionInventoryItem item = CreateQuarantineItem(
             KnownStorageFileName,
-            UtcNow.UtcDateTime.AddHours(-25)
-        );
+            UtcNow.UtcDateTime.AddHours(-25));
         storage.QuarantinedDeletions.Add(item);
         storage.RestoreFailureToken = item.Deletion.Token;
         RecordingLogger logger = new();
         RecipePhotoReconciliationService service = CreateService(
             storage,
             [KnownStorageFileName],
-            logger
-        );
+            logger);
 
         RecipePhotoReconciliationReport report = service.Reconcile();
 
@@ -109,40 +120,50 @@ public sealed class RecipePhotoReconciliationServiceFileRecoveryTests
         Assert.Empty(storage.RestoredDeletions);
         Assert.Contains(LogLevel.Error, logger.Levels);
         Assert.All(logger.Exceptions, exception => Assert.Null(exception));
-        Assert.DoesNotContain("/private/photo-storage", string.Join(" ", logger.Messages));
+        Assert.DoesNotContain(
+            "/private/photo-storage",
+            string.Join(" ", logger.Messages));
     }
 
     [Fact]
     public void Reconcile_WhenOneQuarantineOperationFails_ShouldContinue()
     {
         ReconciliationStorage storage = new();
-        StagedRecipePhotoDeletionInventoryItem failingItem = CreateQuarantineItem(
-            UnreferencedStorageFileName,
-            UtcNow.UtcDateTime.AddHours(-26)
-        );
-        StagedRecipePhotoDeletionInventoryItem successfulItem = CreateQuarantineItem(
-            KnownStorageFileName,
-            UtcNow.UtcDateTime.AddHours(-25)
-        );
+        StagedRecipePhotoDeletionInventoryItem failingItem =
+            CreateQuarantineItem(
+                UnreferencedStorageFileName,
+                UtcNow.UtcDateTime.AddHours(-26));
+        StagedRecipePhotoDeletionInventoryItem successfulItem =
+            CreateQuarantineItem(
+                KnownStorageFileName,
+                UtcNow.UtcDateTime.AddHours(-25));
         storage.QuarantinedDeletions.Add(failingItem);
         storage.QuarantinedDeletions.Add(successfulItem);
         storage.DeleteFailureToken = failingItem.Deletion.Token;
-        RecipePhotoReconciliationService service = CreateService(storage, [KnownStorageFileName]);
+        RecipePhotoReconciliationService service = CreateService(
+            storage,
+            [KnownStorageFileName]);
 
         RecipePhotoReconciliationReport report = service.Reconcile();
 
         Assert.Equal(1, report.FailedCount);
         Assert.Equal(1, report.RestoredCount);
         Assert.Equal(0, report.DeletedCount);
-        Assert.Same(successfulItem.Deletion, Assert.Single(storage.RestoredDeletions));
+        Assert.Same(
+            successfulItem.Deletion,
+            Assert.Single(storage.RestoredDeletions));
     }
 
     [Fact]
     public void Reconcile_WithReferencedFinalFile_ShouldNotReportIt()
     {
         ReconciliationStorage storage = new();
-        storage.FinalFiles.Add(CreateFinalFile(KnownStorageFileName, UtcNow.UtcDateTime.AddHours(-25)));
-        RecipePhotoReconciliationService service = CreateService(storage, [KnownStorageFileName]);
+        storage.FinalFiles.Add(CreateFinalFile(
+            KnownStorageFileName,
+            UtcNow.UtcDateTime.AddHours(-25)));
+        RecipePhotoReconciliationService service = CreateService(
+            storage,
+            [KnownStorageFileName]);
 
         RecipePhotoReconciliationReport report = service.Reconcile();
 
@@ -155,11 +176,13 @@ public sealed class RecipePhotoReconciliationServiceFileRecoveryTests
     public void Reconcile_WithOrphanedFinalFile_ShouldReportWithoutChangingIt()
     {
         ReconciliationStorage storage = new();
-        storage.FinalFiles.Add(
-            CreateFinalFile(OrphanedStorageFileName, UtcNow.UtcDateTime.AddHours(-25))
-        );
+        storage.FinalFiles.Add(CreateFinalFile(
+            OrphanedStorageFileName,
+            UtcNow.UtcDateTime.AddHours(-25)));
         RecordingLogger logger = new();
-        RecipePhotoReconciliationService service = CreateService(storage, logger: logger);
+        RecipePhotoReconciliationService service = CreateService(
+            storage,
+            logger: logger);
 
         RecipePhotoReconciliationReport report = service.Reconcile();
 
@@ -174,9 +197,9 @@ public sealed class RecipePhotoReconciliationServiceFileRecoveryTests
     public void Reconcile_WithFinalFileNewerThanThreshold_ShouldSkipIt()
     {
         ReconciliationStorage storage = new();
-        storage.FinalFiles.Add(
-            CreateFinalFile(NewOrphanStorageFileName, UtcNow.UtcDateTime.AddHours(-23))
-        );
+        storage.FinalFiles.Add(CreateFinalFile(
+            NewOrphanStorageFileName,
+            UtcNow.UtcDateTime.AddHours(-23)));
         RecipePhotoReconciliationService service = CreateService(storage);
 
         RecipePhotoReconciliationReport report = service.Reconcile();
@@ -190,7 +213,10 @@ public sealed class RecipePhotoReconciliationServiceFileRecoveryTests
     [Fact]
     public void Reconcile_WithInvalidFinalFileName_ShouldReportFailure()
     {
-        ReconciliationStorage storage = new() { InvalidFinalFileEntryCount = 1 };
+        ReconciliationStorage storage = new()
+        {
+            InvalidFinalFileEntryCount = 1
+        };
         RecipePhotoReconciliationService service = CreateService(storage);
 
         RecipePhotoReconciliationReport report = service.Reconcile();
@@ -203,49 +229,57 @@ public sealed class RecipePhotoReconciliationServiceFileRecoveryTests
     private static RecipePhotoReconciliationService CreateService(
         ReconciliationStorage storage,
         IReadOnlyList<string>? knownStorageFileNames = null,
-        RecordingLogger? logger = null
-    )
+        RecordingLogger? logger = null)
     {
         FakeRecipeRepository recipeRepository = new()
         {
-            Recipes = [new Recipe { Id = 1, Name = "Recipe" }],
+            Recipes =
+            [
+                new Recipe { Id = 1, Name = "Recipe" }
+            ]
         };
 
         return new RecipePhotoReconciliationService(
             storage,
             recipeRepository,
-            new ReconciliationPhotoRepository(knownStorageFileNames ?? []),
-            new RecipePhotoOptions { ReconciliationMinimumAge = TimeSpan.FromHours(24) },
+            new ReconciliationPhotoRepository(
+                knownStorageFileNames ?? []),
+            new RecipePhotoOptions
+            {
+                ReconciliationMinimumAge = TimeSpan.FromHours(24)
+            },
             new FixedTimeProvider(UtcNow),
-            logger ?? new RecordingLogger()
-        );
+            logger ?? new RecordingLogger());
     }
 
-    private static StagedRecipePhotoDeletionInventoryItem CreateQuarantineItem(
-        string storageFileName,
-        DateTime quarantinedAtUtc
-    )
+    private static StagedRecipePhotoDeletionInventoryItem
+        CreateQuarantineItem(
+            string storageFileName,
+            DateTime quarantinedAtUtc)
     {
         return new StagedRecipePhotoDeletionInventoryItem(
-            new StagedRecipePhotoDeletion(Guid.NewGuid().ToString("N")),
+            new StagedRecipePhotoDeletion(
+                Guid.NewGuid().ToString("N")),
             storageFileName,
-            quarantinedAtUtc
-        );
+            quarantinedAtUtc);
     }
 
     private static RecipePhotoStorageFileInventoryItem CreateFinalFile(
         string storageFileName,
-        DateTime lastModifiedAtUtc
-    )
+        DateTime lastModifiedAtUtc)
     {
-        return new RecipePhotoStorageFileInventoryItem(storageFileName, lastModifiedAtUtc);
+        return new RecipePhotoStorageFileInventoryItem(
+            storageFileName,
+            lastModifiedAtUtc);
     }
 
-    private sealed class ReconciliationPhotoRepository : IRecipePhotoRepository
+    private sealed class ReconciliationPhotoRepository :
+        IRecipePhotoRepository
     {
         private readonly IReadOnlyList<string> _storageFileNames;
 
-        public ReconciliationPhotoRepository(IReadOnlyList<string> storageFileNames)
+        public ReconciliationPhotoRepository(
+            IReadOnlyList<string> storageFileNames)
         {
             _storageFileNames = storageFileNames;
         }
@@ -276,12 +310,14 @@ public sealed class RecipePhotoReconciliationServiceFileRecoveryTests
                 .Select(storageFileName => new RecipePhoto
                 {
                     RecipeId = recipeId,
-                    StorageFileName = storageFileName,
+                    StorageFileName = storageFileName
                 })
                 .ToList();
         }
 
-        public List<RecipePhoto> GetByRecipeIdAndUserId(int recipeId, int userId)
+        public List<RecipePhoto> GetByRecipeIdAndUserId(
+            int recipeId,
+            int userId)
         {
             throw new NotImplementedException();
         }
@@ -299,13 +335,23 @@ public sealed class RecipePhotoReconciliationServiceFileRecoveryTests
 
     private sealed class ReconciliationStorage : IRecipePhotoStorage
     {
-        public List<StagedRecipePhotoDeletionInventoryItem> QuarantinedDeletions { get; } = [];
+        public List<StagedRecipePhotoDeletionInventoryItem>
+            QuarantinedDeletions { get; } = [];
 
-        public List<RecipePhotoStorageFileInventoryItem> FinalFiles { get; } = [];
+        public List<RecipePhotoStorageFileInventoryItem> FinalFiles
+        {
+            get;
+        } = [];
 
-        public List<StagedRecipePhotoDeletion> RestoredDeletions { get; } = [];
+        public List<StagedRecipePhotoDeletion> RestoredDeletions
+        {
+            get;
+        } = [];
 
-        public List<StagedRecipePhotoDeletion> DeletedDeletions { get; } = [];
+        public List<StagedRecipePhotoDeletion> DeletedDeletions
+        {
+            get;
+        } = [];
 
         public int InvalidQuarantineEntryCount { get; set; }
 
@@ -315,13 +361,13 @@ public sealed class RecipePhotoReconciliationServiceFileRecoveryTests
 
         public string? DeleteFailureToken { get; set; }
 
-        public int MutationCount => RestoredDeletions.Count + DeletedDeletions.Count;
+        public int MutationCount =>
+            RestoredDeletions.Count + DeletedDeletions.Count;
 
         public Task<StagedRecipePhotoUpload> StageUploadAsync(
             Stream content,
             long maximumBytes,
-            CancellationToken cancellationToken = default
-        )
+            CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
@@ -331,7 +377,9 @@ public sealed class RecipePhotoReconciliationServiceFileRecoveryTests
             throw new NotImplementedException();
         }
 
-        public string FinalizeUpload(StagedRecipePhotoUpload upload, RecipePhotoFormat format)
+        public string FinalizeUpload(
+            StagedRecipePhotoUpload upload,
+            RecipePhotoFormat format)
         {
             throw new NotImplementedException();
         }
@@ -351,22 +399,26 @@ public sealed class RecipePhotoReconciliationServiceFileRecoveryTests
             throw new NotImplementedException();
         }
 
-        public StagedRecipePhotoDeletion? MoveToQuarantine(string storageFileName)
+        public StagedRecipePhotoDeletion? MoveToQuarantine(
+            string storageFileName)
         {
             throw new NotImplementedException();
         }
 
-        public void RestoreFromQuarantine(StagedRecipePhotoDeletion deletion)
+        public void RestoreFromQuarantine(
+            StagedRecipePhotoDeletion deletion)
         {
             if (deletion.Token == RestoreFailureToken)
             {
-                throw new IOException("restore failed at /private/photo-storage/known.jpg");
+                throw new IOException(
+                    "restore failed at /private/photo-storage/known.jpg");
             }
 
             RestoredDeletions.Add(deletion);
         }
 
-        public void DeleteFromQuarantine(StagedRecipePhotoDeletion deletion)
+        public void DeleteFromQuarantine(
+            StagedRecipePhotoDeletion deletion)
         {
             if (deletion.Token == DeleteFailureToken)
             {
@@ -376,28 +428,31 @@ public sealed class RecipePhotoReconciliationServiceFileRecoveryTests
             DeletedDeletions.Add(deletion);
         }
 
-        public RecipePhotoStorageInventory<StagedRecipePhotoUploadInventoryItem> GetStagedUploads()
+        public RecipePhotoStorageInventory<StagedRecipePhotoUploadInventoryItem>
+            GetStagedUploads()
         {
-            return new RecipePhotoStorageInventory<StagedRecipePhotoUploadInventoryItem>(
-                [],
-                invalidEntryCount: 0
-            );
+            return new RecipePhotoStorageInventory<
+                StagedRecipePhotoUploadInventoryItem>(
+                    [],
+                    invalidEntryCount: 0);
         }
 
-        public RecipePhotoStorageInventory<StagedRecipePhotoDeletionInventoryItem> GetQuarantinedDeletions()
+        public RecipePhotoStorageInventory<StagedRecipePhotoDeletionInventoryItem>
+            GetQuarantinedDeletions()
         {
-            return new RecipePhotoStorageInventory<StagedRecipePhotoDeletionInventoryItem>(
-                QuarantinedDeletions,
-                InvalidQuarantineEntryCount
-            );
+            return new RecipePhotoStorageInventory<
+                StagedRecipePhotoDeletionInventoryItem>(
+                    QuarantinedDeletions,
+                    InvalidQuarantineEntryCount);
         }
 
-        public RecipePhotoStorageInventory<RecipePhotoStorageFileInventoryItem> GetFinalFiles()
+        public RecipePhotoStorageInventory<RecipePhotoStorageFileInventoryItem>
+            GetFinalFiles()
         {
-            return new RecipePhotoStorageInventory<RecipePhotoStorageFileInventoryItem>(
-                FinalFiles,
-                InvalidFinalFileEntryCount
-            );
+            return new RecipePhotoStorageInventory<
+                RecipePhotoStorageFileInventoryItem>(
+                    FinalFiles,
+                    InvalidFinalFileEntryCount);
         }
     }
 
@@ -416,7 +471,8 @@ public sealed class RecipePhotoReconciliationServiceFileRecoveryTests
         }
     }
 
-    private sealed class RecordingLogger : ILogger<RecipePhotoReconciliationService>
+    private sealed class RecordingLogger :
+        ILogger<RecipePhotoReconciliationService>
     {
         public List<LogLevel> Levels { get; } = [];
 
@@ -440,8 +496,7 @@ public sealed class RecipePhotoReconciliationServiceFileRecoveryTests
             EventId eventId,
             TState state,
             Exception? exception,
-            Func<TState, Exception?, string> formatter
-        )
+            Func<TState, Exception?, string> formatter)
         {
             Levels.Add(logLevel);
             Messages.Add(formatter(state, exception));

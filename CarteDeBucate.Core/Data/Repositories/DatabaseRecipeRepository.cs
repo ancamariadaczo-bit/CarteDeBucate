@@ -7,7 +7,9 @@ public class DatabaseRecipeRepository : IRecipeRepository
     private readonly string _connectionString;
     private readonly ILogger<DatabaseRecipeRepository> _logger;
 
-    public DatabaseRecipeRepository(string databasePath, ILogger<DatabaseRecipeRepository> logger)
+    public DatabaseRecipeRepository(
+        string databasePath,
+        ILogger<DatabaseRecipeRepository> logger)
     {
         _connectionString = SqliteConnectionStringFactory.Create(databasePath);
         _logger = logger;
@@ -74,16 +76,22 @@ public class DatabaseRecipeRepository : IRecipeRepository
         connection.Open();
 
         int totalItems = CountRecipes(connection);
-        List<RecipeSummary> recipes = GetRecipeSummariesPage(connection, pageNumber, pageSize);
+        List<RecipeSummary> recipes = GetRecipeSummariesPage(
+            connection,
+            pageNumber,
+            pageSize);
 
-        return new PagedResult<RecipeSummary>(recipes, pageNumber, pageSize, totalItems);
+        return new PagedResult<RecipeSummary>(
+            recipes,
+            pageNumber,
+            pageSize,
+            totalItems);
     }
 
     public PagedResult<RecipeSummary> GetRecipeSummariesPageByUserId(
         int userId,
         int pageNumber,
-        int pageSize
-    )
+        int pageSize)
     {
         using SqliteConnection connection = new SqliteConnection(_connectionString);
         connection.Open();
@@ -93,10 +101,13 @@ public class DatabaseRecipeRepository : IRecipeRepository
             connection,
             userId,
             pageNumber,
-            pageSize
-        );
+            pageSize);
 
-        return new PagedResult<RecipeSummary>(recipes, pageNumber, pageSize, totalItems);
+        return new PagedResult<RecipeSummary>(
+            recipes,
+            pageNumber,
+            pageSize,
+            totalItems);
     }
 
     public List<Recipe> GetAllRecipes()
@@ -208,12 +219,15 @@ public class DatabaseRecipeRepository : IRecipeRepository
         string searchText,
         int? userId,
         int pageNumber,
-        int pageSize
-    )
+        int pageSize)
     {
         if (string.IsNullOrWhiteSpace(searchText))
         {
-            return new PagedResult<RecipeSummary>(new List<RecipeSummary>(), pageNumber, pageSize, 0);
+            return new PagedResult<RecipeSummary>(
+                new List<RecipeSummary>(),
+                pageNumber,
+                pageSize,
+                0);
         }
 
         using SqliteConnection connection = new SqliteConnection(_connectionString);
@@ -225,10 +239,13 @@ public class DatabaseRecipeRepository : IRecipeRepository
             searchText,
             userId,
             pageNumber,
-            pageSize
-        );
+            pageSize);
 
-        return new PagedResult<RecipeSummary>(recipes, pageNumber, pageSize, totalItems);
+        return new PagedResult<RecipeSummary>(
+            recipes,
+            pageNumber,
+            pageSize,
+            totalItems);
     }
 
     public bool HasRecipes()
@@ -492,7 +509,10 @@ public class DatabaseRecipeRepository : IRecipeRepository
         return count > 0;
     }
 
-    private int InsertRecipe(SqliteConnection connection, SqliteTransaction transaction, Recipe recipe)
+    private int InsertRecipe(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        Recipe recipe)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.Transaction = transaction;
@@ -507,15 +527,9 @@ public class DatabaseRecipeRepository : IRecipeRepository
         command.Parameters.AddWithValue("@Name", recipe.Name);
         command.Parameters.AddWithValue("@SourceUrl", recipe.SourceUrl);
         command.Parameters.AddWithValue("@SavedAt", recipe.SavedAt.ToString("O"));
-        command.Parameters.AddWithValue(
-            "@Notes",
-            string.IsNullOrWhiteSpace(recipe.Notes) ? DBNull.Value : recipe.Notes
-        );
+        command.Parameters.AddWithValue("@Notes", string.IsNullOrWhiteSpace(recipe.Notes) ? DBNull.Value : recipe.Notes);
         command.Parameters.AddWithValue("@Status", (int)recipe.Status);
-        command.Parameters.AddWithValue(
-            "@UserId",
-            recipe.UserId.HasValue ? recipe.UserId.Value : (object)DBNull.Value
-        );
+        command.Parameters.AddWithValue("@UserId", recipe.UserId.HasValue ? recipe.UserId.Value : (object)DBNull.Value);
 
         long recipeId = (long)(command.ExecuteScalar() ?? 0);
 
@@ -526,8 +540,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
         SqliteConnection connection,
         SqliteTransaction transaction,
         int recipeId,
-        List<string> ingredients
-    )
+        List<string> ingredients)
     {
         for (int i = 0; i < ingredients.Count; i++)
         {
@@ -551,8 +564,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
         SqliteConnection connection,
         SqliteTransaction transaction,
         int recipeId,
-        List<string> steps
-    )
+        List<string> steps)
     {
         for (int i = 0; i < steps.Count; i++)
         {
@@ -678,8 +690,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
     private void DeleteRecipeIngredients(
         SqliteConnection connection,
         SqliteTransaction transaction,
-        int recipeId
-    )
+        int recipeId)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.Transaction = transaction;
@@ -697,8 +708,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
     private void DeleteRecipeSteps(
         SqliteConnection connection,
         SqliteTransaction transaction,
-        int recipeId
-    )
+        int recipeId)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.Transaction = transaction;
@@ -713,7 +723,10 @@ public class DatabaseRecipeRepository : IRecipeRepository
         command.ExecuteNonQuery();
     }
 
-    private bool RecipeBelongsToUser(SqliteConnection connection, int recipeId, int userId)
+    private bool RecipeBelongsToUser(
+        SqliteConnection connection,
+        int recipeId,
+        int userId)
     {
         using SqliteCommand command = connection.CreateCommand();
 
@@ -737,8 +750,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
     private void DeleteRecipeMainRecord(
         SqliteConnection connection,
         SqliteTransaction transaction,
-        int recipeId
-    )
+        int recipeId)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.Transaction = transaction;
@@ -775,11 +787,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
         return ReadRecipeFromReader(reader);
     }
 
-    private Recipe? GetRecipeMainRecordByIdAndUserId(
-        SqliteConnection connection,
-        int recipeId,
-        int userId
-    )
+    private Recipe? GetRecipeMainRecordByIdAndUserId(SqliteConnection connection, int recipeId, int userId)
     {
         using SqliteCommand command = connection.CreateCommand();
 
@@ -819,7 +827,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
             Steps = new List<string>(),
             UserId = reader.IsDBNull(reader.GetOrdinal("UserId"))
                 ? null
-                : reader.GetInt32(reader.GetOrdinal("UserId")),
+                : reader.GetInt32(reader.GetOrdinal("UserId"))
         };
     }
 
@@ -834,7 +842,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
             Status = (RecipeStatus)reader.GetInt32(reader.GetOrdinal("Status")),
             UserId = reader.IsDBNull(reader.GetOrdinal("UserId"))
                 ? null
-                : reader.GetInt32(reader.GetOrdinal("UserId")),
+                : reader.GetInt32(reader.GetOrdinal("UserId"))
         };
     }
 
@@ -870,8 +878,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
     private List<RecipeSummary> GetRecipeSummariesPage(
         SqliteConnection connection,
         int pageNumber,
-        int pageSize
-    )
+        int pageSize)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
@@ -890,8 +897,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
         SqliteConnection connection,
         int userId,
         int pageNumber,
-        int pageSize
-    )
+        int pageSize)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
@@ -908,7 +914,10 @@ public class DatabaseRecipeRepository : IRecipeRepository
         return ReadRecipeSummaries(command);
     }
 
-    private int CountSearchRecipes(SqliteConnection connection, string searchText, int? userId)
+    private int CountSearchRecipes(
+        SqliteConnection connection,
+        string searchText,
+        int? userId)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
@@ -938,8 +947,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
         string searchText,
         int? userId,
         int pageNumber,
-        int pageSize
-    )
+        int pageSize)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
@@ -965,7 +973,10 @@ public class DatabaseRecipeRepository : IRecipeRepository
         return ReadRecipeSummaries(command);
     }
 
-    private void AddPaginationParameters(SqliteCommand command, int pageNumber, int pageSize)
+    private void AddPaginationParameters(
+        SqliteCommand command,
+        int pageNumber,
+        int pageSize)
     {
         int normalizedPageNumber = Math.Max(1, pageNumber);
         int normalizedPageSize = Math.Max(1, pageSize);
@@ -975,13 +986,13 @@ public class DatabaseRecipeRepository : IRecipeRepository
         command.Parameters.AddWithValue("@Offset", offset);
     }
 
-    private void AddSearchParameters(SqliteCommand command, string searchText, int? userId)
+    private void AddSearchParameters(
+        SqliteCommand command,
+        string searchText,
+        int? userId)
     {
         command.Parameters.AddWithValue("@SearchText", $"%{searchText.Trim().ToLowerInvariant()}%");
-        command.Parameters.AddWithValue(
-            "@UserId",
-            userId.HasValue ? userId.Value : (object)DBNull.Value
-        );
+        command.Parameters.AddWithValue("@UserId", userId.HasValue ? userId.Value : (object)DBNull.Value);
     }
 
     private List<RecipeSummary> ReadRecipeSummaries(SqliteCommand command)
@@ -1003,8 +1014,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
     private void UpdateRecipeMainRecord(
         SqliteConnection connection,
         SqliteTransaction transaction,
-        Recipe recipe
-    )
+        Recipe recipe)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.Transaction = transaction;
@@ -1024,15 +1034,9 @@ public class DatabaseRecipeRepository : IRecipeRepository
         command.Parameters.AddWithValue("@Name", recipe.Name);
         command.Parameters.AddWithValue("@SourceUrl", recipe.SourceUrl);
         command.Parameters.AddWithValue("@SavedAt", recipe.SavedAt.ToString("O"));
-        command.Parameters.AddWithValue(
-            "@Notes",
-            string.IsNullOrWhiteSpace(recipe.Notes) ? DBNull.Value : recipe.Notes
-        );
+        command.Parameters.AddWithValue("@Notes", string.IsNullOrWhiteSpace(recipe.Notes) ? DBNull.Value : recipe.Notes);
         command.Parameters.AddWithValue("@Status", (int)recipe.Status);
-        command.Parameters.AddWithValue(
-            "@UserId",
-            recipe.UserId.HasValue ? recipe.UserId.Value : (object)DBNull.Value
-        );
+        command.Parameters.AddWithValue("@UserId", recipe.UserId.HasValue ? recipe.UserId.Value : (object)DBNull.Value);
 
         command.ExecuteNonQuery();
     }
@@ -1041,8 +1045,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
         SqliteConnection connection,
         SqliteTransaction transaction,
         Recipe recipe,
-        int userId
-    )
+        int userId)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.Transaction = transaction;
@@ -1064,10 +1067,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
         command.Parameters.AddWithValue("@Name", recipe.Name);
         command.Parameters.AddWithValue("@SourceUrl", recipe.SourceUrl);
         command.Parameters.AddWithValue("@SavedAt", recipe.SavedAt.ToString("O"));
-        command.Parameters.AddWithValue(
-            "@Notes",
-            string.IsNullOrWhiteSpace(recipe.Notes) ? DBNull.Value : recipe.Notes
-        );
+        command.Parameters.AddWithValue("@Notes", string.IsNullOrWhiteSpace(recipe.Notes) ? DBNull.Value : recipe.Notes);
         command.Parameters.AddWithValue("@Status", (int)recipe.Status);
 
         command.ExecuteNonQuery();
@@ -1078,8 +1078,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
         _logger.LogDebug(
             "SQLite transaction started for {Operation}. Recipe identifier: {RecipeId}",
             operation,
-            recipeId
-        );
+            recipeId);
 
         return Stopwatch.GetTimestamp();
     }
@@ -1090,23 +1089,20 @@ public class DatabaseRecipeRepository : IRecipeRepository
             "SQLite transaction committed for {Operation}. Recipe identifier: {RecipeId}. Duration: {ElapsedMilliseconds} ms",
             operation,
             recipeId,
-            Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds
-        );
+            Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds);
     }
 
     private void LogTransactionRolledBack(
         string operation,
         int? recipeId,
         long startedAt,
-        Exception exception
-    )
+        Exception exception)
     {
         _logger.LogWarning(
             "SQLite transaction rolled back for {Operation}. Recipe identifier: {RecipeId}. Duration: {ElapsedMilliseconds} ms. Exception type: {ExceptionType}",
             operation,
             recipeId,
             Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds,
-            exception.GetType().Name
-        );
+            exception.GetType().Name);
     }
 }

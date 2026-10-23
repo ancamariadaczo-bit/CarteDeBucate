@@ -1,6 +1,7 @@
 public sealed class FileSystemRecipePhotoStoragePathTests : IDisposable
 {
-    private const string CanonicalStorageFileName = "d0b122fc466a4247896c5d864ac69711.jpg";
+    private const string CanonicalStorageFileName =
+        "d0b122fc466a4247896c5d864ac69711.jpg";
 
     private readonly string _temporaryDirectory;
 
@@ -8,8 +9,7 @@ public sealed class FileSystemRecipePhotoStoragePathTests : IDisposable
     {
         _temporaryDirectory = Path.Combine(
             Path.GetTempPath(),
-            $"recipe-photo-storage-tests-{Guid.NewGuid():N}"
-        );
+            $"recipe-photo-storage-tests-{Guid.NewGuid():N}");
 
         Directory.CreateDirectory(_temporaryDirectory);
     }
@@ -29,7 +29,8 @@ public sealed class FileSystemRecipePhotoStoragePathTests : IDisposable
     [Fact]
     public void Constructor_WithRelativeRoot_ShouldThrow()
     {
-        Assert.Throws<ArgumentException>(() => new FileSystemRecipePhotoStorage("relative/photos"));
+        Assert.Throws<ArgumentException>(() =>
+            new FileSystemRecipePhotoStorage("relative/photos"));
     }
 
     [Fact]
@@ -38,7 +39,8 @@ public sealed class FileSystemRecipePhotoStoragePathTests : IDisposable
         string filePath = Path.Combine(_temporaryDirectory, "photos");
         File.WriteAllText(filePath, "not a directory");
 
-        Assert.Throws<ArgumentException>(() => new FileSystemRecipePhotoStorage(filePath));
+        Assert.Throws<ArgumentException>(() =>
+            new FileSystemRecipePhotoStorage(filePath));
     }
 
     [Fact]
@@ -47,9 +49,12 @@ public sealed class FileSystemRecipePhotoStoragePathTests : IDisposable
         string rootPath = Path.Combine(_temporaryDirectory, "photos");
         FileSystemRecipePhotoStorage storage = new(rootPath);
 
-        string result = storage.ResolveFinalFilePath(CanonicalStorageFileName);
+        string result = storage.ResolveFinalFilePath(
+            CanonicalStorageFileName);
 
-        Assert.Equal(Path.Combine(rootPath, CanonicalStorageFileName), result);
+        Assert.Equal(
+            Path.Combine(rootPath, CanonicalStorageFileName),
+            result);
     }
 
     [Fact]
@@ -58,8 +63,8 @@ public sealed class FileSystemRecipePhotoStoragePathTests : IDisposable
         FileSystemRecipePhotoStorage storage = CreateStorage();
 
         Assert.Throws<ArgumentException>(() =>
-            storage.ResolveFinalFilePath($"../outside/{CanonicalStorageFileName}")
-        );
+            storage.ResolveFinalFilePath(
+                $"../outside/{CanonicalStorageFileName}"));
     }
 
     [Fact]
@@ -69,8 +74,8 @@ public sealed class FileSystemRecipePhotoStoragePathTests : IDisposable
         FileSystemRecipePhotoStorage storage = new(rootPath);
 
         Assert.Throws<ArgumentException>(() =>
-            storage.ResolveFinalFilePath($"../photos-other/{CanonicalStorageFileName}")
-        );
+            storage.ResolveFinalFilePath(
+                $"../photos-other/{CanonicalStorageFileName}"));
     }
 
     [Fact]
@@ -79,8 +84,8 @@ public sealed class FileSystemRecipePhotoStoragePathTests : IDisposable
         FileSystemRecipePhotoStorage storage = CreateStorage();
 
         Assert.Throws<ArgumentException>(() =>
-            storage.ResolveFinalFilePath($"folder\\{CanonicalStorageFileName}")
-        );
+            storage.ResolveFinalFilePath(
+                $"folder\\{CanonicalStorageFileName}"));
     }
 
     [Fact]
@@ -89,17 +94,20 @@ public sealed class FileSystemRecipePhotoStoragePathTests : IDisposable
         FileSystemRecipePhotoStorage storage = CreateStorage();
 
         Assert.Throws<ArgumentException>(() =>
-            storage.ResolveFinalFilePath($"folder/{CanonicalStorageFileName}")
-        );
+            storage.ResolveFinalFilePath(
+                $"folder/{CanonicalStorageFileName}"));
     }
 
     [Fact]
     public void ResolveFinalFilePath_WithAbsoluteName_ShouldThrow()
     {
         FileSystemRecipePhotoStorage storage = CreateStorage();
-        string absolutePath = Path.Combine(_temporaryDirectory, CanonicalStorageFileName);
+        string absolutePath = Path.Combine(
+            _temporaryDirectory,
+            CanonicalStorageFileName);
 
-        Assert.Throws<ArgumentException>(() => storage.ResolveFinalFilePath(absolutePath));
+        Assert.Throws<ArgumentException>(() =>
+            storage.ResolveFinalFilePath(absolutePath));
     }
 
     [Fact]
@@ -108,19 +116,21 @@ public sealed class FileSystemRecipePhotoStoragePathTests : IDisposable
         FileSystemRecipePhotoStorage storage = CreateStorage();
 
         Assert.Throws<ArgumentException>(() =>
-            storage.ResolveFinalFilePath("d0b122fc466a4247896c5d864ac6971\u0001.jpg")
-        );
+            storage.ResolveFinalFilePath(
+                "d0b122fc466a4247896c5d864ac6971\u0001.jpg"));
     }
 
     [Theory]
     [InlineData("d0b122fc466a4247896c5d864ac69711.jpeg")]
     [InlineData("D0B122FC466A4247896C5D864AC69711.jpg")]
     [InlineData("not-a-guid.jpg")]
-    public void ResolveFinalFilePath_WithNonCanonicalName_ShouldThrow(string storageFileName)
+    public void ResolveFinalFilePath_WithNonCanonicalName_ShouldThrow(
+        string storageFileName)
     {
         FileSystemRecipePhotoStorage storage = CreateStorage();
 
-        Assert.Throws<ArgumentException>(() => storage.ResolveFinalFilePath(storageFileName));
+        Assert.Throws<ArgumentException>(() =>
+            storage.ResolveFinalFilePath(storageFileName));
     }
 
     public void Dispose()
@@ -133,6 +143,7 @@ public sealed class FileSystemRecipePhotoStoragePathTests : IDisposable
 
     private FileSystemRecipePhotoStorage CreateStorage()
     {
-        return new FileSystemRecipePhotoStorage(Path.Combine(_temporaryDirectory, "photos"));
+        return new FileSystemRecipePhotoStorage(
+            Path.Combine(_temporaryDirectory, "photos"));
     }
 }

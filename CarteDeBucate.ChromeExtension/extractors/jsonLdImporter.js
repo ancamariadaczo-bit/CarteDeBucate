@@ -1,12 +1,19 @@
 (() => {
-    globalThis.RecipeClipper = globalThis.RecipeClipper || {};
+
+    globalThis.RecipeClipper =
+        globalThis.RecipeClipper || {};
 
     globalThis.RecipeClipper.tryJsonLd = function () {
-        const scripts = document.querySelectorAll('script[type="application/ld+json"]');
+
+        const scripts = document.querySelectorAll(
+            'script[type="application/ld+json"]'
+        );
         let firstIncompleteRecipe = null;
 
         for (const script of scripts) {
+
             try {
+
                 const data = JSON.parse(script.textContent);
 
                 const recipeObjects = [];
@@ -21,8 +28,14 @@
 
                     firstIncompleteRecipe ??= recipe;
                 }
+
             } catch (error) {
-                console.log("Invalid JSON-LD:", error);
+
+                console.log(
+                    "Invalid JSON-LD:",
+                    error
+                );
+
             }
         }
 
@@ -30,6 +43,7 @@
     };
 
     function collectRecipes(value, recipes) {
+
         if (value === null || typeof value !== "object") {
             return;
         }
@@ -39,6 +53,7 @@
         }
 
         if (Array.isArray(value)) {
+
             for (const item of value) {
                 collectRecipes(item, recipes);
             }
@@ -52,6 +67,7 @@
     }
 
     function isRecipe(value) {
+
         const type = value["@type"];
 
         if (type === "Recipe") {
@@ -66,6 +82,7 @@
     }
 
     function convertRecipe(recipe) {
+
         return {
             name: recipe.name ?? "",
             sourceUrl: window.location.href,
@@ -77,22 +94,27 @@
     }
 
     function isCompleteRecipe(recipe) {
-        return (
-            isNonEmptyText(recipe.name) &&
+
+        return isNonEmptyText(recipe.name) &&
             isNonEmptyTextArray(recipe.ingredients) &&
-            isNonEmptyTextArray(recipe.steps)
-        );
+            isNonEmptyTextArray(recipe.steps);
     }
 
     function isNonEmptyText(value) {
-        return typeof value === "string" && value.trim().length > 0;
+
+        return typeof value === "string" &&
+            value.trim().length > 0;
     }
 
     function isNonEmptyTextArray(values) {
-        return Array.isArray(values) && values.length > 0 && values.every(isNonEmptyText);
+
+        return Array.isArray(values) &&
+            values.length > 0 &&
+            values.every(isNonEmptyText);
     }
 
     function getIngredients(value) {
+
         if (!Array.isArray(value)) {
             return [];
         }
@@ -104,6 +126,7 @@
     }
 
     function getAuthor(author) {
+
         if (!author) {
             return null;
         }
@@ -113,7 +136,10 @@
         }
 
         if (Array.isArray(author)) {
-            const names = author.map(item => getAuthor(item)).filter(name => name !== null);
+
+            const names = author
+                .map(item => getAuthor(item))
+                .filter(name => name !== null);
 
             return names.join(", ");
         }
@@ -126,6 +152,7 @@
     }
 
     function getImageUrl(image) {
+
         if (!image) {
             return null;
         }
@@ -135,7 +162,9 @@
         }
 
         if (Array.isArray(image)) {
+
             for (const item of image) {
+
                 const imageUrl = getImageUrl(item);
 
                 if (imageUrl) {
@@ -147,18 +176,21 @@
         }
 
         if (typeof image === "object") {
-            return getImageUrl(image.url) ?? getImageUrl(image.contentUrl);
+            return getImageUrl(image.url) ??
+                getImageUrl(image.contentUrl);
         }
 
         return null;
     }
 
     function normalizeImageUrl(value) {
+
         if (typeof value !== "string" || !value.trim()) {
             return null;
         }
 
         try {
+
             const url = new URL(value.trim(), document.baseURI);
 
             if (url.protocol !== "http:" && url.protocol !== "https:") {
@@ -166,12 +198,14 @@
             }
 
             return url.href;
+
         } catch {
             return null;
         }
     }
 
     function getSteps(instructions) {
+
         const steps = [];
 
         collectSteps(instructions, steps);
@@ -180,11 +214,13 @@
     }
 
     function collectSteps(value, steps) {
+
         if (!value) {
             return;
         }
 
         if (typeof value === "string") {
+
             const text = value.trim();
 
             if (text.length > 0) {
@@ -195,6 +231,7 @@
         }
 
         if (Array.isArray(value)) {
+
             for (const item of value) {
                 collectSteps(item, steps);
             }
@@ -203,7 +240,9 @@
         }
 
         if (typeof value === "object") {
+
             if (typeof value.text === "string") {
+
                 const text = value.text.trim();
 
                 if (text.length > 0) {

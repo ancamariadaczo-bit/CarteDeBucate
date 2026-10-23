@@ -25,7 +25,7 @@ public class RichConsoleReader : IRichConsoleReader
             Ingredients = ReadIngredients(),
             Steps = ReadSteps(),
             Notes = ReadNotes(),
-            SavedAt = DateTime.Now,
+            SavedAt = DateTime.Now
         };
     }
 
@@ -85,7 +85,9 @@ public class RichConsoleReader : IRichConsoleReader
 
     public RecipeSummary? SelectRecipe(List<RecipeSummary> recipes, string title)
     {
-        List<RecipeSelection> choices = recipes.Select(recipe => new RecipeSelection(recipe)).ToList();
+        List<RecipeSelection> choices = recipes
+            .Select(recipe => new RecipeSelection(recipe))
+            .ToList();
 
         choices.Add(RecipeSelection.BackToMainMenu);
 
@@ -94,8 +96,7 @@ public class RichConsoleReader : IRichConsoleReader
                 .Title(Markup.Escape(title))
                 .PageSize(10)
                 .UseConverter(selection => selection.Text)
-                .AddChoices(choices)
-        );
+                .AddChoices(choices));
 
         return selection.Recipe;
     }
@@ -110,8 +111,7 @@ public class RichConsoleReader : IRichConsoleReader
             new SelectionPrompt<string>()
                 .Title(CreateUserOptionTitle(RichConsoleTexts.PaginationActionTitle))
                 .PageSize(3)
-                .AddChoices(nextPageOption, previousPageOption, backToMainMenuOption)
-        );
+                .AddChoices(nextPageOption, previousPageOption, backToMainMenuOption));
 
         if (selectedOption == nextPageOption)
         {
@@ -134,9 +134,7 @@ public class RichConsoleReader : IRichConsoleReader
             recipe.Name = name;
         }
 
-        string sourceUrl = ReadOptionalText(
-            $"{AppTexts.EnterSourceUrl}({AppTexts.KeepCurrentValuePrompt})"
-        );
+        string sourceUrl = ReadOptionalText($"{AppTexts.EnterSourceUrl}({AppTexts.KeepCurrentValuePrompt})");
         if (!string.IsNullOrWhiteSpace(sourceUrl))
         {
             recipe.SourceUrl = sourceUrl;
@@ -178,18 +176,17 @@ public class RichConsoleReader : IRichConsoleReader
     public void WaitForContinue()
     {
         AnsiConsole.WriteLine();
-        AnsiConsole.MarkupLine(
-            CreateMarkupMessage(
-                RichConsoleTexts.UserOptionMarkupStart,
-                RichConsoleTexts.ReturnToMainMenuPrompt
-            )
-        );
+        AnsiConsole.MarkupLine(CreateMarkupMessage(
+            RichConsoleTexts.UserOptionMarkupStart,
+            RichConsoleTexts.ReturnToMainMenuPrompt));
         Console.ReadLine();
     }
 
     private static string ReadOptionalText(string prompt)
     {
-        return AnsiConsole.Prompt(new TextPrompt<string>(Markup.Escape(prompt)).AllowEmpty());
+        return AnsiConsole.Prompt(
+            new TextPrompt<string>(Markup.Escape(prompt))
+                .AllowEmpty());
     }
 
     private static List<string> ReadMultipleLines(string intro, string prompt)
@@ -197,26 +194,18 @@ public class RichConsoleReader : IRichConsoleReader
         List<string> values = new();
 
         AnsiConsole.MarkupLine(CreateMarkupMessage(RichConsoleTexts.InfoMarkupStart, intro));
-        AnsiConsole.MarkupLine(
-            CreateMarkupMessage(
-                RichConsoleTexts.UserOptionMarkupStart,
-                RichConsoleTexts.FinishMultilineInputHint
-            )
-        );
+        AnsiConsole.MarkupLine(CreateMarkupMessage(
+            RichConsoleTexts.UserOptionMarkupStart,
+            RichConsoleTexts.FinishMultilineInputHint));
         AnsiConsole.MarkupLine(Markup.Escape(prompt));
 
         while (true)
         {
             string value = Console.ReadLine() ?? string.Empty;
 
-            if (
-                value
-                    .Trim()
-                    .Equals(
-                        RichConsoleTexts.FinishMultilineInputCommand,
-                        StringComparison.OrdinalIgnoreCase
-                    )
-            )
+            if (value.Trim().Equals(
+                RichConsoleTexts.FinishMultilineInputCommand,
+                StringComparison.OrdinalIgnoreCase))
             {
                 break;
             }
@@ -239,8 +228,10 @@ public class RichConsoleReader : IRichConsoleReader
     private static bool Confirm(string prompt, bool defaultValue)
     {
         return AnsiConsole.Prompt(
-            new ConfirmationPrompt(Markup.Escape(prompt)) { DefaultValue = defaultValue }
-        );
+            new ConfirmationPrompt(Markup.Escape(prompt))
+            {
+                DefaultValue = defaultValue
+            });
     }
 
     private static string CreateRecipeSelectionText(RecipeSummary recipe)
@@ -253,8 +244,7 @@ public class RichConsoleReader : IRichConsoleReader
         return string.Concat(
             Markup.Escape(recipe.Name),
             RichConsoleTexts.SelectionDetailsSeparator,
-            Markup.Escape(recipe.SourceUrl)
-        );
+            Markup.Escape(recipe.SourceUrl));
     }
 
     private static string CreateMarkupMessage(string markupStart, string message)
@@ -264,12 +254,9 @@ public class RichConsoleReader : IRichConsoleReader
 
     private static void ShowBackToMainMenuHint()
     {
-        AnsiConsole.MarkupLine(
-            CreateMarkupMessage(
-                RichConsoleTexts.UserOptionMarkupStart,
-                RichConsoleTexts.EmptyInputReturnsToMainMenu
-            )
-        );
+        AnsiConsole.MarkupLine(CreateMarkupMessage(
+            RichConsoleTexts.UserOptionMarkupStart,
+            RichConsoleTexts.EmptyInputReturnsToMainMenu));
     }
 
     private static bool SelectFollowUpAction(string continueOption)
@@ -278,8 +265,7 @@ public class RichConsoleReader : IRichConsoleReader
             new SelectionPrompt<string>()
                 .Title(CreateUserOptionTitle(RichConsoleTexts.NextActionTitle))
                 .PageSize(3)
-                .AddChoices(continueOption, CreateBackToMainMenuOption())
-        );
+                .AddChoices(continueOption, CreateBackToMainMenuOption()));
 
         return selectedOption == continueOption;
     }
@@ -288,11 +274,12 @@ public class RichConsoleReader : IRichConsoleReader
     {
         public static readonly RecipeSelection BackToMainMenu = new RecipeSelection(
             null,
-            CreateBackToMainMenuOption()
-        );
+            CreateBackToMainMenuOption());
 
         public RecipeSelection(RecipeSummary recipe)
-            : this(recipe, CreateRecipeSelectionText(recipe)) { }
+            : this(recipe, CreateRecipeSelectionText(recipe))
+        {
+        }
 
         private RecipeSelection(RecipeSummary? recipe, string text)
         {
@@ -307,11 +294,7 @@ public class RichConsoleReader : IRichConsoleReader
 
     private static string CreateUserOptionTitle(string text)
     {
-        return string.Concat(
-            RichConsoleTexts.UserOptionTitleMarkupStart,
-            Markup.Escape(text),
-            RichConsoleTexts.MarkupEnd
-        );
+        return string.Concat(RichConsoleTexts.UserOptionTitleMarkupStart, Markup.Escape(text), RichConsoleTexts.MarkupEnd);
     }
 
     private static string CreateBackToMainMenuOption()
@@ -319,7 +302,6 @@ public class RichConsoleReader : IRichConsoleReader
         return string.Concat(
             RichConsoleTexts.BackToMainMenuMarkupStart,
             Markup.Escape(RichConsoleTexts.BackToMainMenuOption),
-            RichConsoleTexts.MarkupEnd
-        );
+            RichConsoleTexts.MarkupEnd);
     }
 }

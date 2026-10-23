@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { initializeSidePanelLauncher } from "../sidepanel/sidePanelLauncher.js";
+import {
+    initializeSidePanelLauncher
+} from "../sidepanel/sidePanelLauncher.js";
 
 function setupLauncher({
     requestIds = ["request-1"],
@@ -123,7 +125,10 @@ test("reports an open error without attempting to publish", async () => {
         }
     ]);
     assert.equal(context.reportedErrors.length, 1);
-    assert.equal(context.reportedErrors[0].message, "The Side Panel could not be opened.");
+    assert.equal(
+        context.reportedErrors[0].message,
+        "The Side Panel could not be opened."
+    );
     assert.equal(context.reportedErrors[0].cause, openError);
 });
 
@@ -140,6 +145,9 @@ test("reports a publish error separately after the panel opens", async () => {
         ["open", "publish"]
     );
     assert.equal(context.reportedErrors.length, 1);
-    assert.equal(context.reportedErrors[0].message, "The extraction request could not be published.");
+    assert.equal(
+        context.reportedErrors[0].message,
+        "The extraction request could not be published."
+    );
     assert.equal(context.reportedErrors[0].cause, publishError);
 });

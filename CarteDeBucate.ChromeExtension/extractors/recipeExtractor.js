@@ -1,8 +1,12 @@
 (() => {
-    globalThis.RecipeClipper = globalThis.RecipeClipper || {};
+
+    globalThis.RecipeClipper =
+        globalThis.RecipeClipper || {};
 
     globalThis.RecipeClipper.extractRecipe = function () {
-        const jsonLdRecipe = globalThis.RecipeClipper.tryJsonLd();
+
+        const jsonLdRecipe =
+            globalThis.RecipeClipper.tryJsonLd();
 
         if (isValidRecipe(jsonLdRecipe)) {
             return {
@@ -12,7 +16,8 @@
             };
         }
 
-        const htmlRecipe = globalThis.RecipeClipper.tryHtml();
+        const htmlRecipe =
+            globalThis.RecipeClipper.tryHtml();
 
         if (isValidRecipe(htmlRecipe)) {
             return {
@@ -29,21 +34,25 @@
     };
 
     function isValidRecipe(recipe) {
-        return (
-            recipe !== null &&
+
+        return recipe !== null &&
             typeof recipe === "object" &&
             !Array.isArray(recipe) &&
             isNonEmptyText(recipe.name) &&
             isNonEmptyTextArray(recipe.ingredients) &&
-            isNonEmptyTextArray(recipe.steps)
-        );
+            isNonEmptyTextArray(recipe.steps);
     }
 
     function isNonEmptyText(value) {
-        return typeof value === "string" && value.trim().length > 0;
+
+        return typeof value === "string" &&
+            value.trim().length > 0;
     }
 
     function isNonEmptyTextArray(values) {
-        return Array.isArray(values) && values.length > 0 && values.every(isNonEmptyText);
+
+        return Array.isArray(values) &&
+            values.length > 0 &&
+            values.every(isNonEmptyText);
     }
 })();

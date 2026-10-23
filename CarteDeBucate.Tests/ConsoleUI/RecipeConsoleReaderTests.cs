@@ -53,9 +53,8 @@ public class RecipeConsoleReaderTests
                         "",
                         "Bake",
                         "gata",
-                        "Notes",
-                    ]
-                );
+                        "Notes"
+                    ]);
 
                 Console.SetIn(new StringReader(input));
                 Console.SetOut(new StringWriter());

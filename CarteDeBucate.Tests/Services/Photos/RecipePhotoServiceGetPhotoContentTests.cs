@@ -8,8 +8,13 @@ public sealed class RecipePhotoServiceGetPhotoContentTests
         RecipePhoto photo = CreatePhoto();
         GetPhotoContentRepository photoRepository = new(photo);
         TrackingMemoryStream storedContent = new([1, 2, 3]);
-        GetPhotoContentStorage storage = new() { Content = storedContent };
-        RecipePhotoService service = CreateService(photoRepository, storage);
+        GetPhotoContentStorage storage = new()
+        {
+            Content = storedContent
+        };
+        RecipePhotoService service = CreateService(
+            photoRepository,
+            storage);
 
         RecipePhotoContentResult result = service.GetPhotoContent(photo.Id);
 
@@ -29,13 +34,15 @@ public sealed class RecipePhotoServiceGetPhotoContentTests
     public void GetPhotoContent_WithAnotherUsersPhoto_ShouldReturnNotFound()
     {
         RecipePhoto photo = CreatePhoto();
-        GetPhotoContentRepository photoRepository = new(photo) { OwnerUserId = 9 };
+        GetPhotoContentRepository photoRepository = new(photo)
+        {
+            OwnerUserId = 9
+        };
         GetPhotoContentStorage storage = new();
         RecipePhotoService service = CreateService(
             photoRepository,
             storage,
-            CreateCurrentUser(userId: 7)
-        );
+            CreateCurrentUser(userId: 7));
 
         RecipePhotoContentResult result = service.GetPhotoContent(photo.Id);
 
@@ -51,7 +58,9 @@ public sealed class RecipePhotoServiceGetPhotoContentTests
     {
         GetPhotoContentRepository photoRepository = new(photo: null);
         GetPhotoContentStorage storage = new();
-        RecipePhotoService service = CreateService(photoRepository, storage);
+        RecipePhotoService service = CreateService(
+            photoRepository,
+            storage);
 
         RecipePhotoContentResult result = service.GetPhotoContent(20);
 
@@ -69,7 +78,10 @@ public sealed class RecipePhotoServiceGetPhotoContentTests
         GetPhotoContentRepository photoRepository = new(photo);
         GetPhotoContentStorage storage = new() { Content = null };
         RecordingLogger logger = new();
-        RecipePhotoService service = CreateService(photoRepository, storage, logger: logger);
+        RecipePhotoService service = CreateService(
+            photoRepository,
+            storage,
+            logger: logger);
 
         RecipePhotoContentResult result = service.GetPhotoContent(photo.Id);
 
@@ -85,9 +97,15 @@ public sealed class RecipePhotoServiceGetPhotoContentTests
     {
         RecipePhoto photo = CreatePhoto();
         GetPhotoContentRepository photoRepository = new(photo);
-        GetPhotoContentStorage storage = new() { OpenException = new IOException("storage failed") };
+        GetPhotoContentStorage storage = new()
+        {
+            OpenException = new IOException("storage failed")
+        };
         RecordingLogger logger = new();
-        RecipePhotoService service = CreateService(photoRepository, storage, logger: logger);
+        RecipePhotoService service = CreateService(
+            photoRepository,
+            storage,
+            logger: logger);
 
         RecipePhotoContentResult result = service.GetPhotoContent(photo.Id);
 
@@ -102,7 +120,9 @@ public sealed class RecipePhotoServiceGetPhotoContentTests
     {
         GetPhotoContentRepository photoRepository = new(CreatePhoto());
         GetPhotoContentStorage storage = new();
-        RecipePhotoService service = CreateService(photoRepository, storage);
+        RecipePhotoService service = CreateService(
+            photoRepository,
+            storage);
 
         RecipePhotoContentResult result = service.GetPhotoContent(0);
 
@@ -117,8 +137,7 @@ public sealed class RecipePhotoServiceGetPhotoContentTests
         GetPhotoContentRepository photoRepository,
         GetPhotoContentStorage storage,
         ICurrentUserContext? currentUserContext = null,
-        RecordingLogger? logger = null
-    )
+        RecordingLogger? logger = null)
     {
         return new RecipePhotoService(
             storage,
@@ -129,14 +148,17 @@ public sealed class RecipePhotoServiceGetPhotoContentTests
             new RecipePhotoFileNameNormalizer(),
             new RecipePhotoOptions(),
             TimeProvider.System,
-            logger ?? new RecordingLogger()
-        );
+            logger ?? new RecordingLogger());
     }
 
     private static CurrentUserContext CreateCurrentUser(int userId)
     {
         CurrentUserContext context = new();
-        context.SetCurrentUser(new User { Id = userId, Username = $"user-{userId}" });
+        context.SetCurrentUser(new User
+        {
+            Id = userId,
+            Username = $"user-{userId}"
+        });
         return context;
     }
 
@@ -146,13 +168,21 @@ public sealed class RecipePhotoServiceGetPhotoContentTests
         {
             Id = 20,
             RecipeId = 10,
-            StorageFileName = "33333333333333333333333333333333.jpg",
+            StorageFileName =
+                "33333333333333333333333333333333.jpg",
             OriginalFileName = @"C:\photos\prajitura.jpeg",
             ContentType = " IMAGE/JPEG ",
             FileSize = 3,
-            CreatedAtUtc = new DateTime(2026, 10, 8, 10, 0, 0, DateTimeKind.Utc),
+            CreatedAtUtc = new DateTime(
+                2026,
+                10,
+                8,
+                10,
+                0,
+                0,
+                DateTimeKind.Utc),
             DisplayOrder = 0,
-            Origin = RecipePhotoOrigin.UserUpload,
+            Origin = RecipePhotoOrigin.UserUpload
         };
     }
 
@@ -193,7 +223,9 @@ public sealed class RecipePhotoServiceGetPhotoContentTests
         {
             GetByIdAndUserIdWasCalled = true;
 
-            return _photo?.Id == photoId && OwnerUserId == userId ? _photo : null;
+            return _photo?.Id == photoId && OwnerUserId == userId
+                ? _photo
+                : null;
         }
 
         public List<RecipePhoto> GetByRecipeId(int recipeId)
@@ -201,7 +233,9 @@ public sealed class RecipePhotoServiceGetPhotoContentTests
             throw new NotImplementedException();
         }
 
-        public List<RecipePhoto> GetByRecipeIdAndUserId(int recipeId, int userId)
+        public List<RecipePhoto> GetByRecipeIdAndUserId(
+            int recipeId,
+            int userId)
         {
             throw new NotImplementedException();
         }
@@ -232,8 +266,7 @@ public sealed class RecipePhotoServiceGetPhotoContentTests
         public Task<StagedRecipePhotoUpload> StageUploadAsync(
             Stream content,
             long maximumBytes,
-            CancellationToken cancellationToken = default
-        )
+            CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
@@ -243,7 +276,9 @@ public sealed class RecipePhotoServiceGetPhotoContentTests
             throw new NotImplementedException();
         }
 
-        public string FinalizeUpload(StagedRecipePhotoUpload upload, RecipePhotoFormat format)
+        public string FinalizeUpload(
+            StagedRecipePhotoUpload upload,
+            RecipePhotoFormat format)
         {
             throw new NotImplementedException();
         }
@@ -271,32 +306,38 @@ public sealed class RecipePhotoServiceGetPhotoContentTests
             throw new NotImplementedException();
         }
 
-        public StagedRecipePhotoDeletion? MoveToQuarantine(string storageFileName)
+        public StagedRecipePhotoDeletion? MoveToQuarantine(
+            string storageFileName)
         {
             throw new NotImplementedException();
         }
 
-        public void RestoreFromQuarantine(StagedRecipePhotoDeletion deletion)
+        public void RestoreFromQuarantine(
+            StagedRecipePhotoDeletion deletion)
         {
             throw new NotImplementedException();
         }
 
-        public void DeleteFromQuarantine(StagedRecipePhotoDeletion deletion)
+        public void DeleteFromQuarantine(
+            StagedRecipePhotoDeletion deletion)
         {
             throw new NotImplementedException();
         }
 
-        public RecipePhotoStorageInventory<StagedRecipePhotoUploadInventoryItem> GetStagedUploads()
+        public RecipePhotoStorageInventory<StagedRecipePhotoUploadInventoryItem>
+            GetStagedUploads()
         {
             throw new NotImplementedException();
         }
 
-        public RecipePhotoStorageInventory<StagedRecipePhotoDeletionInventoryItem> GetQuarantinedDeletions()
+        public RecipePhotoStorageInventory<StagedRecipePhotoDeletionInventoryItem>
+            GetQuarantinedDeletions()
         {
             throw new NotImplementedException();
         }
 
-        public RecipePhotoStorageInventory<RecipePhotoStorageFileInventoryItem> GetFinalFiles()
+        public RecipePhotoStorageInventory<RecipePhotoStorageFileInventoryItem>
+            GetFinalFiles()
         {
             throw new NotImplementedException();
         }
@@ -305,7 +346,9 @@ public sealed class RecipePhotoServiceGetPhotoContentTests
     private sealed class TrackingMemoryStream : MemoryStream
     {
         public TrackingMemoryStream(byte[] content)
-            : base(content, writable: false) { }
+            : base(content, writable: false)
+        {
+        }
 
         public bool IsDisposed { get; private set; }
 
@@ -336,8 +379,7 @@ public sealed class RecipePhotoServiceGetPhotoContentTests
             EventId eventId,
             TState state,
             Exception? exception,
-            Func<TState, Exception?, string> formatter
-        )
+            Func<TState, Exception?, string> formatter)
         {
             Levels.Add(logLevel);
         }

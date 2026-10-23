@@ -11,14 +11,20 @@ public sealed class RecipePageDownloader
     private readonly RecipeImportDestinationPolicy _destinationPolicy;
     private readonly TimeSpan _downloadTimeout;
 
-    public RecipePageDownloader(HttpClient httpClient, RecipeImportDestinationPolicy destinationPolicy)
-        : this(httpClient, destinationPolicy, RecipeImporterHttpClientConfiguration.Timeout) { }
+    public RecipePageDownloader(
+        HttpClient httpClient,
+        RecipeImportDestinationPolicy destinationPolicy)
+        : this(
+            httpClient,
+            destinationPolicy,
+            RecipeImporterHttpClientConfiguration.Timeout)
+    {
+    }
 
     public RecipePageDownloader(
         HttpClient httpClient,
         RecipeImportDestinationPolicy destinationPolicy,
-        TimeSpan downloadTimeout
-    )
+        TimeSpan downloadTimeout)
     {
         if (downloadTimeout <= TimeSpan.Zero)
         {
@@ -32,15 +38,15 @@ public sealed class RecipePageDownloader
 
     public async Task<string> DownloadAsync(
         Uri initialDestination,
-        CancellationToken cancellationToken = default
-    )
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(initialDestination);
 
         using CancellationTokenSource downloadCancellationSource =
             CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         downloadCancellationSource.CancelAfter(_downloadTimeout);
-        CancellationToken downloadCancellationToken = downloadCancellationSource.Token;
+        CancellationToken downloadCancellationToken =
+            downloadCancellationSource.Token;
 
         Uri currentDestination = initialDestination;
         int followedRedirects = 0;
@@ -48,7 +54,9 @@ public sealed class RecipePageDownloader
         while (true)
         {
             RecipeImportDestinationValidationResult validationResult =
-                await _destinationPolicy.ValidateAsync(currentDestination, downloadCancellationToken);
+                await _destinationPolicy.ValidateAsync(
+                    currentDestination,
+                    downloadCancellationToken);
 
             if (!validationResult.IsAllowed)
             {
@@ -57,26 +65,25 @@ public sealed class RecipePageDownloader
 
             using HttpRequestMessage request = new HttpRequestMessage(
                 HttpMethod.Get,
-                currentDestination
-            );
+                currentDestination);
 
             RecipeImportRequestOptions.SetApprovedDestination(
                 request,
                 currentDestination,
-                validationResult.Addresses
-            );
+                validationResult.Addresses);
 
             using HttpResponseMessage response = await _httpClient.SendAsync(
                 request,
                 HttpCompletionOption.ResponseHeadersRead,
-                downloadCancellationToken
-            );
+                downloadCancellationToken);
 
             if (!IsRedirect(response.StatusCode))
             {
                 response.EnsureSuccessStatusCode();
 
-                return await ReadContentAsync(response.Content, downloadCancellationToken);
+                return await ReadContentAsync(
+                    response.Content,
+                    downloadCancellationToken);
             }
 
             if (followedRedirects >= MaximumRedirects)
@@ -95,10 +102,8 @@ public sealed class RecipePageDownloader
                 ? location
                 : new Uri(currentDestination, location);
 
-            if (
-                currentDestination.Scheme == Uri.UriSchemeHttps
-                && nextDestination.Scheme == Uri.UriSchemeHttp
-            )
+            if (currentDestination.Scheme == Uri.UriSchemeHttps &&
+                nextDestination.Scheme == Uri.UriSchemeHttp)
             {
                 throw CreateDownloadException();
             }
@@ -110,18 +115,17 @@ public sealed class RecipePageDownloader
 
     private static bool IsRedirect(HttpStatusCode statusCode)
     {
-        return statusCode
-            is HttpStatusCode.MovedPermanently
-                or HttpStatusCode.Redirect
-                or HttpStatusCode.RedirectMethod
-                or HttpStatusCode.TemporaryRedirect
-                or HttpStatusCode.PermanentRedirect;
+        return statusCode is
+            HttpStatusCode.MovedPermanently or
+            HttpStatusCode.Redirect or
+            HttpStatusCode.RedirectMethod or
+            HttpStatusCode.TemporaryRedirect or
+            HttpStatusCode.PermanentRedirect;
     }
 
     private static async Task<string> ReadContentAsync(
         HttpContent content,
-        CancellationToken cancellationToken
-    )
+        CancellationToken cancellationToken)
     {
         long? declaredLength = content.Headers.ContentLength;
 
@@ -130,15 +134,20 @@ public sealed class RecipePageDownloader
             throw CreateDownloadException();
         }
 
-        int initialCapacity = declaredLength is > 0 ? (int)declaredLength.Value : 0;
+        int initialCapacity = declaredLength is > 0
+            ? (int)declaredLength.Value
+            : 0;
 
-        await using Stream contentStream = await content.ReadAsStreamAsync(cancellationToken);
+        await using Stream contentStream =
+            await content.ReadAsStreamAsync(cancellationToken);
         using MemoryStream bufferedContent = new MemoryStream(initialCapacity);
         byte[] readBuffer = new byte[ReadBufferSizeInBytes];
 
         while (true)
         {
-            int bytesRead = await contentStream.ReadAsync(readBuffer.AsMemory(), cancellationToken);
+            int bytesRead = await contentStream.ReadAsync(
+                readBuffer.AsMemory(),
+                cancellationToken);
 
             if (bytesRead == 0)
             {
@@ -150,7 +159,9 @@ public sealed class RecipePageDownloader
                 throw CreateDownloadException();
             }
 
-            await bufferedContent.WriteAsync(readBuffer.AsMemory(0, bytesRead), cancellationToken);
+            await bufferedContent.WriteAsync(
+                readBuffer.AsMemory(0, bytesRead),
+                cancellationToken);
         }
 
         bufferedContent.Position = 0;
@@ -158,8 +169,7 @@ public sealed class RecipePageDownloader
         using StreamReader reader = new StreamReader(
             bufferedContent,
             GetContentEncoding(content),
-            detectEncodingFromByteOrderMarks: true
-        );
+            detectEncodingFromByteOrderMarks: true);
 
         return await reader.ReadToEndAsync(cancellationToken);
     }

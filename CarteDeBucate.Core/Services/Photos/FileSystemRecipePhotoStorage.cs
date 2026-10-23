@@ -5,19 +5,22 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
     private const int CopyBufferSize = 81920;
     private const string StagedUploadFileExtension = ".upload";
     private const string QuarantineDescriptorFileName = "descriptor.json";
-    private const string QuarantineDescriptorTemporaryFileName = "descriptor.tmp";
+    private const string QuarantineDescriptorTemporaryFileName =
+        "descriptor.tmp";
 
     internal const string StagingDirectoryName = "staging";
     internal const string QuarantineDirectoryName = "quarantine";
 
-    private static readonly StringComparison PathComparison = OperatingSystem.IsWindows()
-        ? StringComparison.OrdinalIgnoreCase
-        : StringComparison.Ordinal;
+    private static readonly StringComparison PathComparison =
+        OperatingSystem.IsWindows()
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
 
-    private static readonly JsonSerializerOptions DescriptorJsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-    };
+    private static readonly JsonSerializerOptions DescriptorJsonOptions =
+        new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
 
     private readonly string _rootPath;
     private readonly string _rootPathWithSeparator;
@@ -29,51 +32,62 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
     private readonly TimeProvider _timeProvider;
 
     public FileSystemRecipePhotoStorage(string rootPath)
-        : this(rootPath, Guid.NewGuid, TimeProvider.System) { }
+        : this(rootPath, Guid.NewGuid, TimeProvider.System)
+    {
+    }
 
-    internal FileSystemRecipePhotoStorage(string rootPath, Func<Guid> guidFactory)
-        : this(rootPath, guidFactory, TimeProvider.System) { }
+    internal FileSystemRecipePhotoStorage(
+        string rootPath,
+        Func<Guid> guidFactory)
+        : this(rootPath, guidFactory, TimeProvider.System)
+    {
+    }
 
     internal FileSystemRecipePhotoStorage(
         string rootPath,
         Func<Guid> guidFactory,
-        TimeProvider timeProvider
-    )
+        TimeProvider timeProvider)
     {
         ArgumentNullException.ThrowIfNull(guidFactory);
         ArgumentNullException.ThrowIfNull(timeProvider);
 
         if (string.IsNullOrWhiteSpace(rootPath))
         {
-            throw new ArgumentException("The recipe photo storage root is required.", nameof(rootPath));
+            throw new ArgumentException(
+                "The recipe photo storage root is required.",
+                nameof(rootPath));
         }
 
         if (!Path.IsPathFullyQualified(rootPath))
         {
             throw new ArgumentException(
                 "The recipe photo storage root must be an absolute path.",
-                nameof(rootPath)
-            );
+                nameof(rootPath));
         }
 
-        _rootPath = Path.TrimEndingDirectorySeparator(Path.GetFullPath(rootPath));
+        _rootPath = Path.TrimEndingDirectorySeparator(
+            Path.GetFullPath(rootPath));
 
         if (File.Exists(_rootPath))
         {
             throw new ArgumentException(
                 "The recipe photo storage root cannot be an existing file.",
-                nameof(rootPath)
-            );
+                nameof(rootPath));
         }
 
-        _rootPathWithSeparator = _rootPath.EndsWith(Path.DirectorySeparatorChar)
-            ? _rootPath
-            : _rootPath + Path.DirectorySeparatorChar;
+        _rootPathWithSeparator = _rootPath.EndsWith(
+            Path.DirectorySeparatorChar)
+                ? _rootPath
+                : _rootPath + Path.DirectorySeparatorChar;
 
         _stagingPath = Path.Combine(_rootPath, StagingDirectoryName);
-        _stagingPathWithSeparator = _stagingPath + Path.DirectorySeparatorChar;
-        _quarantinePath = Path.Combine(_rootPath, QuarantineDirectoryName);
-        _quarantinePathWithSeparator = _quarantinePath + Path.DirectorySeparatorChar;
+        _stagingPathWithSeparator = _stagingPath
+            + Path.DirectorySeparatorChar;
+        _quarantinePath = Path.Combine(
+            _rootPath,
+            QuarantineDirectoryName);
+        _quarantinePathWithSeparator = _quarantinePath
+            + Path.DirectorySeparatorChar;
         _guidFactory = guidFactory;
         _timeProvider = timeProvider;
 
@@ -86,14 +100,16 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
     {
         ValidateStorageFileName(storageFileName);
 
-        string resolvedPath = Path.GetFullPath(Path.Combine(_rootPath, storageFileName));
+        string resolvedPath = Path.GetFullPath(
+            Path.Combine(_rootPath, storageFileName));
 
-        if (!resolvedPath.StartsWith(_rootPathWithSeparator, PathComparison))
+        if (!resolvedPath.StartsWith(
+                _rootPathWithSeparator,
+                PathComparison))
         {
             throw new ArgumentException(
                 "The storage file name resolves outside the photo storage root.",
-                nameof(storageFileName)
-            );
+                nameof(storageFileName));
         }
 
         return resolvedPath;
@@ -103,60 +119,63 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
     {
         if (string.IsNullOrWhiteSpace(storageFileName))
         {
-            throw new ArgumentException("The storage file name is required.", nameof(storageFileName));
+            throw new ArgumentException(
+                "The storage file name is required.",
+                nameof(storageFileName));
         }
 
-        if (
-            Path.IsPathFullyQualified(storageFileName)
+        if (Path.IsPathFullyQualified(storageFileName)
             || storageFileName.Contains("..", StringComparison.Ordinal)
             || storageFileName.Contains(Path.DirectorySeparatorChar)
             || storageFileName.Contains(Path.AltDirectorySeparatorChar)
             || storageFileName.Contains('/')
             || storageFileName.Contains('\\')
-            || storageFileName.Any(char.IsControl)
-        )
+            || storageFileName.Any(char.IsControl))
         {
-            throw new ArgumentException("The storage file name is invalid.", nameof(storageFileName));
+            throw new ArgumentException(
+                "The storage file name is invalid.",
+                nameof(storageFileName));
         }
 
         int extensionStart = storageFileName.IndexOf('.');
 
-        if (extensionStart <= 0 || storageFileName.IndexOf('.', extensionStart + 1) >= 0)
+        if (extensionStart <= 0
+            || storageFileName.IndexOf('.', extensionStart + 1) >= 0)
         {
             throw new ArgumentException(
                 "The storage file name is not canonical.",
-                nameof(storageFileName)
-            );
+                nameof(storageFileName));
         }
 
         string guidPart = storageFileName[..extensionStart];
         string extension = storageFileName[extensionStart..];
 
-        if (
-            !Guid.TryParseExact(guidPart, "N", out Guid identifier)
+        if (!Guid.TryParseExact(guidPart, "N", out Guid identifier)
             || identifier == Guid.Empty
-            || !string.Equals(guidPart, identifier.ToString("N"), StringComparison.Ordinal)
-            || extension is not (".jpg" or ".png" or ".webp")
-        )
+            || !string.Equals(
+                guidPart,
+                identifier.ToString("N"),
+                StringComparison.Ordinal)
+            || extension is not (".jpg" or ".png" or ".webp"))
         {
             throw new ArgumentException(
                 "The storage file name is not canonical.",
-                nameof(storageFileName)
-            );
+                nameof(storageFileName));
         }
     }
 
     public async Task<StagedRecipePhotoUpload> StageUploadAsync(
         Stream content,
         long maximumBytes,
-        CancellationToken cancellationToken = default
-    )
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(content);
 
         if (!content.CanRead)
         {
-            throw new ArgumentException("The photo content stream must be readable.", nameof(content));
+            throw new ArgumentException(
+                "The photo content stream must be readable.",
+                nameof(content));
         }
 
         if (maximumBytes < 0)
@@ -166,7 +185,8 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
 
         cancellationToken.ThrowIfCancellationRequested();
 
-        (string token, string stagedFilePath, FileStream destination) = CreateStagedUploadFile();
+        (string token, string stagedFilePath, FileStream destination) =
+            CreateStagedUploadFile();
 
         try
         {
@@ -178,25 +198,30 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
                 while (true)
                 {
                     long remainingBytes = maximumBytes - totalBytesRead;
-                    int bytesToRead =
-                        remainingBytes >= buffer.Length ? buffer.Length : (int)remainingBytes + 1;
+                    int bytesToRead = remainingBytes >= buffer.Length
+                        ? buffer.Length
+                        : (int)remainingBytes + 1;
 
                     int bytesRead = await content.ReadAsync(
                         buffer.AsMemory(0, bytesToRead),
-                        cancellationToken
-                    );
+                        cancellationToken);
 
                     if (bytesRead == 0)
                     {
-                        return new StagedRecipePhotoUpload(token, totalBytesRead);
+                        return new StagedRecipePhotoUpload(
+                            token,
+                            totalBytesRead);
                     }
 
                     if (bytesRead > remainingBytes)
                     {
-                        throw new RecipePhotoStorageLimitExceededException(maximumBytes);
+                        throw new RecipePhotoStorageLimitExceededException(
+                            maximumBytes);
                     }
 
-                    await destination.WriteAsync(buffer.AsMemory(0, bytesRead), cancellationToken);
+                    await destination.WriteAsync(
+                        buffer.AsMemory(0, bytesRead),
+                        cancellationToken);
 
                     totalBytesRead += bytesRead;
                 }
@@ -209,12 +234,15 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
         }
     }
 
-    private (string Token, string FilePath, FileStream Stream) CreateStagedUploadFile()
+    private (string Token, string FilePath, FileStream Stream)
+        CreateStagedUploadFile()
     {
         while (true)
         {
             string token = _guidFactory().ToString("N");
-            string filePath = Path.Combine(_stagingPath, token + StagedUploadFileExtension);
+            string filePath = Path.Combine(
+                _stagingPath,
+                token + StagedUploadFileExtension);
 
             try
             {
@@ -224,8 +252,7 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
                     FileAccess.Write,
                     FileShare.None,
                     CopyBufferSize,
-                    FileOptions.Asynchronous | FileOptions.SequentialScan
-                );
+                    FileOptions.Asynchronous | FileOptions.SequentialScan);
 
                 return (token, filePath, stream);
             }
@@ -247,11 +274,12 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
             FileAccess.Read,
             FileShare.Read,
             CopyBufferSize,
-            FileOptions.SequentialScan
-        );
+            FileOptions.SequentialScan);
     }
 
-    public string FinalizeUpload(StagedRecipePhotoUpload upload, RecipePhotoFormat format)
+    public string FinalizeUpload(
+        StagedRecipePhotoUpload upload,
+        RecipePhotoFormat format)
     {
         string stagedFilePath = ResolveStagedUploadPath(upload);
         string canonicalExtension =
@@ -260,12 +288,16 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
 
         while (true)
         {
-            string storageFileName = _guidFactory().ToString("N") + canonicalExtension;
+            string storageFileName =
+                _guidFactory().ToString("N") + canonicalExtension;
             string finalFilePath = ResolveFinalFilePath(storageFileName);
 
             try
             {
-                File.Move(stagedFilePath, finalFilePath, overwrite: false);
+                File.Move(
+                    stagedFilePath,
+                    finalFilePath,
+                    overwrite: false);
 
                 return storageFileName;
             }
@@ -291,19 +323,23 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
 
         if (upload.Length < 0 || !IsCanonicalToken(token))
         {
-            throw new ArgumentException("The staged upload token is invalid.", nameof(upload));
+            throw new ArgumentException(
+                "The staged upload token is invalid.",
+                nameof(upload));
         }
 
         string stagedFilePath = Path.GetFullPath(
-            Path.Combine(_stagingPath, token + StagedUploadFileExtension)
-        );
+            Path.Combine(
+                _stagingPath,
+                token + StagedUploadFileExtension));
 
-        if (!stagedFilePath.StartsWith(_stagingPathWithSeparator, PathComparison))
+        if (!stagedFilePath.StartsWith(
+                _stagingPathWithSeparator,
+                PathComparison))
         {
             throw new ArgumentException(
                 "The staged upload resolves outside the staging directory.",
-                nameof(upload)
-            );
+                nameof(upload));
         }
 
         return stagedFilePath;
@@ -321,8 +357,7 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
                 FileAccess.Read,
                 FileShare.Read | FileShare.Delete,
                 CopyBufferSize,
-                FileOptions.SequentialScan
-            );
+                FileOptions.SequentialScan);
         }
         catch (FileNotFoundException)
         {
@@ -336,16 +371,20 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
         return File.Exists(finalFilePath);
     }
 
-    public StagedRecipePhotoDeletion? MoveToQuarantine(string storageFileName)
+    public StagedRecipePhotoDeletion? MoveToQuarantine(
+        string storageFileName)
     {
         string finalFilePath = ResolveFinalFilePath(storageFileName);
-        (string token, string directoryPath) = CreateQuarantineDirectory();
-        string quarantinedFilePath = Path.Combine(directoryPath, storageFileName);
+        (string token, string directoryPath) =
+            CreateQuarantineDirectory();
+        string quarantinedFilePath = Path.Combine(
+            directoryPath,
+            storageFileName);
         QuarantineDescriptor descriptor = new()
         {
             Token = token,
             StorageFileName = storageFileName,
-            QuarantinedAtUtc = _timeProvider.GetUtcNow().UtcDateTime,
+            QuarantinedAtUtc = _timeProvider.GetUtcNow().UtcDateTime
         };
 
         try
@@ -360,10 +399,14 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
 
         try
         {
-            File.Move(finalFilePath, quarantinedFilePath, overwrite: false);
+            File.Move(
+                finalFilePath,
+                quarantinedFilePath,
+                overwrite: false);
         }
-        catch (Exception exception)
-            when (exception is FileNotFoundException or DirectoryNotFoundException)
+        catch (Exception exception) when (
+            exception is FileNotFoundException
+                or DirectoryNotFoundException)
         {
             DeleteQuarantineDirectory(directoryPath);
             return null;
@@ -377,43 +420,58 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
         return new StagedRecipePhotoDeletion(token);
     }
 
-    public void RestoreFromQuarantine(StagedRecipePhotoDeletion deletion)
+    public void RestoreFromQuarantine(
+        StagedRecipePhotoDeletion deletion)
     {
         string directoryPath = ResolveQuarantineDirectoryPath(deletion);
         QuarantineDescriptor descriptor;
 
         try
         {
-            descriptor = ReadQuarantineDescriptor(directoryPath, deletion.Token);
+            descriptor = ReadQuarantineDescriptor(
+                directoryPath,
+                deletion.Token);
         }
         catch (DirectoryNotFoundException)
         {
             return;
         }
 
-        string quarantinedFilePath = Path.Combine(directoryPath, descriptor.StorageFileName);
-        string finalFilePath = ResolveFinalFilePath(descriptor.StorageFileName);
+        string quarantinedFilePath = Path.Combine(
+            directoryPath,
+            descriptor.StorageFileName);
+        string finalFilePath = ResolveFinalFilePath(
+            descriptor.StorageFileName);
 
         try
         {
-            File.Move(quarantinedFilePath, finalFilePath, overwrite: false);
+            File.Move(
+                quarantinedFilePath,
+                finalFilePath,
+                overwrite: false);
         }
-        catch (Exception exception)
-            when (exception is FileNotFoundException or DirectoryNotFoundException)
+        catch (Exception exception) when (
+            exception is FileNotFoundException
+                or DirectoryNotFoundException)
         {
-            EnsureRestoredFileExists(finalFilePath, quarantinedFilePath);
+            EnsureRestoredFileExists(
+                finalFilePath,
+                quarantinedFilePath);
         }
 
         DeleteQuarantineDirectory(directoryPath);
     }
 
-    public void DeleteFromQuarantine(StagedRecipePhotoDeletion deletion)
+    public void DeleteFromQuarantine(
+        StagedRecipePhotoDeletion deletion)
     {
         string directoryPath = ResolveQuarantineDirectoryPath(deletion);
 
         try
         {
-            _ = ReadQuarantineDescriptor(directoryPath, deletion.Token);
+            _ = ReadQuarantineDescriptor(
+                directoryPath,
+                deletion.Token);
         }
         catch (DirectoryNotFoundException)
         {
@@ -423,7 +481,8 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
         DeleteQuarantineDirectory(directoryPath);
     }
 
-    private (string Token, string DirectoryPath) CreateQuarantineDirectory()
+    private (string Token, string DirectoryPath)
+        CreateQuarantineDirectory()
     {
         while (true)
         {
@@ -440,7 +499,8 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
         }
     }
 
-    private string ResolveQuarantineDirectoryPath(StagedRecipePhotoDeletion deletion)
+    private string ResolveQuarantineDirectoryPath(
+        StagedRecipePhotoDeletion deletion)
     {
         ArgumentNullException.ThrowIfNull(deletion);
 
@@ -448,27 +508,39 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
 
         if (!IsCanonicalToken(token))
         {
-            throw new ArgumentException("The staged deletion token is invalid.", nameof(deletion));
+            throw new ArgumentException(
+                "The staged deletion token is invalid.",
+                nameof(deletion));
         }
 
-        string directoryPath = Path.GetFullPath(Path.Combine(_quarantinePath, token));
+        string directoryPath = Path.GetFullPath(
+            Path.Combine(_quarantinePath, token));
 
-        if (!directoryPath.StartsWith(_quarantinePathWithSeparator, PathComparison))
+        if (!directoryPath.StartsWith(
+                _quarantinePathWithSeparator,
+                PathComparison))
         {
             throw new ArgumentException(
                 "The staged deletion resolves outside the quarantine directory.",
-                nameof(deletion)
-            );
+                nameof(deletion));
         }
 
         return directoryPath;
     }
 
-    private static void WriteQuarantineDescriptor(string directoryPath, QuarantineDescriptor descriptor)
+    private static void WriteQuarantineDescriptor(
+        string directoryPath,
+        QuarantineDescriptor descriptor)
     {
-        string temporaryPath = Path.Combine(directoryPath, QuarantineDescriptorTemporaryFileName);
-        string descriptorPath = Path.Combine(directoryPath, QuarantineDescriptorFileName);
-        string json = JsonSerializer.Serialize(descriptor, DescriptorJsonOptions);
+        string temporaryPath = Path.Combine(
+            directoryPath,
+            QuarantineDescriptorTemporaryFileName);
+        string descriptorPath = Path.Combine(
+            directoryPath,
+            QuarantineDescriptorFileName);
+        string json = JsonSerializer.Serialize(
+            descriptor,
+            DescriptorJsonOptions);
 
         File.WriteAllText(temporaryPath, json);
         File.Move(temporaryPath, descriptorPath, overwrite: false);
@@ -476,26 +548,29 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
 
     private static QuarantineDescriptor ReadQuarantineDescriptor(
         string directoryPath,
-        string expectedToken
-    )
+        string expectedToken)
     {
-        string descriptorPath = Path.Combine(directoryPath, QuarantineDescriptorFileName);
+        string descriptorPath = Path.Combine(
+            directoryPath,
+            QuarantineDescriptorFileName);
 
         try
         {
             string json = File.ReadAllText(descriptorPath);
-            QuarantineDescriptor? descriptor = JsonSerializer.Deserialize<QuarantineDescriptor>(
-                json,
-                DescriptorJsonOptions
-            );
+            QuarantineDescriptor? descriptor =
+                JsonSerializer.Deserialize<QuarantineDescriptor>(
+                    json,
+                    DescriptorJsonOptions);
 
-            if (
-                descriptor is null
-                || !string.Equals(descriptor.Token, expectedToken, StringComparison.Ordinal)
-                || descriptor.QuarantinedAtUtc.Kind != DateTimeKind.Utc
-            )
+            if (descriptor is null
+                || !string.Equals(
+                    descriptor.Token,
+                    expectedToken,
+                    StringComparison.Ordinal)
+                || descriptor.QuarantinedAtUtc.Kind != DateTimeKind.Utc)
             {
-                throw new InvalidDataException("The quarantine descriptor is invalid.");
+                throw new InvalidDataException(
+                    "The quarantine descriptor is invalid.");
             }
 
             try
@@ -504,18 +579,24 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
             }
             catch (ArgumentException exception)
             {
-                throw new InvalidDataException("The quarantine descriptor is invalid.", exception);
+                throw new InvalidDataException(
+                    "The quarantine descriptor is invalid.",
+                    exception);
             }
 
             return descriptor;
         }
         catch (JsonException exception)
         {
-            throw new InvalidDataException("The quarantine descriptor is invalid.", exception);
+            throw new InvalidDataException(
+                "The quarantine descriptor is invalid.",
+                exception);
         }
     }
 
-    private static void EnsureRestoredFileExists(string finalFilePath, string quarantinedFilePath)
+    private static void EnsureRestoredFileExists(
+        string finalFilePath,
+        string quarantinedFilePath)
     {
         try
         {
@@ -523,17 +604,18 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
 
             if ((attributes & FileAttributes.Directory) != 0)
             {
-                throw new IOException("The restored photo path is a directory.");
+                throw new IOException(
+                    "The restored photo path is a directory.");
             }
         }
-        catch (Exception exception)
-            when (exception is FileNotFoundException or DirectoryNotFoundException)
+        catch (Exception exception) when (
+            exception is FileNotFoundException
+                or DirectoryNotFoundException)
         {
             throw new FileNotFoundException(
                 "The quarantined photo content is missing.",
                 quarantinedFilePath,
-                exception
-            );
+                exception);
         }
     }
 
@@ -549,12 +631,14 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
         }
     }
 
-    public RecipePhotoStorageInventory<StagedRecipePhotoUploadInventoryItem> GetStagedUploads()
+    public RecipePhotoStorageInventory<StagedRecipePhotoUploadInventoryItem>
+        GetStagedUploads()
     {
         List<StagedRecipePhotoUploadInventoryItem> items = [];
         int invalidEntryCount = 0;
 
-        foreach (string entryPath in Directory.GetFileSystemEntries(_stagingPath))
+        foreach (string entryPath in
+                 Directory.GetFileSystemEntries(_stagingPath))
         {
             try
             {
@@ -566,13 +650,16 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
 
                 string fileName = Path.GetFileName(entryPath);
 
-                if (!fileName.EndsWith(StagedUploadFileExtension, StringComparison.Ordinal))
+                if (!fileName.EndsWith(
+                        StagedUploadFileExtension,
+                        StringComparison.Ordinal))
                 {
                     invalidEntryCount++;
                     continue;
                 }
 
-                string token = fileName[..^StagedUploadFileExtension.Length];
+                string token = fileName[
+                    ..^StagedUploadFileExtension.Length];
 
                 if (!IsCanonicalToken(token))
                 {
@@ -589,31 +676,31 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
                     continue;
                 }
 
-                items.Add(
-                    new StagedRecipePhotoUploadInventoryItem(
-                        new StagedRecipePhotoUpload(token, file.Length),
-                        file.LastWriteTimeUtc
-                    )
-                );
+                items.Add(new StagedRecipePhotoUploadInventoryItem(
+                    new StagedRecipePhotoUpload(token, file.Length),
+                    file.LastWriteTimeUtc));
             }
-            catch (Exception exception) when (IsInvalidInventoryEntryException(exception))
+            catch (Exception exception)
+                when (IsInvalidInventoryEntryException(exception))
             {
                 invalidEntryCount++;
             }
         }
 
-        return new RecipePhotoStorageInventory<StagedRecipePhotoUploadInventoryItem>(
-            items,
-            invalidEntryCount
-        );
+        return new RecipePhotoStorageInventory<
+            StagedRecipePhotoUploadInventoryItem>(
+                items,
+                invalidEntryCount);
     }
 
-    public RecipePhotoStorageInventory<StagedRecipePhotoDeletionInventoryItem> GetQuarantinedDeletions()
+    public RecipePhotoStorageInventory<StagedRecipePhotoDeletionInventoryItem>
+        GetQuarantinedDeletions()
     {
         List<StagedRecipePhotoDeletionInventoryItem> items = [];
         int invalidEntryCount = 0;
 
-        foreach (string entryPath in Directory.GetFileSystemEntries(_quarantinePath))
+        foreach (string entryPath in
+                 Directory.GetFileSystemEntries(_quarantinePath))
         {
             try
             {
@@ -631,53 +718,60 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
                     continue;
                 }
 
-                QuarantineDescriptor descriptor = ReadQuarantineDescriptor(entryPath, token);
-                string expectedContentPath = Path.Combine(entryPath, descriptor.StorageFileName);
-                string expectedDescriptorPath = Path.Combine(entryPath, QuarantineDescriptorFileName);
+                QuarantineDescriptor descriptor =
+                    ReadQuarantineDescriptor(entryPath, token);
+                string expectedContentPath = Path.Combine(
+                    entryPath,
+                    descriptor.StorageFileName);
+                string expectedDescriptorPath = Path.Combine(
+                    entryPath,
+                    QuarantineDescriptorFileName);
                 string[] files = Directory.GetFiles(entryPath);
 
-                if (
-                    Directory.GetDirectories(entryPath).Length != 0
+                if (Directory.GetDirectories(entryPath).Length != 0
                     || files.Length != 2
                     || !ContainsExactPath(files, expectedContentPath)
-                    || !ContainsExactPath(files, expectedDescriptorPath)
-                )
+                    || !ContainsExactPath(files, expectedDescriptorPath))
                 {
                     invalidEntryCount++;
                     continue;
                 }
 
-                items.Add(
-                    new StagedRecipePhotoDeletionInventoryItem(
-                        new StagedRecipePhotoDeletion(token),
-                        descriptor.StorageFileName,
-                        descriptor.QuarantinedAtUtc
-                    )
-                );
+                items.Add(new StagedRecipePhotoDeletionInventoryItem(
+                    new StagedRecipePhotoDeletion(token),
+                    descriptor.StorageFileName,
+                    descriptor.QuarantinedAtUtc));
             }
-            catch (Exception exception) when (IsInvalidInventoryEntryException(exception))
+            catch (Exception exception)
+                when (IsInvalidInventoryEntryException(exception))
             {
                 invalidEntryCount++;
             }
         }
 
-        return new RecipePhotoStorageInventory<StagedRecipePhotoDeletionInventoryItem>(
-            items,
-            invalidEntryCount
-        );
+        return new RecipePhotoStorageInventory<
+            StagedRecipePhotoDeletionInventoryItem>(
+                items,
+                invalidEntryCount);
     }
 
-    public RecipePhotoStorageInventory<RecipePhotoStorageFileInventoryItem> GetFinalFiles()
+    public RecipePhotoStorageInventory<RecipePhotoStorageFileInventoryItem>
+        GetFinalFiles()
     {
         List<RecipePhotoStorageFileInventoryItem> items = [];
         int invalidEntryCount = 0;
 
-        foreach (string entryPath in Directory.GetFileSystemEntries(_rootPath))
+        foreach (string entryPath in
+                 Directory.GetFileSystemEntries(_rootPath))
         {
-            if (
-                string.Equals(entryPath, _stagingPath, PathComparison)
-                || string.Equals(entryPath, _quarantinePath, PathComparison)
-            )
+            if (string.Equals(
+                    entryPath,
+                    _stagingPath,
+                    PathComparison)
+                || string.Equals(
+                    entryPath,
+                    _quarantinePath,
+                    PathComparison))
             {
                 continue;
             }
@@ -702,20 +796,21 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
                     continue;
                 }
 
-                items.Add(
-                    new RecipePhotoStorageFileInventoryItem(storageFileName, file.LastWriteTimeUtc)
-                );
+                items.Add(new RecipePhotoStorageFileInventoryItem(
+                    storageFileName,
+                    file.LastWriteTimeUtc));
             }
-            catch (Exception exception) when (IsInvalidInventoryEntryException(exception))
+            catch (Exception exception)
+                when (IsInvalidInventoryEntryException(exception))
             {
                 invalidEntryCount++;
             }
         }
 
-        return new RecipePhotoStorageInventory<RecipePhotoStorageFileInventoryItem>(
-            items,
-            invalidEntryCount
-        );
+        return new RecipePhotoStorageInventory<
+            RecipePhotoStorageFileInventoryItem>(
+                items,
+                invalidEntryCount);
     }
 
     private static bool IsCanonicalToken(string? token)
@@ -723,26 +818,34 @@ internal sealed class FileSystemRecipePhotoStorage : IRecipePhotoStorage
         return !string.IsNullOrWhiteSpace(token)
             && Guid.TryParseExact(token, "N", out Guid identifier)
             && identifier != Guid.Empty
-            && string.Equals(token, identifier.ToString("N"), StringComparison.Ordinal);
+            && string.Equals(
+                token,
+                identifier.ToString("N"),
+                StringComparison.Ordinal);
     }
 
-    private static bool ContainsExactPath(IEnumerable<string> paths, string expectedPath)
+    private static bool ContainsExactPath(
+        IEnumerable<string> paths,
+        string expectedPath)
     {
-        return paths.Any(path => string.Equals(path, expectedPath, StringComparison.Ordinal));
+        return paths.Any(path =>
+            string.Equals(path, expectedPath, StringComparison.Ordinal));
     }
 
-    private static bool IsInvalidInventoryEntryException(Exception exception)
+    private static bool IsInvalidInventoryEntryException(
+        Exception exception)
     {
-        return exception
-            is IOException
-                or InvalidDataException
-                or UnauthorizedAccessException
-                or ArgumentException;
+        return exception is IOException
+            or InvalidDataException
+            or UnauthorizedAccessException
+            or ArgumentException;
     }
 
     private sealed class QuarantineDescriptor
     {
-        public QuarantineDescriptor() { }
+        public QuarantineDescriptor()
+        {
+        }
 
         public string Token { get; init; } = string.Empty;
 

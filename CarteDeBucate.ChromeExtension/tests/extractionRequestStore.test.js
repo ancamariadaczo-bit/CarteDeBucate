@@ -97,7 +97,10 @@ test("isolates requests by window and consumes each request only once", async ()
 
     assert.deepEqual(firstConsumption, firstRequest);
     assert.equal(duplicateConsumption, null);
-    assert.equal(session.values.has(getExtractionRequestStorageKey(201, "request-1")), false);
+    assert.equal(
+        session.values.has(getExtractionRequestStorageKey(201, "request-1")),
+        false
+    );
     assert.deepEqual(await store.consumeExtractionRequest(202), secondRequest);
 });
 
@@ -185,7 +188,10 @@ test("deduplicates a requestId that is published again", async () => {
 
     await store.publishExtractionRequest(request);
     assert.equal(await store.consumeExtractionRequest(201), null);
-    assert.equal(session.values.has(getExtractionRequestStorageKey(201, "request-1")), false);
+    assert.equal(
+        session.values.has(getExtractionRequestStorageKey(201, "request-1")),
+        false
+    );
 });
 
 test("does not delete a newer request published between reading and removing", async () => {
@@ -250,26 +256,23 @@ test("propagates storage errors from publish, read, consume, and remove", async 
     await t.test("publish", async () => {
         const store = createExtractionRequestStore({
             storageSession: {
-                async get() {
-                    return {};
-                },
-                async set() {
-                    throw storageError;
-                },
+                async get() { return {}; },
+                async set() { throw storageError; },
                 async remove() {}
             },
             now: () => 5_000
         });
 
-        await assert.rejects(store.publishExtractionRequest(validRequest), storageError);
+        await assert.rejects(
+            store.publishExtractionRequest(validRequest),
+            storageError
+        );
     });
 
     await t.test("read and consume get", async () => {
         const store = createExtractionRequestStore({
             storageSession: {
-                async get() {
-                    throw storageError;
-                },
+                async get() { throw storageError; },
                 async set() {},
                 async remove() {}
             },
@@ -284,13 +287,9 @@ test("propagates storage errors from publish, read, consume, and remove", async 
         const key = getExtractionRequestStorageKey(201, validRequest.requestId);
         const store = createExtractionRequestStore({
             storageSession: {
-                async get() {
-                    return { [key]: validRequest };
-                },
+                async get() { return { [key]: validRequest }; },
                 async set() {},
-                async remove() {
-                    throw storageError;
-                }
+                async remove() { throw storageError; }
             },
             now: () => 5_000
         });

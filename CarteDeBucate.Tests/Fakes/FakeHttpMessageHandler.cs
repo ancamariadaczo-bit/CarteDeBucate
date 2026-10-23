@@ -11,8 +11,7 @@ public class FakeHttpMessageHandler : HttpMessageHandler
 
     protected override Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
-        CancellationToken cancellationToken
-    )
+        CancellationToken cancellationToken)
     {
         return Task.FromResult(_handler(request));
     }
