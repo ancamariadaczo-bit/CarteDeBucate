@@ -1,11 +1,11 @@
 using System.Text;
-using CarteDeBucate.Web.Filters;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CarteDeBucate.Web.Controllers;
 
-[ServiceFilter(typeof(OptionalAuthenticationFilter))]
+[Authorize]
 public class RecipeBackupsController : Controller
 {
     private const string SuccessMessageKey = "SuccessMessage";

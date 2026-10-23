@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using CarteDeBucate.Web.Configuration;
 using CarteDeBucate.Web.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -10,17 +9,14 @@ namespace CarteDeBucate.Web.Controllers;
 public class AccountController : Controller
 {
     private readonly IAuthenticationService _authenticationService;
-    private readonly WebAppSettings _settings;
     private readonly ILogger<AccountController> _logger;
 
     public AccountController(
         IAuthenticationService authenticationService,
-        WebAppSettings settings,
         ILogger<AccountController> logger
     )
     {
         _authenticationService = authenticationService;
-        _settings = settings;
         _logger = logger;
     }
 
@@ -105,12 +101,7 @@ public class AccountController : Controller
 
         _logger.LogInformation("User logout succeeded. User identifier: {UserId}", userId);
 
-        if (_settings.AuthenticationEnabled)
-        {
-            return RedirectToAction(nameof(Login));
-        }
-
-        return RedirectToAction(nameof(RecipesController.Index), "Recipes");
+        return RedirectToAction(nameof(Login));
     }
 
     public IActionResult AccessDenied()

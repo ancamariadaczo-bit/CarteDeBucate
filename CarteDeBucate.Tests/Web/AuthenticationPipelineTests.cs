@@ -316,7 +316,6 @@ public sealed class AuthenticationApiWebApplicationFactory : WebApplicationFacto
         return new Dictionary<string, string?>
         {
             ["DatabasePath"] = Path.Combine(_temporaryDirectory, "recipes.db"),
-            ["AuthenticationEnabled"] = "true",
             ["Jwt:Key"] = TestJwtKey,
             ["Jwt:Issuer"] = TestJwtIssuer,
             ["Jwt:Audience"] = TestJwtAudience,

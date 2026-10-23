@@ -1,11 +1,11 @@
-using CarteDeBucate.Web.Filters;
 using CarteDeBucate.Web.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CarteDeBucate.Web.Controllers;
 
-[ServiceFilter(typeof(OptionalAuthenticationFilter))]
+[Authorize]
 public class RecipesController : Controller
 {
     private const int PageSize = 10;

@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using System.Text.Json;
-using CarteDeBucate.Web.Configuration;
 using CarteDeBucate.Web.Services.Authentication;
 using Microsoft.AspNetCore.Http;
 
@@ -70,30 +69,6 @@ public class WebCurrentUserFilteringTests
         RecipeSummary recipe = Assert.Single(recipes);
         Assert.Equal(2, recipe.Id);
         Assert.Equal(7, recipe.UserId);
-    }
-
-    [Fact]
-    public void GetRecipeSummaries_WithAuthenticationDisabled_ShouldIgnoreAuthenticatedCookie()
-    {
-        FakeRecipeRepository repository = new FakeRecipeRepository
-        {
-            Recipes = new List<Recipe>
-            {
-                CreateRecipe(1, userId: 7, "https://example.com/current-user"),
-                CreateRecipe(2, userId: 9, "https://example.com/other-user"),
-                CreateRecipe(3, userId: null, "https://example.com/global"),
-            },
-        };
-        RecipeLibraryService service = new RecipeLibraryService(
-            repository,
-            CreateWebCurrentUserContext(userId: 7, authenticationEnabled: false)
-        );
-
-        List<RecipeSummary> recipes = service.GetRecipeSummaries();
-
-        Assert.Equal(3, recipes.Count);
-        Assert.True(repository.GetAllRecipeSummariesWasCalled);
-        Assert.False(repository.GetRecipeSummariesByUserIdWasCalled);
     }
 
     [Fact]
@@ -178,10 +153,7 @@ public class WebCurrentUserFilteringTests
         return new RecipeLibraryService(repository, CreateWebCurrentUserContext(userId));
     }
 
-    private static HttpCurrentUserContext CreateWebCurrentUserContext(
-        int userId,
-        bool authenticationEnabled = true
-    )
+    private static HttpCurrentUserContext CreateWebCurrentUserContext(int userId)
     {
         Claim[] claims =
         {
@@ -193,23 +165,14 @@ public class WebCurrentUserFilteringTests
             User = new ClaimsPrincipal(new ClaimsIdentity(claims, "Test")),
         };
 
-        return new HttpCurrentUserContext(
-            new HttpContextAccessor { HttpContext = httpContext },
-            CreateSettings(authenticationEnabled)
-        );
+        return new HttpCurrentUserContext(new HttpContextAccessor { HttpContext = httpContext });
     }
 
     private static HttpCurrentUserContext CreateAnonymousWebCurrentUserContext()
     {
         return new HttpCurrentUserContext(
-            new HttpContextAccessor { HttpContext = new DefaultHttpContext() },
-            CreateSettings(authenticationEnabled: true)
+            new HttpContextAccessor { HttpContext = new DefaultHttpContext() }
         );
-    }
-
-    private static WebAppSettings CreateSettings(bool authenticationEnabled)
-    {
-        return new WebAppSettings { AuthenticationEnabled = authenticationEnabled };
     }
 
     private static Recipe CreateRecipe(int id, int? userId, string sourceUrl)

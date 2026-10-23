@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using CarteDeBucate.Web.Configuration;
 using CarteDeBucate.Web.Services.Authentication;
 using Microsoft.AspNetCore.Http;
 
@@ -66,51 +65,9 @@ public class HttpCurrentUserContextTests
         Assert.Null(context.Username);
     }
 
-    [Fact]
-    public void Context_WhenAuthenticationIsDisabled_ShouldIgnoreAuthenticatedUserClaims()
+    private static HttpCurrentUserContext CreateContext(IHttpContextAccessor httpContextAccessor)
     {
-        HttpContextAccessor httpContextAccessor = new HttpContextAccessor
-        {
-            HttpContext = CreateHttpContextWithUser("12", "anca"),
-        };
-        HttpCurrentUserContext context = CreateContext(
-            httpContextAccessor,
-            authenticationEnabled: false
-        );
-
-        Assert.False(context.IsAuthenticated);
-        Assert.Null(context.UserId);
-        Assert.Null(context.Username);
-    }
-
-    [Fact]
-    public void SetCurrentUser_WhenAuthenticationIsDisabled_ShouldNotExposeUserIdentity()
-    {
-        HttpContextAccessor httpContextAccessor = new HttpContextAccessor
-        {
-            HttpContext = new DefaultHttpContext(),
-        };
-        HttpCurrentUserContext context = CreateContext(
-            httpContextAccessor,
-            authenticationEnabled: false
-        );
-
-        context.SetCurrentUser(new User { Id = 21, Username = "maria" });
-
-        Assert.False(context.IsAuthenticated);
-        Assert.Null(context.UserId);
-        Assert.Null(context.Username);
-    }
-
-    private static HttpCurrentUserContext CreateContext(
-        IHttpContextAccessor httpContextAccessor,
-        bool authenticationEnabled = true
-    )
-    {
-        return new HttpCurrentUserContext(
-            httpContextAccessor,
-            new WebAppSettings { AuthenticationEnabled = authenticationEnabled }
-        );
+        return new HttpCurrentUserContext(httpContextAccessor);
     }
 
     private static HttpContext CreateHttpContextWithUser(string userId, string username)

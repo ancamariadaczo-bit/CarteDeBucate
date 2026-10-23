@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using CarteDeBucate.Web.Configuration;
 using CarteDeBucate.Web.Controllers;
 using CarteDeBucate.Web.Models;
 using Microsoft.AspNetCore.Authentication;
@@ -194,14 +193,13 @@ public class AccountControllerTests
     }
 
     [Fact]
-    public async Task Logout_WhenAuthenticationIsEnabled_ShouldSignOutAndRedirectToLogin()
+    public async Task Logout_ShouldSignOutAndRedirectToLogin()
     {
         FakeAuthenticationService authenticationService = new FakeAuthenticationService();
         TestHttpAuthenticationService httpAuthenticationService = new TestHttpAuthenticationService();
         AccountController controller = CreateController(
             authenticationService,
-            new WebAppSettings { AuthenticationEnabled = true },
-            httpAuthenticationService
+            httpAuthenticationService: httpAuthenticationService
         );
 
         IActionResult result = await controller.Logout();
@@ -243,7 +241,6 @@ public class AccountControllerTests
 
     private static AccountController CreateController(
         FakeAuthenticationService authenticationService,
-        WebAppSettings? settings = null,
         TestHttpAuthenticationService? httpAuthenticationService = null,
         ClaimsPrincipal? user = null
     )
@@ -261,7 +258,6 @@ public class AccountControllerTests
         };
         AccountController controller = new AccountController(
             authenticationService,
-            settings ?? new WebAppSettings(),
             NullLogger<AccountController>.Instance
         )
         {

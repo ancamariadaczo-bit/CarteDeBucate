@@ -1,7 +1,5 @@
 using System.Text;
 using CarteDeBucate.Web.BackgroundServices;
-using CarteDeBucate.Web.Configuration;
-using CarteDeBucate.Web.Filters;
 using CarteDeBucate.Web.Services;
 using CarteDeBucate.Web.Services.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -35,8 +33,6 @@ if (string.IsNullOrWhiteSpace(configuredRecipePhotosPath))
 string recipePhotosPath = Path.IsPathFullyQualified(configuredRecipePhotosPath)
     ? Path.GetFullPath(configuredRecipePhotosPath)
     : Path.GetFullPath(configuredRecipePhotosPath, databaseDirectoryPath);
-
-WebAppSettings webAppSettings = builder.Configuration.Get<WebAppSettings>() ?? new WebAppSettings();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -96,8 +92,6 @@ builder
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
 builder.Services.AddSingleton<IExtensionAuthenticationCodeService, ExtensionAuthenticationCodeService>();
-builder.Services.AddSingleton(webAppSettings);
-builder.Services.AddScoped<OptionalAuthenticationFilter>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserContext, HttpCurrentUserContext>();
 builder.Services.AddScoped<IRecipeRepository>(serviceProvider =>
@@ -183,9 +177,8 @@ builder.Services.AddHostedService<DatabaseBackupWorker>();
 var app = builder.Build();
 
 app.Logger.LogInformation(
-    "Application starting in {EnvironmentName} environment. Authentication enabled: {AuthenticationEnabled}",
-    app.Environment.EnvironmentName,
-    webAppSettings.AuthenticationEnabled
+    "Application starting in {EnvironmentName} environment",
+    app.Environment.EnvironmentName
 );
 
 try
