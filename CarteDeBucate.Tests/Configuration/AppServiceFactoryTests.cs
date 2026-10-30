@@ -437,6 +437,39 @@ public class AppServiceFactoryTests
     }
 
     [Fact]
+    public void CreateRecipeLibraryService_WithCache_ShouldUseProvidedDependencies()
+    {
+        FakeRecipeRepository repository = new();
+        StubRecipeCacheService recipeCacheService = new();
+        CurrentUserContext currentUserContext = new();
+        ILogger<RecipeLibraryService> logger =
+            NullLogger<RecipeLibraryService>.Instance;
+
+        IRecipeLibraryService service =
+            AppServiceFactory.CreateRecipeLibraryService(
+                repository,
+                recipeCacheService,
+                currentUserContext,
+                logger);
+
+        RecipeLibraryService concreteService =
+            Assert.IsType<RecipeLibraryService>(service);
+        Assert.Same(
+            recipeCacheService,
+            GetPrivateField<IRecipeCacheService>(
+                concreteService,
+                "_recipeCacheService"));
+        Assert.Same(
+            logger,
+            GetPrivateField<ILogger<RecipeLibraryService>>(
+                concreteService,
+                "_logger"));
+        Assert.Null(GetPrivateFieldValue(
+            concreteService,
+            "_photoDeletionCoordinator"));
+    }
+
+    [Fact]
     public void CreateDatabaseRecipeLibraryService_ShouldUsePhotoDeletionCoordinator()
     {
         string databaseDirectoryPath = Path.Combine(
@@ -560,6 +593,33 @@ public class AppServiceFactoryTests
 
         public void Dispose()
         {
+        }
+    }
+
+    private sealed class StubRecipeCacheService : IRecipeCacheService
+    {
+        public Task<Recipe?> GetAsync(
+            int recipeId,
+            int userId,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<Recipe?>(null);
+        }
+
+        public Task SetAsync(
+            Recipe recipe,
+            int userId,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task RemoveAsync(
+            int recipeId,
+            int userId,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
         }
     }
 

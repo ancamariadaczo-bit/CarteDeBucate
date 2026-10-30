@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 public class RecipeLibraryService : IRecipeLibraryService
 {
     private readonly IRecipeRepository _recipeRepository;
+    private readonly IRecipeCacheService? _recipeCacheService;
     private readonly ICurrentUserContext? _currentUserContext;
     private readonly IRecipePhotoDeletionCoordinator? _photoDeletionCoordinator;
     private readonly ILogger<RecipeLibraryService> _logger;
@@ -11,6 +12,7 @@ public class RecipeLibraryService : IRecipeLibraryService
     public RecipeLibraryService(IRecipeRepository recipeRepository)
         : this(
             recipeRepository,
+            null,
             null,
             null,
             NullLogger<RecipeLibraryService>.Instance)
@@ -22,6 +24,7 @@ public class RecipeLibraryService : IRecipeLibraryService
         ICurrentUserContext? currentUserContext)
         : this(
             recipeRepository,
+            null,
             currentUserContext,
             null,
             NullLogger<RecipeLibraryService>.Instance)
@@ -30,6 +33,7 @@ public class RecipeLibraryService : IRecipeLibraryService
 
     internal RecipeLibraryService(
         IRecipeRepository recipeRepository,
+        IRecipeCacheService? recipeCacheService,
         ICurrentUserContext? currentUserContext,
         IRecipePhotoDeletionCoordinator? photoDeletionCoordinator,
         ILogger<RecipeLibraryService> logger)
@@ -37,6 +41,7 @@ public class RecipeLibraryService : IRecipeLibraryService
         ArgumentNullException.ThrowIfNull(logger);
 
         _recipeRepository = recipeRepository;
+        _recipeCacheService = recipeCacheService;
         _currentUserContext = currentUserContext;
         _photoDeletionCoordinator = photoDeletionCoordinator;
         _logger = logger;
@@ -88,6 +93,59 @@ public class RecipeLibraryService : IRecipeLibraryService
         }
 
         return _recipeRepository.GetRecipeById(recipeId);
+    }
+
+    public async Task<Recipe?> GetRecipeByIdAsync(int recipeId)
+    {
+        if (recipeId <= 0)
+        {
+            return null;
+        }
+
+        int? userId = CurrentUserId;
+
+        if (!userId.HasValue)
+        {
+            return GetRecipeById(recipeId);
+        }
+
+        if (_recipeCacheService != null)
+        {
+            try
+            {
+                Recipe? cachedRecipe = await _recipeCacheService.GetAsync(recipeId, userId.Value);
+
+                if (cachedRecipe != null)
+                {
+                    return cachedRecipe;
+                }
+            }
+            catch (Exception exception)
+            {
+                _logger.LogWarning(exception, "Failed to read recipe from Redis cache.");
+            }
+        }
+
+        Recipe? recipe = _recipeRepository.GetRecipeByIdAndUserId(recipeId, userId.Value);
+
+        if (recipe != null && _recipeCacheService != null)
+        {
+            try
+            {
+                await _recipeCacheService.SetAsync(recipe, userId.Value);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogWarning(
+                    exception,
+                    "Failed to cache recipe {RecipeId} for user {UserId}.",
+                    recipeId,
+                    userId.Value
+                );
+            }
+        }
+
+        return recipe;
     }
 
     public List<RecipeSummary> SearchRecipes(string searchText)
@@ -199,6 +257,20 @@ public class RecipeLibraryService : IRecipeLibraryService
         return RecipeSaveResult.Success(AppTexts.RecipeUpdated, recipe);
     }
 
+    public async Task<RecipeSaveResult> UpdateRecipeAsync(Recipe recipe)
+    {
+        RecipeSaveResult result = UpdateRecipe(recipe);
+
+        if (!result.IsSuccess)
+        {
+            return result;
+        }
+
+        await InvalidateRecipeCacheAsync(recipe.Id);
+
+        return result;
+    }
+
     public RecipeSaveResult DeleteRecipe(int recipeId)
     {
         if (recipeId <= 0)
@@ -287,6 +359,20 @@ public class RecipeLibraryService : IRecipeLibraryService
         return RecipeSaveResult.Success(AppTexts.RecipeDeleted);
     }
 
+    public async Task<RecipeSaveResult> DeleteRecipeAsync(int recipeId)
+    {
+        RecipeSaveResult result = DeleteRecipe(recipeId);
+
+        if (!result.IsSuccess)
+        {
+            return result;
+        }
+
+        await InvalidateRecipeCacheAsync(recipeId);
+
+        return result;
+    }
+
     private int? CurrentUserId => _currentUserContext?.UserId;
 
     private void DeleteRecipeFromRepository(int recipeId)
@@ -308,4 +394,24 @@ public class RecipeLibraryService : IRecipeLibraryService
         recipe.SourceUrl = recipe.SourceUrl?.Trim() ?? string.Empty;
     }
 
+    private async Task InvalidateRecipeCacheAsync(int recipeId)
+    {
+        if (_recipeCacheService == null || !CurrentUserId.HasValue)
+        {
+            return;
+        }
+
+        try
+        {
+            await _recipeCacheService.RemoveAsync(recipeId, CurrentUserId.Value);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(
+                exception,
+                "Failed to invalidate cache for recipe {RecipeId}.",
+                recipeId
+            );
+        }
+    }
 }

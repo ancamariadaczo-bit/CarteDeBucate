@@ -127,4 +127,19 @@ public class FakeRecipeLibraryService : IRecipeLibraryService
 
         return DeleteResultToReturn;
     }
+
+    public Task<Recipe?> GetRecipeByIdAsync(int recipeId)
+    {
+        return Task.FromResult(GetRecipeById(recipeId));
+    }
+
+    public Task<RecipeSaveResult> UpdateRecipeAsync(Recipe recipe)
+    {
+        return Task.FromResult(UpdateRecipe(recipe));
+    }
+
+    public Task<RecipeSaveResult> DeleteRecipeAsync(int recipeId)
+    {
+        return Task.FromResult(DeleteRecipe(recipeId));
+    }
 }

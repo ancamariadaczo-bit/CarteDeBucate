@@ -785,6 +785,7 @@ public class RecipeLibraryServiceTests
         RecipeLibraryService service = new(
             repository,
             null,
+            null,
             coordinator,
             new RecordingRecipeLibraryLogger());
 
@@ -818,6 +819,7 @@ public class RecipeLibraryServiceTests
         RecipeLibraryService service = new(
             repository,
             null,
+            null,
             coordinator,
             new RecordingRecipeLibraryLogger());
 
@@ -847,6 +849,7 @@ public class RecipeLibraryServiceTests
         RecordingRecipeLibraryLogger logger = new();
         RecipeLibraryService service = new(
             repository,
+            null,
             null,
             coordinator,
             logger);
@@ -881,6 +884,7 @@ public class RecipeLibraryServiceTests
         RecipeLibraryService service = new(
             repository,
             null,
+            null,
             coordinator,
             logger);
 
@@ -913,6 +917,7 @@ public class RecipeLibraryServiceTests
         FakeRecipePhotoDeletionCoordinator coordinator = new();
         RecipeLibraryService service = new(
             repository,
+            null,
             currentUserContext,
             coordinator,
             new RecordingRecipeLibraryLogger());

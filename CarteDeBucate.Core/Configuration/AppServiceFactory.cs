@@ -188,6 +188,20 @@ public static class AppServiceFactory
         return new RecipeLibraryService(recipeRepository, currentUserContext);
     }
 
+    public static IRecipeLibraryService CreateRecipeLibraryService(
+        IRecipeRepository recipeRepository,
+        IRecipeCacheService recipeCacheService,
+        ICurrentUserContext currentUserContext,
+        ILogger<RecipeLibraryService> logger)
+    {
+        return new RecipeLibraryService(
+            recipeRepository,
+            recipeCacheService,
+            currentUserContext,
+            null,
+            logger);
+    }
+
     public static IRecipeLibraryService CreateDatabaseRecipeLibraryService(
         string databasePath,
         string recipePhotosPath,
@@ -235,6 +249,7 @@ public static class AppServiceFactory
 
         return new RecipeLibraryService(
             recipeRepository,
+            null, // No cache for the desktop application
             currentUserContext,
             photoDeletionCoordinator,
             logger);

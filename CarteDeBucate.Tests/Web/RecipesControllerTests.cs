@@ -201,12 +201,12 @@ public class RecipesControllerTests
     }
 
     [Fact]
-    public void Details_WhenRecipeDoesNotExist_ShouldReturnFriendlyNotFoundView()
+    public async Task Details_WhenRecipeDoesNotExist_ShouldReturnFriendlyNotFoundView()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService();
         RecipesController controller = CreateController(recipeService);
 
-        IActionResult result = controller.Details(17);
+        IActionResult result = await controller.Details(17);
 
         ViewResult viewResult = Assert.IsType<ViewResult>(result);
         Assert.Equal("NotFound", viewResult.ViewName);
@@ -216,7 +216,7 @@ public class RecipesControllerTests
     }
 
     [Fact]
-    public void Details_WithPageNumber_ShouldExposePageNumberToView()
+    public async Task Details_WithPageNumber_ShouldExposePageNumberToView()
     {
         Recipe recipe = new Recipe { Id = 17, Name = "Recipe" };
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
@@ -225,7 +225,7 @@ public class RecipesControllerTests
         };
         RecipesController controller = CreateController(recipeService);
 
-        IActionResult result = controller.Details(17, pageNumber: 3, searchText: "supa");
+        IActionResult result = await controller.Details(17, pageNumber: 3, searchText: "supa");
 
         ViewResult viewResult = Assert.IsType<ViewResult>(result);
         Assert.Same(recipe, viewResult.Model);
@@ -234,12 +234,12 @@ public class RecipesControllerTests
     }
 
     [Fact]
-    public void Edit_WhenRecipeDoesNotExist_ShouldReturnFriendlyNotFoundView()
+    public async Task Edit_WhenRecipeDoesNotExist_ShouldReturnFriendlyNotFoundView()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService();
         RecipesController controller = CreateController(recipeService);
 
-        IActionResult result = controller.Edit(18);
+        IActionResult result = await controller.Edit(18);
 
         ViewResult viewResult = Assert.IsType<ViewResult>(result);
         Assert.Equal("NotFound", viewResult.ViewName);
@@ -247,12 +247,12 @@ public class RecipesControllerTests
     }
 
     [Fact]
-    public void Delete_WhenRecipeDoesNotExist_ShouldReturnFriendlyNotFoundView()
+    public async Task Delete_WhenRecipeDoesNotExist_ShouldReturnFriendlyNotFoundView()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService();
         RecipesController controller = CreateController(recipeService);
 
-        IActionResult result = controller.Delete(19);
+        IActionResult result = await controller.Delete(19);
 
         ViewResult viewResult = Assert.IsType<ViewResult>(result);
         Assert.Equal("NotFound", viewResult.ViewName);
@@ -260,7 +260,7 @@ public class RecipesControllerTests
     }
 
     [Fact]
-    public void Delete_WhenOpenedFromIndex_ShouldCancelBackToIndex()
+    public async Task Delete_WhenOpenedFromIndex_ShouldCancelBackToIndex()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
@@ -268,7 +268,7 @@ public class RecipesControllerTests
         };
         RecipesController controller = CreateController(recipeService);
 
-        IActionResult result = controller.Delete(17, "Index");
+        IActionResult result = await controller.Delete(17, "Index");
 
         ViewResult viewResult = Assert.IsType<ViewResult>(result);
         Assert.IsType<Recipe>(viewResult.Model);
@@ -278,7 +278,7 @@ public class RecipesControllerTests
     }
 
     [Fact]
-    public void Delete_WhenOpenedWithoutReturnToIndex_ShouldCancelBackToDetails()
+    public async Task Delete_WhenOpenedWithoutReturnToIndex_ShouldCancelBackToDetails()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
@@ -286,7 +286,7 @@ public class RecipesControllerTests
         };
         RecipesController controller = CreateController(recipeService);
 
-        IActionResult result = controller.Delete(17);
+        IActionResult result = await controller.Delete(17);
 
         ViewResult viewResult = Assert.IsType<ViewResult>(result);
         Assert.IsType<Recipe>(viewResult.Model);
@@ -296,7 +296,7 @@ public class RecipesControllerTests
     }
 
     [Fact]
-    public void Delete_WithPageNumber_ShouldExposePageNumberToView()
+    public async Task Delete_WithPageNumber_ShouldExposePageNumberToView()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
@@ -304,7 +304,7 @@ public class RecipesControllerTests
         };
         RecipesController controller = CreateController(recipeService);
 
-        IActionResult result = controller.Delete(17, pageNumber: 3);
+        IActionResult result = await controller.Delete(17, pageNumber: 3);
 
         ViewResult viewResult = Assert.IsType<ViewResult>(result);
         Assert.IsType<Recipe>(viewResult.Model);
@@ -312,7 +312,7 @@ public class RecipesControllerTests
     }
 
     [Fact]
-    public void Delete_WhenOpenedFromIndexWithPageNumber_ShouldKeepIndexAndPageNumber()
+    public async Task Delete_WhenOpenedFromIndexWithPageNumber_ShouldKeepIndexAndPageNumber()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
@@ -320,7 +320,7 @@ public class RecipesControllerTests
         };
         RecipesController controller = CreateController(recipeService);
 
-        IActionResult result = controller.Delete(
+        IActionResult result = await controller.Delete(
             17,
             returnTo: "Index",
             pageNumber: 3,
@@ -336,7 +336,7 @@ public class RecipesControllerTests
     }
 
     [Fact]
-    public void Edit_WhenOpenedFromIndex_ShouldCancelBackToIndex()
+    public async Task Edit_WhenOpenedFromIndex_ShouldCancelBackToIndex()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
@@ -344,7 +344,7 @@ public class RecipesControllerTests
         };
         RecipesController controller = CreateController(recipeService);
 
-        IActionResult result = controller.Edit(17, "Index");
+        IActionResult result = await controller.Edit(17, "Index");
 
         ViewResult viewResult = Assert.IsType<ViewResult>(result);
         Assert.IsType<RecipeFormViewModel>(viewResult.Model);
@@ -354,7 +354,7 @@ public class RecipesControllerTests
     }
 
     [Fact]
-    public void Edit_WithPageNumber_ShouldExposePageNumberToView()
+    public async Task Edit_WithPageNumber_ShouldExposePageNumberToView()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
@@ -362,7 +362,7 @@ public class RecipesControllerTests
         };
         RecipesController controller = CreateController(recipeService);
 
-        IActionResult result = controller.Edit(17, pageNumber: 3, searchText: "supa");
+        IActionResult result = await controller.Edit(17, pageNumber: 3, searchText: "supa");
 
         ViewResult viewResult = Assert.IsType<ViewResult>(result);
         Assert.IsType<RecipeFormViewModel>(viewResult.Model);
@@ -371,7 +371,7 @@ public class RecipesControllerTests
     }
 
     [Fact]
-    public void Edit_WhenOpenedWithoutReturnToIndex_ShouldCancelBackToDetails()
+    public async Task Edit_WhenOpenedWithoutReturnToIndex_ShouldCancelBackToDetails()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
@@ -379,7 +379,7 @@ public class RecipesControllerTests
         };
         RecipesController controller = CreateController(recipeService);
 
-        IActionResult result = controller.Edit(17);
+        IActionResult result = await controller.Edit(17);
 
         ViewResult viewResult = Assert.IsType<ViewResult>(result);
         Assert.IsType<RecipeFormViewModel>(viewResult.Model);
@@ -468,7 +468,7 @@ public class RecipesControllerTests
     }
 
     [Fact]
-    public void EditPost_WhenUpdateSucceeds_ShouldKeepModelId()
+    public async Task EditPost_WhenUpdateSucceeds_ShouldKeepModelId()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
@@ -478,7 +478,7 @@ public class RecipesControllerTests
         RecipeFormViewModel model = CreateValidModel();
         model.Id = 23;
 
-        IActionResult result = controller.Edit(23, model);
+        IActionResult result = await controller.Edit(23, model);
 
         RedirectToActionResult redirectResult =
             Assert.IsType<RedirectToActionResult>(result);
@@ -490,7 +490,7 @@ public class RecipesControllerTests
     }
 
     [Fact]
-    public void EditPost_WhenUpdateSucceeds_ShouldRedirectToDetailsWithPageNumber()
+    public async Task EditPost_WhenUpdateSucceeds_ShouldRedirectToDetailsWithPageNumber()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
@@ -501,7 +501,7 @@ public class RecipesControllerTests
         RecipeFormViewModel model = CreateValidModel();
         model.Id = 23;
 
-        IActionResult result = controller.Edit(23, model, pageNumber: 3, searchText: "supa");
+        IActionResult result = await controller.Edit(23, model, pageNumber: 3, searchText: "supa");
 
         RedirectToActionResult redirectResult =
             Assert.IsType<RedirectToActionResult>(result);
@@ -512,7 +512,7 @@ public class RecipesControllerTests
     }
 
     [Fact]
-    public void EditPost_WhenOpenedFromIndexAndUpdateSucceeds_ShouldRedirectToIndexWithPageNumber()
+    public async Task EditPost_WhenOpenedFromIndexAndUpdateSucceeds_ShouldRedirectToIndexWithPageNumber()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
@@ -522,7 +522,7 @@ public class RecipesControllerTests
         RecipeFormViewModel model = CreateValidModel();
         model.Id = 23;
 
-        IActionResult result = controller.Edit(
+        IActionResult result = await controller.Edit(
             23,
             model,
             returnTo: "Index",
@@ -537,7 +537,7 @@ public class RecipesControllerTests
     }
 
     [Fact]
-    public void DeletePost_WhenDeleteSucceeds_ShouldRedirectToIndex()
+    public async Task DeletePost_WhenDeleteSucceeds_ShouldRedirectToIndex()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
@@ -545,7 +545,7 @@ public class RecipesControllerTests
         };
         RecipesController controller = CreateController(recipeService);
 
-        IActionResult result = controller.DeleteConfirmed(31);
+        IActionResult result = await controller.DeleteConfirmed(31);
 
         RedirectToActionResult redirectResult =
             Assert.IsType<RedirectToActionResult>(result);
@@ -556,7 +556,7 @@ public class RecipesControllerTests
     }
 
     [Fact]
-    public void DeletePost_WhenOpenedFromIndex_ShouldRedirectToIndexWithPageNumber()
+    public async Task DeletePost_WhenOpenedFromIndex_ShouldRedirectToIndexWithPageNumber()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
@@ -564,7 +564,7 @@ public class RecipesControllerTests
         };
         RecipesController controller = CreateController(recipeService);
 
-        IActionResult result = controller.DeleteConfirmed(
+        IActionResult result = await controller.DeleteConfirmed(
             31,
             returnTo: "Index",
             pageNumber: 3,
@@ -578,7 +578,7 @@ public class RecipesControllerTests
     }
 
     [Fact]
-    public void EditPost_WhenUpdateFails_ShouldNotSetSuccessMessage()
+    public async Task EditPost_WhenUpdateFails_ShouldNotSetSuccessMessage()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
@@ -588,7 +588,7 @@ public class RecipesControllerTests
         RecipeFormViewModel model = CreateValidModel();
         model.Id = 23;
 
-        IActionResult result = controller.Edit(23, model);
+        IActionResult result = await controller.Edit(23, model);
 
         ViewResult viewResult = Assert.IsType<ViewResult>(result);
         Assert.Same(model, viewResult.Model);

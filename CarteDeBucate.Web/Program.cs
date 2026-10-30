@@ -132,16 +132,29 @@ builder.Services.AddScoped<IRecipePhotoReconciliationService>(
                 loggerFactory);
     });
 
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+    options.InstanceName = "CarteDeBucate:";
+});
+builder.Services.AddScoped<IRecipeCacheService, RedisRecipeCacheService>();
+
 builder.Services.AddScoped<IRecipeLibraryService>(serviceProvider =>
 {
     IRecipeRepository recipeRepository =
         serviceProvider.GetRequiredService<IRecipeRepository>();
+    IRecipeCacheService recipeCacheService =
+        serviceProvider.GetRequiredService<IRecipeCacheService>();
     ICurrentUserContext currentUserContext =
         serviceProvider.GetRequiredService<ICurrentUserContext>();
+    ILogger<RecipeLibraryService> logger =
+        serviceProvider.GetRequiredService<ILogger<RecipeLibraryService>>();
 
     return AppServiceFactory.CreateRecipeLibraryService(
         recipeRepository,
-        currentUserContext);
+        recipeCacheService,
+        currentUserContext,
+        logger);
 });
 builder.Services.AddSingleton<IHostAddressResolver, DnsHostAddressResolver>();
 builder.Services.AddSingleton<RecipeImportDestinationPolicy>();

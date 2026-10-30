@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CarteDeBucate.Core\CarteDeBucate.Core.csproj" />
+    <ProjectReference Include="..\CarteDeBucate.Infrastructure\CarteDeBucate.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

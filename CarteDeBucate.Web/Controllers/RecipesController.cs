@@ -74,12 +74,12 @@ public class RecipesController : Controller
         });
     }
 
-    public IActionResult Details(
+    public async Task<IActionResult> Details(
         int id,
         int pageNumber = 1,
         string? searchText = null)
     {
-        Recipe? recipe = _recipeLibraryService.GetRecipeById(id);
+        Recipe? recipe = await _recipeLibraryService.GetRecipeByIdAsync(id);
 
         if (recipe == null)
         {
@@ -130,13 +130,13 @@ public class RecipesController : Controller
             new { id = result.Recipe.Id });
     }
 
-    public IActionResult Edit(
+    public async Task<IActionResult> Edit(
         int id,
         string? returnTo = null,
         int pageNumber = 1,
         string? searchText = null)
     {
-        Recipe? recipe = _recipeLibraryService.GetRecipeById(id);
+        Recipe? recipe = await _recipeLibraryService.GetRecipeByIdAsync(id);
 
         if (recipe == null)
         {
@@ -152,7 +152,7 @@ public class RecipesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Edit(
+    public async Task<IActionResult> Edit(
         int id,
         RecipeFormViewModel model,
         string? returnTo = null,
@@ -173,7 +173,7 @@ public class RecipesController : Controller
             return View(model);
         }
 
-        RecipeSaveResult result = _recipeLibraryService.UpdateRecipe(model.ToRecipe());
+        RecipeSaveResult result = await _recipeLibraryService.UpdateRecipeAsync(model.ToRecipe());
 
         if (!result.IsSuccess)
         {
@@ -204,13 +204,13 @@ public class RecipesController : Controller
             });
     }
 
-    public IActionResult Delete(
+    public async Task<IActionResult> Delete(
         int id,
         string? returnTo = null,
         int pageNumber = 1,
         string? searchText = null)
     {
-        Recipe? recipe = _recipeLibraryService.GetRecipeById(id);
+        Recipe? recipe = await _recipeLibraryService.GetRecipeByIdAsync(id);
 
         if (recipe == null)
         {
@@ -226,17 +226,17 @@ public class RecipesController : Controller
 
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
-    public IActionResult DeleteConfirmed(
+    public async Task<IActionResult> DeleteConfirmed(
         int id,
         string? returnTo = null,
         int pageNumber = 1,
         string? searchText = null)
     {
-        RecipeSaveResult result = _recipeLibraryService.DeleteRecipe(id);
+        RecipeSaveResult result = await _recipeLibraryService.DeleteRecipeAsync(id);
 
         if (!result.IsSuccess)
         {
-            Recipe? recipe = _recipeLibraryService.GetRecipeById(id);
+            Recipe? recipe = await _recipeLibraryService.GetRecipeByIdAsync(id);
 
             if (recipe == null)
             {

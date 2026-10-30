@@ -7,6 +7,8 @@ public interface IRecipeLibraryService
 
     Recipe? GetRecipeById(int recipeId);
 
+    Task<Recipe?> GetRecipeByIdAsync(int recipeId);
+
     List<RecipeSummary> SearchRecipes(string searchText);
     PagedResult<RecipeSummary> SearchRecipesPage(string searchText, int pageNumber, int pageSize);
 
@@ -16,5 +18,9 @@ public interface IRecipeLibraryService
 
     RecipeSaveResult UpdateRecipe(Recipe recipe);
 
+    Task<RecipeSaveResult> UpdateRecipeAsync(Recipe recipe);
+
     RecipeSaveResult DeleteRecipe(int recipeId);
+
+    Task<RecipeSaveResult> DeleteRecipeAsync(int recipeId);
 }

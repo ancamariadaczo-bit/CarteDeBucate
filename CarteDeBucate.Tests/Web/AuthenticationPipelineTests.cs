@@ -458,4 +458,18 @@ public sealed class PipelineRecipeLibraryService : IRecipeLibraryService
     {
         throw new NotSupportedException();
     }
+
+    public Task<Recipe?> GetRecipeByIdAsync(int recipeId)
+    {
+        throw new NotSupportedException();
+    }
+
+    public Task<RecipeSaveResult> UpdateRecipeAsync(Recipe recipe)
+    {
+        throw new NotSupportedException();
+    }
+    public Task<RecipeSaveResult> DeleteRecipeAsync(int recipeId)
+    {
+        throw new NotSupportedException();
+    }
 }
