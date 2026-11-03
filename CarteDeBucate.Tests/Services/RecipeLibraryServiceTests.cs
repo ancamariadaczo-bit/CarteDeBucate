@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 public class RecipeLibraryServiceTests
 {
@@ -934,6 +935,318 @@ public class RecipeLibraryServiceTests
         Assert.True(coordinator.ConfirmWasCalled);
     }
 
+    [Fact]
+    public async Task GetRecipeByIdAsync_WhenCacheReadThrows_ShouldReturnRecipeFromRepository()
+    {
+        const int userId = 7;
+
+        Recipe expectedRecipe = CreateValidRecipe(userId);
+        expectedRecipe.Id = 42;
+
+        FakeRecipeRepository repository = new() { Recipes = [expectedRecipe] };
+
+        CurrentUserContext currentUserContext = new();
+        currentUserContext.SetCurrentUser(new User
+        {
+            Id = userId,
+            Username = "ana"
+        });
+
+        ThrowingRecipeCacheService cache = new();
+        RecordingRecipeLibraryLogger logger = new();
+
+        RecipeLibraryService service = new(repository, cache, currentUserContext, null, logger);
+
+        Recipe? result = await service.GetRecipeByIdAsync(expectedRecipe.Id);
+
+        Assert.Same(expectedRecipe, result);
+        Assert.True(repository.GetRecipeByIdAndUserIdWasCalled);
+        Assert.Contains(LogLevel.Warning, logger.Levels);
+    }
+
+    [Fact]
+    public async Task GetRecipeByIdAsync_WhenCacheContainsRecipe_ShouldReturnCacheWithoutCallingRepository()
+    {
+        const int userId = 7;
+        Recipe cachedRecipe = CreateValidRecipe(userId);
+        cachedRecipe.Id = 42;
+        FakeRecipeRepository repository = new();
+        FakeRecipeCacheService cache = new()
+        {
+            RecipeToReturn = cachedRecipe
+        };
+        CurrentUserContext currentUserContext = CreateCurrentUserContext(userId);
+        RecipeLibraryService service = new(
+            repository,
+            cache,
+            currentUserContext,
+            null,
+            new RecordingRecipeLibraryLogger());
+
+        Recipe? result = await service.GetRecipeByIdAsync(cachedRecipe.Id);
+
+        Assert.Same(cachedRecipe, result);
+        Assert.Equal(1, cache.GetCallCount);
+        Assert.Equal(cachedRecipe.Id, cache.RecipeIdPassedToGet);
+        Assert.Equal(userId, cache.UserIdPassedToGet);
+        Assert.Equal(0, cache.SetCallCount);
+        Assert.False(repository.GetRecipeByIdWasCalled);
+        Assert.False(repository.GetRecipeByIdAndUserIdWasCalled);
+    }
+
+    [Fact]
+    public async Task GetRecipeByIdAsync_WhenCacheMisses_ShouldReturnAndCacheRepositoryRecipe()
+    {
+        const int userId = 7;
+        Recipe expectedRecipe = CreateValidRecipe(userId);
+        expectedRecipe.Id = 42;
+        FakeRecipeRepository repository = new()
+        {
+            Recipes = [expectedRecipe]
+        };
+        FakeRecipeCacheService cache = new();
+        CurrentUserContext currentUserContext = CreateCurrentUserContext(userId);
+        RecipeLibraryService service = new(
+            repository,
+            cache,
+            currentUserContext,
+            null,
+            new RecordingRecipeLibraryLogger());
+
+        Recipe? result = await service.GetRecipeByIdAsync(expectedRecipe.Id);
+
+        Assert.Same(expectedRecipe, result);
+        Assert.Equal(1, cache.GetCallCount);
+        Assert.True(repository.GetRecipeByIdAndUserIdWasCalled);
+        Assert.Equal(1, cache.SetCallCount);
+        Assert.Same(expectedRecipe, cache.RecipePassedToSet);
+        Assert.Equal(userId, cache.UserIdPassedToSet);
+    }
+
+    [Fact]
+    public async Task GetRecipeByIdAsync_WhenRecipeDoesNotExist_ShouldNotPopulateCache()
+    {
+        const int userId = 7;
+        FakeRecipeRepository repository = new();
+        FakeRecipeCacheService cache = new();
+        CurrentUserContext currentUserContext = CreateCurrentUserContext(userId);
+        RecipeLibraryService service = new(
+            repository,
+            cache,
+            currentUserContext,
+            null,
+            new RecordingRecipeLibraryLogger());
+
+        Recipe? result = await service.GetRecipeByIdAsync(42);
+
+        Assert.Null(result);
+        Assert.Equal(1, cache.GetCallCount);
+        Assert.True(repository.GetRecipeByIdAndUserIdWasCalled);
+        Assert.Equal(0, cache.SetCallCount);
+    }
+
+    [Fact]
+    public async Task GetRecipeByIdAsync_WhenCacheWriteThrows_ShouldStillReturnRepositoryRecipe()
+    {
+        const int userId = 7;
+        Recipe expectedRecipe = CreateValidRecipe(userId);
+        expectedRecipe.Id = 42;
+        FakeRecipeRepository repository = new()
+        {
+            Recipes = [expectedRecipe]
+        };
+        FakeRecipeCacheService cache = new()
+        {
+            ExceptionToThrowOnSet = new InvalidOperationException("cache write failed")
+        };
+        RecordingRecipeLibraryLogger logger = new();
+        CurrentUserContext currentUserContext = CreateCurrentUserContext(userId);
+        RecipeLibraryService service = new(
+            repository,
+            cache,
+            currentUserContext,
+            null,
+            logger);
+
+        Recipe? result = await service.GetRecipeByIdAsync(expectedRecipe.Id);
+
+        Assert.Same(expectedRecipe, result);
+        Assert.True(repository.GetRecipeByIdAndUserIdWasCalled);
+        Assert.Equal(1, cache.SetCallCount);
+        Assert.Contains(LogLevel.Warning, logger.Levels);
+    }
+
+    [Fact]
+    public async Task GetRecipeByIdAsync_WithoutCurrentUser_ShouldBypassCache()
+    {
+        Recipe expectedRecipe = CreateValidRecipe(userId: null);
+        expectedRecipe.Id = 42;
+        FakeRecipeRepository repository = new()
+        {
+            Recipes = [expectedRecipe]
+        };
+        FakeRecipeCacheService cache = new();
+        RecipeLibraryService service = new(
+            repository,
+            cache,
+            null,
+            null,
+            new RecordingRecipeLibraryLogger());
+
+        Recipe? result = await service.GetRecipeByIdAsync(expectedRecipe.Id);
+
+        Assert.Same(expectedRecipe, result);
+        Assert.Equal(0, cache.GetCallCount);
+        Assert.Equal(0, cache.SetCallCount);
+        Assert.True(repository.GetRecipeByIdWasCalled);
+        Assert.False(repository.GetRecipeByIdAndUserIdWasCalled);
+    }
+
+    [Fact]
+    public async Task UpdateRecipeAsync_WhenUpdateSucceeds_ShouldInvalidateCache()
+    {
+        const int userId = 7;
+        Recipe existingRecipe = CreateValidRecipe(userId);
+        existingRecipe.Id = 42;
+        Recipe updatedRecipe = CreateValidRecipe(userId);
+        updatedRecipe.Id = existingRecipe.Id;
+        updatedRecipe.Name = "Updated recipe";
+        FakeRecipeRepository repository = new()
+        {
+            Recipes = [existingRecipe]
+        };
+        FakeRecipeCacheService cache = new();
+        CurrentUserContext currentUserContext = CreateCurrentUserContext(userId);
+        RecipeLibraryService service = new(
+            repository,
+            cache,
+            currentUserContext,
+            null,
+            new RecordingRecipeLibraryLogger());
+
+        RecipeSaveResult result = await service.UpdateRecipeAsync(updatedRecipe);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(1, cache.RemoveCallCount);
+        Assert.Equal(updatedRecipe.Id, cache.RecipeIdPassedToRemove);
+        Assert.Equal(userId, cache.UserIdPassedToRemove);
+    }
+
+    [Fact]
+    public async Task UpdateRecipeAsync_WhenUpdateFails_ShouldNotInvalidateCache()
+    {
+        const int userId = 7;
+        Recipe recipe = CreateValidRecipe(userId);
+        recipe.Id = 42;
+        FakeRecipeRepository repository = new();
+        FakeRecipeCacheService cache = new();
+        CurrentUserContext currentUserContext = CreateCurrentUserContext(userId);
+        RecipeLibraryService service = new(
+            repository,
+            cache,
+            currentUserContext,
+            null,
+            new RecordingRecipeLibraryLogger());
+
+        RecipeSaveResult result = await service.UpdateRecipeAsync(recipe);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(0, cache.RemoveCallCount);
+    }
+
+    [Fact]
+    public async Task DeleteRecipeAsync_WhenDeleteSucceeds_ShouldInvalidateCache()
+    {
+        const int userId = 7;
+        Recipe recipe = CreateValidRecipe(userId);
+        recipe.Id = 42;
+        FakeRecipeRepository repository = new()
+        {
+            Recipes = [recipe]
+        };
+        FakeRecipeCacheService cache = new();
+        CurrentUserContext currentUserContext = CreateCurrentUserContext(userId);
+        RecipeLibraryService service = new(
+            repository,
+            cache,
+            currentUserContext,
+            null,
+            new RecordingRecipeLibraryLogger());
+
+        RecipeSaveResult result = await service.DeleteRecipeAsync(recipe.Id);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(1, cache.RemoveCallCount);
+        Assert.Equal(recipe.Id, cache.RecipeIdPassedToRemove);
+        Assert.Equal(userId, cache.UserIdPassedToRemove);
+    }
+
+    [Fact]
+    public async Task DeleteRecipeAsync_WhenDeleteFails_ShouldNotInvalidateCache()
+    {
+        const int userId = 7;
+        FakeRecipeRepository repository = new();
+        FakeRecipeCacheService cache = new();
+        CurrentUserContext currentUserContext = CreateCurrentUserContext(userId);
+        RecipeLibraryService service = new(
+            repository,
+            cache,
+            currentUserContext,
+            null,
+            new RecordingRecipeLibraryLogger());
+
+        RecipeSaveResult result = await service.DeleteRecipeAsync(42);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(0, cache.RemoveCallCount);
+    }
+
+    [Fact]
+    public async Task UpdateRecipeAsync_WhenCacheInvalidationThrows_ShouldKeepSuccessfulUpdate()
+    {
+        const int userId = 7;
+        Recipe existingRecipe = CreateValidRecipe(userId);
+        existingRecipe.Id = 42;
+        Recipe updatedRecipe = CreateValidRecipe(userId);
+        updatedRecipe.Id = existingRecipe.Id;
+        updatedRecipe.Name = "Updated recipe";
+        FakeRecipeRepository repository = new()
+        {
+            Recipes = [existingRecipe]
+        };
+        FakeRecipeCacheService cache = new()
+        {
+            ExceptionToThrowOnRemove = new InvalidOperationException("cache invalidation failed")
+        };
+        RecordingRecipeLibraryLogger logger = new();
+        CurrentUserContext currentUserContext = CreateCurrentUserContext(userId);
+        RecipeLibraryService service = new(
+            repository,
+            cache,
+            currentUserContext,
+            null,
+            logger);
+
+        RecipeSaveResult result = await service.UpdateRecipeAsync(updatedRecipe);
+
+        Assert.True(result.IsSuccess);
+        Assert.True(repository.UpdateRecipeWasCalled);
+        Assert.Equal(1, cache.RemoveCallCount);
+        Assert.Contains(LogLevel.Warning, logger.Levels);
+    }
+
+    private static CurrentUserContext CreateCurrentUserContext(int userId)
+    {
+        CurrentUserContext currentUserContext = new();
+        currentUserContext.SetCurrentUser(new User
+        {
+            Id = userId,
+            Username = "ana"
+        });
+
+        return currentUserContext;
+    }
+
     private static Recipe CreateValidRecipe(int? userId)
     {
         return new Recipe
@@ -955,8 +1268,7 @@ public class RecipeLibraryServiceTests
         };
     }
 
-    private sealed class FakeRecipePhotoDeletionCoordinator :
-        IRecipePhotoDeletionCoordinator
+    private sealed class FakeRecipePhotoDeletionCoordinator : IRecipePhotoDeletionCoordinator
     {
         public bool PrepareSucceeds { get; set; } = true;
 
@@ -1025,13 +1337,11 @@ public class RecipeLibraryServiceTests
         }
     }
 
-    private sealed class RecordingRecipeLibraryLogger :
-        ILogger<RecipeLibraryService>
+    private sealed class RecordingRecipeLibraryLogger : ILogger<RecipeLibraryService>
     {
         public List<LogLevel> Levels { get; } = [];
 
-        public IDisposable? BeginScope<TState>(TState state)
-            where TState : notnull
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull
         {
             return null;
         }
@@ -1049,6 +1359,24 @@ public class RecipeLibraryServiceTests
             Func<TState, Exception?, string> formatter)
         {
             Levels.Add(logLevel);
+        }
+    }
+
+    private sealed class ThrowingRecipeCacheService : IRecipeCacheService
+    {
+        public Task<Recipe?> GetAsync(int recipeId, int userId, CancellationToken cancellationToken = default)
+        {
+            return Task.FromException<Recipe?>(new JsonException("Cached recipe contains malformed JSON."));
+        }
+
+        public Task SetAsync(Recipe recipe, int userId, CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task RemoveAsync(int recipeId, int userId, CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
         }
     }
 }
