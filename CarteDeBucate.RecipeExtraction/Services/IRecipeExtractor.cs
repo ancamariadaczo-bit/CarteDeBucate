@@ -2,5 +2,5 @@ namespace RecipeExtraction;
 
 public interface IRecipeExtractor
 {
-    public RecipeExtractionResult Extract();
+    RecipeExtractionResult Extract(string html, string url, bool allowTitleOnly = false);
 }
