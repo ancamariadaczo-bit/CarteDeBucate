@@ -4,8 +4,17 @@ using HtmlAgilityPack;
 
 namespace RecipeExtraction;
 
+/// <summary>
+/// Extracts neutral recipe data from visible HTML content.
+/// </summary>
 public class RecipeHtmlExtractor
 {
+    /// <summary>
+    /// Attempts to extract a recipe from visible HTML headings and sections.
+    /// </summary>
+    /// <param name="html">The HTML content to inspect.</param>
+    /// <param name="url">The source URL associated with the HTML content.</param>
+    /// <returns>The extracted recipe, or <see langword="null"/> when no recipe content is found.</returns>
     public ExtractedRecipe? TryExtract(string html, string url)
     {
         HtmlDocument document = new HtmlDocument();
@@ -42,6 +51,11 @@ public class RecipeHtmlExtractor
         };
     }
 
+    /// <summary>
+    /// Extracts and normalizes the contents of the HTML <c>title</c> element.
+    /// </summary>
+    /// <param name="html">The HTML content to inspect.</param>
+    /// <returns>The normalized title, or an empty string when no title is found.</returns>
     public static string ExtractTitle(string html)
     {
         Match match = Regex.Match(

@@ -4,8 +4,17 @@ using System.Text.RegularExpressions;
 
 namespace RecipeExtraction;
 
+/// <summary>
+/// Extracts neutral recipe data from JSON-LD blocks embedded in HTML.
+/// </summary>
 public class RecipeJsonLdExtractor
 {
+    /// <summary>
+    /// Attempts to extract the first valid recipe from the HTML's JSON-LD blocks.
+    /// </summary>
+    /// <param name="html">The HTML content containing JSON-LD script blocks.</param>
+    /// <param name="url">The source URL associated with the HTML content.</param>
+    /// <returns>The extracted recipe, or <see langword="null"/> when no valid recipe is found.</returns>
     public ExtractedRecipe? TryExtract(string html, string url)
     {
         List<string> jsonLdBlocks = ExtractJsonLdBlocks(html);

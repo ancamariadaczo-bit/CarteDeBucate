@@ -1,11 +1,15 @@
 namespace RecipeExtraction;
 
+/// <summary>
+/// Runs the public recipe extraction pipeline over supplied HTML content.
+/// </summary>
 public class RecipeExtractor : IRecipeExtractor
 {
     private readonly RecipePageDetector pageDetector = new RecipePageDetector();
     private readonly RecipeJsonLdExtractor jsonLdExtractor = new RecipeJsonLdExtractor();
     private readonly RecipeHtmlExtractor htmlExtractor = new RecipeHtmlExtractor();
 
+    /// <inheritdoc />
     public RecipeExtractionResult Extract(string html, string url, bool allowTitleOnly = false)
     {
         if (string.IsNullOrWhiteSpace(html))

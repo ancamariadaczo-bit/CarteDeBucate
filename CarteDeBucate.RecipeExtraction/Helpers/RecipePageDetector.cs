@@ -1,8 +1,18 @@
 
 namespace RecipeExtraction;
 
+/// <summary>
+/// Applies heuristics for recognizing recipe pages and common blocked-page responses.
+/// </summary>
 public class RecipePageDetector
 {
+    /// <summary>
+    /// Determines whether the supplied content and extraction result resemble a recipe page.
+    /// </summary>
+    /// <param name="html">The HTML content to inspect.</param>
+    /// <param name="url">The source URL associated with the HTML content.</param>
+    /// <param name="recipe">The recipe data extracted from the page.</param>
+    /// <returns><see langword="true"/> when the page meets the recipe-page heuristic threshold.</returns>
     public bool LooksLikeRecipePage(string html, string url, ExtractedRecipe recipe)
     {
         int score = 0;
@@ -54,6 +64,11 @@ public class RecipePageDetector
         return score >= 5;
     }
 
+    /// <summary>
+    /// Determines whether the HTML resembles an automated verification or blocked page.
+    /// </summary>
+    /// <param name="html">The HTML content to inspect.</param>
+    /// <returns><see langword="true"/> when blocked-page indicators are detected.</returns>
     public bool LooksLikeBlockedPage(string html)
     {
         string normalizedHtml = RecipeExtractionTextHelper.NormalizeForSearch(html);
