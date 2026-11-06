@@ -1,0 +1,109 @@
+body {
+    margin: 0;
+    padding: 24px;
+    font-family: Arial, sans-serif;
+    font-size: 9.5pt;
+    line-height: 1.25;
+    color: #111;
+}
+
+#recipe {
+    max-width: 190mm;
+    margin: 0 auto;
+}
+
+.top {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+#recipeSummary,
+#imageSection {
+    min-width: 0;
+}
+
+#imageSection {
+    display: flex;
+    min-height: 85mm;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #bbb;
+    text-align: center;
+}
+
+h1 {
+    margin: 0 0 6px;
+    font-size: 18pt;
+    line-height: 1.12;
+}
+
+h2 {
+    margin: 12px 0 5px;
+    font-size: 12pt;
+    line-height: 1.15;
+}
+
+p {
+    margin: 0 0 7px;
+    line-height: 1.25;
+}
+
+a {
+    overflow-wrap: anywhere;
+}
+
+.image-error {
+    margin: 0;
+    padding: 12px;
+}
+
+#stepsSection {
+    margin-top: 12px;
+}
+
+ul,
+ol {
+    margin: 0;
+    padding-left: 20px;
+}
+
+li {
+    margin-bottom: 3px;
+    line-height: 1.25;
+}
+
+#stepsSection li {
+    white-space: pre-line;
+}
+
+@media print {
+    @page {
+        size: A4;
+        margin: 10mm;
+    }
+
+    body {
+        padding: 0;
+        font-size: 9.5pt;
+    }
+
+    #recipe {
+        max-width: none;
+    }
+
+    .top {
+        gap: 6mm;
+    }
+
+    h1,
+    h2 {
+        break-after: avoid;
+    }
+
+    li,
+    #imageSection {
+        break-inside: avoid;
+    }
+}

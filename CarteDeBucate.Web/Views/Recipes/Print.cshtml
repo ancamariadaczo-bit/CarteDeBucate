@@ -1,0 +1,52 @@
+@model Recipe
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@Model.Name</title>
+    <link rel="stylesheet" href="~/css/recipe-print.css" asp-append-version="true" />
+</head>
+<body>
+    <main id="recipe">
+        <section class="top">
+            <div id="recipeSummary">
+                <h1>@Model.Name</h1>
+
+                <p class="recipe-source">
+                    <strong>Source: </strong>
+                    <a href="@Model.SourceUrl">@Model.SourceUrl</a>
+                </p>
+
+                <h2>Ingredients</h2>
+                <ul>
+                    @foreach (string ingredient in Model.Ingredients)
+                    {
+                        <li>@ingredient</li>
+                    }
+                </ul>
+            </div>
+
+            <div id="imageSection">
+                <p class="image-error">Image unavailable</p>
+            </div>
+        </section>
+
+        <section id="stepsSection">
+            <h2>Instructions</h2>
+            <ol>
+                @foreach (string step in Model.Steps)
+                {
+                    <li>@step</li>
+                }
+            </ol>
+        </section>
+    </main>
+    <script src="~/js/recipe-print.js" asp-append-version="true"></script>
+</body>
+</html>

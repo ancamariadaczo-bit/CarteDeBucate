@@ -25,6 +25,11 @@
            asp-route-id="@Model.Id"
            asp-route-searchText="@routeSearchText"
            asp-route-pageNumber="@ViewData["PageNumber"]">Editează</a>
+        <a class="btn btn-outline-primary"
+           asp-action="Print"
+           asp-route-id="@Model.Id"
+           target="_blank"
+           rel="noopener noreferrer">Printează</a>
         <a class="btn btn-outline-danger"
            asp-action="Delete"
            asp-route-id="@Model.Id"

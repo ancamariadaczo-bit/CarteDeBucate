@@ -234,6 +234,39 @@ public class RecipesControllerTests
     }
 
     [Fact]
+    public async Task Print_WhenRecipeExists_ShouldReturnRecipe()
+    {
+        Recipe recipe = new Recipe { Id = 18, Name = "Recipe" };
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
+        {
+            RecipeToReturn = recipe
+        };
+        RecipesController controller = CreateController(recipeService);
+
+        IActionResult result = await controller.Print(18);
+
+        ViewResult viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Same(recipe, viewResult.Model);
+        Assert.True(recipeService.GetRecipeByIdWasCalled);
+        Assert.Equal(18, recipeService.RecipeIdPassedToGetRecipeById);
+    }
+
+    [Fact]
+    public async Task Print_WhenRecipeDoesNotExist_ShouldReturnFriendlyNotFoundView()
+    {
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService();
+        RecipesController controller = CreateController(recipeService);
+
+        IActionResult result = await controller.Print(19);
+
+        ViewResult viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Equal("NotFound", viewResult.ViewName);
+        Assert.Equal(StatusCodes.Status404NotFound, controller.Response.StatusCode);
+        Assert.True(recipeService.GetRecipeByIdWasCalled);
+        Assert.Equal(19, recipeService.RecipeIdPassedToGetRecipeById);
+    }
+
+    [Fact]
     public async Task Edit_WhenRecipeDoesNotExist_ShouldReturnFriendlyNotFoundView()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService();

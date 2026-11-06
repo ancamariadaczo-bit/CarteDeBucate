@@ -92,6 +92,19 @@ public class RecipesController : Controller
         return View(recipe);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> Print(int id)
+    {
+        Recipe? recipe = await _recipeLibraryService.GetRecipeByIdAsync(id);
+
+        if (recipe == null)
+        {
+            return RecipeNotFound();
+        }
+
+        return View(recipe);
+    }
+
     public IActionResult Create()
     {
         return View(new RecipeFormViewModel());
