@@ -579,6 +579,56 @@ public class AppServiceFactoryTests
     }
 
     [Fact]
+    public void CreateRecipeLibraryService_WithPhotoServiceAndNoCache_ShouldKeepCoordinator()
+    {
+        string rootPath = Path.Combine(
+            Path.GetTempPath(),
+            $"service-factory-tests-{Guid.NewGuid():N}");
+        string databasePath = Path.Combine(rootPath, "recipes.db");
+        string photosPath = Path.Combine(rootPath, "recipe-photos");
+        FakeRecipeRepository repository = new();
+        CurrentUserContext currentUserContext = new();
+        RecordingLoggerFactory loggerFactory = new();
+
+        try
+        {
+            IRecipePhotoService photoService =
+                AppServiceFactory.CreateDatabaseRecipePhotoService(
+                    databasePath,
+                    photosPath,
+                    repository,
+                    currentUserContext,
+                    loggerFactory);
+
+            IRecipeLibraryService service =
+                AppServiceFactory.CreateRecipeLibraryService(
+                    repository,
+                    null,
+                    currentUserContext,
+                    photoService,
+                    NullLogger<RecipeLibraryService>.Instance);
+
+            RecipeLibraryService concreteService =
+                Assert.IsType<RecipeLibraryService>(service);
+            Assert.Null(GetPrivateFieldValue(
+                concreteService,
+                "_recipeCacheService"));
+            Assert.Same(
+                photoService,
+                GetPrivateField<IRecipePhotoDeletionCoordinator>(
+                    concreteService,
+                    "_photoDeletionCoordinator"));
+        }
+        finally
+        {
+            if (Directory.Exists(rootPath))
+            {
+                Directory.Delete(rootPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public void CreateRecipeLibraryService_ShouldRemainWithoutPhotoDeletionCoordinator()
     {
         IRecipeLibraryService service =

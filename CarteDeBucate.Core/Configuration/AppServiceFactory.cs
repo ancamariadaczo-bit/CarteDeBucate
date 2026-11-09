@@ -204,13 +204,12 @@ public static class AppServiceFactory
 
     public static IRecipeLibraryService CreateRecipeLibraryService(
         IRecipeRepository recipeRepository,
-        IRecipeCacheService recipeCacheService,
+        IRecipeCacheService? recipeCacheService,
         ICurrentUserContext currentUserContext,
         IRecipePhotoService recipePhotoService,
         ILogger<RecipeLibraryService> logger)
     {
         ArgumentNullException.ThrowIfNull(recipeRepository);
-        ArgumentNullException.ThrowIfNull(recipeCacheService);
         ArgumentNullException.ThrowIfNull(currentUserContext);
         ArgumentNullException.ThrowIfNull(recipePhotoService);
         ArgumentNullException.ThrowIfNull(logger);

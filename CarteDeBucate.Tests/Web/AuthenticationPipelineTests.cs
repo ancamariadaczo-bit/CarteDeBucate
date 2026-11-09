@@ -22,6 +22,30 @@ public class AuthenticationPipelineTests
     }
 
     [Fact]
+    public void Services_WithoutRedisConnectionString_ShouldNotRegisterRecipeCache()
+    {
+        using IServiceScope scope = _factory.Services.CreateScope();
+
+        IRecipeCacheService? recipeCacheService =
+            scope.ServiceProvider.GetService<IRecipeCacheService>();
+
+        Assert.Null(recipeCacheService);
+    }
+
+    [Fact]
+    public void Services_WithRedisConnectionString_ShouldRegisterRecipeCache()
+    {
+        using AuthenticationApiWebApplicationFactory factory =
+            new("localhost:6379");
+        using IServiceScope scope = factory.Services.CreateScope();
+
+        IRecipeCacheService recipeCacheService =
+            scope.ServiceProvider.GetRequiredService<IRecipeCacheService>();
+
+        Assert.IsType<RedisRecipeCacheService>(recipeCacheService);
+    }
+
+    [Fact]
     public async Task CreateRecipe_WithoutToken_ShouldReturnUnauthorized()
     {
         using HttpClient client = CreateClient();
@@ -243,9 +267,16 @@ public sealed class AuthenticationApiWebApplicationFactory
     private const string TestJwtAudience = "RecipeClipper.IntegrationTests";
 
     private readonly string _temporaryDirectory;
+    private readonly string _redisConnectionString;
 
     public AuthenticationApiWebApplicationFactory()
+        : this(string.Empty)
     {
+    }
+
+    internal AuthenticationApiWebApplicationFactory(string redisConnectionString)
+    {
+        _redisConnectionString = redisConnectionString;
         _temporaryDirectory = Path.Combine(
             Path.GetTempPath(),
             "CarteDeBucate.AuthenticationPipelineTests",
@@ -315,6 +346,7 @@ public sealed class AuthenticationApiWebApplicationFactory
             ["Jwt:Issuer"] = TestJwtIssuer,
             ["Jwt:Audience"] = TestJwtAudience,
             ["Jwt:ExpirationMinutes"] = "30",
+            ["ConnectionStrings:Redis"] = _redisConnectionString,
             ["Cors:AllowedOrigins:0"] = AllowedExtensionOrigin,
             ["ChromeExtension:AuthenticationRedirectUrl"] =
                 "https://integration-test-extension-id.chromiumapp.org/authentication-callback"

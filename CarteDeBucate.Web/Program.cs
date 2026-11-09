@@ -143,19 +143,26 @@ builder.Services.AddScoped<IRecipePhotoReconciliationService>(
                 loggerFactory);
     });
 
-builder.Services.AddStackExchangeRedisCache(options =>
+string? redisConnectionString =
+    builder.Configuration.GetConnectionString("Redis");
+bool isRedisCacheEnabled = !string.IsNullOrWhiteSpace(redisConnectionString);
+
+if (isRedisCacheEnabled)
 {
-    options.Configuration = builder.Configuration.GetConnectionString("Redis");
-    options.InstanceName = "CarteDeBucate:";
-});
-builder.Services.AddScoped<IRecipeCacheService, RedisRecipeCacheService>();
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        options.Configuration = redisConnectionString;
+        options.InstanceName = "CarteDeBucate:";
+    });
+    builder.Services.AddScoped<IRecipeCacheService, RedisRecipeCacheService>();
+}
 
 builder.Services.AddScoped<IRecipeLibraryService>(serviceProvider =>
 {
     IRecipeRepository recipeRepository =
         serviceProvider.GetRequiredService<IRecipeRepository>();
-    IRecipeCacheService recipeCacheService =
-        serviceProvider.GetRequiredService<IRecipeCacheService>();
+    IRecipeCacheService? recipeCacheService =
+        serviceProvider.GetService<IRecipeCacheService>();
     ICurrentUserContext currentUserContext =
         serviceProvider.GetRequiredService<ICurrentUserContext>();
     ILogger<RecipeLibraryService> logger =
@@ -220,6 +227,9 @@ var app = builder.Build();
 app.Logger.LogInformation(
     "Application starting in {EnvironmentName} environment",
     app.Environment.EnvironmentName);
+app.Logger.LogInformation(
+    "Redis recipe cache is {RedisCacheStatus}",
+    isRedisCacheEnabled ? "enabled" : "disabled");
 
 try
 {

@@ -269,6 +269,22 @@ from the local key. The non-secret values are inherited from `appsettings.json`.
 Add Render overrides only when a production value genuinely differs from the
 shared value.
 
+#### Optional Redis recipe cache
+
+The web application runs without Redis by default. Recipe reads use SQLite
+directly when no Redis connection string is configured.
+
+To enable the recipe cache, configure this environment variable locally or in
+Render:
+
+```text
+ConnectionStrings__Redis=<redis-connection-string>
+```
+
+Do not set it to `localhost:6379` in Render unless Redis is running inside the
+same service. At startup, the application logs whether the Redis recipe cache is
+`enabled` or `disabled` without logging the connection string.
+
 #### Chrome extension ID
 
 Before local testing or a production release, read the extension ID from
