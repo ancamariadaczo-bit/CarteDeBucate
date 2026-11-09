@@ -7,6 +7,9 @@ internal static class RecipeExtractionConstants
     public const string JsonLdGraphProperty = "@graph";
     public const string RecipeType = "Recipe";
     public const string NameProperty = "name";
+    public const string ImageProperty = "image";
+    public const string UrlProperty = "url";
+    public const string ContentUrlProperty = "contentUrl";
     public const string RecipeIngredientProperty = "recipeIngredient";
     public const string RecipeInstructionsProperty = "recipeInstructions";
     public const string TextProperty = "text";

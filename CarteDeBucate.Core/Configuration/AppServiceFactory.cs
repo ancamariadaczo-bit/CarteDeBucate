@@ -202,6 +202,35 @@ public static class AppServiceFactory
             logger);
     }
 
+    public static IRecipeLibraryService CreateRecipeLibraryService(
+        IRecipeRepository recipeRepository,
+        IRecipeCacheService recipeCacheService,
+        ICurrentUserContext currentUserContext,
+        IRecipePhotoService recipePhotoService,
+        ILogger<RecipeLibraryService> logger)
+    {
+        ArgumentNullException.ThrowIfNull(recipeRepository);
+        ArgumentNullException.ThrowIfNull(recipeCacheService);
+        ArgumentNullException.ThrowIfNull(currentUserContext);
+        ArgumentNullException.ThrowIfNull(recipePhotoService);
+        ArgumentNullException.ThrowIfNull(logger);
+
+        if (recipePhotoService is not IRecipePhotoDeletionCoordinator
+            photoDeletionCoordinator)
+        {
+            throw new ArgumentException(
+                "The recipe photo service does not support coordinated deletion.",
+                nameof(recipePhotoService));
+        }
+
+        return new RecipeLibraryService(
+            recipeRepository,
+            recipeCacheService,
+            currentUserContext,
+            photoDeletionCoordinator,
+            logger);
+    }
+
     public static IRecipeLibraryService CreateDatabaseRecipeLibraryService(
         string databasePath,
         string recipePhotosPath,

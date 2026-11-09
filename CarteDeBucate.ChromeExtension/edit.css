@@ -216,6 +216,12 @@ button:disabled {
     color: #710000;
 }
 
+.save-status.warning {
+    background: #fff8e1;
+    border-color: #b8860b;
+    color: #5f4300;
+}
+
 @media (max-width: 600px) {
     .editor-header,
     main {

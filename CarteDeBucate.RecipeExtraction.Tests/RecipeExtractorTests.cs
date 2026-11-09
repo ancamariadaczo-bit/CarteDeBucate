@@ -112,6 +112,28 @@ public class RecipeExtractorTests
     }
 
     [Fact]
+    public void Extract_WhenTitleOnlyContainsImage_ReturnsImageUrl()
+    {
+        string html = """
+            <title>Title-Only Recipe</title>
+            <meta property="og:image" content="/images/title-only.jpg" />
+            <p>Ingredients</p>
+            """;
+        RecipeExtractor extractor = new RecipeExtractor();
+
+        RecipeExtractionResult result = extractor.Extract(
+            html,
+            SourceUrl,
+            allowTitleOnly: true);
+
+        Assert.True(result.Success);
+        Assert.NotNull(result.Recipe);
+        Assert.Equal(
+            "https://example.com/images/title-only.jpg",
+            result.Recipe.ImageUrl);
+    }
+
+    [Fact]
     public void Extract_WhenTitleOnlyIsNotAllowed_ReturnsNotRecipePage()
     {
         string html = """

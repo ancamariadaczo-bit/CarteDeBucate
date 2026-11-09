@@ -1,4 +1,5 @@
 using CarteDeBucate.Web.Models;
+using CarteDeBucate.Web.Services.Photos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -10,6 +11,8 @@ public class RecipesController : Controller
 {
     private const int PageSize = 10;
     private const string SuccessMessageKey = "SuccessMessage";
+    private const string ErrorMessageKey = "ErrorMessage";
+    private const string WarningMessageKey = "WarningMessage";
     private const string DeleteCancelActionKey = "DeleteCancelAction";
     private const string EditCancelActionKey = "EditCancelAction";
     private const string PageNumberKey = "PageNumber";
@@ -21,15 +24,21 @@ public class RecipesController : Controller
 
     private readonly IRecipeLibraryService _recipeLibraryService;
     private readonly IRecipeImporterService _recipeImporterService;
+    private readonly IRecipePhotoService _recipePhotoService;
+    private readonly IRecipePhotoUrlImporter _recipePhotoUrlImporter;
     private readonly ILogger<RecipesController> _logger;
 
     public RecipesController(
         IRecipeLibraryService recipeLibraryService,
         IRecipeImporterService recipeImporterService,
+        IRecipePhotoService recipePhotoService,
+        IRecipePhotoUrlImporter recipePhotoUrlImporter,
         ILogger<RecipesController> logger)
     {
         _recipeLibraryService = recipeLibraryService;
         _recipeImporterService = recipeImporterService;
+        _recipePhotoService = recipePhotoService;
+        _recipePhotoUrlImporter = recipePhotoUrlImporter;
         _logger = logger;
     }
 
@@ -61,9 +70,20 @@ public class RecipesController : Controller
                 });
         }
 
+        // The current page contains at most ten recipes. Photo metadata is
+        // intentionally loaded per recipe until Core exposes a bulk query.
+        List<RecipeIndexItemViewModel> items = recipes
+            .Select(recipe => new RecipeIndexItemViewModel
+            {
+                Recipe = recipe,
+                PrimaryPhotoId = GetPrimaryPhotoId(recipe.Id)
+            })
+            .ToList();
+
         return View(new RecipeIndexViewModel
         {
             Recipes = recipes,
+            Items = items,
             SearchText = searchText ?? "",
             PageNumber = pagedResult?.PageNumber ?? 1,
             PageSize = pagedResult?.PageSize ?? PageSize,
@@ -86,10 +106,16 @@ public class RecipesController : Controller
             return RecipeNotFound();
         }
 
+        IReadOnlyList<RecipePhotoInfo> photos = GetPhotosOrEmpty(id);
+
         SetPageNumber(pageNumber);
         SetSearchText(searchText);
 
-        return View(recipe);
+        return View(new RecipeDetailsViewModel
+        {
+            Recipe = recipe,
+            Photos = photos
+        });
     }
 
     [HttpGet]
@@ -102,7 +128,11 @@ public class RecipesController : Controller
             return RecipeNotFound();
         }
 
-        return View(recipe);
+        return View(new RecipePrintViewModel
+        {
+            Recipe = recipe,
+            PrimaryPhotoId = GetPrimaryPhotoId(id)
+        });
     }
 
     public IActionResult Create()
@@ -112,7 +142,9 @@ public class RecipesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Create(RecipeFormViewModel model)
+    public async Task<IActionResult> Create(
+        RecipeFormViewModel model,
+        CancellationToken cancellationToken = default)
     {
         if (!ModelState.IsValid)
         {
@@ -138,6 +170,26 @@ public class RecipesController : Controller
 
         TempData[SuccessMessageKey] = result.Message;
 
+        if (model.Photo != null)
+        {
+            await using Stream content = model.Photo.OpenReadStream();
+            RecipePhotoResult photoResult =
+                await _recipePhotoService.AddPhotoAsync(
+                    result.Recipe.Id,
+                    content,
+                    model.Photo.FileName,
+                    model.Photo.ContentType,
+                    model.Photo.Length,
+                    RecipePhotoOrigin.UserUpload,
+                    cancellationToken);
+
+            if (!photoResult.IsSuccess)
+            {
+                TempData[ErrorMessageKey] =
+                    $"Rețeta a fost salvată, dar fotografia nu a putut fi adăugată. {GetPhotoFailureMessage(photoResult)}";
+            }
+        }
+
         return RedirectToAction(
             nameof(Details),
             new { id = result.Recipe.Id });
@@ -156,11 +208,14 @@ public class RecipesController : Controller
             return RecipeNotFound();
         }
 
+        RecipeFormViewModel model = RecipeFormViewModel.FromRecipe(recipe);
+        model.Photos = GetPhotosOrEmpty(id);
+
         SetEditCancelAction(returnTo);
         SetPageNumber(pageNumber);
         SetSearchText(searchText);
 
-        return View(RecipeFormViewModel.FromRecipe(recipe));
+        return View(model);
     }
 
     [HttpPost]
@@ -179,6 +234,7 @@ public class RecipesController : Controller
 
         if (!ModelState.IsValid)
         {
+            model.Photos = GetPhotosOrEmpty(id);
             SetEditCancelAction(returnTo);
             SetPageNumber(pageNumber);
             SetSearchText(searchText);
@@ -191,6 +247,7 @@ public class RecipesController : Controller
         if (!result.IsSuccess)
         {
             ModelState.AddModelError("", result.Message);
+            model.Photos = GetPhotosOrEmpty(id);
             SetEditCancelAction(returnTo);
             SetPageNumber(pageNumber);
             SetSearchText(searchText);
@@ -215,6 +272,83 @@ public class RecipesController : Controller
                 pageNumber,
                 searchText
             });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddPhoto(
+        RecipePhotoUploadViewModel model,
+        string? returnTo = null,
+        int pageNumber = 1,
+        string? searchText = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (model.Photo == null || model.Photo.Length == 0)
+        {
+            TempData[ErrorMessageKey] = "Selectează o fotografie pentru încărcare.";
+
+            return RedirectToEdit(
+                model.RecipeId,
+                returnTo,
+                pageNumber,
+                searchText);
+        }
+
+        await using Stream content = model.Photo.OpenReadStream();
+        RecipePhotoResult result = await _recipePhotoService.AddPhotoAsync(
+            model.RecipeId,
+            content,
+            model.Photo.FileName,
+            model.Photo.ContentType,
+            model.Photo.Length,
+            RecipePhotoOrigin.UserUpload,
+            cancellationToken);
+
+        if (result.IsSuccess)
+        {
+            TempData[SuccessMessageKey] = result.Message;
+        }
+        else
+        {
+            TempData[ErrorMessageKey] = GetPhotoFailureMessage(result);
+        }
+
+        return RedirectToEdit(
+            model.RecipeId,
+            returnTo,
+            pageNumber,
+            searchText);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult DeletePhoto(
+        int recipeId,
+        int photoId,
+        string? returnTo = null,
+        int pageNumber = 1,
+        string? searchText = null)
+    {
+        RecipePhotoResult result = _recipePhotoService.DeletePhoto(photoId);
+
+        if (result.IsSuccess && result.Code == RecipePhotoResultCode.Success)
+        {
+            TempData[SuccessMessageKey] = result.Message;
+        }
+        else if (result.IsSuccess)
+        {
+            TempData[WarningMessageKey] = result.Message;
+        }
+        else
+        {
+            TempData[ErrorMessageKey] = GetPhotoFailureMessage(result);
+        }
+
+        return RedirectToEdit(
+            recipeId,
+            returnTo,
+            pageNumber,
+            searchText);
     }
 
     public async Task<IActionResult> Delete(
@@ -324,7 +458,9 @@ public class RecipesController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Import(string? url)
+    public async Task<IActionResult> Import(
+        string? url,
+        CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Recipe URL import started");
 
@@ -397,8 +533,32 @@ public class RecipesController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        TempData[SuccessMessageKey] =
-            "Rețeta a fost importată. Verifică informațiile și editează-le dacă este nevoie.";
+        if (string.IsNullOrWhiteSpace(importResult.ImageUrl))
+        {
+            TempData[SuccessMessageKey] =
+                "Rețeta a fost importată. Verifică informațiile și editează-le dacă este nevoie.";
+        }
+        else
+        {
+            RecipePhotoUrlImportResult photoResult =
+                await _recipePhotoUrlImporter.ImportAsync(
+                    result.Recipe.Id,
+                    importResult.ImageUrl,
+                    cancellationToken);
+
+            if (photoResult.IsSuccess)
+            {
+                TempData[SuccessMessageKey] =
+                    "Rețeta și fotografia au fost importate. Verifică informațiile și editează-le dacă este nevoie.";
+            }
+            else
+            {
+                TempData[SuccessMessageKey] =
+                    "Rețeta a fost importată. Verifică informațiile și editează-le dacă este nevoie.";
+                TempData[WarningMessageKey] =
+                    $"Fotografia nu a putut fi copiată. {photoResult.Message}";
+            }
+        }
 
         _logger.LogInformation(
             "Recipe URL import completed successfully. Recipe identifier: {RecipeId}",
@@ -413,5 +573,65 @@ public class RecipesController : Controller
     {
         return message.Contains(global::AppTexts.RecipeIngredientsRequired)
             || message.Contains(global::AppTexts.RecipeStepsRequired);
+    }
+
+    private IReadOnlyList<RecipePhotoInfo> GetPhotosOrEmpty(int recipeId)
+    {
+        RecipePhotosResult result =
+            _recipePhotoService.GetPhotosForRecipe(recipeId);
+
+        if (result.IsSuccess)
+        {
+            return result.Photos;
+        }
+
+        _logger.LogWarning(
+            "Could not load photos for recipe {RecipeId}. Result code: {ResultCode}. Reason: {FailureReason}",
+            recipeId,
+            result.Code,
+            result.Message);
+
+        return Array.Empty<RecipePhotoInfo>();
+    }
+
+    private int? GetPrimaryPhotoId(int recipeId)
+    {
+        return GetPhotosOrEmpty(recipeId).FirstOrDefault()?.Id;
+    }
+
+    private IActionResult RedirectToEdit(
+        int recipeId,
+        string? returnTo,
+        int pageNumber,
+        string? searchText)
+    {
+        return RedirectToAction(
+            nameof(Edit),
+            new
+            {
+                id = recipeId,
+                returnTo,
+                pageNumber,
+                searchText
+            });
+    }
+
+    private static string GetPhotoFailureMessage(RecipePhotoResult result)
+    {
+        return result.Code switch
+        {
+            RecipePhotoResultCode.PhotoLimitReached =>
+                "O rețetă poate avea maximum 20 de fotografii.",
+            RecipePhotoResultCode.UnsupportedFormat or
+            RecipePhotoResultCode.InvalidContent =>
+                "Fotografia trebuie să fie un fișier JPEG, PNG sau WebP valid.",
+            RecipePhotoResultCode.FileTooLarge =>
+                "Fotografia depășește limita de 10 MiB.",
+            RecipePhotoResultCode.RecipeNotFound or
+            RecipePhotoResultCode.PhotoNotFound or
+            RecipePhotoResultCode.InvalidRecipeId =>
+                "Rețeta sau fotografia nu mai există.",
+            _ => "Fotografia nu a putut fi procesată. Încearcă din nou."
+        };
     }
 }

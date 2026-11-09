@@ -735,12 +735,21 @@ test("Save to Cookbook disables immediately, prevents parallel requests, and sta
         }));
         assert.equal(context.calls.cookbookRequests.length, 1);
 
-        completeSave({ recipeId: 42 });
+        completeSave({
+            recipeId: 42,
+            photo: {
+                status: "NotProvided",
+                message: "No photo provided."
+            }
+        });
         await flushAsyncWork();
 
         assert.equal(saveButton.disabled, true);
         assert.equal(saveButton.textContent.trim(), "Save to Cookbook");
-        assert.equal(saveStatus.textContent, "Recipe saved successfully.");
+        assert.equal(
+            saveStatus.textContent,
+            "Recipe saved successfully without a photo."
+        );
         assert.equal(saveStatus.classList.contains("success"), true);
         assert.equal(context.document.getElementById("printButton").disabled, false);
         assert.equal(context.document.getElementById("cancelButton").disabled, false);
@@ -773,6 +782,38 @@ test("Save to Cookbook re-enables after an API error and displays its reason", a
         assert.equal(saveStatus.classList.contains("error"), true);
         assert.deepEqual(context.calls.errors, [saveError]);
         assert.equal(context.document.getElementById("printButton").disabled, false);
+    } finally {
+        context.cleanup();
+    }
+});
+
+test("Save to Cookbook treats a failed photo copy as partial success", async () => {
+    const context = await setupEditor({
+        initialIsAuthenticated: true,
+        saveRecipeToApi: async () => ({
+            recipeId: 42,
+            photo: {
+                status: "Failed",
+                message: "Photo download failed."
+            }
+        })
+    });
+
+    try {
+        const saveButton = context.document.getElementById("saveButton");
+        const saveStatus = context.document.getElementById("saveStatus");
+
+        await clickAndFlush(saveButton);
+
+        assert.equal(
+            saveStatus.textContent,
+            "Recipe saved, but the photo could not be copied. You can add it later from Web Edit."
+        );
+        assert.equal(saveStatus.classList.contains("error"), false);
+        assert.equal(saveStatus.classList.contains("warning"), true);
+        assert.equal(saveButton.disabled, true);
+        assert.equal(context.calls.errors.length, 1);
+        assert.equal(context.calls.errors[0].message, "Photo download failed.");
     } finally {
         context.cleanup();
     }

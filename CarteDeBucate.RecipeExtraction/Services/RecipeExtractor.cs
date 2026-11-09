@@ -47,7 +47,10 @@ public class RecipeExtractor : IRecipeExtractor
                 ExtractedRecipe titleOnlyRecipe = new ExtractedRecipe
                 {
                     Name = title,
-                    SourceUrl = normalizedUrl
+                    SourceUrl = normalizedUrl,
+                    ImageUrl = RecipeHtmlExtractor.ExtractImageUrl(
+                        html,
+                        normalizedUrl)
                 };
 
                 if (pageDetector.LooksLikeRecipePage(html, normalizedUrl, titleOnlyRecipe))

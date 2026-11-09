@@ -203,7 +203,11 @@ test("saveRecipeToApi sends the recipe to the recipes API and returns its respon
     const accessToken = "test-access-token";
     const apiResponse = {
         message: "Recipe saved successfully.",
-        id: 42
+        recipeId: 42,
+        photo: {
+            status: "Saved",
+            message: "The recipe photo was saved."
+        }
     };
     const fetchRequest = async (...request) => {
         requests.push(request);
@@ -229,11 +233,113 @@ test("saveRecipeToApi sends the recipe to the recipes API and returns its respon
                 name: recipe.name,
                 sourceUrl: recipe.sourceUrl,
                 ingredients: recipe.ingredients,
-                steps: recipe.steps
+                steps: recipe.steps,
+                imageUrl: recipe.imageUrl
             })
         }
     ]]);
     assert.deepEqual(result, apiResponse);
+});
+
+test("saveRecipeToApi sends null when the recipe has no image URL", async () => {
+    const requests = [];
+    const recipeWithoutImage = { ...recipe, imageUrl: undefined };
+    const fetchRequest = async (...request) => {
+        requests.push(request);
+
+        return {
+            ok: true,
+            status: 201,
+            json: async () => ({
+                message: "Recipe saved successfully.",
+                recipeId: 42,
+                photo: {
+                    status: "NotProvided",
+                    message: "No recipe photo was provided."
+                }
+            })
+        };
+    };
+
+    const result = await saveRecipeToApi(
+        recipeWithoutImage,
+        "test-access-token",
+        fetchRequest
+    );
+
+    const requestBody = JSON.parse(requests[0][1].body);
+    assert.equal(requestBody.imageUrl, null);
+    assert.equal(result.photo.status, "NotProvided");
+});
+
+test("saveRecipeToApi preserves a failed photo result after recipe creation", async () => {
+    const fetchRequest = async () => ({
+        ok: true,
+        status: 201,
+        json: async () => ({
+            message: "Recipe saved successfully.",
+            recipeId: 42,
+            photo: {
+                status: "Failed",
+                message: "The photo could not be downloaded."
+            }
+        })
+    });
+
+    const result = await saveRecipeToApi(
+        recipe,
+        "test-access-token",
+        fetchRequest
+    );
+
+    assert.equal(result.photo.status, "Failed");
+});
+
+test("saveRecipeToApi treats a legacy response with an image as partial success", async () => {
+    const fetchRequest = async () => ({
+        ok: true,
+        status: 201,
+        json: async () => ({
+            message: "Recipe saved successfully.",
+            recipeId: 42
+        })
+    });
+
+    const result = await saveRecipeToApi(
+        recipe,
+        "test-access-token",
+        fetchRequest
+    );
+
+    assert.equal(result.recipeId, 42);
+    assert.deepEqual(result.photo, {
+        status: "Failed",
+        message: "The recipe was saved, but the server did not report a recipe photo result."
+    });
+});
+
+test("saveRecipeToApi treats a legacy response without an image as saved without a photo", async () => {
+    const recipeWithoutImage = { ...recipe, imageUrl: undefined };
+    const fetchRequest = async () => ({
+        ok: true,
+        status: 201,
+        json: async () => ({
+            message: "Recipe saved successfully.",
+            recipeId: 42
+        })
+    });
+
+    const result = await saveRecipeToApi(
+        recipeWithoutImage,
+        "test-access-token",
+        fetchRequest
+    );
+
+    assert.equal(result.recipeId, 42);
+    assert.deepEqual(result.photo, {
+        status: "NotProvided",
+        message: "No recipe photo was provided."
+    });
 });
 
 test("saveRecipeToApi uses the API message when the request fails", async () => {

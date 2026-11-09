@@ -46,6 +46,7 @@ public class RecipeHtmlExtractor
         {
             Name = string.IsNullOrWhiteSpace(title) ? "" : title,
             SourceUrl = url.Trim(),
+            ImageUrl = ExtractImageUrl(document, url),
             Ingredients = ingredients,
             Steps = steps
         };
@@ -74,6 +75,78 @@ public class RecipeHtmlExtractor
         title = Regex.Replace(title, @"\s+", " ").Trim();
 
         return title;
+    }
+
+    /// <summary>
+    /// Extracts the first valid recipe image URL using common HTML metadata.
+    /// </summary>
+    public static string? ExtractImageUrl(string html, string url)
+    {
+        HtmlDocument document = new HtmlDocument();
+        document.LoadHtml(html);
+
+        return ExtractImageUrl(document, url);
+    }
+
+    private static string? ExtractImageUrl(HtmlDocument document, string url)
+    {
+        string upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        string lower = "abcdefghijklmnopqrstuvwxyz";
+        string[] selectors =
+        {
+            $"//meta[translate(@property,'{upper}','{lower}')='og:image']",
+            $"//meta[translate(@name,'{upper}','{lower}')='twitter:image']",
+            "//*[@itemprop='image']",
+            "//article//img"
+        };
+
+        foreach (string selector in selectors)
+        {
+            HtmlNodeCollection? nodes =
+                document.DocumentNode.SelectNodes(selector);
+
+            if (nodes == null)
+            {
+                continue;
+            }
+
+            foreach (HtmlNode node in nodes)
+            {
+                string? candidate = GetImageCandidate(node);
+                string? normalized =
+                    RecipeImageUrlNormalizer.Normalize(candidate, url);
+
+                if (normalized != null)
+                {
+                    return normalized;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static string? GetImageCandidate(HtmlNode node)
+    {
+        foreach (string attributeName in new[] { "content", "src", "href" })
+        {
+            string? value = node.GetAttributeValue(attributeName, null);
+
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                return HtmlEntity.DeEntitize(value);
+            }
+        }
+
+        HtmlNode? nestedCandidate = node.SelectSingleNode(
+            ".//*[@content or @src or @href]");
+
+        if (nestedCandidate != null)
+        {
+            return GetImageCandidate(nestedCandidate);
+        }
+
+        return null;
     }
 
     private static string ExtractMainTitle(HtmlDocument document)

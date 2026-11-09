@@ -259,7 +259,16 @@ test("renders a successful extraction with title, links, image, ingredients, and
 test("enables all recipe actions after an authenticated extraction", async () => {
     const context = await setupSidePanel(
         async () => ({ success: true, recipe }),
-        { initialIsAuthenticated: true }
+        {
+            initialIsAuthenticated: true,
+            saveRecipeToApi: async () => ({
+                recipeId: 42,
+                photo: {
+                    status: "Saved",
+                    message: "Photo saved."
+                }
+            })
+        }
     );
 
     try {
@@ -708,10 +717,49 @@ test("shows a green status panel after a successful Cookbook save", async () => 
 
         const saveStatus = context.document.getElementById("saveStatus");
 
-        assert.equal(saveStatus.textContent, "Recipe saved successfully.");
+        assert.equal(
+            saveStatus.textContent,
+            "Recipe and photo saved successfully."
+        );
         assert.equal(saveStatus.classList.contains("success"), true);
         assert.equal(saveStatus.classList.contains("error"), false);
         assert.equal(context.document.getElementById("saveButton").disabled, true);
+    } finally {
+        context.cleanup();
+    }
+});
+
+test("shows partial success and prevents retry when only the photo fails", async () => {
+    const reportedErrors = [];
+    const context = await setupSidePanel(
+        async () => ({ success: true, recipe }),
+        {
+            initialIsAuthenticated: true,
+            saveRecipeToApi: async () => ({
+                recipeId: 42,
+                photo: {
+                    status: "Failed",
+                    message: "Photo download failed."
+                }
+            }),
+            reportError: error => reportedErrors.push(error)
+        }
+    );
+
+    try {
+        await requestExtraction(context);
+        await clickAndFlush(context.document.getElementById("saveButton"));
+
+        const saveStatus = context.document.getElementById("saveStatus");
+        assert.equal(
+            saveStatus.textContent,
+            "Recipe saved, but the photo could not be copied. You can add it later from Web Edit."
+        );
+        assert.equal(saveStatus.classList.contains("error"), false);
+        assert.equal(saveStatus.classList.contains("warning"), true);
+        assert.equal(context.document.getElementById("saveButton").disabled, true);
+        assert.equal(reportedErrors.length, 1);
+        assert.equal(reportedErrors[0].message, "Photo download failed.");
     } finally {
         context.cleanup();
     }

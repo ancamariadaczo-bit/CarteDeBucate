@@ -5,6 +5,33 @@ public class RecipeJsonLdExtractorTests
 {
     private const string SourceUrl = "https://example.com/recipes/test-recipe";
 
+    [Theory]
+    [InlineData("\"/images/recipe.jpg\"")]
+    [InlineData("{ \"url\": \"/images/recipe.jpg\" }")]
+    [InlineData("{ \"contentUrl\": \"/images/recipe.jpg\" }")]
+    [InlineData("[\"javascript:alert(1)\", \"/images/recipe.jpg\"]")]
+    public void TryExtract_WithSupportedImageShape_ReturnsNormalizedImageUrl(
+        string imageJson)
+    {
+        string html = $$"""
+            <script type="application/ld+json">
+            {
+                "@type": "Recipe",
+                "name": "Recipe with image",
+                "image": {{imageJson}}
+            }
+            </script>
+            """;
+        RecipeJsonLdExtractor extractor = new RecipeJsonLdExtractor();
+
+        ExtractedRecipe? recipe = extractor.TryExtract(html, SourceUrl);
+
+        Assert.NotNull(recipe);
+        Assert.Equal(
+            "https://example.com/images/recipe.jpg",
+            recipe.ImageUrl);
+    }
+
     [Fact]
     public void TryExtract_WhenRecipeIsAtDocumentRoot_ReturnsRecipe()
     {

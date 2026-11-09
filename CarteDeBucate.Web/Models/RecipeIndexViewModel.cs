@@ -4,6 +4,8 @@ public class RecipeIndexViewModel
 {
     public List<RecipeSummary> Recipes { get; set; } = new();
 
+    public List<RecipeIndexItemViewModel> Items { get; set; } = new();
+
     public string SearchText { get; set; } = "";
 
     public int PageNumber { get; set; } = 1;

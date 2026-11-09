@@ -17,6 +17,11 @@ public class ExtractedRecipe
     public string SourceUrl { get; set; } = "";
 
     /// <summary>
+    /// Gets or sets the first valid external image URL found for the recipe.
+    /// </summary>
+    public string? ImageUrl { get; set; }
+
+    /// <summary>
     /// Gets or sets the extracted ingredient descriptions.
     /// </summary>
     public List<string> Ingredients { get; set; } = new();

@@ -6,6 +6,47 @@ public class RecipeHtmlExtractorTests
     private const string SourceUrl = "https://example.com/recipes/visible-recipe";
 
     [Fact]
+    public void TryExtract_WithMultipleImageCandidates_UsesOpenGraphImageFirst()
+    {
+        string html = """
+            <meta property="og:image" content="/images/open-graph.jpg" />
+            <meta name="twitter:image" content="/images/twitter.jpg" />
+            <h1>Recipe with image</h1>
+            <h2>Ingredients</h2>
+            <ul><li>One ingredient</li></ul>
+            <article><img src="/images/article.jpg" /></article>
+            """;
+        RecipeHtmlExtractor extractor = new RecipeHtmlExtractor();
+
+        ExtractedRecipe? recipe = extractor.TryExtract(html, SourceUrl);
+
+        Assert.NotNull(recipe);
+        Assert.Equal(
+            "https://example.com/images/open-graph.jpg",
+            recipe.ImageUrl);
+    }
+
+    [Fact]
+    public void TryExtract_WithInvalidOpenGraphImage_UsesTwitterImage()
+    {
+        string html = """
+            <meta property="og:image" content="javascript:alert(1)" />
+            <meta name="twitter:image" content="https://cdn.example.com/twitter.jpg" />
+            <h1>Recipe with image</h1>
+            <h2>Ingredients</h2>
+            <ul><li>One ingredient</li></ul>
+            """;
+        RecipeHtmlExtractor extractor = new RecipeHtmlExtractor();
+
+        ExtractedRecipe? recipe = extractor.TryExtract(html, SourceUrl);
+
+        Assert.NotNull(recipe);
+        Assert.Equal(
+            "https://cdn.example.com/twitter.jpg",
+            recipe.ImageUrl);
+    }
+
+    [Fact]
     public void TryExtract_WhenH1Exists_UsesH1AsTitle()
     {
         string html = """

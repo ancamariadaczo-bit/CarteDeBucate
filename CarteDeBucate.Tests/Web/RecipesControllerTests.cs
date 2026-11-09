@@ -40,6 +40,9 @@ public class RecipesControllerTests
         Assert.Equal(10, recipeService.PageSizePassedToGetRecipeSummariesPage);
         Assert.False(recipeService.GetRecipeSummariesWasCalled);
         Assert.False(recipeService.SearchRecipesWasCalled);
+        Assert.Single(model.Items);
+        Assert.Same(recipes[0], model.Items[0].Recipe);
+        Assert.Null(model.Items[0].PrimaryPhotoId);
     }
 
     [Fact]
@@ -204,7 +207,8 @@ public class RecipesControllerTests
     public async Task Details_WhenRecipeDoesNotExist_ShouldReturnFriendlyNotFoundView()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService();
-        RecipesController controller = CreateController(recipeService);
+        FakeRecipePhotoService photoService = new FakeRecipePhotoService();
+        RecipesController controller = CreateController(recipeService, photoService);
 
         IActionResult result = await controller.Details(17);
 
@@ -213,6 +217,7 @@ public class RecipesControllerTests
         Assert.Equal(StatusCodes.Status404NotFound, controller.Response.StatusCode);
         Assert.True(recipeService.GetRecipeByIdWasCalled);
         Assert.Equal(17, recipeService.RecipeIdPassedToGetRecipeById);
+        Assert.False(photoService.GetPhotosForRecipeWasCalled);
     }
 
     [Fact]
@@ -223,14 +228,89 @@ public class RecipesControllerTests
         {
             RecipeToReturn = recipe
         };
-        RecipesController controller = CreateController(recipeService);
+        FakeRecipePhotoService photoService = new FakeRecipePhotoService();
+        RecipesController controller = CreateController(recipeService, photoService);
 
         IActionResult result = await controller.Details(17, pageNumber: 3, searchText: "supa");
 
         ViewResult viewResult = Assert.IsType<ViewResult>(result);
-        Assert.Same(recipe, viewResult.Model);
+        RecipeDetailsViewModel model =
+            Assert.IsType<RecipeDetailsViewModel>(viewResult.Model);
+        Assert.Same(recipe, model.Recipe);
+        Assert.Empty(model.Photos);
         Assert.Equal(3, controller.ViewData["PageNumber"]);
         Assert.Equal("supa", controller.ViewData["SearchText"]);
+        Assert.True(photoService.GetPhotosForRecipeWasCalled);
+        Assert.Equal(17, photoService.RecipeIdPassedToGetPhotos);
+    }
+
+    [Fact]
+    public async Task Details_WhenPhotosExist_ShouldPreserveServiceOrder()
+    {
+        Recipe recipe = new Recipe { Id = 17, Name = "Recipe" };
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
+        {
+            RecipeToReturn = recipe
+        };
+        FakeRecipePhotoService photoService = new FakeRecipePhotoService
+        {
+            GetPhotosResultToReturn = RecipePhotosResult.Success(
+                [
+                    new RecipePhotoInfo
+                    {
+                        Id = 22,
+                        RecipeId = 17,
+                        OriginalFileName = "second.jpg",
+                        DisplayOrder = 1
+                    },
+                    new RecipePhotoInfo
+                    {
+                        Id = 11,
+                        RecipeId = 17,
+                        OriginalFileName = "first.jpg",
+                        DisplayOrder = 0
+                    }
+                ],
+                "Photos loaded.")
+        };
+        RecipesController controller = CreateController(recipeService, photoService);
+
+        IActionResult result = await controller.Details(17);
+
+        ViewResult viewResult = Assert.IsType<ViewResult>(result);
+        RecipeDetailsViewModel model =
+            Assert.IsType<RecipeDetailsViewModel>(viewResult.Model);
+        Assert.Same(recipe, model.Recipe);
+        Assert.Equal([22, 11], model.Photos.Select(photo => photo.Id));
+        Assert.True(photoService.GetPhotosForRecipeWasCalled);
+        Assert.Equal(17, photoService.RecipeIdPassedToGetPhotos);
+    }
+
+    [Fact]
+    public async Task Details_WhenPhotosCannotBeLoaded_ShouldShowRecipeWithoutPhotos()
+    {
+        Recipe recipe = new Recipe { Id = 17, Name = "Recipe" };
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
+        {
+            RecipeToReturn = recipe
+        };
+        FakeRecipePhotoService photoService = new FakeRecipePhotoService
+        {
+            GetPhotosResultToReturn = RecipePhotosResult.Failure(
+                RecipePhotoResultCode.StorageFailure,
+                "Storage failed.")
+        };
+        RecipesController controller = CreateController(recipeService, photoService);
+
+        IActionResult result = await controller.Details(17);
+
+        ViewResult viewResult = Assert.IsType<ViewResult>(result);
+        RecipeDetailsViewModel model =
+            Assert.IsType<RecipeDetailsViewModel>(viewResult.Model);
+        Assert.Same(recipe, model.Recipe);
+        Assert.Empty(model.Photos);
+        Assert.True(photoService.GetPhotosForRecipeWasCalled);
+        Assert.Equal(17, photoService.RecipeIdPassedToGetPhotos);
     }
 
     [Fact]
@@ -246,9 +326,39 @@ public class RecipesControllerTests
         IActionResult result = await controller.Print(18);
 
         ViewResult viewResult = Assert.IsType<ViewResult>(result);
-        Assert.Same(recipe, viewResult.Model);
+        RecipePrintViewModel model =
+            Assert.IsType<RecipePrintViewModel>(viewResult.Model);
+        Assert.Same(recipe, model.Recipe);
+        Assert.Null(model.PrimaryPhotoId);
         Assert.True(recipeService.GetRecipeByIdWasCalled);
         Assert.Equal(18, recipeService.RecipeIdPassedToGetRecipeById);
+    }
+
+    [Fact]
+    public async Task Print_WhenPhotosExist_ShouldUseFirstPhotoReturnedByService()
+    {
+        Recipe recipe = new Recipe { Id = 18, Name = "Recipe" };
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
+        {
+            RecipeToReturn = recipe
+        };
+        FakeRecipePhotoService photoService = new FakeRecipePhotoService
+        {
+            GetPhotosResultToReturn = RecipePhotosResult.Success(
+                [
+                    new RecipePhotoInfo { Id = 8, RecipeId = 18 },
+                    new RecipePhotoInfo { Id = 9, RecipeId = 18 }
+                ],
+                "Loaded.")
+        };
+        RecipesController controller = CreateController(recipeService, photoService);
+
+        IActionResult result = await controller.Print(18);
+
+        ViewResult viewResult = Assert.IsType<ViewResult>(result);
+        RecipePrintViewModel model =
+            Assert.IsType<RecipePrintViewModel>(viewResult.Model);
+        Assert.Equal(8, model.PrimaryPhotoId);
     }
 
     [Fact]
@@ -422,7 +532,7 @@ public class RecipesControllerTests
     }
 
     [Fact]
-    public void CreatePost_WhenSaveSucceeds_ShouldRedirectToSavedRecipeDetails()
+    public async Task CreatePost_WhenSaveSucceeds_ShouldRedirectToSavedRecipeDetails()
     {
         Recipe savedRecipe = new Recipe { Id = 41 };
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
@@ -432,7 +542,7 @@ public class RecipesControllerTests
         RecipesController controller = CreateController(recipeService);
         RecipeFormViewModel model = CreateValidModel();
 
-        IActionResult result = controller.Create(model);
+        IActionResult result = await controller.Create(model);
 
         RedirectToActionResult redirectResult =
             Assert.IsType<RedirectToActionResult>(result);
@@ -443,7 +553,81 @@ public class RecipesControllerTests
     }
 
     [Fact]
-    public void CreatePost_WhenSuccessfulResultHasNoRecipe_ShouldRedirectToIndex()
+    public async Task CreatePost_WithPhoto_ShouldSaveUserUploadAfterRecipe()
+    {
+        Recipe savedRecipe = new Recipe { Id = 41 };
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
+        {
+            SaveResultToReturn = RecipeSaveResult.Success("Saved.", savedRecipe)
+        };
+        FakeRecipePhotoService photoService = new FakeRecipePhotoService();
+        RecipesController controller = CreateController(recipeService, photoService);
+        RecipeFormViewModel model = CreateValidModel();
+        model.Photo = CreatePhotoFormFile("recipe.jpg", "image/jpeg");
+
+        IActionResult result = await controller.Create(model);
+
+        Assert.IsType<RedirectToActionResult>(result);
+        Assert.True(photoService.AddPhotoAsyncWasCalled);
+        Assert.Equal(41, photoService.RecipeIdPassedToAddPhoto);
+        Assert.Equal(RecipePhotoOrigin.UserUpload, photoService.OriginPassedToAddPhoto);
+        Assert.Equal("recipe.jpg", photoService.OriginalFileNamePassedToAddPhoto);
+        Assert.Equal("image/jpeg", photoService.DeclaredContentTypePassedToAddPhoto);
+    }
+
+    [Fact]
+    public async Task AddPhoto_WhenServiceFails_ShouldRedirectWithControlledMessage()
+    {
+        FakeRecipePhotoService photoService = new FakeRecipePhotoService
+        {
+            AddPhotoResultToReturn = RecipePhotoResult.Failure(
+                RecipePhotoResultCode.PhotoLimitReached,
+                "Limit reached.")
+        };
+        RecipesController controller = CreateController(
+            new FakeRecipeLibraryService(),
+            photoService);
+        RecipePhotoUploadViewModel model = new()
+        {
+            RecipeId = 41,
+            Photo = CreatePhotoFormFile("recipe.jpg", "image/jpeg")
+        };
+
+        IActionResult result = await controller.AddPhoto(model);
+
+        RedirectToActionResult redirect =
+            Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(nameof(RecipesController.Edit), redirect.ActionName);
+        Assert.Equal(41, redirect.RouteValues?["id"]);
+        Assert.Equal(
+            "O rețetă poate avea maximum 20 de fotografii.",
+            controller.TempData["ErrorMessage"]);
+    }
+
+    [Fact]
+    public void DeletePhoto_WithCleanupWarning_ShouldRedirectWithWarning()
+    {
+        FakeRecipePhotoService photoService = new FakeRecipePhotoService
+        {
+            DeletePhotoResultToReturn = RecipePhotoResult.SuccessWithWarning(
+                RecipePhotoResultCode.CleanupPending,
+                "Cleanup pending.")
+        };
+        RecipesController controller = CreateController(
+            new FakeRecipeLibraryService(),
+            photoService);
+
+        IActionResult result = controller.DeletePhoto(41, 7);
+
+        RedirectToActionResult redirect =
+            Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(nameof(RecipesController.Edit), redirect.ActionName);
+        Assert.Equal("Cleanup pending.", controller.TempData["WarningMessage"]);
+        Assert.Equal(7, photoService.PhotoIdPassedToDelete);
+    }
+
+    [Fact]
+    public async Task CreatePost_WhenSuccessfulResultHasNoRecipe_ShouldRedirectToIndex()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
@@ -452,7 +636,7 @@ public class RecipesControllerTests
         RecipesController controller = CreateController(recipeService);
         RecipeFormViewModel model = CreateValidModel();
 
-        IActionResult result = controller.Create(model);
+        IActionResult result = await controller.Create(model);
 
         RedirectToActionResult redirectResult =
             Assert.IsType<RedirectToActionResult>(result);
@@ -464,7 +648,7 @@ public class RecipesControllerTests
     }
 
     [Fact]
-    public void CreatePost_WhenSaveFails_ShouldKeepBusinessErrorAndEnteredValues()
+    public async Task CreatePost_WhenSaveFails_ShouldKeepBusinessErrorAndEnteredValues()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
@@ -473,7 +657,7 @@ public class RecipesControllerTests
         RecipesController controller = CreateController(recipeService);
         RecipeFormViewModel model = CreateValidModel();
 
-        IActionResult result = controller.Create(model);
+        IActionResult result = await controller.Create(model);
 
         ViewResult viewResult = Assert.IsType<ViewResult>(result);
         Assert.Same(model, viewResult.Model);
@@ -484,7 +668,7 @@ public class RecipesControllerTests
     }
 
     [Fact]
-    public void CreatePost_WhenModelStateIsInvalid_ShouldNotCallService()
+    public async Task CreatePost_WhenModelStateIsInvalid_ShouldNotCallService()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService();
         RecipesController controller = CreateController(recipeService);
@@ -493,7 +677,7 @@ public class RecipesControllerTests
             nameof(RecipeFormViewModel.Name),
             "Numele este obligatoriu.");
 
-        IActionResult result = controller.Create(model);
+        IActionResult result = await controller.Create(model);
 
         ViewResult viewResult = Assert.IsType<ViewResult>(result);
         Assert.Same(model, viewResult.Model);
@@ -666,6 +850,42 @@ public class RecipesControllerTests
     }
 
     [Fact]
+    public async Task ImportPost_WithImageUrl_ShouldCopyPhotoAfterSavingRecipe()
+    {
+        Recipe importedRecipe = new Recipe { Id = 52 };
+        FakeRecipeImporterService importerService = new FakeRecipeImporterService
+        {
+            ImportResultToReturn = new RecipeImportResult
+            {
+                Success = true,
+                Recipe = importedRecipe,
+                ImageUrl = "https://example.com/recipe.jpg",
+                Message = "Imported."
+            }
+        };
+        FakeRecipeLibraryService libraryService = new FakeRecipeLibraryService
+        {
+            SaveResultToReturn = RecipeSaveResult.Success("Imported.", importedRecipe)
+        };
+        FakeRecipePhotoUrlImporter photoImporter =
+            new FakeRecipePhotoUrlImporter();
+        RecipesController controller = CreateController(
+            libraryService,
+            importerService,
+            photoImporter);
+
+        IActionResult result = await controller.Import(
+            "https://example.com/imported-recipe");
+
+        Assert.IsType<RedirectToActionResult>(result);
+        Assert.True(photoImporter.ImportAsyncWasCalled);
+        Assert.Equal(52, photoImporter.RecipeIdPassedToImport);
+        Assert.Equal(
+            "https://example.com/recipe.jpg",
+            photoImporter.ImageUrlPassedToImport);
+    }
+
+    [Fact]
     public async Task ImportPost_WhenImportFails_ShouldReturnViewWithEnteredUrlAndError()
     {
         const string url = "https://example.com/failed-import";
@@ -759,6 +979,24 @@ public class RecipesControllerTests
         };
     }
 
+    private static IFormFile CreatePhotoFormFile(
+        string fileName,
+        string contentType)
+    {
+        byte[] bytes = [0xff, 0xd8, 0xff, 0xd9];
+
+        return new FormFile(
+            new MemoryStream(bytes),
+            0,
+            bytes.Length,
+            "Photo",
+            fileName)
+        {
+            Headers = new HeaderDictionary(),
+            ContentType = contentType
+        };
+    }
+
     private static RecipesController CreateController(
         IRecipeLibraryService recipeLibraryService)
     {
@@ -777,12 +1015,38 @@ public class RecipesControllerTests
 
     private static RecipesController CreateController(
         IRecipeLibraryService recipeLibraryService,
-        IRecipeImporterService recipeImporterService)
+        IRecipePhotoService recipePhotoService)
+    {
+        return CreateController(
+            recipeLibraryService,
+            new FakeRecipeImporterService(),
+            recipePhotoService);
+    }
+
+    private static RecipesController CreateController(
+        IRecipeLibraryService recipeLibraryService,
+        IRecipeImporterService recipeImporterService,
+        FakeRecipePhotoUrlImporter recipePhotoUrlImporter)
+    {
+        return CreateController(
+            recipeLibraryService,
+            recipeImporterService,
+            null,
+            recipePhotoUrlImporter);
+    }
+
+    private static RecipesController CreateController(
+        IRecipeLibraryService recipeLibraryService,
+        IRecipeImporterService recipeImporterService,
+        IRecipePhotoService? recipePhotoService = null,
+        FakeRecipePhotoUrlImporter? recipePhotoUrlImporter = null)
     {
         DefaultHttpContext httpContext = new DefaultHttpContext();
         RecipesController controller = new RecipesController(
             recipeLibraryService,
             recipeImporterService,
+            recipePhotoService ?? new FakeRecipePhotoService(),
+            recipePhotoUrlImporter ?? new FakeRecipePhotoUrlImporter(),
             NullLogger<RecipesController>.Instance)
         {
             ControllerContext = new ControllerContext

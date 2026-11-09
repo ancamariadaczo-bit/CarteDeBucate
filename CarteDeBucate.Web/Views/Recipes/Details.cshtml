@@ -1,7 +1,8 @@
-@model Recipe
+@model RecipeDetailsViewModel
 
 @{
-    ViewData["Title"] = Model.Name;
+    Recipe recipe = Model.Recipe;
+    ViewData["Title"] = recipe.Name;
     string? routeSearchText = ViewData["SearchText"] as string;
     if (string.IsNullOrWhiteSpace(routeSearchText))
     {
@@ -11,28 +12,28 @@
 
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
     <div>
-        <h1 class="h2 mb-1">@Model.Name</h1>
+        <h1 class="h2 mb-1">@recipe.Name</h1>
         <div class="text-muted">
-            <span class="badge @RecipeStatusPresentation.GetBadgeClass(Model.Status)">
-                @RecipeStatusPresentation.GetLabel(Model.Status)
+            <span class="badge @RecipeStatusPresentation.GetBadgeClass(recipe.Status)">
+                @RecipeStatusPresentation.GetLabel(recipe.Status)
             </span>
-            · salvată la @Model.SavedAt.ToString("dd.MM.yyyy")
+            · salvată la @recipe.SavedAt.ToString("dd.MM.yyyy")
         </div>
     </div>
     <div class="d-flex gap-2">
         <a class="btn btn-outline-secondary"
            asp-action="Edit"
-           asp-route-id="@Model.Id"
+           asp-route-id="@recipe.Id"
            asp-route-searchText="@routeSearchText"
            asp-route-pageNumber="@ViewData["PageNumber"]">Editează</a>
         <a class="btn btn-outline-primary"
            asp-action="Print"
-           asp-route-id="@Model.Id"
+           asp-route-id="@recipe.Id"
            target="_blank"
            rel="noopener noreferrer">Printează</a>
         <a class="btn btn-outline-danger"
            asp-action="Delete"
-           asp-route-id="@Model.Id"
+           asp-route-id="@recipe.Id"
            asp-route-searchText="@routeSearchText"
            asp-route-pageNumber="@ViewData["PageNumber"]">Șterge</a>
         <a class="btn btn-outline-primary"
@@ -42,10 +43,33 @@
     </div>
 </div>
 
+@if (Model.Photos.Count > 0)
+{
+    <section class="mb-4" aria-labelledby="recipe-photos-title">
+        <h2 id="recipe-photos-title" class="h4">Fotografii</h2>
+        <div class="row g-3">
+            @foreach (RecipePhotoInfo photo in Model.Photos)
+            {
+                <div class="col-12 col-md-6 col-xl-4">
+                    <figure class="card h-100 mb-0">
+                        <img class="card-img-top img-fluid"
+                             src="@Url.Action("Content", "RecipePhotos", new { id = photo.Id })"
+                             alt="@($"{recipe.Name} - {photo.OriginalFileName}")"
+                             loading="lazy" />
+                        <figcaption class="card-body py-2">
+                            <span class="small text-muted">@photo.OriginalFileName</span>
+                        </figcaption>
+                    </figure>
+                </div>
+            }
+        </div>
+    </section>
+}
+
 <section class="mb-4">
     <h2 class="h4">Ingrediente</h2>
     <ul>
-        @foreach (string ingredient in Model.Ingredients)
+        @foreach (string ingredient in recipe.Ingredients)
         {
             <li>@ingredient</li>
         }
@@ -55,27 +79,27 @@
 <section class="mb-4">
     <h2 class="h4">Pași</h2>
     <ol>
-        @foreach (string step in Model.Steps)
+        @foreach (string step in recipe.Steps)
         {
             <li class="mb-2">@step</li>
         }
     </ol>
 </section>
 
-@if (!string.IsNullOrWhiteSpace(Model.Notes))
+@if (!string.IsNullOrWhiteSpace(recipe.Notes))
 {
     <section class="mb-4">
         <h2 class="h4">Notițe</h2>
-        <p class="text-pre-line">@Model.Notes</p>
+        <p class="text-pre-line">@recipe.Notes</p>
     </section>
 }
 
-@if (!string.IsNullOrWhiteSpace(Model.SourceUrl))
+@if (!string.IsNullOrWhiteSpace(recipe.SourceUrl))
 {
     <section>
         <h2 class="h4">Sursa</h2>
-        <a href="@Model.SourceUrl" target="_blank" rel="noopener noreferrer">
-            @Model.SourceUrl
+        <a href="@recipe.SourceUrl" target="_blank" rel="noopener noreferrer">
+            @recipe.SourceUrl
         </a>
     </section>
 }

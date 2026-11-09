@@ -155,6 +155,12 @@ img {
     color: #710000;
 }
 
+.save-status.warning {
+    background: #fff8e1;
+    border-color: #b8860b;
+    color: #5f4300;
+}
+
 .auth-section {
     display: flex;
     align-items: center;

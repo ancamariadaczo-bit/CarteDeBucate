@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using CarteDeBucate.Web.Controllers.Api;
+using CarteDeBucate.Web.Models;
 using CarteDeBucate.Web.Models.Api;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -16,7 +17,7 @@ public class RecipesApiControllerTests
         {
             RecipeExistsBySourceUrlResultToReturn = true
         };
-        RecipesApiController controller = new RecipesApiController(recipeService);
+        RecipesApiController controller = CreateController(recipeService);
 
         IActionResult result = controller.Exists("https://example.com/banana-bread");
 
@@ -32,7 +33,7 @@ public class RecipesApiControllerTests
     public void Exists_WhenRecipeDoesNotExist_ShouldReturnFalse()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService();
-        RecipesApiController controller = new RecipesApiController(recipeService);
+        RecipesApiController controller = CreateController(recipeService);
 
         IActionResult result = controller.Exists("https://example.com/missing");
 
@@ -45,7 +46,7 @@ public class RecipesApiControllerTests
     public void Exists_WithExteriorWhitespace_ShouldPassNormalizedUrlToService()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService();
-        RecipesApiController controller = new RecipesApiController(recipeService);
+        RecipesApiController controller = CreateController(recipeService);
 
         IActionResult result = controller.Exists(
             "  https://example.com/banana-bread  ");
@@ -61,7 +62,7 @@ public class RecipesApiControllerTests
     public void Exists_WithMissingSourceUrl_ShouldReturnBadRequestWithoutCallingService()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService();
-        RecipesApiController controller = new RecipesApiController(recipeService);
+        RecipesApiController controller = CreateController(recipeService);
 
         IActionResult result = controller.Exists(null);
 
@@ -80,7 +81,7 @@ public class RecipesApiControllerTests
         string sourceUrl)
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService();
-        RecipesApiController controller = new RecipesApiController(recipeService);
+        RecipesApiController controller = CreateController(recipeService);
 
         IActionResult result = controller.Exists(sourceUrl);
 
@@ -96,7 +97,7 @@ public class RecipesApiControllerTests
     public void Exists_WithUnsupportedProtocol_ShouldReturnBadRequestWithoutCallingService()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService();
-        RecipesApiController controller = new RecipesApiController(recipeService);
+        RecipesApiController controller = CreateController(recipeService);
 
         IActionResult result = controller.Exists("ftp://example.com/banana-bread");
 
@@ -109,7 +110,7 @@ public class RecipesApiControllerTests
     }
 
     [Fact]
-    public void Create_WhenSaveSucceeds_ShouldSaveMappedRecipeAndReturnCreatedResult()
+    public async Task Create_WhenSaveSucceeds_ShouldSaveMappedRecipeAndReturnCreatedResult()
     {
         Recipe savedRecipe = new Recipe
         {
@@ -122,10 +123,10 @@ public class RecipesApiControllerTests
                 "Recipe saved successfully.",
                 savedRecipe)
         };
-        RecipesApiController controller = new RecipesApiController(recipeService);
+        RecipesApiController controller = CreateController(recipeService);
         CreateRecipeRequest request = CreateRequest();
 
-        IActionResult result = controller.Create(request);
+        IActionResult result = await controller.Create(request);
 
         CreatedResult createdResult = Assert.IsType<CreatedResult>(result);
         Assert.True(recipeService.SaveRecipeWasCalled);
@@ -136,6 +137,8 @@ public class RecipesApiControllerTests
         Assert.Equal(
             42,
             GetResponseProperty<int>(createdResult.Value, "recipeId"));
+        object photo = GetResponseProperty<object>(createdResult.Value, "photo");
+        Assert.Equal("NotProvided", GetResponseProperty<string>(photo, "status"));
 
         Recipe recipePassedToService =
             Assert.IsType<Recipe>(recipeService.RecipePassedToSaveRecipe);
@@ -146,15 +149,19 @@ public class RecipesApiControllerTests
     }
 
     [Fact]
-    public void Create_WhenSaveFails_ShouldReturnBadRequestWithServiceMessage()
+    public async Task Create_WhenSaveFails_ShouldReturnBadRequestWithServiceMessage()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
             SaveResultToReturn = RecipeSaveResult.Fail("Recipe already exists.")
         };
-        RecipesApiController controller = new RecipesApiController(recipeService);
+        FakeRecipePhotoUrlImporter photoImporter =
+            new FakeRecipePhotoUrlImporter();
+        RecipesApiController controller = CreateController(
+            recipeService,
+            photoImporter);
 
-        IActionResult result = controller.Create(CreateRequest());
+        IActionResult result = await controller.Create(CreateRequest());
 
         BadRequestObjectResult badRequestResult =
             Assert.IsType<BadRequestObjectResult>(result);
@@ -162,19 +169,81 @@ public class RecipesApiControllerTests
         Assert.Equal(
             "Recipe already exists.",
             GetResponseProperty<string>(badRequestResult.Value, "message"));
+        Assert.False(photoImporter.ImportAsyncWasCalled);
     }
 
     [Fact]
-    public void Create_WhenSaveSucceedsWithoutRecipe_ShouldReturnInternalServerError()
+    public async Task Create_WithImageUrl_ShouldReturnSavedPhotoResult()
+    {
+        Recipe savedRecipe = new Recipe { Id = 42, Name = "Banana bread" };
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
+        {
+            SaveResultToReturn = RecipeSaveResult.Success(
+                "Recipe saved successfully.",
+                savedRecipe)
+        };
+        FakeRecipePhotoUrlImporter photoImporter =
+            new FakeRecipePhotoUrlImporter();
+        RecipesApiController controller = CreateController(
+            recipeService,
+            photoImporter);
+        CreateRecipeRequest request = CreateRequest();
+        request.ImageUrl = "https://example.com/banana-bread.jpg";
+
+        IActionResult result = await controller.Create(request);
+
+        CreatedResult createdResult = Assert.IsType<CreatedResult>(result);
+        object photo = GetResponseProperty<object>(createdResult.Value, "photo");
+        Assert.Equal("Saved", GetResponseProperty<string>(photo, "status"));
+        Assert.True(photoImporter.ImportAsyncWasCalled);
+        Assert.Equal(42, photoImporter.RecipeIdPassedToImport);
+        Assert.Equal(request.ImageUrl, photoImporter.ImageUrlPassedToImport);
+    }
+
+    [Fact]
+    public async Task Create_WhenPhotoImportFails_ShouldStillReturnCreated()
+    {
+        Recipe savedRecipe = new Recipe { Id = 42, Name = "Banana bread" };
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
+        {
+            SaveResultToReturn = RecipeSaveResult.Success(
+                "Recipe saved successfully.",
+                savedRecipe)
+        };
+        FakeRecipePhotoUrlImporter photoImporter =
+            new FakeRecipePhotoUrlImporter
+            {
+                ResultToReturn = RecipePhotoUrlImportResult.Failure(
+                    RecipePhotoUrlImportResultCode.DownloadFailed,
+                    "Photo download failed.")
+            };
+        RecipesApiController controller = CreateController(
+            recipeService,
+            photoImporter);
+        CreateRecipeRequest request = CreateRequest();
+        request.ImageUrl = "https://example.com/banana-bread.jpg";
+
+        IActionResult result = await controller.Create(request);
+
+        CreatedResult createdResult = Assert.IsType<CreatedResult>(result);
+        object photo = GetResponseProperty<object>(createdResult.Value, "photo");
+        Assert.Equal("Failed", GetResponseProperty<string>(photo, "status"));
+        Assert.Equal(
+            "Photo download failed.",
+            GetResponseProperty<string>(photo, "message"));
+    }
+
+    [Fact]
+    public async Task Create_WhenSaveSucceedsWithoutRecipe_ShouldReturnInternalServerError()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
         {
             SaveResultToReturn = RecipeSaveResult.Success(
                 "Recipe saved successfully.")
         };
-        RecipesApiController controller = new RecipesApiController(recipeService);
+        RecipesApiController controller = CreateController(recipeService);
 
-        IActionResult result = controller.Create(CreateRequest());
+        IActionResult result = await controller.Create(CreateRequest());
 
         ObjectResult objectResult = Assert.IsType<ObjectResult>(result);
         Assert.True(recipeService.SaveRecipeWasCalled);
@@ -205,6 +274,25 @@ public class RecipesApiControllerTests
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
+    [Fact]
+    public async Task Create_WithInvalidImageUrl_ShouldReturnBadRequest()
+    {
+        using AuthenticationApiWebApplicationFactory factory = new();
+        using HttpClient client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue(
+                "Bearer",
+                factory.CreateToken("42", "chef"));
+        CreateRecipeRequest request = CreateRequest();
+        request.ImageUrl = "file:///tmp/recipe.jpg";
+
+        HttpResponseMessage response = await client.PostAsJsonAsync(
+            "/api/recipes",
+            request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
     private static CreateRecipeRequest CreateRequest()
     {
         return new CreateRecipeRequest
@@ -224,6 +312,15 @@ public class RecipesApiControllerTests
         };
     }
 
+    private static RecipesApiController CreateController(
+        IRecipeLibraryService recipeLibraryService,
+        FakeRecipePhotoUrlImporter? photoUrlImporter = null)
+    {
+        return new RecipesApiController(
+            recipeLibraryService,
+            photoUrlImporter ?? new FakeRecipePhotoUrlImporter());
+    }
+
     private static T GetResponseProperty<T>(object? response, string propertyName)
     {
         Assert.NotNull(response);
@@ -232,6 +329,6 @@ public class RecipesApiControllerTests
 
         Assert.NotNull(property);
 
-        return Assert.IsType<T>(property.GetValue(response));
+        return Assert.IsAssignableFrom<T>(property.GetValue(response));
     }
 }

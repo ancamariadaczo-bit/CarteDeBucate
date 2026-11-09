@@ -1,7 +1,8 @@
-@model Recipe
+@model RecipePrintViewModel
 
 @{
     Layout = null;
+    Recipe recipe = Model.Recipe;
 }
 
 <!DOCTYPE html>
@@ -9,23 +10,23 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@Model.Name</title>
+    <title>@recipe.Name</title>
     <link rel="stylesheet" href="~/css/recipe-print.css" asp-append-version="true" />
 </head>
 <body>
     <main id="recipe">
         <section class="top">
             <div id="recipeSummary">
-                <h1>@Model.Name</h1>
+                <h1>@recipe.Name</h1>
 
                 <p class="recipe-source">
                     <strong>Source: </strong>
-                    <a href="@Model.SourceUrl">@Model.SourceUrl</a>
+                    <a href="@recipe.SourceUrl">@recipe.SourceUrl</a>
                 </p>
 
                 <h2>Ingredients</h2>
                 <ul>
-                    @foreach (string ingredient in Model.Ingredients)
+                    @foreach (string ingredient in recipe.Ingredients)
                     {
                         <li>@ingredient</li>
                     }
@@ -33,14 +34,25 @@
             </div>
 
             <div id="imageSection">
-                <p class="image-error">Image unavailable</p>
+                @if (Model.PrimaryPhotoId.HasValue)
+                {
+                    <img id="recipeImage"
+                         src="@Url.Action("Content", "RecipePhotos", new { id = Model.PrimaryPhotoId.Value })"
+                         alt="@recipe.Name"
+                         onerror="this.hidden=true;document.getElementById('imageUnavailable').hidden=false" />
+                    <p id="imageUnavailable" class="image-error" hidden>Image unavailable</p>
+                }
+                else
+                {
+                    <p class="image-error">Image unavailable</p>
+                }
             </div>
         </section>
 
         <section id="stepsSection">
             <h2>Instructions</h2>
             <ol>
-                @foreach (string step in Model.Steps)
+                @foreach (string step in recipe.Steps)
                 {
                     <li>@step</li>
                 }

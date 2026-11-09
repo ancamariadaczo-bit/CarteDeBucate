@@ -188,9 +188,9 @@ export function initializeSidePanelController({
         showSaveStatus("Saving...");
 
         try {
-            await saveRecipeToApi(recipeToSave);
+            const saveResult = await saveRecipeToApi(recipeToSave);
             isSaved = true;
-            showSaveStatus("Recipe saved successfully.", "success");
+            showRecipeSaveResult(saveResult);
         } catch (error) {
             if (isAuthenticationRequiredError(error)) {
                 await handleExpiredSession(error);
@@ -274,6 +274,42 @@ export function initializeSidePanelController({
         saveStatus.textContent = message;
         saveStatus.classList.toggle("success", state === "success");
         saveStatus.classList.toggle("error", state === "error");
+        saveStatus.classList.toggle("warning", state === "warning");
+    }
+
+    function showRecipeSaveResult(saveResult) {
+        const photoStatus = saveResult?.photo?.status;
+
+        if (photoStatus === "Saved") {
+            showSaveStatus(
+                "Recipe and photo saved successfully.",
+                "success"
+            );
+            return;
+        }
+
+        if (photoStatus === "Failed") {
+            showSaveStatus(
+                "Recipe saved, but the photo could not be copied. You can add it later from Web Edit.",
+                "warning"
+            );
+
+            if (saveResult.photo.message) {
+                reportError(new Error(saveResult.photo.message));
+            }
+
+            return;
+        }
+
+        if (photoStatus === "NotProvided") {
+            showSaveStatus(
+                "Recipe saved successfully without a photo.",
+                "success"
+            );
+            return;
+        }
+
+        showSaveStatus("Recipe saved successfully.", "success");
     }
 
     function showExtractionStatus(message, state = null) {

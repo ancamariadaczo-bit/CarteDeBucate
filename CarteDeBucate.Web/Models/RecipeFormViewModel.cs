@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace CarteDeBucate.Web.Models;
 
@@ -26,6 +27,11 @@ public class RecipeFormViewModel
     public DateTime SavedAt { get; set; } = DateTime.Now;
 
     public int? UserId { get; set; }
+
+    public IFormFile? Photo { get; set; }
+
+    public IReadOnlyList<RecipePhotoInfo> Photos { get; set; } =
+        Array.Empty<RecipePhotoInfo>();
 
     public static RecipeFormViewModel FromRecipe(Recipe recipe)
     {

@@ -60,6 +60,81 @@
     </div>
 </form>
 
+<section class="mt-5" aria-labelledby="recipe-photos-title">
+    <h2 id="recipe-photos-title" class="h4">Fotografii</h2>
+
+    <form asp-action="AddPhoto"
+          method="post"
+          enctype="multipart/form-data"
+          class="border rounded p-3 mb-4">
+        <input type="hidden" name="RecipeId" value="@Model.Id" />
+        <input type="hidden" name="returnTo" value="@cancelAction" />
+        <input type="hidden" name="pageNumber" value="@ViewData["PageNumber"]" />
+        <input type="hidden" name="searchText" value="@routeSearchText" />
+        <label for="photo-upload" class="form-label">Adaugă o fotografie</label>
+        <div class="d-flex flex-column flex-md-row gap-2">
+            <input id="photo-upload"
+                   name="Photo"
+                   type="file"
+                   class="form-control"
+                   accept="image/jpeg,image/png,image/webp"
+                   required />
+            <button type="submit" class="btn btn-primary text-nowrap">
+                Adaugă fotografia
+            </button>
+        </div>
+        <div class="form-text">
+            JPEG, PNG sau WebP, maximum 10 MiB. Poți salva până la 20 de fotografii.
+        </div>
+    </form>
+
+    @if (Model.Photos.Count == 0)
+    {
+        <p class="text-muted">Această rețetă nu are fotografii.</p>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (RecipePhotoInfo photo in Model.Photos)
+            {
+                <div class="col-12 col-md-6 col-xl-4">
+                    <article class="card h-100">
+                        <img class="card-img-top img-fluid"
+                             src="@Url.Action("Content", "RecipePhotos", new { id = photo.Id })"
+                             alt="@($"{Model.Name} - {photo.OriginalFileName}")"
+                             loading="lazy" />
+                        <div class="card-body">
+                            <p class="card-text mb-1 text-break">@photo.OriginalFileName</p>
+                            <p class="small text-muted mb-3">
+                                @photo.ContentType · @FormatFileSize(photo.FileSize)
+                            </p>
+                            <form asp-action="DeletePhoto" method="post">
+                                <input type="hidden" name="recipeId" value="@Model.Id" />
+                                <input type="hidden" name="photoId" value="@photo.Id" />
+                                <input type="hidden" name="returnTo" value="@cancelAction" />
+                                <input type="hidden" name="pageNumber" value="@ViewData["PageNumber"]" />
+                                <input type="hidden" name="searchText" value="@routeSearchText" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    Șterge fotografia
+                                </button>
+                            </form>
+                        </div>
+                    </article>
+                </div>
+            }
+        </div>
+    }
+</section>
+
+@functions {
+    private static string FormatFileSize(long bytes)
+    {
+        return bytes >= 1024 * 1024
+            ? $"{bytes / 1024d / 1024d:0.##} MiB"
+            : $"{Math.Max(0, bytes) / 1024d:0.##} KiB";
+    }
+}
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 }

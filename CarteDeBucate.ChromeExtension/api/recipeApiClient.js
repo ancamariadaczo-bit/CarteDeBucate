@@ -79,7 +79,8 @@ export async function saveRecipeToApi(
             name: recipe.name,
             sourceUrl: recipe.sourceUrl,
             ingredients: recipe.ingredients,
-            steps: recipe.steps
+            steps: recipe.steps,
+            imageUrl: recipe.imageUrl ?? null
         })
     });
 
@@ -97,6 +98,42 @@ export async function saveRecipeToApi(
             responseBody?.message
             ?? responseBody?.title
             ?? `API request failed with status ${response.status}`,
+            response.status
+        );
+    }
+
+    if (!Number.isInteger(responseBody?.recipeId)) {
+        throw createRecipeApiError(
+            "The API response did not contain a valid recipe photo result.",
+            response.status
+        );
+    }
+
+    if (responseBody.photo == null) {
+        const hasImageUrl = String(recipe?.imageUrl ?? "").trim().length > 0;
+
+        return {
+            ...responseBody,
+            photo: hasImageUrl
+                ? {
+                    status: "Failed",
+                    message: "The recipe was saved, but the server did not report a recipe photo result."
+                }
+                : {
+                    status: "NotProvided",
+                    message: "No recipe photo was provided."
+                }
+        };
+    }
+
+    const photoStatus = responseBody.photo.status;
+
+    if (
+        !["NotProvided", "Saved", "Failed"].includes(photoStatus)
+        || typeof responseBody.photo.message !== "string"
+    ) {
+        throw createRecipeApiError(
+            "The API response did not contain a valid recipe photo result.",
             response.status
         );
     }

@@ -87,14 +87,32 @@ else
                 </tr>
             </thead>
             <tbody>
-                @foreach (RecipeSummary recipe in Model.Recipes)
+                @foreach (RecipeIndexItemViewModel item in Model.Items)
                 {
+                    RecipeSummary recipe = item.Recipe;
                     <tr>
                         <td>
-                            <a asp-action="Details"
-                               asp-route-id="@recipe.Id"
-                               asp-route-searchText="@routeSearchText"
-                               asp-route-pageNumber="@Model.PageNumber">@recipe.Name</a>
+                            <div class="d-flex align-items-center gap-3">
+                                @if (item.PrimaryPhotoId.HasValue)
+                                {
+                                    <img class="rounded object-fit-cover flex-shrink-0"
+                                         width="72"
+                                         height="54"
+                                         src="@Url.Action("Content", "RecipePhotos", new { id = item.PrimaryPhotoId.Value })"
+                                         alt="@recipe.Name"
+                                         loading="lazy" />
+                                }
+                                else
+                                {
+                                    <span class="rounded bg-light border d-inline-flex align-items-center justify-content-center text-muted flex-shrink-0"
+                                          style="width:72px;height:54px"
+                                          aria-hidden="true">—</span>
+                                }
+                                <a asp-action="Details"
+                                   asp-route-id="@recipe.Id"
+                                   asp-route-searchText="@routeSearchText"
+                                   asp-route-pageNumber="@Model.PageNumber">@recipe.Name</a>
+                            </div>
                         </td>
                         <td>
                             <span class="badge @RecipeStatusPresentation.GetBadgeClass(recipe.Status)">

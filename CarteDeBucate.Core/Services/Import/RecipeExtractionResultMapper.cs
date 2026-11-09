@@ -27,6 +27,7 @@ public static class RecipeExtractionResultMapper
         {
             Success = true,
             Recipe = ExtractedRecipeMapper.ToRecipe(extractionResult.Recipe),
+            ImageUrl = extractionResult.Recipe.ImageUrl,
             Message = successMessage
         };
     }

@@ -24,6 +24,13 @@ body {
     min-width: 0;
 }
 
+#recipeImage {
+    display: block;
+    width: 100%;
+    max-height: 105mm;
+    object-fit: contain;
+}
+
 #imageSection {
     display: flex;
     min-height: 85mm;

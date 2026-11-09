@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using CarteDeBucate.Web.BackgroundServices;
 using CarteDeBucate.Web.Services;
+using CarteDeBucate.Web.Services.Photos;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -86,6 +87,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         });
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
+RecipePhotoOptions recipePhotoOptions = new();
+builder.Services.AddSingleton(recipePhotoOptions);
 builder.Services.AddSingleton<IExtensionAuthenticationCodeService, ExtensionAuthenticationCodeService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserContext, HttpCurrentUserContext>();
@@ -106,12 +109,16 @@ builder.Services.AddScoped<IRecipePhotoService>(serviceProvider =>
 
     ILoggerFactory loggerFactory =
         serviceProvider.GetRequiredService<ILoggerFactory>();
+    TimeProvider timeProvider =
+        serviceProvider.GetRequiredService<TimeProvider>();
 
     return AppServiceFactory.CreateDatabaseRecipePhotoService(
         databasePath,
         recipePhotosPath,
         recipeRepository,
         currentUserContext,
+        recipePhotoOptions,
+        timeProvider,
         loggerFactory);
 });
 
@@ -123,12 +130,16 @@ builder.Services.AddScoped<IRecipePhotoReconciliationService>(
 
         ILoggerFactory loggerFactory =
             serviceProvider.GetRequiredService<ILoggerFactory>();
+        TimeProvider timeProvider =
+            serviceProvider.GetRequiredService<TimeProvider>();
 
         return AppServiceFactory
             .CreateDatabaseRecipePhotoReconciliationService(
                 databasePath,
                 recipePhotosPath,
                 recipeRepository,
+                recipePhotoOptions,
+                timeProvider,
                 loggerFactory);
     });
 
@@ -149,17 +160,26 @@ builder.Services.AddScoped<IRecipeLibraryService>(serviceProvider =>
         serviceProvider.GetRequiredService<ICurrentUserContext>();
     ILogger<RecipeLibraryService> logger =
         serviceProvider.GetRequiredService<ILogger<RecipeLibraryService>>();
+    IRecipePhotoService recipePhotoService =
+        serviceProvider.GetRequiredService<IRecipePhotoService>();
 
     return AppServiceFactory.CreateRecipeLibraryService(
         recipeRepository,
         recipeCacheService,
         currentUserContext,
+        recipePhotoService,
         logger);
 });
 builder.Services.AddSingleton<IHostAddressResolver, DnsHostAddressResolver>();
 builder.Services.AddSingleton<RecipeImportDestinationPolicy>();
 builder.Services
     .AddHttpClient<IRecipeImporter, RecipeImporter>(
+        RecipeImporterHttpClientConfiguration.Configure)
+    .ConfigurePrimaryHttpMessageHandler(serviceProvider =>
+        new RecipeImportHttpMessageHandler(
+            serviceProvider.GetRequiredService<RecipeImportDestinationPolicy>()));
+builder.Services
+    .AddHttpClient<IRecipePhotoUrlImporter, RecipePhotoUrlImporter>(
         RecipeImporterHttpClientConfiguration.Configure)
     .ConfigurePrimaryHttpMessageHandler(serviceProvider =>
         new RecipeImportHttpMessageHandler(

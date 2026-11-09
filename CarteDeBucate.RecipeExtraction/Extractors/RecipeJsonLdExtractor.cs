@@ -145,11 +145,75 @@ public class RecipeJsonLdExtractor
         {
             Name = GetStringProperty(recipeElement, RecipeExtractionConstants.NameProperty),
             SourceUrl = url.Trim(),
+            ImageUrl = GetImageUrl(recipeElement, url),
             Ingredients = GetStringListProperty(recipeElement, RecipeExtractionConstants.RecipeIngredientProperty),
             Steps = GetInstructions(recipeElement)
         };
 
         return recipe;
+    }
+
+    private static string? GetImageUrl(JsonElement recipeElement, string sourceUrl)
+    {
+        if (!recipeElement.TryGetProperty(
+                RecipeExtractionConstants.ImageProperty,
+                out JsonElement image))
+        {
+            return null;
+        }
+
+        return FindFirstImageUrl(image, sourceUrl);
+    }
+
+    private static string? FindFirstImageUrl(
+        JsonElement image,
+        string sourceUrl)
+    {
+        if (image.ValueKind == JsonValueKind.String)
+        {
+            return RecipeImageUrlNormalizer.Normalize(
+                image.GetString(),
+                sourceUrl);
+        }
+
+        if (image.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement item in image.EnumerateArray())
+            {
+                string? candidate = FindFirstImageUrl(item, sourceUrl);
+
+                if (candidate != null)
+                {
+                    return candidate;
+                }
+            }
+
+            return null;
+        }
+
+        if (image.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        foreach (string propertyName in new[]
+                 {
+                     RecipeExtractionConstants.UrlProperty,
+                     RecipeExtractionConstants.ContentUrlProperty
+                 })
+        {
+            if (image.TryGetProperty(propertyName, out JsonElement property))
+            {
+                string? candidate = FindFirstImageUrl(property, sourceUrl);
+
+                if (candidate != null)
+                {
+                    return candidate;
+                }
+            }
+        }
+
+        return null;
     }
 
     private static string GetStringProperty(JsonElement element, string propertyName)
