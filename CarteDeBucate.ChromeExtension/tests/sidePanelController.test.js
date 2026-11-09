@@ -708,7 +708,16 @@ test("losing authentication resets the duplicate result", async () => {
 test("shows a green status panel after a successful Cookbook save", async () => {
     const context = await setupSidePanel(
         async () => ({ success: true, recipe }),
-        { initialIsAuthenticated: true }
+        {
+            initialIsAuthenticated: true,
+            saveRecipeToApi: async () => ({
+                recipeId: 42,
+                photo: {
+                    status: "Saved",
+                    message: "Photo saved."
+                }
+            })
+        }
     );
 
     try {
