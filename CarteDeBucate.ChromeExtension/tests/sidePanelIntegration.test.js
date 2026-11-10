@@ -14,7 +14,8 @@ test("manifest declares the Side Panel contract without broad page access", asyn
 
     assert.equal(manifest.minimum_chrome_version, "116");
     assert.equal(manifest.side_panel?.default_path, "sidepanel.html");
-    assert.equal(manifest.action?.default_title, "Extract recipe");
+    assert.equal(manifest.default_locale, "en");
+    assert.equal(manifest.action?.default_title, "__MSG_actionTitle__");
     assert.equal(Object.hasOwn(manifest.action, "default_popup"), false);
     assert.equal(manifest.permissions.includes("sidePanel"), true);
     assert.equal(manifest.permissions.includes("activeTab"), true);

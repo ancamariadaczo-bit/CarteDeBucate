@@ -6,6 +6,8 @@ using Microsoft.IdentityModel.Tokens;
 using CarteDeBucate.Web.BackgroundServices;
 using CarteDeBucate.Web.Services;
 using CarteDeBucate.Web.Services.Photos;
+using System.Globalization;
+using Microsoft.AspNetCore.Localization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,7 +37,8 @@ string recipePhotosPath = Path.IsPathFullyQualified(configuredRecipePhotosPath)
     : Path.GetFullPath(configuredRecipePhotosPath, databaseDirectoryPath);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+builder.Services.AddControllersWithViews().AddViewLocalization();
 
 string[] allowedOrigins =
     builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
@@ -224,6 +227,14 @@ builder.Services.AddHostedService<DatabaseBackupWorker>();
 
 var app = builder.Build();
 
+CultureInfo romanianCulture = CultureInfo.GetCultureInfo("ro-RO");
+RequestLocalizationOptions localizationOptions = new()
+{
+    DefaultRequestCulture = new RequestCulture(romanianCulture),
+    SupportedCultures = [romanianCulture],
+    SupportedUICultures = [romanianCulture]
+};
+
 app.Logger.LogInformation(
     "Application starting in {EnvironmentName} environment",
     app.Environment.EnvironmentName);
@@ -261,6 +272,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseRequestLocalization(localizationOptions);
 app.UseRouting();
 
 app.UseCors("ChromeExtension");

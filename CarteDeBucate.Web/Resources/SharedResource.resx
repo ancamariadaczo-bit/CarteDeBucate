@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Site_Title" xml:space="preserve"><value>Carte de bucate</value></data>
+  <data name="Public_HowItWorks" xml:space="preserve"><value>Cum funcționează</value></data>
+  <data name="Public_Capabilities" xml:space="preserve"><value>Ce poți face?</value></data>
+  <data name="Public_About" xml:space="preserve"><value>Despre</value></data>
+  <data name="Auth_Login" xml:space="preserve"><value>Autentificare</value></data>
+  <data name="Auth_LoginAction" xml:space="preserve"><value>Autentifică-te</value></data>
+  <data name="Auth_Register" xml:space="preserve"><value>Creează cont</value></data>
+  <data name="Auth_Username" xml:space="preserve"><value>Nume de utilizator</value></data>
+  <data name="Auth_Password" xml:space="preserve"><value>Parolă</value></data>
+  <data name="Auth_ConfirmPassword" xml:space="preserve"><value>Confirmă parola</value></data>
+  <data name="Auth_ShowPassword" xml:space="preserve"><value>Arată parola</value></data>
+  <data name="Auth_HidePassword" xml:space="preserve"><value>Ascunde parola</value></data>
+  <data name="Auth_Submitting" xml:space="preserve"><value>Se trimite…</value></data>
+  <data name="Auth_InvalidCredentials" xml:space="preserve"><value>Numele de utilizator sau parola sunt incorecte.</value></data>
+  <data name="Register_DuplicateUsername" xml:space="preserve"><value>Acest nume de utilizator este deja folosit. Alege altul.</value></data>
+  <data name="Login_Description" xml:space="preserve"><value>Autentifică-te pentru a continua către colecția ta de rețete.</value></data>
+  <data name="Login_Prompt" xml:space="preserve"><value>Nu ai încă un cont?</value></data>
+  <data name="Register_Description" xml:space="preserve"><value>Creează-ți contul și începe să-ți organizezi rețetele într-un singur loc.</value></data>
+  <data name="Register_PasswordRequirement" xml:space="preserve"><value>Parola trebuie să aibă cel puțin 5 caractere.</value></data>
+  <data name="Register_Prompt" xml:space="preserve"><value>Ai deja un cont?</value></data>
+  <data name="Public_MetaDescription" xml:space="preserve"><value>Organizează toate rețetele tale într-o singură carte de bucate personală.</value></data>
+  <data name="Hero_Title" xml:space="preserve"><value>Colecția ta de rețete, într-un singur loc.</value></data>
+  <data name="Hero_Text" xml:space="preserve"><value>Salvează rețete de pe web sau adaugă-le manual. Organizează-le și găsește-le ușor când ai nevoie de inspirație.</value></data>
+  <data name="How_Add_Title" xml:space="preserve"><value>Adaugă rețeta</value></data>
+  <data name="How_Add_Text" xml:space="preserve"><value>Introdu-o manual sau import-o folosind adresa paginii web.</value></data>
+  <data name="How_Organize_Title" xml:space="preserve"><value>Organizează colecția</value></data>
+  <data name="How_Organize_Text" xml:space="preserve"><value>Editează detaliile, adaugă notițe și folosește etichetele disponibile pentru a-ți organiza rețetele.</value></data>
+  <data name="How_Find_Title" xml:space="preserve"><value>Găsește rețeta</value></data>
+  <data name="How_Find_Text" xml:space="preserve"><value>Folosește căutarea pentru a găsi rapid rețeta de care ai nevoie.</value></data>
+  <data name="Feature_Details_Title" xml:space="preserve"><value>Păstrează toate detaliile</value></data>
+  <data name="Feature_Details_Text" xml:space="preserve"><value>Adaugă ingredientele, modul de preparare, notițele și sursa originală.</value></data>
+  <data name="Feature_Photos_Title" xml:space="preserve"><value>Adaugă fotografii</value></data>
+  <data name="Feature_Photos_Text" xml:space="preserve"><value>Păstrează alături de rețetă imaginile care îți sunt utile.</value></data>
+  <data name="Feature_Favorites_Title" xml:space="preserve"><value>Urmărește rețetele preferate</value></data>
+  <data name="Feature_Favorites_Text" xml:space="preserve"><value>Folosește etichetele pentru a vedea ce vrei să încerci, ce ai încercat și ce ai adăugat la favorite.</value></data>
+  <data name="Feature_Print_Title" xml:space="preserve"><value>Imprimă rețetele</value></data>
+  <data name="Feature_Print_Text" xml:space="preserve"><value>Pregătește o versiune simplă și clară pe care o poți imprima sau salva ca PDF.</value></data>
+  <data name="Feature_Backup_Title" xml:space="preserve"><value>Creează copii de siguranță</value></data>
+  <data name="Feature_Backup_Text" xml:space="preserve"><value>Exportă colecția și import-o din nou atunci când ai nevoie.</value></data>
+  <data name="Feature_Clipper_Title" xml:space="preserve"><value>Folosește Recipe Clipper</value></data>
+  <data name="Feature_Clipper_Text" xml:space="preserve"><value>Extrage o rețetă direct din pagina web pe care o vizitezi și verific-o înainte de a o păstra.</value></data>
+  <data name="About_Text1" xml:space="preserve"><value>Rețetele ajung adesea împrăștiate prin semne de carte, notițe, capturi de ecran și diferite site-uri. Carte de bucate a fost creată pentru a le aduce împreună într-un singur loc, simplu și ușor de folosit.</value></data>
+  <data name="About_Text2" xml:space="preserve"><value>Este colecția ta personală de rețete: un spațiu în care poți păstra preparatele pe care vrei să le încerci, rețetele preferate și toate detaliile de care ai nevoie atunci când gătești.</value></data>
+  <data name="About_Invitation" xml:space="preserve"><value>Începe propria colecție de rețete</value></data>
+</root>

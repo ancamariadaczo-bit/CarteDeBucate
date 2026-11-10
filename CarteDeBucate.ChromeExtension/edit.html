@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Edit Recipe</title>
+    <title data-i18n-title="editPageTitle">Edit Recipe</title>
 
     <link rel="stylesheet" href="edit.css">
 </head>
@@ -16,7 +16,7 @@
             src="icons/icon48.png"
             alt="">
 
-        <h1>Recipe Clipper – Print &amp; Save Recipes</h1>
+        <h1 data-i18n="extensionName">Recipe Clipper – Print &amp; Save Recipes</h1>
     </header>
 
     <main>
@@ -24,34 +24,34 @@
 
         <form id="recipeForm" novalidate>
             <section aria-labelledby="recipeDetailsHeading">
-                <h2 id="recipeDetailsHeading">Edit Recipe</h2>
+                <h2 id="recipeDetailsHeading" data-i18n="editRecipe">Edit Recipe</h2>
 
-                <label for="recipeName">Recipe name</label>
+                <label for="recipeName" data-i18n="recipeName">Recipe name</label>
                 <input id="recipeName" name="recipeName" type="text" required>
 
-                <label for="sourceUrl">Source URL</label>
+                <label for="sourceUrl" data-i18n="sourceUrl">Source URL</label>
                 <input id="sourceUrl" name="sourceUrl" type="url">
 
-                <label for="imageUrl">Image URL</label>
+                <label for="imageUrl" data-i18n="imageUrl">Image URL</label>
                 <input id="imageUrl" name="imageUrl" type="url">
             </section>
 
             <section aria-labelledby="ingredientsHeading">
-                <h2 id="ingredientsHeading">Ingredients</h2>
+                <h2 id="ingredientsHeading" data-i18n="ingredients">Ingredients</h2>
 
                 <div id="ingredientRows"></div>
 
-                <button id="addIngredientButton" type="button">
+                <button id="addIngredientButton" data-i18n="addIngredient" type="button">
                     Add Ingredient
                 </button>
             </section>
 
             <section aria-labelledby="instructionsHeading">
-                <h2 id="instructionsHeading">Instructions</h2>
+                <h2 id="instructionsHeading" data-i18n="instructions">Instructions</h2>
 
                 <div id="instructionRows"></div>
 
-                <button id="addInstructionButton" type="button">
+                <button id="addInstructionButton" data-i18n="addInstruction" type="button">
                     Add Instruction
                 </button>
             </section>
@@ -67,15 +67,15 @@
             </div>
 
             <div class="form-actions">
-                <button id="printButton" type="submit">
+                <button id="printButton" data-i18n="printSavePdf" type="submit">
                     Print / Save PDF
                 </button>
 
-                <button id="saveButton" type="button" disabled>
+                <button id="saveButton" type="button" disabled data-i18n="saveToCookbook">
                     Save to Cookbook
                 </button>
 
-                <button id="cancelButton" type="button">
+                <button id="cancelButton" data-i18n="cancel" type="button">
                     Cancel
                 </button>
             </div>
@@ -84,6 +84,7 @@
         </form>
     </main>
 
+    <script src="i18n.js"></script>
     <script type="module" src="edit.js"></script>
 
 </body>

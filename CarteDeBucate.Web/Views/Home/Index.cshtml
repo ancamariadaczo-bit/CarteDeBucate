@@ -1,0 +1,52 @@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<CarteDeBucate.Web.SharedResource> L
+@{
+    Layout = "_PublicLayout";
+    ViewData["Title"] = L["Site_Title"];
+    ViewData["Description"] = L["Public_MetaDescription"];
+}
+<header class="public-header">
+    <a class="public-wordmark" asp-controller="Home" asp-action="Index">@L["Site_Title"]</a>
+    <nav class="public-nav" aria-label="Navigare principală">
+        <a href="#cum-functioneaza">@L["Public_HowItWorks"]</a>
+        <a href="#ce-poti-face">@L["Public_Capabilities"]</a>
+        <a href="#despre">@L["Public_About"]</a>
+    </nav>
+    <div class="public-account-actions">
+        <a class="public-login-link" asp-controller="Account" asp-action="Login">@L["Auth_Login"]</a>
+        <a class="public-button public-button-small" asp-controller="Account" asp-action="Register">@L["Auth_Register"]</a>
+    </div>
+</header>
+<main>
+    <section class="public-hero" aria-labelledby="hero-title">
+        <div class="public-hero-copy">
+            <h1 id="hero-title">@L["Hero_Title"]</h1>
+            <p>@L["Hero_Text"]</p>
+            <a class="public-button" asp-controller="Account" asp-action="Register">@L["Auth_Register"]</a>
+        </div>
+        <div class="public-hero-art" aria-hidden="true"><span>⌁</span></div>
+    </section>
+    <section id="cum-functioneaza" class="public-section" aria-labelledby="how-title">
+        <h2 id="how-title">@L["Public_HowItWorks"]</h2>
+        <div class="public-card-grid public-steps">
+            <article><span>1</span><h3>@L["How_Add_Title"]</h3><p>@L["How_Add_Text"]</p></article>
+            <article><span>2</span><h3>@L["How_Organize_Title"]</h3><p>@L["How_Organize_Text"]</p></article>
+            <article><span>3</span><h3>@L["How_Find_Title"]</h3><p>@L["How_Find_Text"]</p></article>
+        </div>
+    </section>
+    <section id="ce-poti-face" class="public-section public-section-tint" aria-labelledby="features-title">
+        <h2 id="features-title">@L["Public_Capabilities"]</h2>
+        <div class="public-card-grid public-feature-grid">
+            <article><h3>@L["Feature_Details_Title"]</h3><p>@L["Feature_Details_Text"]</p></article>
+            <article><h3>@L["Feature_Photos_Title"]</h3><p>@L["Feature_Photos_Text"]</p></article>
+            <article><h3>@L["Feature_Favorites_Title"]</h3><p>@L["Feature_Favorites_Text"]</p></article>
+            <article><h3>@L["Feature_Print_Title"]</h3><p>@L["Feature_Print_Text"]</p></article>
+            <article><h3>@L["Feature_Backup_Title"]</h3><p>@L["Feature_Backup_Text"]</p></article>
+            <article><h3>@L["Feature_Clipper_Title"]</h3><p>@L["Feature_Clipper_Text"]</p></article>
+        </div>
+    </section>
+    <section id="despre" class="public-section public-about" aria-labelledby="about-title">
+        <h2 id="about-title">@L["Public_About"]</h2>
+        <p>@L["About_Text1"]</p><p>@L["About_Text2"]</p>
+        <div class="public-invitation"><h3>@L["About_Invitation"]</h3><a class="public-button" asp-controller="Account" asp-action="Register">@L["Auth_Register"]</a></div>
+    </section>
+</main>

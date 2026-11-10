@@ -3,6 +3,8 @@ using CarteDeBucate.Web.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using CarteDeBucate.Web.Resources;
 
 namespace CarteDeBucate.Web.Controllers;
 
@@ -19,6 +21,7 @@ public class AccountController : Controller
         _logger = logger;
     }
 
+    [AllowAnonymous]
     [HttpGet]
     public IActionResult Login(string? returnUrl = null)
     {
@@ -49,7 +52,7 @@ public class AccountController : Controller
         {
             _logger.LogWarning("User login failed");
 
-            ModelState.AddModelError("", result.Message);
+            ModelState.AddModelError("", SharedMessages.AuthInvalidCredentials);
 
             return View(model);
         }
@@ -63,11 +66,18 @@ public class AccountController : Controller
         return RedirectAfterAuthentication(model.ReturnUrl);
     }
 
+    [AllowAnonymous]
     public IActionResult Register()
     {
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            return RedirectToAction(nameof(RecipesController.Index), "Recipes");
+        }
+
         return View(new RegisterViewModel());
     }
 
+    [AllowAnonymous]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegisterViewModel model)
@@ -84,7 +94,7 @@ public class AccountController : Controller
         {
             _logger.LogWarning("User registration failed");
 
-            ModelState.AddModelError("", result.Message);
+            ModelState.AddModelError("", SharedMessages.RegisterDuplicateUsername);
 
             return View(model);
         }

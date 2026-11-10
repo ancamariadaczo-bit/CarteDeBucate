@@ -4,10 +4,14 @@ namespace CarteDeBucate.Web.Models;
 
 public class LoginViewModel
 {
-    [Required(ErrorMessage = "Username-ul este obligatoriu.")]
+    [Required(
+        ErrorMessageResourceType = typeof(Resources.ValidationMessages),
+        ErrorMessageResourceName = nameof(Resources.ValidationMessages.UsernameRequired))]
     public string Username { get; set; } = "";
 
-    [Required(ErrorMessage = "Parola este obligatorie.")]
+    [Required(
+        ErrorMessageResourceType = typeof(Resources.ValidationMessages),
+        ErrorMessageResourceName = nameof(Resources.ValidationMessages.PasswordRequired))]
     [DataType(DataType.Password)]
     public string Password { get; set; } = "";
 

@@ -1,39 +1,14 @@
 @model LoginViewModel
-
-@{
-    ViewData["Title"] = "Autentificare";
-}
-
-<div class="mb-4">
-    <h1 class="h2">Autentificare</h1>
-</div>
-
-<form asp-action="Login" method="post">
-    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-
-    <input asp-for="ReturnUrl" type="hidden" />
-
-    <div class="mb-3">
-        <label asp-for="Username" class="form-label">Username</label>
-        <input asp-for="Username" class="form-control" autocomplete="username" />
-        <span asp-validation-for="Username" class="text-danger"></span>
-    </div>
-
-    <div class="mb-4">
-        <label asp-for="Password" class="form-label">Parolă</label>
-        <input asp-for="Password"
-               class="form-control"
-               autocomplete="current-password" />
-        <span asp-validation-for="Password" class="text-danger"></span>
-    </div>
-
-    <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-primary">Autentifică-te</button>
-        <a class="btn btn-outline-secondary"
-           asp-action="Register">Creează cont</a>
-    </div>
-</form>
-
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}
+@inject Microsoft.Extensions.Localization.IStringLocalizer<CarteDeBucate.Web.SharedResource> L
+@{ Layout = "_PublicLayout"; ViewData["Title"] = L["Auth_Login"]; ViewData["Description"] = L["Login_Description"]; }
+<header class="auth-header"><a class="public-wordmark" asp-controller="Home" asp-action="Index">@L["Site_Title"]</a></header>
+<main class="auth-main"><section class="auth-panel" aria-labelledby="login-title">
+    <h1 id="login-title">@L["Auth_Login"]</h1><p class="auth-description">@L["Login_Description"]</p>
+    <form asp-action="Login" method="post" data-auth-form>
+        <div asp-validation-summary="ModelOnly" class="auth-summary" role="alert"></div><input asp-for="ReturnUrl" type="hidden" />
+        <div class="auth-field"><label asp-for="Username">@L["Auth_Username"]</label><input asp-for="Username" autocomplete="username" /><span asp-validation-for="Username"></span></div>
+        <div class="auth-field"><label asp-for="Password">@L["Auth_Password"]</label><div class="password-input"><input asp-for="Password" autocomplete="current-password" /><button type="button" data-password-toggle data-show-label="@L["Auth_ShowPassword"]" data-hide-label="@L["Auth_HidePassword"]" aria-label="@L["Auth_ShowPassword"]">@L["Auth_ShowPassword"]</button></div><span asp-validation-for="Password"></span></div>
+        <button class="public-button auth-submit" type="submit" data-submit-label="@L["Auth_LoginAction"]" data-loading-label="@L["Auth_Submitting"]">@L["Auth_LoginAction"]</button>
+    </form><p class="auth-switch">@L["Login_Prompt"] <a asp-action="Register">@L["Auth_Register"]</a></p>
+</section></main>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

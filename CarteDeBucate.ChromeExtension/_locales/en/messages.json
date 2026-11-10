@@ -1,0 +1,22 @@
+{
+  "extensionName": { "message": "Recipe Clipper – Print & Save Recipes" },
+  "extensionDescription": { "message": "Extract recipes from web pages and format them for easy printing or saving as PDF." },
+  "actionTitle": { "message": "Extract recipe" },
+  "sidePanelDescription": { "message": "Extract the recipe from the current page." },
+  "editRecipe": { "message": "Edit Recipe" },
+  "printSavePdf": { "message": "Print / Save PDF" },
+  "saveToCookbook": { "message": "Save to Cookbook" },
+  "extractHint": { "message": "Click the extension icon to extract a recipe from the current page." },
+  "signInToSave": { "message": "Sign in to save recipes." },
+  "logIn": { "message": "Log in" },
+  "recipeName": { "message": "Recipe name" },
+  "sourceUrl": { "message": "Source URL" },
+  "imageUrl": { "message": "Image URL" },
+  "ingredients": { "message": "Ingredients" },
+  "instructions": { "message": "Instructions" },
+  "addIngredient": { "message": "Add Ingredient" },
+  "addInstruction": { "message": "Add Instruction" },
+  "cancel": { "message": "Cancel" },
+  "editPageTitle": { "message": "Edit Recipe" },
+  "printPageTitle": { "message": "Print Recipe" }
+}

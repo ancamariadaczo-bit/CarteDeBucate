@@ -1,9 +1,10 @@
 {
     "manifest_version": 3,
-    "name": "Recipe Clipper – Print & Save Recipes",
+    "default_locale": "en",
+    "name": "__MSG_extensionName__",
     "version": "1.2.0",
     "minimum_chrome_version": "116",
-    "description": "Extract recipes from web pages and format them for easy printing or saving as PDF.",
+    "description": "__MSG_extensionDescription__",
     "permissions": [
         "activeTab",
         "scripting",
@@ -24,7 +25,7 @@
         "default_path": "sidepanel.html"
     },
     "action": {
-        "default_title": "Extract recipe",
+        "default_title": "__MSG_actionTitle__",
         "default_icon": {
             "16": "icons/icon16.png",
             "32": "icons/icon32.png"

@@ -2,6 +2,7 @@ using System.Diagnostics;
 using CarteDeBucate.Web.Models;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CarteDeBucate.Web.Controllers;
 
@@ -14,9 +15,15 @@ public class HomeController : Controller
         _logger = logger;
     }
 
+    [AllowAnonymous]
     public IActionResult Index()
     {
-        return RedirectToAction("Index", "Recipes");
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            return RedirectToAction("Index", "Recipes");
+        }
+
+        return View();
     }
 
     public IActionResult Privacy()
