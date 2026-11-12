@@ -16,7 +16,7 @@
 
 <div class="mb-3">
     <label asp-for="SourceUrl" class="form-label">
-        URL sursă <span class="text-danger" aria-hidden="true">*</span>
+        URL sursă
     </label>
     <input asp-for="SourceUrl" class="form-control" type="url" />
     <span asp-validation-for="SourceUrl" class="text-danger"></span>
@@ -35,7 +35,7 @@
 
 <div class="mb-3">
     <label asp-for="StepsText" class="form-label">
-        Pași <span class="text-danger" aria-hidden="true">*</span>
+        Pași
     </label>
     <div class="form-text">
         Introdu fiecare pas pe o linie separată.
@@ -52,8 +52,7 @@
 
 <div class="mb-4">
     <label asp-for="Status" class="form-label">Status</label>
-    <select asp-for="Status"
-            asp-items="RecipeStatusPresentation.GetSelectList(Model.Status)"
+    <select asp-for="Status" asp-items="RecipeStatusPresentation.GetSelectList(Model.Status)"
             class="form-select"></select>
     <span asp-validation-for="Status" class="text-danger"></span>
 </div>

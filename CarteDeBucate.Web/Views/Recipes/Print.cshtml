@@ -19,10 +19,13 @@
             <div id="recipeSummary">
                 <h1>@recipe.Name</h1>
 
-                <p class="recipe-source">
-                    <strong>Source: </strong>
-                    <a href="@recipe.SourceUrl">@recipe.SourceUrl</a>
-                </p>
+                @if (!string.IsNullOrWhiteSpace(recipe.SourceUrl))
+                {
+                    <p class="recipe-source">
+                        <strong>Source: </strong>
+                        <a href="@recipe.SourceUrl">@recipe.SourceUrl</a>
+                    </p>
+                }
 
                 <h2>Ingredients</h2>
                 <ul>
@@ -51,12 +54,19 @@
 
         <section id="stepsSection">
             <h2>Instructions</h2>
-            <ol>
-                @foreach (string step in recipe.Steps)
-                {
-                    <li>@step</li>
-                }
-            </ol>
+            @if (recipe.Steps.Count == 0)
+            {
+                <p>No steps available.</p>
+            }
+            else
+            {
+                <ol>
+                    @foreach (string step in recipe.Steps)
+                    {
+                        <li>@step</li>
+                    }
+                </ol>
+            }
         </section>
     </main>
     <script src="~/js/recipe-print.js" asp-append-version="true"></script>

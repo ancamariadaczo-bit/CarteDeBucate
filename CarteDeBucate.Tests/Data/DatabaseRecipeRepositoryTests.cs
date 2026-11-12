@@ -765,6 +765,42 @@ public class DatabaseRecipeRepositoryTests
         }
     }
 
+    [Fact]
+    public void AddAndUpdateRecipe_WithMissingSourceUrlAndSteps_ShouldPersistNullUrlAndEmptySteps()
+    {
+        string databasePath = CreateTemporaryDatabasePath();
+
+        try
+        {
+            DatabaseRecipeRepository repository = CreateRepository(databasePath);
+            Recipe recipe = CreateTestRecipe();
+            recipe.SourceUrl = string.Empty;
+            recipe.Steps = [];
+
+            repository.AddRecipe(recipe);
+
+            Recipe saved = Assert.Single(repository.GetAllRecipes());
+            Assert.Equal(string.Empty, saved.SourceUrl);
+            Assert.Empty(saved.Steps);
+            Assert.False(repository.RecipeExistsBySourceUrl(string.Empty));
+
+            saved.SourceUrl = "https://example.com/temporary";
+            saved.Steps = ["Step"];
+            repository.UpdateRecipe(saved);
+            saved.SourceUrl = string.Empty;
+            saved.Steps = [];
+            repository.UpdateRecipe(saved);
+
+            Recipe updated = Assert.Single(repository.GetAllRecipes());
+            Assert.Equal(string.Empty, updated.SourceUrl);
+            Assert.Empty(updated.Steps);
+        }
+        finally
+        {
+            DeleteDatabaseFile(databasePath);
+        }
+    }
+
     private static DatabaseRecipeRepository CreateRepository(string databasePath)
     {
         DatabaseInitializer databaseInitializer = new DatabaseInitializer(databasePath);

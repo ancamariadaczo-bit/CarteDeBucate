@@ -115,7 +115,10 @@ public class RecipeConsoleWriter : IRecipeConsoleWriter
 
     private static void WriteRecipeSummary(RecipeSummary recipe)
     {
-        Console.WriteLine($"{AppTexts.SourceLabel}{recipe.SourceUrl}");
+        if (!string.IsNullOrWhiteSpace(recipe.SourceUrl))
+        {
+            Console.WriteLine($"{AppTexts.SourceLabel}{recipe.SourceUrl}");
+        }
         Console.WriteLine($"{AppTexts.SavedAtLabel}{recipe.SavedAt}");
     }
 
@@ -135,7 +138,10 @@ public class RecipeConsoleWriter : IRecipeConsoleWriter
             Console.WriteLine($"{AppTexts.IdLabel}: {recipe.Id}");
         }
 
-        Console.WriteLine($"{AppTexts.SourceLabel}{recipe.SourceUrl}");
+        if (!string.IsNullOrWhiteSpace(recipe.SourceUrl))
+        {
+            Console.WriteLine($"{AppTexts.SourceLabel}{recipe.SourceUrl}");
+        }
         Console.WriteLine($"{dateLabel}{recipe.SavedAt}");
 
         Console.WriteLine();

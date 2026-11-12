@@ -2,6 +2,8 @@ using RecipeExtraction;
 
 public static class RecipeExtractionResultMapper
 {
+    private static readonly RecipeImportQualityChecker ImportQualityChecker = new();
+
     public static RecipeImportResult ToImportResult(RecipeExtractionResult extractionResult)
     {
         ArgumentNullException.ThrowIfNull(extractionResult);
@@ -23,12 +25,15 @@ public static class RecipeExtractionResultMapper
             return CreateFailure(AppTexts.RecipeImportFailed);
         }
 
+        Recipe recipe = ExtractedRecipeMapper.ToRecipe(extractionResult.Recipe);
+
         return new RecipeImportResult
         {
             Success = true,
-            Recipe = ExtractedRecipeMapper.ToRecipe(extractionResult.Recipe),
+            Recipe = recipe,
             ImageUrl = extractionResult.Recipe.ImageUrl,
-            Message = successMessage
+            Message = successMessage,
+            WarningMessage = ImportQualityChecker.GetWarning(recipe)
         };
     }
 

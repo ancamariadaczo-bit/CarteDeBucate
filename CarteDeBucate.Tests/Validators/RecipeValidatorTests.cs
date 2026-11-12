@@ -33,14 +33,14 @@ public class RecipeValidatorTests
     }
 
     [Fact]
-    public void ValidateForSave_WithMissingSourceUrl_ShouldReturnInvalidResult()
+    public void ValidateForSave_WithMissingSourceUrl_ShouldReturnValidResult()
     {
         Recipe recipe = CreateValidRecipe();
         recipe.SourceUrl = "";
 
         RecipeValidationResult result = RecipeValidator.ValidateForSave(recipe);
 
-        Assert.False(result.IsValid);
+        Assert.True(result.IsValid);
     }
 
     [Theory]
@@ -97,14 +97,14 @@ public class RecipeValidatorTests
     }
 
     [Fact]
-    public void ValidateForSave_WithNoSteps_ShouldReturnInvalidResult()
+    public void ValidateForSave_WithNoSteps_ShouldReturnValidResult()
     {
         Recipe recipe = CreateValidRecipe();
         recipe.Steps.Clear();
 
         RecipeValidationResult result = RecipeValidator.ValidateForSave(recipe);
 
-        Assert.False(result.IsValid);
+        Assert.True(result.IsValid);
     }
 
     private static Recipe CreateValidRecipe()

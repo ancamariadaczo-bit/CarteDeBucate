@@ -21,11 +21,6 @@ public class RecipeConsoleReader : IRecipeConsoleReader
         Console.Write(AppTexts.EnterSourceUrl);
         recipe.SourceUrl = Console.ReadLine() ?? "";
 
-        if (string.IsNullOrWhiteSpace(recipe.SourceUrl))
-        {
-            return null;
-        }
-
         Console.WriteLine();
         Console.WriteLine(AppTexts.EnterIngredientsIntro);
         Console.WriteLine(AppTexts.EmptyLineToFinish);
@@ -133,10 +128,15 @@ public class RecipeConsoleReader : IRecipeConsoleReader
 
         Console.WriteLine();
         Console.WriteLine($"{AppTexts.CurrentValueLabel}{recipe.SourceUrl}");
+        Console.WriteLine(AppTexts.ClearSourceUrlHint);
         Console.Write(AppTexts.EnterSourceUrl);
         string sourceUrl = Console.ReadLine() ?? "";
 
-        if (!string.IsNullOrWhiteSpace(sourceUrl))
+        if (sourceUrl.Trim().Equals(AppTexts.ClearSourceUrlCommand, StringComparison.OrdinalIgnoreCase))
+        {
+            recipe.SourceUrl = string.Empty;
+        }
+        else if (!string.IsNullOrWhiteSpace(sourceUrl))
         {
             recipe.SourceUrl = sourceUrl;
         }

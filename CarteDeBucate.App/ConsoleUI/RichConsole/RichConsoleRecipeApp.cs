@@ -139,6 +139,11 @@ public class RichConsoleRecipeApp : IRecipeApp
             if (importResult.Success)
             {
                 _display.ShowSpacedSuccess(importResult.Message);
+
+                if (!string.IsNullOrWhiteSpace(importResult.WarningMessage))
+                {
+                    _display.ShowInfo(importResult.WarningMessage);
+                }
             }
             else
             {

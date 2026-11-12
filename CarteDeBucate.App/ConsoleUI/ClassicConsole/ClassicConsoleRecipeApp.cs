@@ -134,6 +134,11 @@ public class ClassicConsoleRecipeApp : IRecipeApp
 
         _writer.DisplayMessage(importResult.Message);
 
+        if (!string.IsNullOrWhiteSpace(importResult.WarningMessage))
+        {
+            _writer.DisplayMessage(importResult.WarningMessage);
+        }
+
         if (!importResult.Success || importResult.Recipe == null)
         {
             return;

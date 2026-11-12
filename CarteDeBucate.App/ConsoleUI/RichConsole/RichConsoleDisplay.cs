@@ -43,7 +43,7 @@ public class RichConsoleDisplay : IRichConsoleDisplay
 
             table.AddRow(
                 Markup.Escape(recipe.Name ?? RichConsoleTexts.EmptyValue),
-                Markup.Escape(recipe.SourceUrl ?? RichConsoleTexts.EmptyValue),
+                Markup.Escape(string.IsNullOrWhiteSpace(recipe.SourceUrl) ? RichConsoleTexts.EmptyValue : recipe.SourceUrl),
                 Markup.Escape(recipe.SavedAt.ToString(RichConsoleTexts.SavedAtDateFormat)));
 
             if (index < recipes.Count - 1)
@@ -61,7 +61,10 @@ public class RichConsoleDisplay : IRichConsoleDisplay
         metadata.AddColumn();
         metadata.AddColumn();
         metadata.AddRow(RichConsoleTexts.NameColumn, Markup.Escape(recipe.Name));
-        metadata.AddRow(RichConsoleTexts.SourceColumn, Markup.Escape(recipe.SourceUrl));
+        if (!string.IsNullOrWhiteSpace(recipe.SourceUrl))
+        {
+            metadata.AddRow(RichConsoleTexts.SourceColumn, Markup.Escape(recipe.SourceUrl));
+        }
         metadata.AddRow(
             RichConsoleTexts.SavedAtColumn,
             Markup.Escape(recipe.SavedAt.ToString(RichConsoleTexts.SavedAtDateFormat)));

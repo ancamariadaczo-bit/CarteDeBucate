@@ -41,7 +41,8 @@ public class DatabaseMigrator
             new DatabaseMigration(2, "Create Users table", DatabaseScripts.CreateUsersTable),
             new DatabaseMigration(3, "Add user id to recipes", DatabaseScripts.AddUserIdToRecipes),
             new DatabaseMigration(4, "Create RecipePhotos table", DatabaseScripts.CreateRecipePhotosSchema),
-            new DatabaseMigration(5, "Make usernames case-insensitively unique", DatabaseScripts.CreateUsersUsernameNoCaseUniqueIndex)
+            new DatabaseMigration(5, "Make usernames case-insensitively unique", DatabaseScripts.CreateUsersUsernameNoCaseUniqueIndex),
+            new DatabaseMigration(6, "Make recipe source URL optional", DatabaseScripts.MakeRecipeSourceUrlOptional)
         };
     }
 
@@ -78,8 +79,27 @@ public class DatabaseMigrator
             3 => ColumnExists(connection, "Recipes", "UserId"),
             4 => TableExists(connection, "RecipePhotos"),
             5 => IndexExists(connection, "IX_Users_Username_NoCase"),
+            6 => IsColumnNullable(connection, "Recipes", "SourceUrl"),
             _ => false
         };
+    }
+
+    private static bool IsColumnNullable(SqliteConnection connection, string tableName, string columnName)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = $"PRAGMA table_info({tableName});";
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            if (reader.GetString(reader.GetOrdinal("name"))
+                .Equals(columnName, StringComparison.OrdinalIgnoreCase))
+            {
+                return reader.GetInt32(reader.GetOrdinal("notnull")) == 0;
+            }
+        }
+
+        return false;
     }
 
     private static bool IndexExists(SqliteConnection connection, string indexName)

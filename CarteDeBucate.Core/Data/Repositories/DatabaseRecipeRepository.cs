@@ -525,7 +525,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
             """;
 
         command.Parameters.AddWithValue("@Name", recipe.Name);
-        command.Parameters.AddWithValue("@SourceUrl", recipe.SourceUrl);
+        command.Parameters.AddWithValue("@SourceUrl", ToDatabaseSourceUrl(recipe.SourceUrl));
         command.Parameters.AddWithValue("@SavedAt", recipe.SavedAt.ToString("O"));
         command.Parameters.AddWithValue("@Notes", string.IsNullOrWhiteSpace(recipe.Notes) ? DBNull.Value : recipe.Notes);
         command.Parameters.AddWithValue("@Status", (int)recipe.Status);
@@ -817,7 +817,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
         {
             Id = reader.GetInt32(reader.GetOrdinal("Id")),
             Name = reader.GetString(reader.GetOrdinal("Name")),
-            SourceUrl = reader.GetString(reader.GetOrdinal("SourceUrl")),
+            SourceUrl = ReadSourceUrl(reader),
             SavedAt = DateTime.Parse(reader.GetString(reader.GetOrdinal("SavedAt"))),
             Notes = reader.IsDBNull(reader.GetOrdinal("Notes"))
                 ? ""
@@ -837,7 +837,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
         {
             Id = reader.GetInt32(reader.GetOrdinal("Id")),
             Name = reader.GetString(reader.GetOrdinal("Name")),
-            SourceUrl = reader.GetString(reader.GetOrdinal("SourceUrl")),
+            SourceUrl = ReadSourceUrl(reader),
             SavedAt = DateTime.Parse(reader.GetString(reader.GetOrdinal("SavedAt"))),
             Status = (RecipeStatus)reader.GetInt32(reader.GetOrdinal("Status")),
             UserId = reader.IsDBNull(reader.GetOrdinal("UserId"))
@@ -1032,7 +1032,7 @@ public class DatabaseRecipeRepository : IRecipeRepository
 
         command.Parameters.AddWithValue("@RecipeId", recipe.Id);
         command.Parameters.AddWithValue("@Name", recipe.Name);
-        command.Parameters.AddWithValue("@SourceUrl", recipe.SourceUrl);
+        command.Parameters.AddWithValue("@SourceUrl", ToDatabaseSourceUrl(recipe.SourceUrl));
         command.Parameters.AddWithValue("@SavedAt", recipe.SavedAt.ToString("O"));
         command.Parameters.AddWithValue("@Notes", string.IsNullOrWhiteSpace(recipe.Notes) ? DBNull.Value : recipe.Notes);
         command.Parameters.AddWithValue("@Status", (int)recipe.Status);
@@ -1065,12 +1065,23 @@ public class DatabaseRecipeRepository : IRecipeRepository
         command.Parameters.AddWithValue("@RecipeId", recipe.Id);
         command.Parameters.AddWithValue("@UserId", userId);
         command.Parameters.AddWithValue("@Name", recipe.Name);
-        command.Parameters.AddWithValue("@SourceUrl", recipe.SourceUrl);
+        command.Parameters.AddWithValue("@SourceUrl", ToDatabaseSourceUrl(recipe.SourceUrl));
         command.Parameters.AddWithValue("@SavedAt", recipe.SavedAt.ToString("O"));
         command.Parameters.AddWithValue("@Notes", string.IsNullOrWhiteSpace(recipe.Notes) ? DBNull.Value : recipe.Notes);
         command.Parameters.AddWithValue("@Status", (int)recipe.Status);
 
         command.ExecuteNonQuery();
+    }
+
+    private static object ToDatabaseSourceUrl(string? sourceUrl)
+    {
+        return string.IsNullOrWhiteSpace(sourceUrl) ? DBNull.Value : sourceUrl.Trim();
+    }
+
+    private static string ReadSourceUrl(SqliteDataReader reader)
+    {
+        int ordinal = reader.GetOrdinal("SourceUrl");
+        return reader.IsDBNull(ordinal) ? string.Empty : reader.GetString(ordinal);
     }
 
     private long LogTransactionStarted(string operation, int? recipeId)

@@ -8,9 +8,9 @@ public static class CreateRecipeRequestExtensions
         return new Recipe
         {
             Name = request.Name,
-            SourceUrl = request.SourceUrl,
+            SourceUrl = request.SourceUrl?.Trim() ?? string.Empty,
             Ingredients = request.Ingredients,
-            Steps = request.Steps
+            Steps = request.Steps ?? []
         };
     }
 }

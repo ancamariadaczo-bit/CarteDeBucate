@@ -255,7 +255,7 @@ public class JsonRecipeRepository : IRecipeRepository
         List<Recipe> recipes = GetAllRecipes();
 
         return recipes.Any(existingRecipe =>
-            existingRecipe.SourceUrl.Trim().Equals(
+            (existingRecipe.SourceUrl ?? string.Empty).Trim().Equals(
                 sourceUrl.Trim(),
                 StringComparison.OrdinalIgnoreCase));
     }
@@ -271,7 +271,7 @@ public class JsonRecipeRepository : IRecipeRepository
 
         return recipes.Any(existingRecipe =>
             existingRecipe.UserId == userId &&
-            existingRecipe.SourceUrl.Trim().Equals(
+            (existingRecipe.SourceUrl ?? string.Empty).Trim().Equals(
                 sourceUrl.Trim(),
                 StringComparison.OrdinalIgnoreCase));
     }
@@ -340,10 +340,10 @@ public class JsonRecipeRepository : IRecipeRepository
         {
             Id = recipeId,
             Name = recipe.Name,
-            SourceUrl = recipe.SourceUrl,
+            SourceUrl = recipe.SourceUrl ?? string.Empty,
             SavedAt = recipe.SavedAt,
             Ingredients = new List<string>(recipe.Ingredients),
-            Steps = new List<string>(recipe.Steps),
+            Steps = new List<string>(recipe.Steps ?? []),
             Notes = recipe.Notes,
             Status = recipe.Status,
             UserId = recipe.UserId
@@ -356,7 +356,7 @@ public class JsonRecipeRepository : IRecipeRepository
         {
             Id = recipe.Id,
             Name = recipe.Name,
-            SourceUrl = recipe.SourceUrl,
+            SourceUrl = recipe.SourceUrl ?? string.Empty,
             SavedAt = recipe.SavedAt,
             Status = recipe.Status,
             UserId = recipe.UserId

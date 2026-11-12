@@ -3,22 +3,19 @@ using Microsoft.AspNetCore.Http;
 
 namespace CarteDeBucate.Web.Models;
 
-public class RecipeFormViewModel
+public class RecipeFormViewModel : IValidatableObject
 {
     public int Id { get; set; }
 
     [Required(ErrorMessage = "Numele este obligatoriu.")]
     public string Name { get; set; } = "";
 
-    [Required(ErrorMessage = "URL-ul sursă este obligatoriu.")]
-    [Url(ErrorMessage = "Introdu un URL valid.")]
-    public string SourceUrl { get; set; } = "";
+    public string? SourceUrl { get; set; }
 
     [Required(ErrorMessage = "Ingredientele sunt obligatorii.")]
     public string IngredientsText { get; set; } = "";
 
-    [Required(ErrorMessage = "Pașii sunt obligatorii.")]
-    public string StepsText { get; set; } = "";
+    public string? StepsText { get; set; }
 
     public string? Notes { get; set; }
 
@@ -41,9 +38,9 @@ public class RecipeFormViewModel
         {
             Id = recipe.Id,
             Name = recipe.Name,
-            SourceUrl = recipe.SourceUrl,
+            SourceUrl = recipe.SourceUrl ?? string.Empty,
             IngredientsText = string.Join(Environment.NewLine, recipe.Ingredients),
-            StepsText = string.Join(Environment.NewLine, recipe.Steps),
+            StepsText = string.Join(Environment.NewLine, recipe.Steps ?? []),
             Notes = recipe.Notes,
             Status = recipe.Status,
             SavedAt = recipe.SavedAt,
@@ -57,7 +54,7 @@ public class RecipeFormViewModel
         {
             Id = Id,
             Name = Name,
-            SourceUrl = SourceUrl,
+            SourceUrl = SourceUrl?.Trim() ?? string.Empty,
             Ingredients = SplitLines(IngredientsText),
             Steps = SplitLines(StepsText),
             Notes = Notes ?? "",
@@ -67,7 +64,18 @@ public class RecipeFormViewModel
         };
     }
 
-    private static List<string> SplitLines(string text)
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (!string.IsNullOrWhiteSpace(SourceUrl) &&
+            !UrlValidator.IsValidHttpUrl(SourceUrl))
+        {
+            yield return new ValidationResult(
+                "Introdu un URL valid.",
+                [nameof(SourceUrl)]);
+        }
+    }
+
+    private static List<string> SplitLines(string? text)
     {
         return (text ?? "")
             .Split(

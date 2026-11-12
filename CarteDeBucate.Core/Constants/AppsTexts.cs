@@ -50,6 +50,8 @@ public static class AppTexts
     public const string ImportSuccessJsonLd = "Rețeta a fost importată cu succes.";
     public const string ImportSuccessVisibleHtml = "Rețeta a fost importată cu succes.";
     public const string ImportSuccessTitleOnly = "Am importat numele rețetei. Te rog completează ingredientele și pașii.";
+    public const string ImportStepsNotExtracted =
+        "Nu am putut extrage pașii rețetei. Îi poți completa manual.";
     public const string ImportFailedBlockedPage =
     "Pagina pare blocată de o verificare automată. Programul nu a primit conținutul real al rețetei.";
 
@@ -115,6 +117,8 @@ public static class AppTexts
     public const string EnterRecipeIdToEdit = "Introdu ID-ul rețetei pe care vrei să o editezi: ";
     public const string RecipeUpdated = "Rețeta a fost actualizată.";
     public const string KeepCurrentValuePrompt = "Apasă Enter ca să păstrezi valoarea curentă.";
+    public const string ClearSourceUrlCommand = "sterge";
+    public const string ClearSourceUrlHint = "Scrie „sterge” pentru a elimina link-ul sursă.";
     public const string CurrentValueLabel = "Valoare curentă: ";
     public const string EditRecipeTitle = "=== Editare rețetă ===";
     public const string EditIngredientsPrompt = "Vrei să editezi ingredientele? Scrie da pentru editare sau apasă Enter ca să le păstrezi.";
@@ -125,7 +129,6 @@ public static class AppTexts
         "URL-ul sursă trebuie să fie un URL absolut HTTP sau HTTPS.";
     public const string RecipeSavedDateRequired = "Data de savare a rețetei este obligatorie.";
     public const string RecipeIngredientsRequired = "Ingredientele sunt obligatorii.";
-    public const string RecipeStepsRequired = "Pșii sunt obligatorii.";
 
     public const string SaveRecipeQuestion = "Dorești să salvezi această rețetă? (Y/N)?";
     public const string InvalidSaveOption = "Opțiune invalidă. Te rog introdu Y pentru Da sau N pentru Nu.";

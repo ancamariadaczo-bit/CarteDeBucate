@@ -345,22 +345,31 @@ public class RecipeBackupServiceTests
         Assert.Equal(0, repository.AddRecipesCallCount);
     }
 
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void ImportFromJsonContent_WithEmptyIngredientsOrSteps_ShouldFailWithoutPersisting(
-        bool emptyIngredients)
+    [Fact]
+    public void ImportFromJsonContent_WithEmptyIngredients_ShouldFailWithoutPersisting()
     {
         Recipe invalidRecipe = CreateValidRecipe();
 
-        if (emptyIngredients)
-        {
-            invalidRecipe.Ingredients.Clear();
-        }
-        else
-        {
-            invalidRecipe.Steps.Clear();
-        }
+        invalidRecipe.Ingredients.Clear();
+
+        string json = JsonSerializer.Serialize(new[] { invalidRecipe });
+        FakeRecipeRepository repository = new FakeRecipeRepository();
+        RecipeBackupService service = new RecipeBackupService(repository);
+
+        RecipeBackupResult result = service.ImportFromJsonContent(json);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(0, result.ImportedCount);
+        Assert.Empty(repository.Recipes);
+        Assert.False(repository.AddRecipeWasCalled);
+        Assert.Equal(0, repository.AddRecipesCallCount);
+    }
+
+    [Fact]
+    public void ImportFromJsonContent_WithNullIngredients_ShouldFailWithoutPersisting()
+    {
+        Recipe invalidRecipe = CreateValidRecipe();
+        invalidRecipe.Ingredients = null!;
 
         string json = JsonSerializer.Serialize(new[] { invalidRecipe });
         FakeRecipeRepository repository = new FakeRecipeRepository();

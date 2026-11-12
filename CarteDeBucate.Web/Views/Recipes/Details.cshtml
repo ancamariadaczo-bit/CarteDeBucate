@@ -78,12 +78,19 @@
 
 <section class="mb-4">
     <h2 class="h4">Pași</h2>
-    <ol>
-        @foreach (string step in recipe.Steps)
-        {
-            <li class="mb-2">@step</li>
-        }
-    </ol>
+    @if (recipe.Steps.Count == 0)
+    {
+        <p>Nu există pași.</p>
+    }
+    else
+    {
+        <ol>
+            @foreach (string step in recipe.Steps)
+            {
+                <li class="mb-2">@step</li>
+            }
+        </ol>
+    }
 </section>
 
 @if (!string.IsNullOrWhiteSpace(recipe.Notes))

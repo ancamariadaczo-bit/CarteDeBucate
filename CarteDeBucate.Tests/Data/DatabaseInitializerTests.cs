@@ -3,6 +3,17 @@ using Microsoft.Data.Sqlite;
 public class DatabaseInitializerTests
 {
     [Fact]
+    public void Initialize_ShouldAllowNullRecipeSourceUrl()
+    {
+        WithInitializedDatabase(databasePath =>
+        {
+            Dictionary<string, ColumnDefinition> columns = ReadColumns(databasePath, "Recipes");
+
+            Assert.False(columns["SourceUrl"].IsNotNull);
+        });
+    }
+
+    [Fact]
     public void Initialize_ShouldCreateRecipePhotosTable()
     {
         WithInitializedDatabase(databasePath =>

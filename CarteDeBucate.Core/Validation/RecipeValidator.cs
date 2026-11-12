@@ -4,16 +4,13 @@ public static class RecipeValidator
     {
         RecipeValidationResult result = new RecipeValidationResult();
 
-        if (string.IsNullOrWhiteSpace(recipe.Name))
+        if (!RecipeQualityChecker.HasValidName(recipe))
         {
             result.Errors.Add(AppTexts.RecipeNameRequired);
         }
 
-        if (string.IsNullOrWhiteSpace(recipe.SourceUrl))
-        {
-            result.Errors.Add(AppTexts.RecipeSourceUrlRequired);
-        }
-        else if (!UrlValidator.IsValidHttpUrl(recipe.SourceUrl))
+        if (!string.IsNullOrWhiteSpace(recipe.SourceUrl) &&
+            !UrlValidator.IsValidHttpUrl(recipe.SourceUrl))
         {
             result.Errors.Add(AppTexts.RecipeSourceUrlInvalid);
         }
@@ -23,14 +20,9 @@ public static class RecipeValidator
             result.Errors.Add(AppTexts.RecipeSavedDateRequired);
         }
 
-        if (recipe.Ingredients == null || recipe.Ingredients.Count == 0)
+        if (!RecipeQualityChecker.HasIngredients(recipe))
         {
             result.Errors.Add(AppTexts.RecipeIngredientsRequired);
-        }
-
-        if (recipe.Steps == null || recipe.Steps.Count == 0)
-        {
-            result.Errors.Add(AppTexts.RecipeStepsRequired);
         }
 
         return result;

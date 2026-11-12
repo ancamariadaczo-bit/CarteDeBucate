@@ -13,10 +13,6 @@ public class RichConsoleReader : IRichConsoleReader
         }
 
         string sourceUrl = ReadOptionalText(AppTexts.EnterSourceUrl);
-        if (string.IsNullOrWhiteSpace(sourceUrl))
-        {
-            return null;
-        }
 
         return new Recipe
         {
@@ -134,8 +130,12 @@ public class RichConsoleReader : IRichConsoleReader
             recipe.Name = name;
         }
 
-        string sourceUrl = ReadOptionalText($"{AppTexts.EnterSourceUrl}({AppTexts.KeepCurrentValuePrompt})");
-        if (!string.IsNullOrWhiteSpace(sourceUrl))
+        string sourceUrl = ReadOptionalText($"{AppTexts.EnterSourceUrl}({AppTexts.KeepCurrentValuePrompt} {AppTexts.ClearSourceUrlHint})");
+        if (sourceUrl.Trim().Equals(AppTexts.ClearSourceUrlCommand, StringComparison.OrdinalIgnoreCase))
+        {
+            recipe.SourceUrl = string.Empty;
+        }
+        else if (!string.IsNullOrWhiteSpace(sourceUrl))
         {
             recipe.SourceUrl = sourceUrl;
         }

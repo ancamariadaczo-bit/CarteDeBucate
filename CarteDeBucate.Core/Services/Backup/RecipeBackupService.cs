@@ -163,9 +163,10 @@ public class RecipeBackupService : IRecipeBackupService
 
             foreach (Recipe recipe in recipes)
             {
-                bool isDuplicateInDocument = !sourceUrlsInDocument.Add(recipe.SourceUrl);
-                bool alreadyExists =
-                    isDuplicateInDocument || RecipeExistsBySourceUrl(recipe.SourceUrl);
+                bool hasSourceUrl = !string.IsNullOrWhiteSpace(recipe.SourceUrl);
+                bool isDuplicateInDocument = hasSourceUrl && !sourceUrlsInDocument.Add(recipe.SourceUrl);
+                bool alreadyExists = hasSourceUrl &&
+                    (isDuplicateInDocument || RecipeExistsBySourceUrl(recipe.SourceUrl));
 
                 if (alreadyExists)
                 {

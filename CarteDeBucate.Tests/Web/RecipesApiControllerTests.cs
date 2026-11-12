@@ -275,6 +275,27 @@ public class RecipesApiControllerTests
     }
 
     [Fact]
+    public async Task Create_WithMissingOptionalSourceUrlAndSteps_ShouldNormalizeThem()
+    {
+        Recipe savedRecipe = new Recipe { Id = 42 };
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
+        {
+            SaveResultToReturn = RecipeSaveResult.Success("Recipe saved successfully.", savedRecipe)
+        };
+        RecipesApiController controller = CreateController(recipeService);
+        CreateRecipeRequest request = CreateRequest();
+        request.SourceUrl = null;
+        request.Steps = null;
+
+        IActionResult result = await controller.Create(request);
+
+        Assert.IsType<CreatedResult>(result);
+        Recipe recipe = Assert.IsType<Recipe>(recipeService.RecipePassedToSaveRecipe);
+        Assert.Equal(string.Empty, recipe.SourceUrl);
+        Assert.Empty(recipe.Steps);
+    }
+
+    [Fact]
     public async Task Create_WithInvalidImageUrl_ShouldReturnBadRequest()
     {
         using AuthenticationApiWebApplicationFactory factory = new();

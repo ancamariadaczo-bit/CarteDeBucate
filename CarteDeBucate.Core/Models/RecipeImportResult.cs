@@ -4,4 +4,5 @@ public class RecipeImportResult
     public Recipe? Recipe { get; set; }
     public string? ImageUrl { get; set; }
     public string Message { get; set; } = "";
+    public string? WarningMessage { get; set; }
 }

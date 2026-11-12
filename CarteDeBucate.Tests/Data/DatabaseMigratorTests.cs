@@ -133,6 +133,7 @@ public class DatabaseMigratorTests
 
             Assert.Equal(1L, MigrationRecordCount(databasePath, 4));
             Assert.Equal(1L, MigrationRecordCount(databasePath, 5));
+            Assert.Equal(1L, MigrationRecordCount(databasePath, 6));
         }
         finally
         {
@@ -154,6 +155,31 @@ public class DatabaseMigratorTests
             migrator.ApplyMigrations();
 
             AssertOldRecipeWasPreserved(databasePath, recipeId);
+        }
+        finally
+        {
+            DeleteDatabaseFile(databasePath);
+        }
+    }
+
+    [Fact]
+    public void ApplyMigrations_ShouldMakeSourceUrlNullableAndPreserveForeignKeys()
+    {
+        string databasePath = CreateTemporaryDatabasePath();
+
+        try
+        {
+            CreateOldRecipesTable(databasePath);
+            int recipeId = InsertOldRecipe(databasePath);
+
+            DatabaseMigrator migrator = new DatabaseMigrator(databasePath);
+            migrator.ApplyMigrations();
+
+            Assert.True(MigrationWasRecorded(databasePath, 6));
+            Assert.True(SourceUrlIsNullable(databasePath));
+            AssertOldRecipeWasPreserved(databasePath, recipeId);
+            Assert.IsType<DBNull>(InsertRecipeWithNullSourceUrl(databasePath));
+            Assert.Empty(ReadForeignKeyCheck(databasePath));
         }
         finally
         {
@@ -314,6 +340,55 @@ public class DatabaseMigratorTests
         }
 
         return false;
+    }
+
+    private static bool SourceUrlIsNullable(string databasePath)
+    {
+        using SqliteConnection connection = new SqliteConnection($"Data Source={databasePath}");
+        connection.Open();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = "PRAGMA table_info(Recipes);";
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            if (reader.GetString(reader.GetOrdinal("name")) == "SourceUrl")
+            {
+                return reader.GetInt32(reader.GetOrdinal("notnull")) == 0;
+            }
+        }
+
+        return false;
+    }
+
+    private static object? InsertRecipeWithNullSourceUrl(string databasePath)
+    {
+        using SqliteConnection connection = new SqliteConnection($"Data Source={databasePath}");
+        connection.Open();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO Recipes (Name, SourceUrl, SavedAt, Status)
+            VALUES ('No source', NULL, @SavedAt, 0);
+            SELECT SourceUrl FROM Recipes WHERE Id = last_insert_rowid();
+            """;
+        command.Parameters.AddWithValue("@SavedAt", DateTime.UtcNow.ToString("O"));
+        return command.ExecuteScalar();
+    }
+
+    private static List<string> ReadForeignKeyCheck(string databasePath)
+    {
+        using SqliteConnection connection = new SqliteConnection($"Data Source={databasePath}");
+        connection.Open();
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = "PRAGMA foreign_key_check;";
+        using SqliteDataReader reader = command.ExecuteReader();
+        List<string> errors = [];
+        while (reader.Read())
+        {
+            errors.Add(reader.GetString(0));
+        }
+
+        return errors;
     }
 
     private static bool TableExists(string databasePath, string tableName)

@@ -19,17 +19,16 @@ public class RecipeFormViewModelTests
     }
 
     [Fact]
-    public void SourceUrl_WhenEmpty_ShouldReturnRequiredValidationError()
+    public void SourceUrl_WhenEmpty_ShouldNotReturnValidationError()
     {
         RecipeFormViewModel model = CreateValidModel();
         model.SourceUrl = "";
 
         List<ValidationResult> results = Validate(model);
 
-        Assert.Contains(
+        Assert.DoesNotContain(
             results,
-            result => HasError(result, nameof(RecipeFormViewModel.SourceUrl),
-                "URL-ul sursă este obligatoriu."));
+            result => result.MemberNames.Contains(nameof(RecipeFormViewModel.SourceUrl)));
     }
 
     [Fact]
@@ -61,17 +60,16 @@ public class RecipeFormViewModelTests
     }
 
     [Fact]
-    public void StepsText_WhenEmpty_ShouldReturnRequiredValidationError()
+    public void StepsText_WhenEmpty_ShouldNotReturnValidationError()
     {
         RecipeFormViewModel model = CreateValidModel();
         model.StepsText = "";
 
         List<ValidationResult> results = Validate(model);
 
-        Assert.Contains(
+        Assert.DoesNotContain(
             results,
-            result => HasError(result, nameof(RecipeFormViewModel.StepsText),
-                "Pașii sunt obligatorii."));
+            result => result.MemberNames.Contains(nameof(RecipeFormViewModel.StepsText)));
     }
 
     [Fact]
@@ -157,6 +155,19 @@ public class RecipeFormViewModelTests
         Assert.Equal(0, content.Position);
         Assert.True(content.CanRead);
         Assert.Null(typeof(Recipe).GetProperty(nameof(RecipeFormViewModel.Photo)));
+    }
+
+    [Fact]
+    public void ToRecipe_WithMissingOptionalValues_ShouldNormalizeThem()
+    {
+        RecipeFormViewModel model = CreateValidModel();
+        model.SourceUrl = null;
+        model.StepsText = null;
+
+        Recipe recipe = model.ToRecipe();
+
+        Assert.Equal(string.Empty, recipe.SourceUrl);
+        Assert.Empty(recipe.Steps);
     }
 
     private static RecipeFormViewModel CreateValidModel()

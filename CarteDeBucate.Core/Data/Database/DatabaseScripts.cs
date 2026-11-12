@@ -15,7 +15,7 @@ public static class DatabaseScripts
     CREATE TABLE IF NOT EXISTS Recipes (
         Id INTEGER PRIMARY KEY AUTOINCREMENT,
         Name TEXT NOT NULL,
-        SourceUrl TEXT NOT NULL,
+        SourceUrl TEXT NULL,
         SavedAt TEXT NOT NULL,
         Notes TEXT NULL,
         Status INTEGER NOT NULL DEFAULT 0,
@@ -105,5 +105,12 @@ public static class DatabaseScripts
     public const string AddUserIdToRecipes = """
     ALTER TABLE Recipes
         ADD COLUMN UserId INTEGER NULL REFERENCES Users(Id);
+    """;
+
+    public const string MakeRecipeSourceUrlOptional = """
+    ALTER TABLE Recipes RENAME COLUMN SourceUrl TO SourceUrlRequired;
+    ALTER TABLE Recipes ADD COLUMN SourceUrl TEXT NULL;
+    UPDATE Recipes SET SourceUrl = SourceUrlRequired;
+    ALTER TABLE Recipes DROP COLUMN SourceUrlRequired;
     """;
 }

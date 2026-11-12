@@ -7,14 +7,12 @@ public class CreateRecipeRequest : IValidatableObject
     [Required]
     public string Name { get; set; } = string.Empty;
 
-    [Required]
-    public string SourceUrl { get; set; } = string.Empty;
+    public string? SourceUrl { get; set; }
 
     [Required]
     public List<string> Ingredients { get; set; } = [];
 
-    [Required]
-    public List<string> Steps { get; set; } = [];
+    public List<string>? Steps { get; set; }
 
     public string? ImageUrl { get; set; }
 

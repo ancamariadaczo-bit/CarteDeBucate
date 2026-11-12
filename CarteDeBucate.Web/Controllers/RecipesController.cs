@@ -560,6 +560,14 @@ public class RecipesController : Controller
             }
         }
 
+        if (!string.IsNullOrWhiteSpace(importResult.WarningMessage))
+        {
+            string? existingWarning = TempData[WarningMessageKey] as string;
+            TempData[WarningMessageKey] = string.IsNullOrWhiteSpace(existingWarning)
+                ? importResult.WarningMessage
+                : $"{existingWarning} {importResult.WarningMessage}";
+        }
+
         _logger.LogInformation(
             "Recipe URL import completed successfully. Recipe identifier: {RecipeId}",
             result.Recipe.Id);
@@ -571,8 +579,7 @@ public class RecipesController : Controller
 
     private static bool IsMissingImportedRecipeDetails(string message)
     {
-        return message.Contains(global::AppTexts.RecipeIngredientsRequired)
-            || message.Contains(global::AppTexts.RecipeStepsRequired);
+        return message.Contains(global::AppTexts.RecipeIngredientsRequired);
     }
 
     private IReadOnlyList<RecipePhotoInfo> GetPhotosOrEmpty(int recipeId)
