@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Recipe import fixtures</title>
+    <style>
+        body { font-family: system-ui, sans-serif; line-height: 1.5; margin: 2rem auto; max-width: 70rem; padding: 0 1rem; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #bbb; padding: .7rem; text-align: left; vertical-align: top; }
+        th { background: #f3f3f3; }
+        code { white-space: nowrap; }
+    </style>
+</head>
+<body>
+    <h1>Recipe import fixtures</h1>
+    <p>Use these pages as source URLs for manual recipe-import checks. They are deliberately static and do not require authentication.</p>
+    <p><strong>Local-host note:</strong> the application deliberately rejects imports from <code>localhost</code>, loopback, and private-network addresses. You can browse these files locally, but end-to-end import requires this Web application to be reachable through a public HTTP/HTTPS address on port 80 or 443, such as a deployed test environment or a public tunnel.</p>
+
+    <h2>JSON-LD fixtures</h2>
+    <table>
+        <thead><tr><th>Fixture</th><th>Expected result</th></tr></thead>
+        <tbody>
+            <tr><td><a href="json-ld-complete.html">json-ld-complete.html</a></td><td>Valid name, ingredients, and steps extracted from JSON-LD.</td></tr>
+            <tr><td><a href="json-ld-missing-steps.html">json-ld-missing-steps.html</a></td><td>Name and ingredients extracted; no steps. Show a non-blocking steps warning.</td></tr>
+            <tr><td><a href="json-ld-missing-ingredients.html">json-ld-missing-ingredients.html</a></td><td>Name and steps extracted; no ingredients. Saving should require user-entered ingredients.</td></tr>
+            <tr><td><a href="json-ld-invalid-ingredients.html">json-ld-invalid-ingredients.html</a></td><td>Ingredients use blank and unsupported JSON values, so none are extracted. Saving should require user-entered ingredients.</td></tr>
+            <tr><td><a href="json-ld-invalid-steps.html">json-ld-invalid-steps.html</a></td><td>Instructions use blank and unsupported JSON values, so no steps are extracted. Saving remains allowed.</td></tr>
+            <tr><td><a href="json-ld-invalid-name-html-fallback.html">json-ld-invalid-name-html-fallback.html</a></td><td>JSON-LD without a usable name falls back to visible HTML, which has no title. Saving should require a user-entered name.</td></tr>
+            <tr><td><a href="json-ld-nested-instructions.html">json-ld-nested-instructions.html</a></td><td>Nested <code>HowToSection</code>/<code>itemListElement</code> instructions are extracted.</td></tr>
+        </tbody>
+    </table>
+
+    <h2>Visible HTML fixtures</h2>
+    <table>
+        <thead><tr><th>Fixture</th><th>Expected result</th></tr></thead>
+        <tbody>
+            <tr><td><a href="html-complete.html">html-complete.html</a></td><td>Valid name, ingredients, and steps extracted from visible HTML.</td></tr>
+            <tr><td><a href="html-missing-steps.html">html-missing-steps.html</a></td><td>Name and ingredients extracted; no steps. Show a non-blocking steps warning.</td></tr>
+            <tr><td><a href="html-missing-ingredients.html">html-missing-ingredients.html</a></td><td>Name and steps extracted; no ingredients. Saving should require user-entered ingredients.</td></tr>
+            <tr><td><a href="html-invalid-ingredients.html">html-invalid-ingredients.html</a></td><td>The ingredient section contains no usable values. Saving should require user-entered ingredients.</td></tr>
+            <tr><td><a href="html-invalid-steps.html">html-invalid-steps.html</a></td><td>The steps section contains no usable values. Saving remains allowed.</td></tr>
+            <tr><td><a href="html-missing-name.html">html-missing-name.html</a></td><td>Ingredients and steps extracted without a usable title. Saving should require a user-entered name.</td></tr>
+            <tr><td><a href="html-title-only.html">html-title-only.html</a></td><td>Title-only fallback: no ingredients or steps. Saving should require ingredients and warn about steps.</td></tr>
+            <tr><td><a href="html-malformed-json-ld-fallback.html">html-malformed-json-ld-fallback.html</a></td><td>Malformed JSON-LD is ignored and valid visible HTML is extracted.</td></tr>
+        </tbody>
+    </table>
+</body>
+</html>

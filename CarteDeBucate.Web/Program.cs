@@ -180,8 +180,19 @@ builder.Services.AddScoped<IRecipeLibraryService>(serviceProvider =>
         recipePhotoService,
         logger);
 });
+
+string[] allowedDevelopmentRecipeImportOrigins =
+    builder.Environment.IsDevelopment()
+        ? builder.Configuration
+            .GetSection("RecipeImport:AllowedDevelopmentOrigins")
+            .Get<string[]>() ?? []
+        : [];
+
 builder.Services.AddSingleton<IHostAddressResolver, DnsHostAddressResolver>();
-builder.Services.AddSingleton<RecipeImportDestinationPolicy>();
+builder.Services.AddSingleton<RecipeImportDestinationPolicy>(serviceProvider =>
+    new RecipeImportDestinationPolicy(
+        serviceProvider.GetRequiredService<IHostAddressResolver>(),
+        allowedDevelopmentRecipeImportOrigins));
 builder.Services
     .AddHttpClient<IRecipeImporter, RecipeImporter>(
         RecipeImporterHttpClientConfiguration.Configure)

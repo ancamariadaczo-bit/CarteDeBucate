@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSON-LD recipe with invalid steps</title>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Recipe",
+        "name": "JSON-LD invalid steps",
+        "recipeIngredient": ["2 eggs", "100 g flour"],
+        "recipeInstructions": ["   ", null, 7, { "text": " " }, { "name": "" }, { "itemListElement": [null, 9] }]
+    }
+    </script>
+</head>
+<body><h1>JSON-LD invalid steps</h1></body>
+</html>

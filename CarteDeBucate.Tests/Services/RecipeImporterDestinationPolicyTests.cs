@@ -58,6 +58,63 @@ public class RecipeImporterDestinationPolicyTests
         Assert.Empty(result.Addresses);
     }
 
+    [Theory]
+    [InlineData("http://localhost:5080/import-fixtures/json-ld-complete.html")]
+    [InlineData("https://localhost:7080/import-fixtures/html-complete.html")]
+    public async Task ValidateAsync_WithConfiguredDevelopmentLocalhostOrigin_ShouldAllowLoopbackDestination(
+        string destination)
+    {
+        FakeHostAddressResolver resolver = new FakeHostAddressResolver("127.0.0.1");
+        RecipeImportDestinationPolicy policy =
+            new RecipeImportDestinationPolicy(
+                resolver,
+                ["http://localhost:5080", "https://localhost:7080"]);
+
+        RecipeImportDestinationValidationResult result =
+            await policy.ValidateAsync(new Uri(destination));
+
+        Assert.True(result.IsAllowed);
+        IPAddress approvedAddress = Assert.Single(result.Addresses);
+        Assert.Equal(IPAddress.Loopback, approvedAddress);
+    }
+
+    [Theory]
+    [InlineData("http://localhost:5081/import-fixtures/json-ld-complete.html")]
+    [InlineData("http://127.0.0.1:5080/import-fixtures/json-ld-complete.html")]
+    [InlineData("http://192.168.1.10:5080/import-fixtures/json-ld-complete.html")]
+    public async Task ValidateAsync_WithNonConfiguredDevelopmentDestination_ShouldReject(
+        string destination)
+    {
+        FakeHostAddressResolver resolver = new FakeHostAddressResolver("127.0.0.1");
+        RecipeImportDestinationPolicy policy =
+            new RecipeImportDestinationPolicy(
+                resolver,
+                ["http://localhost:5080", "https://localhost:7080"]);
+
+        RecipeImportDestinationValidationResult result =
+            await policy.ValidateAsync(new Uri(destination));
+
+        Assert.False(result.IsAllowed);
+        Assert.Empty(result.Addresses);
+    }
+
+    [Fact]
+    public async Task ValidateAsync_WithConfiguredDevelopmentOriginResolvingToPrivateAddress_ShouldReject()
+    {
+        FakeHostAddressResolver resolver = new FakeHostAddressResolver("192.168.1.10");
+        RecipeImportDestinationPolicy policy =
+            new RecipeImportDestinationPolicy(
+                resolver,
+                ["http://localhost:5080", "https://localhost:7080"]);
+
+        RecipeImportDestinationValidationResult result =
+            await policy.ValidateAsync(
+                new Uri("http://localhost:5080/import-fixtures/json-ld-complete.html"));
+
+        Assert.False(result.IsAllowed);
+        Assert.Empty(result.Addresses);
+    }
+
     [Fact]
     public async Task ValidateAsync_WhenOneResolvedAddressIsNonPublic_ShouldRejectEntireHost()
     {

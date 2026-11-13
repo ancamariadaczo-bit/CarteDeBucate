@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSON-LD nested instructions recipe</title>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Recipe",
+        "name": "JSON-LD nested instructions soup",
+        "recipeIngredient": ["500 g tomatoes", "1 onion", "500 ml stock"],
+        "recipeInstructions": [
+            {
+                "@type": "HowToSection",
+                "itemListElement": [
+                    { "@type": "HowToStep", "text": "Cook the onion." },
+                    { "@type": "HowToStep", "text": "Add tomatoes and stock." }
+                ]
+            },
+            { "@type": "HowToStep", "name": "Blend and serve." }
+        ]
+    }
+    </script>
+</head>
+<body><h1>JSON-LD nested instructions soup</h1></body>
+</html>

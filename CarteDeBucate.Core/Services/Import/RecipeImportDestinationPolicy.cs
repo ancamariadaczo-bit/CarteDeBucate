@@ -8,11 +8,15 @@ public sealed record RecipeImportDestinationValidationResult(
 public sealed class RecipeImportDestinationPolicy
 {
     private readonly IHostAddressResolver _hostAddressResolver;
+    private readonly HashSet<RecipeImportOrigin> _allowedDevelopmentOrigins;
 
     public RecipeImportDestinationPolicy(
-        IHostAddressResolver hostAddressResolver)
+        IHostAddressResolver hostAddressResolver,
+        IEnumerable<string>? allowedDevelopmentOrigins = null)
     {
         _hostAddressResolver = hostAddressResolver;
+        _allowedDevelopmentOrigins = CreateAllowedDevelopmentOrigins(
+            allowedDevelopmentOrigins);
     }
 
     public async Task<RecipeImportDestinationValidationResult> ValidateAsync(
@@ -21,7 +25,10 @@ public sealed class RecipeImportDestinationPolicy
     {
         ArgumentNullException.ThrowIfNull(destination);
 
-        if (!IsAllowedUri(destination))
+        bool isAllowedDevelopmentOrigin =
+            IsAllowedDevelopmentOrigin(destination);
+
+        if (!IsAllowedUri(destination) && !isAllowedDevelopmentOrigin)
         {
             return Rejected();
         }
@@ -30,14 +37,86 @@ public sealed class RecipeImportDestinationPolicy
             destination.IdnHost,
             cancellationToken);
 
-        if (addresses.Length == 0 || addresses.Any(address => !IsPublicAddress(address)))
+        if (addresses.Length == 0)
         {
             return Rejected();
         }
 
-        return new RecipeImportDestinationValidationResult(
-            true,
-            addresses.Distinct().ToArray());
+        if (isAllowedDevelopmentOrigin && addresses.All(IPAddress.IsLoopback))
+        {
+            return Allowed(addresses);
+        }
+
+        if (addresses.Any(address => !IsPublicAddress(address)))
+        {
+            return Rejected();
+        }
+
+        return Allowed(addresses);
+    }
+
+    private static HashSet<RecipeImportOrigin> CreateAllowedDevelopmentOrigins(
+        IEnumerable<string>? configuredOrigins)
+    {
+        HashSet<RecipeImportOrigin> origins = new();
+
+        if (configuredOrigins == null)
+        {
+            return origins;
+        }
+
+        foreach (string configuredOrigin in configuredOrigins)
+        {
+            if (TryCreateOrigin(configuredOrigin, out RecipeImportOrigin? origin) &&
+                origin != null)
+            {
+                origins.Add(origin);
+            }
+        }
+
+        return origins;
+    }
+
+    private bool IsAllowedDevelopmentOrigin(Uri destination)
+    {
+        return TryCreateOrigin(destination, out RecipeImportOrigin? origin) &&
+            origin != null &&
+            _allowedDevelopmentOrigins.Contains(origin);
+    }
+
+    private static bool TryCreateOrigin(
+        string? value,
+        out RecipeImportOrigin? origin)
+    {
+        origin = null;
+
+        if (!Uri.TryCreate(value, UriKind.Absolute, out Uri? uri))
+        {
+            return false;
+        }
+
+        return TryCreateOrigin(uri, out origin);
+    }
+
+    private static bool TryCreateOrigin(
+        Uri uri,
+        out RecipeImportOrigin? origin)
+    {
+        origin = null;
+
+        if (!uri.IsAbsoluteUri ||
+            string.IsNullOrWhiteSpace(uri.Host) ||
+            (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+        {
+            return false;
+        }
+
+        origin = new RecipeImportOrigin(
+            uri.Scheme.ToLowerInvariant(),
+            uri.IdnHost.ToLowerInvariant(),
+            uri.Port);
+
+        return true;
     }
 
     private static bool IsAllowedUri(Uri destination)
@@ -182,4 +261,17 @@ public sealed class RecipeImportDestinationPolicy
             false,
             Array.Empty<IPAddress>());
     }
+
+    private static RecipeImportDestinationValidationResult Allowed(
+        IEnumerable<IPAddress> addresses)
+    {
+        return new RecipeImportDestinationValidationResult(
+            true,
+            addresses.Distinct().ToArray());
+    }
+
+    private sealed record RecipeImportOrigin(
+        string Scheme,
+        string Host,
+        int Port);
 }

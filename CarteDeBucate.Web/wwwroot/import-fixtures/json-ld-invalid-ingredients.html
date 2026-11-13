@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSON-LD recipe with invalid ingredients</title>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Recipe",
+        "name": "JSON-LD invalid ingredients",
+        "recipeIngredient": ["   ", null, 12, { "name": "ignored ingredient" }],
+        "recipeInstructions": ["Heat the pan.", "Cook for five minutes."]
+    }
+    </script>
+</head>
+<body><h1>JSON-LD invalid ingredients</h1></body>
+</html>
