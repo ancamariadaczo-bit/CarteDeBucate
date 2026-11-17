@@ -42,6 +42,12 @@
     </div>
     <textarea asp-for="StepsText" class="form-control" rows="10"></textarea>
     <span asp-validation-for="StepsText" class="text-danger"></span>
+    @if (Model.IsImportReview && string.IsNullOrWhiteSpace(Model.StepsText))
+    {
+        <div class="form-text text-warning">
+            Nu au fost extrași pași. Îi poți adăuga acum sau poți salva rețeta fără ei.
+        </div>
+    }
 </div>
 
 <div class="mb-3">

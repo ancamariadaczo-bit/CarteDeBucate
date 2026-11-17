@@ -18,9 +18,7 @@ public class RecipesController : Controller
     private const string PageNumberKey = "PageNumber";
     private const string SearchTextKey = "SearchText";
     private const string ReturnToIndexValue = "Index";
-    private const string ShowManualAddRecipeLinkKey = "ShowManualAddRecipeLink";
-    private const string ImportMissingRequiredDetailsMessage =
-        "Nu am putut extrage ingredientele sau pașii din această pagină. Te rugăm să adaugi rețeta manual.";
+    private const string ImportReviewMessageKey = "ImportReviewMessage";
 
     private readonly IRecipeLibraryService _recipeLibraryService;
     private readonly IRecipeImporterService _recipeImporterService;
@@ -187,6 +185,20 @@ public class RecipesController : Controller
             {
                 TempData[ErrorMessageKey] =
                     $"Rețeta a fost salvată, dar fotografia nu a putut fi adăugată. {GetPhotoFailureMessage(photoResult)}";
+            }
+        }
+        else if (!string.IsNullOrWhiteSpace(model.ImportedImageUrl))
+        {
+            RecipePhotoUrlImportResult photoResult =
+                await _recipePhotoUrlImporter.ImportAsync(
+                    result.Recipe.Id,
+                    model.ImportedImageUrl.Trim(),
+                    cancellationToken);
+
+            if (!photoResult.IsSuccess)
+            {
+                TempData[WarningMessageKey] =
+                    $"Rețeta a fost salvată, dar fotografia importată nu a putut fi copiată. {photoResult.Message}";
             }
         }
 
@@ -473,17 +485,7 @@ public class RecipesController : Controller
                 "Recipe URL import failed. Reason: {FailureReason}",
                 importResult.Message);
 
-            if (IsMissingImportedRecipeDetails(importResult.Message))
-            {
-                ModelState.AddModelError(
-                    "url",
-                    ImportMissingRequiredDetailsMessage);
-                ViewData[ShowManualAddRecipeLinkKey] = true;
-            }
-            else
-            {
-                ModelState.AddModelError("url", importResult.Message);
-            }
+            ModelState.AddModelError("url", importResult.Message);
 
             return View(model: url);
         }
@@ -493,93 +495,60 @@ public class RecipesController : Controller
             _logger.LogWarning(
                 "Recipe URL import reported success without returning a recipe");
 
-            TempData[SuccessMessageKey] =
-                "Rețeta a fost importată, dar pagina de detalii nu a putut fi deschisă. Verifică lista de rețete.";
-
-            return RedirectToAction(nameof(Index));
-        }
-
-        RecipeSaveResult result = _recipeLibraryService.SaveRecipe(importResult.Recipe);
-
-        if (!result.IsSuccess)
-        {
-            _logger.LogWarning(
-                "Imported recipe could not be saved. Reason: {FailureReason}",
-                result.Message);
-
-            if (IsMissingImportedRecipeDetails(result.Message))
-            {
-                ModelState.AddModelError(
-                    "url",
-                    ImportMissingRequiredDetailsMessage);
-                ViewData[ShowManualAddRecipeLinkKey] = true;
-            }
-            else
-            {
-                ModelState.AddModelError("url", result.Message);
-            }
+            ModelState.AddModelError(
+                "url",
+                "Nu am putut extrage datele rețetei din această pagină.");
 
             return View(model: url);
         }
 
-        if (result.Recipe == null)
+        RecipeFormViewModel model = RecipeFormViewModel.FromRecipe(importResult.Recipe);
+        model.ImportedImageUrl = importResult.ImageUrl;
+        model.IsImportReview = true;
+
+        if (string.IsNullOrWhiteSpace(model.SourceUrl))
         {
-            _logger.LogWarning(
-                "Imported recipe save reported success without returning the saved recipe");
-
-            TempData[SuccessMessageKey] =
-                "Rețeta a fost importată, dar pagina de detalii nu a putut fi deschisă. Verifică lista de rețete.";
-
-            return RedirectToAction(nameof(Index));
+            model.SourceUrl = url?.Trim() ?? string.Empty;
         }
 
-        if (string.IsNullOrWhiteSpace(importResult.ImageUrl))
-        {
-            TempData[SuccessMessageKey] =
-                "Rețeta a fost importată. Verifică informațiile și editează-le dacă este nevoie.";
-        }
-        else
-        {
-            RecipePhotoUrlImportResult photoResult =
-                await _recipePhotoUrlImporter.ImportAsync(
-                    result.Recipe.Id,
-                    importResult.ImageUrl,
-                    cancellationToken);
-
-            if (photoResult.IsSuccess)
-            {
-                TempData[SuccessMessageKey] =
-                    "Rețeta și fotografia au fost importate. Verifică informațiile și editează-le dacă este nevoie.";
-            }
-            else
-            {
-                TempData[SuccessMessageKey] =
-                    "Rețeta a fost importată. Verifică informațiile și editează-le dacă este nevoie.";
-                TempData[WarningMessageKey] =
-                    $"Fotografia nu a putut fi copiată. {photoResult.Message}";
-            }
-        }
-
-        if (!string.IsNullOrWhiteSpace(importResult.WarningMessage))
-        {
-            string? existingWarning = TempData[WarningMessageKey] as string;
-            TempData[WarningMessageKey] = string.IsNullOrWhiteSpace(existingWarning)
-                ? importResult.WarningMessage
-                : $"{existingWarning} {importResult.WarningMessage}";
-        }
+        AddImportReviewValidationFeedback(model);
+        ViewData[ImportReviewMessageKey] =
+            "Datele rețetei au fost importate, dar nu au fost încă salvate. Verifică informațiile de mai jos și fă modificările necesare înainte de salvare.";
 
         _logger.LogInformation(
-            "Recipe URL import completed successfully. Recipe identifier: {RecipeId}",
-            result.Recipe.Id);
+            "Recipe URL extraction completed successfully and is awaiting review");
 
-        return RedirectToAction(
-            nameof(Details),
-            new { id = result.Recipe.Id });
+        return View(nameof(Create), model);
     }
 
-    private static bool IsMissingImportedRecipeDetails(string message)
+    private void AddImportReviewValidationFeedback(RecipeFormViewModel model)
     {
-        return message.Contains(global::AppTexts.RecipeIngredientsRequired);
+        if (string.IsNullOrWhiteSpace(model.Name))
+        {
+            ModelState.AddModelError(
+                nameof(RecipeFormViewModel.Name),
+                "Numele nu a putut fi extras. Completează-l înainte de salvare.");
+        }
+
+        if (string.IsNullOrWhiteSpace(model.IngredientsText))
+        {
+            ModelState.AddModelError(
+                nameof(RecipeFormViewModel.IngredientsText),
+                "Ingredientele nu au putut fi extrase. Adaugă cel puțin un ingredient înainte de salvare.");
+        }
+
+        if (string.IsNullOrWhiteSpace(model.SourceUrl))
+        {
+            ModelState.AddModelError(
+                nameof(RecipeFormViewModel.SourceUrl),
+                "URL-ul sursă nu a putut fi păstrat. Introdu un URL valid înainte de salvare.");
+        }
+        else if (!UrlValidator.IsValidHttpUrl(model.SourceUrl))
+        {
+            ModelState.AddModelError(
+                nameof(RecipeFormViewModel.SourceUrl),
+                "URL-ul sursă importat nu este valid. Introdu un URL HTTP sau HTTPS valid înainte de salvare.");
+        }
     }
 
     private IReadOnlyList<RecipePhotoInfo> GetPhotosOrEmpty(int recipeId)

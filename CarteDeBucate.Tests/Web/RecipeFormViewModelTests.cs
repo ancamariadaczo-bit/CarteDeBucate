@@ -83,6 +83,33 @@ public class RecipeFormViewModelTests
     }
 
     [Fact]
+    public void ImportedImageUrl_WhenEmpty_ShouldNotReturnValidationError()
+    {
+        RecipeFormViewModel model = CreateValidModel();
+        model.ImportedImageUrl = "";
+
+        List<ValidationResult> results = Validate(model);
+
+        Assert.DoesNotContain(
+            results,
+            result => result.MemberNames.Contains(nameof(RecipeFormViewModel.ImportedImageUrl)));
+    }
+
+    [Fact]
+    public void ImportedImageUrl_WhenInvalid_ShouldReturnUrlValidationError()
+    {
+        RecipeFormViewModel model = CreateValidModel();
+        model.ImportedImageUrl = "ftp://example.com/recipe.jpg";
+
+        List<ValidationResult> results = Validate(model);
+
+        Assert.Contains(
+            results,
+            result => HasError(result, nameof(RecipeFormViewModel.ImportedImageUrl),
+                "Introdu un URL valid pentru fotografia importată."));
+    }
+
+    [Fact]
     public void Photo_WhenMissing_ShouldRemainOptional()
     {
         RecipeFormViewModel model = CreateValidModel();
@@ -121,6 +148,8 @@ public class RecipeFormViewModelTests
         Assert.Equal(recipe.SavedAt, model.SavedAt);
         Assert.Equal(recipe.UserId, model.UserId);
         Assert.Null(model.Photo);
+        Assert.Null(model.ImportedImageUrl);
+        Assert.False(model.IsImportReview);
     }
 
     [Fact]
@@ -140,6 +169,8 @@ public class RecipeFormViewModelTests
         model.SavedAt = new DateTime(2026, 11, 9);
         model.UserId = 5;
         model.Photo = photo;
+        model.ImportedImageUrl = "https://example.com/supa.jpg";
+        model.IsImportReview = true;
 
         Recipe recipe = model.ToRecipe();
 
@@ -155,6 +186,8 @@ public class RecipeFormViewModelTests
         Assert.Equal(0, content.Position);
         Assert.True(content.CanRead);
         Assert.Null(typeof(Recipe).GetProperty(nameof(RecipeFormViewModel.Photo)));
+        Assert.Null(typeof(Recipe).GetProperty(nameof(RecipeFormViewModel.ImportedImageUrl)));
+        Assert.Null(typeof(Recipe).GetProperty(nameof(RecipeFormViewModel.IsImportReview)));
     }
 
     [Fact]

@@ -9,11 +9,52 @@
     <p class="text-muted mb-0">Introdu fiecare ingredient și fiecare pas pe o linie separată.</p>
 </div>
 
+@if (Model.IsImportReview)
+{
+    <div class="alert alert-info" role="status">
+        @(ViewData["ImportReviewMessage"] as string ??
+            "Datele rețetei au fost importate, dar nu au fost încă salvate. Verifică informațiile de mai jos și fă modificările necesare înainte de salvare.")
+    </div>
+
+    @if (string.IsNullOrWhiteSpace(Model.Name) ||
+         string.IsNullOrWhiteSpace(Model.IngredientsText) ||
+         string.IsNullOrWhiteSpace(Model.StepsText))
+    {
+        <div class="alert alert-warning" role="alert">
+            <p class="mb-1">Unele informații nu au putut fi extrase:</p>
+            <ul class="mb-0">
+                @if (string.IsNullOrWhiteSpace(Model.Name))
+                {
+                    <li>Numele nu a fost găsit. Completează-l înainte de salvare.</li>
+                }
+                @if (string.IsNullOrWhiteSpace(Model.IngredientsText))
+                {
+                    <li>Ingredientele nu au fost găsite. Adaugă cel puțin un ingredient înainte de salvare.</li>
+                }
+                @if (string.IsNullOrWhiteSpace(Model.StepsText))
+                {
+                    <li>Pașii nu au fost găsiți. Îi poți adăuga acum sau poți salva rețeta fără ei.</li>
+                }
+            </ul>
+        </div>
+    }
+}
+
 <form asp-action="Create"
       method="post"
       enctype="multipart/form-data"
       data-track-unsaved-changes="true">
+    <input asp-for="IsImportReview" type="hidden" />
+    <input asp-for="ImportedImageUrl" type="hidden" />
     <partial name="_RecipeForm" model="Model" />
+
+    @if (!string.IsNullOrWhiteSpace(Model.ImportedImageUrl))
+    {
+        <div class="alert alert-info" role="status">
+            <strong>Fotografie găsită în pagina sursă.</strong>
+            Va fi descărcată și adăugată după salvarea rețetei.
+        </div>
+    }
 
     <div class="mb-3">
         <label asp-for="Photo" class="form-label">Fotografie inițială (opțional)</label>
@@ -23,6 +64,7 @@
                accept="image/jpeg,image/png,image/webp" />
         <div class="form-text">
             Formate acceptate: JPEG, PNG și WebP. Dimensiune maximă: 10 MiB.
+            Dacă selectezi un fișier local, acesta va fi folosit în locul fotografiei găsite la import.
             Dacă formularul conține erori, selectează din nou fișierul.
         </div>
     </div>

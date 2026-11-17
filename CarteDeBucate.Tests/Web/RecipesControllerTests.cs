@@ -576,6 +576,88 @@ public class RecipesControllerTests
     }
 
     [Fact]
+    public async Task CreatePost_WithImportedImageUrl_ShouldImportImageOnlyAfterRecipeSave()
+    {
+        Recipe savedRecipe = new Recipe { Id = 41 };
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
+        {
+            SaveResultToReturn = RecipeSaveResult.Success("Saved.", savedRecipe)
+        };
+        FakeRecipePhotoUrlImporter photoImporter = new FakeRecipePhotoUrlImporter();
+        RecipesController controller = CreateController(
+            recipeService,
+            new FakeRecipeImporterService(),
+            photoImporter);
+        RecipeFormViewModel model = CreateValidModel();
+        model.Name = "Edited imported recipe";
+        model.IngredientsText = "Edited ingredient";
+        model.ImportedImageUrl = "https://example.com/imported-photo.jpg";
+        model.IsImportReview = true;
+
+        IActionResult result = await controller.Create(model);
+
+        Assert.IsType<RedirectToActionResult>(result);
+        Assert.True(recipeService.SaveRecipeWasCalled);
+        Assert.Equal("Edited imported recipe", recipeService.RecipePassedToSaveRecipe?.Name);
+        Assert.Equal(
+            new List<string> { "Edited ingredient" },
+            recipeService.RecipePassedToSaveRecipe?.Ingredients);
+        Assert.True(photoImporter.ImportAsyncWasCalled);
+        Assert.Equal(41, photoImporter.RecipeIdPassedToImport);
+        Assert.Equal(
+            "https://example.com/imported-photo.jpg",
+            photoImporter.ImageUrlPassedToImport);
+    }
+
+    [Fact]
+    public async Task CreatePost_WhenSaveFails_ShouldNotImportDeferredImage()
+    {
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
+        {
+            SaveResultToReturn = RecipeSaveResult.Fail("Save failed.")
+        };
+        FakeRecipePhotoUrlImporter photoImporter = new FakeRecipePhotoUrlImporter();
+        RecipesController controller = CreateController(
+            recipeService,
+            new FakeRecipeImporterService(),
+            photoImporter);
+        RecipeFormViewModel model = CreateValidModel();
+        model.ImportedImageUrl = "https://example.com/imported-photo.jpg";
+
+        IActionResult result = await controller.Create(model);
+
+        Assert.IsType<ViewResult>(result);
+        Assert.True(recipeService.SaveRecipeWasCalled);
+        Assert.False(photoImporter.ImportAsyncWasCalled);
+    }
+
+    [Fact]
+    public async Task CreatePost_WithLocalPhotoAndImportedImage_ShouldPreferLocalPhoto()
+    {
+        Recipe savedRecipe = new Recipe { Id = 41 };
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
+        {
+            SaveResultToReturn = RecipeSaveResult.Success("Saved.", savedRecipe)
+        };
+        FakeRecipePhotoService photoService = new FakeRecipePhotoService();
+        FakeRecipePhotoUrlImporter photoImporter = new FakeRecipePhotoUrlImporter();
+        RecipesController controller = CreateController(
+            recipeService,
+            new FakeRecipeImporterService(),
+            photoService,
+            photoImporter);
+        RecipeFormViewModel model = CreateValidModel();
+        model.Photo = CreatePhotoFormFile("recipe.jpg", "image/jpeg");
+        model.ImportedImageUrl = "https://example.com/imported-photo.jpg";
+
+        IActionResult result = await controller.Create(model);
+
+        Assert.IsType<RedirectToActionResult>(result);
+        Assert.True(photoService.AddPhotoAsyncWasCalled);
+        Assert.False(photoImporter.ImportAsyncWasCalled);
+    }
+
+    [Fact]
     public async Task AddPhoto_WhenServiceFails_ShouldRedirectWithControlledMessage()
     {
         FakeRecipePhotoService photoService = new FakeRecipePhotoService
@@ -707,6 +789,30 @@ public class RecipesControllerTests
     }
 
     [Fact]
+    public async Task EditPost_ShouldNotProcessPendingImportedImageState()
+    {
+        FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
+        {
+            UpdateResultToReturn = RecipeSaveResult.Success("Updated.")
+        };
+        FakeRecipePhotoUrlImporter photoImporter = new FakeRecipePhotoUrlImporter();
+        RecipesController controller = CreateController(
+            recipeService,
+            new FakeRecipeImporterService(),
+            photoImporter);
+        RecipeFormViewModel model = CreateValidModel();
+        model.Id = 23;
+        model.ImportedImageUrl = "https://example.com/imported-photo.jpg";
+        model.IsImportReview = true;
+
+        IActionResult result = await controller.Edit(23, model);
+
+        Assert.IsType<RedirectToActionResult>(result);
+        Assert.True(recipeService.UpdateRecipeWasCalled);
+        Assert.False(photoImporter.ImportAsyncWasCalled);
+    }
+
+    [Fact]
     public async Task EditPost_WhenUpdateSucceeds_ShouldRedirectToDetailsWithPageNumber()
     {
         FakeRecipeLibraryService recipeService = new FakeRecipeLibraryService
@@ -816,43 +922,16 @@ public class RecipesControllerTests
     }
 
     [Fact]
-    public async Task ImportPost_WhenImportSucceeds_ShouldRedirectToRecipeDetails()
+    public async Task ImportPost_WhenImportSucceeds_ShouldReturnPrepopulatedCreateReviewWithoutSaving()
     {
-        Recipe importedRecipe = new Recipe { Id = 52 };
-        FakeRecipeImporterService importerService = new FakeRecipeImporterService
+        Recipe importedRecipe = new Recipe
         {
-            ImportResultToReturn = new RecipeImportResult
-            {
-                Success = true,
-                Recipe = importedRecipe,
-                Message = "Imported."
-            }
+            Name = "Imported recipe",
+            SourceUrl = "https://example.com/imported-recipe",
+            Ingredients = ["Ingredient"],
+            Steps = ["Step"],
+            Notes = "Imported note"
         };
-        FakeRecipeLibraryService libraryService = new FakeRecipeLibraryService
-        {
-            SaveResultToReturn = RecipeSaveResult.Success("Imported.", importedRecipe)
-        };
-        RecipesController controller = CreateController(libraryService, importerService);
-
-        IActionResult result =
-            await controller.Import("https://example.com/imported-recipe");
-
-        RedirectToActionResult redirectResult =
-            Assert.IsType<RedirectToActionResult>(result);
-        Assert.Equal(nameof(RecipesController.Details), redirectResult.ActionName);
-        Assert.Equal(52, redirectResult.RouteValues?["id"]);
-        Assert.True(importerService.ImportRecipeFromUrlAsyncWasCalled);
-        Assert.True(libraryService.SaveRecipeWasCalled);
-        Assert.Equal(importedRecipe, libraryService.RecipePassedToSaveRecipe);
-        Assert.Equal(
-            "Rețeta a fost importată. Verifică informațiile și editează-le dacă este nevoie.",
-            controller.TempData["SuccessMessage"]);
-    }
-
-    [Fact]
-    public async Task ImportPost_WithImageUrl_ShouldCopyPhotoAfterSavingRecipe()
-    {
-        Recipe importedRecipe = new Recipe { Id = 52 };
         FakeRecipeImporterService importerService = new FakeRecipeImporterService
         {
             ImportResultToReturn = new RecipeImportResult
@@ -863,26 +942,71 @@ public class RecipesControllerTests
                 Message = "Imported."
             }
         };
-        FakeRecipeLibraryService libraryService = new FakeRecipeLibraryService
-        {
-            SaveResultToReturn = RecipeSaveResult.Success("Imported.", importedRecipe)
-        };
-        FakeRecipePhotoUrlImporter photoImporter =
-            new FakeRecipePhotoUrlImporter();
+        FakeRecipeLibraryService libraryService = new FakeRecipeLibraryService();
+        FakeRecipePhotoUrlImporter photoImporter = new FakeRecipePhotoUrlImporter();
         RecipesController controller = CreateController(
             libraryService,
             importerService,
             photoImporter);
 
+        IActionResult result =
+            await controller.Import("https://example.com/imported-recipe");
+
+        ViewResult viewResult = Assert.IsType<ViewResult>(result);
+        RecipeFormViewModel model = Assert.IsType<RecipeFormViewModel>(viewResult.Model);
+        Assert.Equal(nameof(RecipesController.Create), viewResult.ViewName);
+        Assert.True(importerService.ImportRecipeFromUrlAsyncWasCalled);
+        Assert.False(libraryService.SaveRecipeWasCalled);
+        Assert.False(libraryService.UpdateRecipeWasCalled);
+        Assert.False(photoImporter.ImportAsyncWasCalled);
+        Assert.Equal(importedRecipe.Name, model.Name);
+        Assert.Equal(importedRecipe.SourceUrl, model.SourceUrl);
+        Assert.Equal("Ingredient", model.IngredientsText);
+        Assert.Equal("Step", model.StepsText);
+        Assert.Equal(importedRecipe.Notes, model.Notes);
+        Assert.Equal("https://example.com/recipe.jpg", model.ImportedImageUrl);
+        Assert.True(model.IsImportReview);
+        Assert.False(controller.TempData.ContainsKey("SuccessMessage"));
+    }
+
+    [Fact]
+    public async Task ImportPost_WithMissingRequiredDetails_ShouldReturnReviewWithFieldErrors()
+    {
+        FakeRecipeImporterService importerService = new FakeRecipeImporterService
+        {
+            ImportResultToReturn = new RecipeImportResult
+            {
+                Success = true,
+                Recipe = new Recipe
+                {
+                    SourceUrl = "https://example.com/imported-recipe"
+                },
+                Message = "Imported.",
+                WarningMessage = "Nu am putut extrage pașii rețetei. Îi poți completa manual."
+            }
+        };
+        FakeRecipeLibraryService libraryService = new FakeRecipeLibraryService();
+        RecipesController controller = CreateController(libraryService, importerService);
+
         IActionResult result = await controller.Import(
             "https://example.com/imported-recipe");
 
-        Assert.IsType<RedirectToActionResult>(result);
-        Assert.True(photoImporter.ImportAsyncWasCalled);
-        Assert.Equal(52, photoImporter.RecipeIdPassedToImport);
-        Assert.Equal(
-            "https://example.com/recipe.jpg",
-            photoImporter.ImageUrlPassedToImport);
+        ViewResult viewResult = Assert.IsType<ViewResult>(result);
+        RecipeFormViewModel model = Assert.IsType<RecipeFormViewModel>(viewResult.Model);
+        Assert.Equal(nameof(RecipesController.Create), viewResult.ViewName);
+        Assert.True(model.IsImportReview);
+        Assert.True(string.IsNullOrWhiteSpace(model.StepsText));
+        Assert.False(libraryService.SaveRecipeWasCalled);
+        Assert.Null(controller.ViewData["ImportReviewWarningMessage"]);
+        Assert.Contains(
+            controller.ModelState[nameof(RecipeFormViewModel.Name)]!.Errors,
+            error => error.ErrorMessage ==
+                "Numele nu a putut fi extras. Completează-l înainte de salvare.");
+        Assert.Contains(
+            controller.ModelState[nameof(RecipeFormViewModel.IngredientsText)]!.Errors,
+            error => error.ErrorMessage ==
+                "Ingredientele nu au putut fi extrase. Adaugă cel puțin un ingredient înainte de salvare.");
+        Assert.False(controller.ModelState.ContainsKey(nameof(RecipeFormViewModel.StepsText)));
     }
 
     [Fact]
@@ -912,40 +1036,9 @@ public class RecipesControllerTests
     }
 
     [Fact]
-    public async Task ImportPost_WhenImportedRecipeMissesDetails_ShouldShowManualAddMessage()
+    public async Task ImportPost_WhenSuccessfulResultHasNoRecipe_ShouldReturnImportViewWithError()
     {
-        const string url = "https://example.com/incomplete-recipe";
-        FakeRecipeImporterService recipeService = new FakeRecipeImporterService
-        {
-            ImportResultToReturn = new RecipeImportResult
-            {
-                Success = true,
-                Recipe = new Recipe { Name = "Incomplete recipe" },
-                Message = "Imported."
-            }
-        };
-        FakeRecipeLibraryService libraryService = new FakeRecipeLibraryService
-        {
-            SaveResultToReturn = RecipeSaveResult.Fail(
-                "Ingredientele sunt obligatorii.\nPșii sunt obligatorii.")
-        };
-        RecipesController controller = CreateController(libraryService, recipeService);
-
-        IActionResult result = await controller.Import(url);
-
-        ViewResult viewResult = Assert.IsType<ViewResult>(result);
-        Assert.Equal(url, viewResult.Model);
-        Assert.Contains(
-            controller.ModelState["url"]!.Errors,
-            error => error.ErrorMessage ==
-                "Nu am putut extrage ingredientele sau pașii din această pagină. Te rugăm să adaugi rețeta manual.");
-        Assert.True(controller.ViewData["ShowManualAddRecipeLink"] is true);
-        Assert.True(libraryService.SaveRecipeWasCalled);
-    }
-
-    [Fact]
-    public async Task ImportPost_WhenSuccessfulResultHasNoRecipe_ShouldRedirectToIndex()
-    {
+        const string url = "https://example.com/imported-recipe";
         FakeRecipeImporterService recipeService = new FakeRecipeImporterService
         {
             ImportResultToReturn = new RecipeImportResult
@@ -956,15 +1049,14 @@ public class RecipesControllerTests
         };
         RecipesController controller = CreateController(recipeService);
 
-        IActionResult result =
-            await controller.Import("https://example.com/imported-recipe");
+        IActionResult result = await controller.Import(url);
 
-        RedirectToActionResult redirectResult =
-            Assert.IsType<RedirectToActionResult>(result);
-        Assert.Equal(nameof(RecipesController.Index), redirectResult.ActionName);
-        Assert.Equal(
-            "Rețeta a fost importată, dar pagina de detalii nu a putut fi deschisă. Verifică lista de rețete.",
-            controller.TempData["SuccessMessage"]);
+        ViewResult viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Equal(url, viewResult.Model);
+        Assert.Contains(
+            controller.ModelState["url"]!.Errors,
+            error => error.ErrorMessage ==
+                "Nu am putut extrage datele rețetei din această pagină.");
     }
 
     private static RecipeFormViewModel CreateValidModel()

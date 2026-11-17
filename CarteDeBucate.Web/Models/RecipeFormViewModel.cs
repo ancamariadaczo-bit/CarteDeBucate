@@ -27,6 +27,14 @@ public class RecipeFormViewModel : IValidatableObject
 
     public IFormFile? Photo { get; set; }
 
+    // This is short-lived state from the URL-import review flow. It is never
+    // mapped to Recipe and therefore cannot be persisted with recipe data.
+    public string? ImportedImageUrl { get; set; }
+
+    // This controls review-only feedback on the Create page. It has no
+    // corresponding property on Recipe.
+    public bool IsImportReview { get; set; }
+
     public IReadOnlyList<RecipePhotoInfo> Photos { get; set; } =
         Array.Empty<RecipePhotoInfo>();
 
@@ -72,6 +80,14 @@ public class RecipeFormViewModel : IValidatableObject
             yield return new ValidationResult(
                 "Introdu un URL valid.",
                 [nameof(SourceUrl)]);
+        }
+
+        if (!string.IsNullOrWhiteSpace(ImportedImageUrl) &&
+            !UrlValidator.IsValidHttpUrl(ImportedImageUrl))
+        {
+            yield return new ValidationResult(
+                "Introdu un URL valid pentru fotografia importată.",
+                [nameof(ImportedImageUrl)]);
         }
     }
 
