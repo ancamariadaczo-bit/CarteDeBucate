@@ -29,20 +29,47 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Recipes" asp-action="Import">Importă din URL</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="RecipeBackups" asp-action="Index">Backup JSON</a>
-                        </li>
                     </ul>
                     @if (User.Identity?.IsAuthenticated == true)
                     {
-                        <ul class="navbar-nav align-items-sm-center">
-                            <li class="nav-item d-flex align-items-center">
-                                <span class="badge text-bg-light border text-dark">@User.Identity.Name</span>
-                            </li>
-                            <li class="nav-item d-flex align-items-center">
-                                <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
-                                    <button type="submit" class="nav-link btn btn-link text-dark py-0">Logout</button>
-                                </form>
+                        <ul class="navbar-nav align-items-sm-center account-navigation">
+                            <li class="nav-item dropdown">
+                                <button class="nav-link account-menu-trigger"
+                                        type="button"
+                                        id="account-menu"
+                                        data-bs-toggle="dropdown"
+                                        aria-expanded="false"
+                                        aria-label="Meniul utilizatorului curent: @User.Identity.Name">
+                                    <svg class="account-menu-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                                        <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm0 1c-3.07 0-5.5 1.57-5.5 3.5V14h11v-1.5C13.5 10.57 11.07 9 8 9Z" />
+                                    </svg>
+                                    <span class="account-menu-name text-truncate" title="@User.Identity.Name">@User.Identity.Name</span>
+                                    <svg class="account-menu-chevron" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                                        <path d="m4.2 6.2 3.8 3.8 3.8-3.8.9.9-4.7 4.7-4.7-4.7.9-.9Z" />
+                                    </svg>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end account-menu" aria-labelledby="account-menu">
+                                    <li>
+                                        <div class="account-menu-identity">
+                                            <svg class="account-menu-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                                                <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm0 1c-3.07 0-5.5 1.57-5.5 3.5V14h11v-1.5C13.5 10.57 11.07 9 8 9Z" />
+                                            </svg>
+                                            <div class="account-menu-identity-text">
+                                                <span class="account-menu-identity-label">Meniu utilizator</span>
+                                                <span class="account-menu-identity-name" title="@User.Identity.Name">@User.Identity.Name</span>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Settings" asp-action="Index">Setări</a>
+                                    </li>
+                                    <li>
+                                        <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                                            <button type="submit" class="dropdown-item">Deconectare</button>
+                                        </form>
+                                    </li>
+                                </ul>
                             </li>
                         </ul>
                     }

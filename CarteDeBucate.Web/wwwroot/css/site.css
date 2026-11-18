@@ -197,3 +197,177 @@ main .border.rounded {
 .text-pre-line {
   white-space: pre-line;
 }
+
+.account-navigation {
+  flex-shrink: 0;
+}
+
+.account-menu-trigger {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  display: inline-flex;
+  gap: .4rem;
+  max-width: 100%;
+  min-height: 2.75rem;
+  padding: .5rem .75rem;
+}
+
+.account-menu-trigger:hover,
+.account-menu-trigger:focus {
+  color: var(--cb-primary) !important;
+}
+
+.account-menu-icon,
+.account-menu-chevron {
+  fill: currentColor;
+  flex: 0 0 auto;
+}
+
+.account-menu-icon {
+  height: 1.1rem;
+  width: 1.1rem;
+}
+
+.account-menu-chevron {
+  height: .85rem;
+  width: .85rem;
+}
+
+.account-menu-name {
+  max-width: 12rem;
+}
+
+.account-menu {
+  border-color: var(--cb-border);
+  box-shadow: 0 .75rem 1.5rem rgba(88, 58, 32, .12);
+  max-width: calc(100vw - 2rem);
+  min-width: 16rem;
+  padding: .5rem;
+}
+
+.account-menu-identity {
+  align-items: center;
+  display: flex;
+  gap: .65rem;
+  padding: .5rem;
+}
+
+.account-menu-identity-text {
+  min-width: 0;
+}
+
+.account-menu-identity-label,
+.account-menu-identity-name {
+  display: block;
+}
+
+.account-menu-identity-label {
+  color: var(--cb-muted);
+  font-size: .8rem;
+}
+
+.account-menu-identity-name {
+  font-weight: 600;
+  max-width: 17rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown-item {
+  border-radius: .35rem;
+  color: var(--cb-text);
+  min-height: 2.5rem;
+  padding: .55rem .75rem;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+  background-color: var(--cb-primary-soft);
+  color: var(--cb-text);
+}
+
+.dropdown-item:focus,
+.account-menu-trigger:focus {
+  box-shadow: 0 0 0 0.1rem var(--cb-surface), 0 0 0 0.25rem var(--cb-focus);
+  outline: 0;
+}
+
+.settings-section {
+  border-bottom: 1px solid var(--cb-border);
+  padding-bottom: 1.5rem;
+}
+
+.settings-action,
+.settings-placeholder {
+  align-items: flex-start;
+  border: 1px solid var(--cb-border);
+  border-radius: .75rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-top: 1rem;
+  padding: 1.25rem;
+}
+
+.settings-action h3,
+.settings-placeholder h3 {
+  color: var(--cb-text);
+  margin-bottom: .4rem;
+}
+
+.settings-action form {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.settings-action form .form-control {
+  min-width: min(100%, 19rem);
+}
+
+.settings-placeholder {
+  background-color: var(--cb-surface-warm);
+}
+
+.settings-coming-soon {
+  background-color: var(--cb-primary-soft);
+  border-radius: 999px;
+  color: var(--cb-text);
+  flex: 0 0 auto;
+  font-size: .875rem;
+  font-weight: 600;
+  padding: .3rem .65rem;
+}
+
+@media (max-width: 575.98px) {
+  .account-navigation {
+    align-items: stretch;
+  }
+
+  .account-menu-trigger {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .account-menu-name {
+    max-width: calc(100vw - 9rem);
+  }
+
+  .account-menu {
+    min-width: 100%;
+  }
+
+  .settings-action,
+  .settings-placeholder {
+    flex-direction: column;
+  }
+
+  .settings-action form {
+    width: 100%;
+  }
+
+  .settings-action form .form-control {
+    min-width: 0;
+  }
+}

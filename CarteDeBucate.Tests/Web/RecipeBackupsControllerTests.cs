@@ -8,14 +8,16 @@ using Microsoft.Extensions.Logging.Abstractions;
 public class RecipeBackupsControllerTests
 {
     [Fact]
-    public void Index_ShouldReturnDefaultView()
+    public void Index_ShouldRedirectToSettings()
     {
         FakeRecipeBackupService backupService = new FakeRecipeBackupService();
         RecipeBackupsController controller = CreateController(backupService);
 
         IActionResult result = controller.Index();
 
-        Assert.IsType<ViewResult>(result);
+        RedirectToActionResult redirectResult = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(nameof(SettingsController.Index), redirectResult.ActionName);
+        Assert.Equal("Settings", redirectResult.ControllerName);
     }
 
     [Fact]
@@ -45,7 +47,7 @@ public class RecipeBackupsControllerTests
     }
 
     [Fact]
-    public void Export_WhenBackupFails_ShouldRedirectToIndexAndSetErrorMessage()
+    public void Export_WhenBackupFails_ShouldRedirectToSettingsAndSetErrorMessage()
     {
         FakeRecipeBackupService backupService = new FakeRecipeBackupService
         {
@@ -61,13 +63,14 @@ public class RecipeBackupsControllerTests
 
         RedirectToActionResult redirectResult =
             Assert.IsType<RedirectToActionResult>(result);
-        Assert.Equal(nameof(RecipeBackupsController.Index), redirectResult.ActionName);
+        Assert.Equal(nameof(SettingsController.Index), redirectResult.ActionName);
+        Assert.Equal("Settings", redirectResult.ControllerName);
         Assert.True(backupService.ExportToJsonContentWasCalled);
         Assert.Equal("Export failed.", controller.TempData["ErrorMessage"]);
     }
 
     [Fact]
-    public async Task Import_WhenFileIsMissing_ShouldRedirectToIndexAndSetErrorMessage()
+    public async Task Import_WhenFileIsMissing_ShouldRedirectToSettingsAndSetErrorMessage()
     {
         FakeRecipeBackupService backupService = new FakeRecipeBackupService();
         RecipeBackupsController controller = CreateController(backupService);
@@ -76,7 +79,8 @@ public class RecipeBackupsControllerTests
 
         RedirectToActionResult redirectResult =
             Assert.IsType<RedirectToActionResult>(result);
-        Assert.Equal(nameof(RecipeBackupsController.Index), redirectResult.ActionName);
+        Assert.Equal(nameof(SettingsController.Index), redirectResult.ActionName);
+        Assert.Equal("Settings", redirectResult.ControllerName);
         Assert.False(backupService.ImportFromJsonContentWasCalled);
         Assert.Equal(
             "Selectează un fișier backup JSON.",
@@ -99,7 +103,7 @@ public class RecipeBackupsControllerTests
     }
 
     [Fact]
-    public async Task Import_WhenBackupSucceeds_ShouldRedirectToIndexAndSetSuccessMessage()
+    public async Task Import_WhenBackupSucceeds_ShouldRedirectToSettingsAndSetSuccessMessage()
     {
         FakeRecipeBackupService backupService = new FakeRecipeBackupService
         {
@@ -116,12 +120,13 @@ public class RecipeBackupsControllerTests
 
         RedirectToActionResult redirectResult =
             Assert.IsType<RedirectToActionResult>(result);
-        Assert.Equal(nameof(RecipeBackupsController.Index), redirectResult.ActionName);
+        Assert.Equal(nameof(SettingsController.Index), redirectResult.ActionName);
+        Assert.Equal("Settings", redirectResult.ControllerName);
         Assert.Equal("Imported.", controller.TempData["SuccessMessage"]);
     }
 
     [Fact]
-    public async Task Import_WhenBackupFails_ShouldRedirectToIndexAndSetErrorMessage()
+    public async Task Import_WhenBackupFails_ShouldRedirectToSettingsAndSetErrorMessage()
     {
         FakeRecipeBackupService backupService = new FakeRecipeBackupService
         {
@@ -138,7 +143,8 @@ public class RecipeBackupsControllerTests
 
         RedirectToActionResult redirectResult =
             Assert.IsType<RedirectToActionResult>(result);
-        Assert.Equal(nameof(RecipeBackupsController.Index), redirectResult.ActionName);
+        Assert.Equal(nameof(SettingsController.Index), redirectResult.ActionName);
+        Assert.Equal("Settings", redirectResult.ControllerName);
         Assert.Equal("Import failed.", controller.TempData["ErrorMessage"]);
     }
 

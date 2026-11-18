@@ -26,7 +26,7 @@ public class RecipeBackupsController : Controller
 
     public IActionResult Index()
     {
-        return View();
+        return RedirectToAction(nameof(SettingsController.Index), "Settings");
     }
 
     [HttpPost]
@@ -43,7 +43,7 @@ public class RecipeBackupsController : Controller
 
             TempData[ErrorMessageKey] = result.Message;
 
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(SettingsController.Index), "Settings");
         }
 
         byte[] fileContents = Encoding.UTF8.GetBytes(result.Json);
@@ -65,7 +65,7 @@ public class RecipeBackupsController : Controller
 
             TempData[ErrorMessageKey] = EmptyBackupFileMessage;
 
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(SettingsController.Index), "Settings");
         }
 
         using StreamReader reader = new StreamReader(backupFile.OpenReadStream());
@@ -88,7 +88,7 @@ public class RecipeBackupsController : Controller
                 result.Message);
         }
 
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(SettingsController.Index), "Settings");
     }
 
     private static string CreateBackupFileName()

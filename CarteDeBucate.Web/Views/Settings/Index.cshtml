@@ -1,0 +1,69 @@
+@{
+    ViewData["Title"] = "Setări";
+}
+
+<div class="mb-4">
+    <h1 class="h2">Setări</h1>
+    <p class="text-muted mb-0">Gestionează preferințele, datele salvate și opțiunile contului.</p>
+</div>
+
+<section class="settings-section" aria-labelledby="preferences-heading">
+    <h2 id="preferences-heading" class="h4">Preferințe</h2>
+    <p class="text-muted mb-0">
+        În curând vei putea alege limba, unitățile de măsură și aspectul aplicației.
+    </p>
+</section>
+
+<section class="settings-section" aria-labelledby="backup-heading">
+    <h2 id="backup-heading" class="h4">Date și backup</h2>
+    <p class="text-muted">Păstrează o copie a rețetelor sau adaugă rețete dintr-un fișier JSON.</p>
+
+    <div class="settings-action">
+        <div>
+            <h3 class="h5">Exportă rețetele</h3>
+            <p class="text-muted mb-0">Descarcă rețetele tale într-un fișier JSON.</p>
+        </div>
+        <form asp-controller="RecipeBackups" asp-action="Export" method="post">
+            <button type="submit" class="btn btn-primary">Exportă JSON</button>
+        </form>
+    </div>
+
+    <div class="settings-action">
+        <div>
+            <h3 class="h5">Importă rețete</h3>
+            <p class="text-muted">Restaurează sau adaugă rețete dintr-un fișier JSON.</p>
+        </div>
+        <form asp-controller="RecipeBackups" asp-action="Import" method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="backupFile" class="form-label">Fișier backup</label>
+                <input id="backupFile"
+                       name="backupFile"
+                       type="file"
+                       accept="application/json,.json"
+                       class="form-control"
+                       required />
+            </div>
+            <button type="submit" class="btn btn-primary">Importă JSON</button>
+        </form>
+    </div>
+</section>
+
+<section class="settings-section mb-0" aria-labelledby="account-heading">
+    <h2 id="account-heading" class="h4">Cont</h2>
+
+    <div class="settings-placeholder">
+        <div>
+            <h3 class="h5">Schimbă parola</h3>
+            <p class="text-muted mb-0">Această opțiune va fi disponibilă în curând.</p>
+        </div>
+        <span class="settings-coming-soon">În curând</span>
+    </div>
+
+    <div class="settings-placeholder">
+        <div>
+            <h3 class="h5">Șterge contul</h3>
+            <p class="text-muted mb-0">Ștergerea permanentă a contului va fi disponibilă în curând.</p>
+        </div>
+        <span class="settings-coming-soon">În curând</span>
+    </div>
+</section>

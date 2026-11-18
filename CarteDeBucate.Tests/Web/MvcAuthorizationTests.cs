@@ -15,6 +15,12 @@ public class MvcAuthorizationTests
         AssertControllerRequiresAuthorization(typeof(RecipeBackupsController));
     }
 
+    [Fact]
+    public void SettingsController_ShouldRequireAuthorization()
+    {
+        AssertControllerRequiresAuthorization(typeof(SettingsController));
+    }
+
     private static void AssertControllerRequiresAuthorization(Type controllerType)
     {
         AuthorizeAttribute? authorizeAttribute = controllerType
