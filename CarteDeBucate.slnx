@@ -1,6 +1,5 @@
 <Solution>
   <Project Path="CarteDeBucate.Core/CarteDeBucate.Core.csproj" />
-  <Project Path="CarteDeBucate.App/CarteDeBucate.App.csproj" />
   <Project Path="CarteDeBucate.Web/CarteDeBucate.Web.csproj" />
   <Project Path="CarteDeBucate.Infrastructure/CarteDeBucate.Infrastructure.csproj" />
   <Project Path="CarteDeBucate.RecipeExtraction.Tests/CarteDeBucate.RecipeExtraction.Tests.csproj" />
