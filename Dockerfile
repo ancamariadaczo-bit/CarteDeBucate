@@ -3,7 +3,6 @@ WORKDIR /src
 
 COPY CarteDeBucate.slnx ./
 COPY CarteDeBucate.Web/CarteDeBucate.Web.csproj CarteDeBucate.Web/
-COPY CarteDeBucate.App/CarteDeBucate.App.csproj CarteDeBucate.App/
 COPY CarteDeBucate.Tests/CarteDeBucate.Tests.csproj CarteDeBucate.Tests/
 
 RUN dotnet restore CarteDeBucate.Web/CarteDeBucate.Web.csproj
