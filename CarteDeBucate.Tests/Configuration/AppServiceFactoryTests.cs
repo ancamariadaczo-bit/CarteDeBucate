@@ -19,30 +19,6 @@ public class AppServiceFactoryTests
     }
 
     [Fact]
-    public void CreateRecipeRepository_WithJsonStorage_ShouldCreateJsonRepository()
-    {
-        IRecipeRepository repository = AppServiceFactory.CreateRecipeRepository(
-            StorageMode.Json,
-            "recipes.json",
-            "recipes.db",
-            NullLogger<DatabaseRecipeRepository>.Instance);
-
-        Assert.IsType<JsonRecipeRepository>(repository);
-    }
-
-    [Fact]
-    public void CreateRecipeRepository_WithDatabaseStorage_ShouldCreateDatabaseRepository()
-    {
-        IRecipeRepository repository = AppServiceFactory.CreateRecipeRepository(
-            StorageMode.Database,
-            "recipes.json",
-            "recipes.db",
-            NullLogger<DatabaseRecipeRepository>.Instance);
-
-        Assert.IsType<DatabaseRecipeRepository>(repository);
-    }
-
-    [Fact]
     public void CreateDatabaseRecipePhotoRepository_ShouldCreateDatabaseRepository()
     {
         IRecipePhotoRepository repository =
@@ -362,28 +338,6 @@ public class AppServiceFactoryTests
                 Directory.Delete(databaseDirectoryPath, recursive: true);
             }
         }
-    }
-
-    [Fact]
-    public void CreateUserRepository_WithJsonStorage_ShouldCreateJsonRepository()
-    {
-        IUserRepository repository = AppServiceFactory.CreateUserRepository(
-            StorageMode.Json,
-            "users.json",
-            "recipes.db");
-
-        Assert.IsType<JsonUserRepository>(repository);
-    }
-
-    [Fact]
-    public void CreateUserRepository_WithDatabaseStorage_ShouldCreateDatabaseRepository()
-    {
-        IUserRepository repository = AppServiceFactory.CreateUserRepository(
-            StorageMode.Database,
-            "users.json",
-            "recipes.db");
-
-        Assert.IsType<DatabaseUserRepository>(repository);
     }
 
     [Fact]

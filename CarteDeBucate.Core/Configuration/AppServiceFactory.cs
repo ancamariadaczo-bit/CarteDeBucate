@@ -2,16 +2,6 @@ using Microsoft.Extensions.Logging;
 
 public static class AppServiceFactory
 {
-    public static void EnsureDatabaseIsUpToDate(StorageMode storageMode, string databasePath)
-    {
-        if (storageMode != StorageMode.Database)
-        {
-            return;
-        }
-
-        EnsureDatabaseIsUpToDate(databasePath);
-    }
-
     public static void EnsureDatabaseIsUpToDate(string databasePath)
     {
         DatabaseInitializer databaseInitializer = new DatabaseInitializer(databasePath);
@@ -19,20 +9,6 @@ public static class AppServiceFactory
 
         DatabaseMigrator migrator = new DatabaseMigrator(databasePath);
         migrator.ApplyMigrations();
-    }
-
-    public static IRecipeRepository CreateRecipeRepository(
-        StorageMode storageMode,
-        string recipesFilePath,
-        string databasePath,
-        ILogger<DatabaseRecipeRepository> logger)
-    {
-        return storageMode switch
-        {
-            StorageMode.Json => new JsonRecipeRepository(recipesFilePath),
-            StorageMode.Database => new DatabaseRecipeRepository(databasePath, logger),
-            _ => throw new InvalidOperationException(AppTexts.UnknownStorageModeError)
-        };
     }
 
     public static IRecipeRepository CreateDatabaseRecipeRepository(
@@ -150,19 +126,6 @@ public static class AppServiceFactory
             options,
             timeProvider,
             logger);
-    }
-
-    public static IUserRepository CreateUserRepository(
-        StorageMode storageMode,
-        string usersFilePath,
-        string databasePath)
-    {
-        return storageMode switch
-        {
-            StorageMode.Json => new JsonUserRepository(usersFilePath),
-            StorageMode.Database => new DatabaseUserRepository(databasePath),
-            _ => throw new InvalidOperationException(AppTexts.UnknownStorageModeError)
-        };
     }
 
     public static IUserRepository CreateDatabaseUserRepository(string databasePath)
@@ -287,20 +250,6 @@ public static class AppServiceFactory
         IRecipeRepository recipeRepository, ICurrentUserContext currentUserContext)
     {
         return new RecipeBackupService(recipeRepository, currentUserContext);
-    }
-
-    public static IAuthenticationService CreateAuthenticationService(
-        StorageMode storageMode,
-        string usersFilePath,
-        string databasePath,
-        ICurrentUserContext currentUserContext)
-    {
-        IUserRepository userRepository = CreateUserRepository(
-            storageMode,
-            usersFilePath,
-            databasePath);
-
-        return CreateAuthenticationService(userRepository, currentUserContext);
     }
 
     public static IAuthenticationService CreateAuthenticationService(

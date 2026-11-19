@@ -4,10 +4,6 @@ public class AppSettings
 {
     private const string ConfigurationFileName = "appsettings.json";
 
-    public string RecipesFilePath { get; private set; } = "recipes.json";
-
-    public string UsersFilePath { get; private set; } = "users.json";
-
     public string DatabasePath { get; private set; } = "recipes.db";
 
     public string RecipePhotosPath { get; private set; } = "recipe-photos";
@@ -15,8 +11,6 @@ public class AppSettings
     public bool AuthenticationEnabled { get; set; } = false;
 
     //public bool AiFallbackEnabled { get; private set; } = false;
-
-    public StorageMode CurrentStorageMode { get; private set; } = StorageMode.Json;
 
     public InterfaceMode CurrentInterfaceMode { get; private set; } = InterfaceMode.ClassicConsole;
 
@@ -80,16 +74,6 @@ public class AppSettings
             return settings;
         }
 
-        if (!string.IsNullOrWhiteSpace(settingsFile.RecipesFilePath))
-        {
-            settings.RecipesFilePath = settingsFile.RecipesFilePath;
-        }
-
-        if (!string.IsNullOrWhiteSpace(settingsFile.UsersFilePath))
-        {
-            settings.UsersFilePath = settingsFile.UsersFilePath;
-        }
-
         if (!string.IsNullOrWhiteSpace(settingsFile.DatabasePath))
         {
             settings.DatabasePath = settingsFile.DatabasePath;
@@ -98,11 +82,6 @@ public class AppSettings
         if (!string.IsNullOrWhiteSpace(settingsFile.RecipePhotosPath))
         {
             settings.RecipePhotosPath = settingsFile.RecipePhotosPath;
-        }
-
-        if (Enum.TryParse(settingsFile.StorageMode, ignoreCase: true, out StorageMode storageMode))
-        {
-            settings.CurrentStorageMode = storageMode;
         }
 
         if (Enum.TryParse(settingsFile.InterfaceMode, ignoreCase: true, out InterfaceMode interfaceMode))
@@ -154,13 +133,7 @@ public class AppSettings
 
     private class AppSettingsFile
     {
-        public string? StorageMode { get; set; }
-
         public string? InterfaceMode { get; set; }
-
-        public string? RecipesFilePath { get; set; }
-
-        public string? UsersFilePath { get; set; }
 
         public string? DatabasePath { get; set; }
 

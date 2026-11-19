@@ -112,7 +112,6 @@ public static class AppTexts
     public const string RecipeDetailsTitle = "=== Detalii rețetă ===";
     public const string RecipeDetailsEndLine = "======================";
     public const string IdLabel = "ID";
-    public const string UnknownStorageModeError = "Mod de stocare al rețetelor necunoscut.";
     public const string MenuEditRecipe = "Editează rețetă";
     public const string EnterRecipeIdToEdit = "Introdu ID-ul rețetei pe care vrei să o editezi: ";
     public const string RecipeUpdated = "Rețeta a fost actualizată.";
