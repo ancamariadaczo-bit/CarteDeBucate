@@ -1,9 +1,8 @@
 using System.Security.Cryptography;
-using System.Text;
 
 public class PasswordHasher
 {
-    private const int Iterations = 10000;
+    private const int Iterations = 100_000;
     private const int SaltSize = 16;
     private const int HashSize = 32;
 
@@ -35,8 +34,8 @@ public class PasswordHasher
             HashAlgorithmName.SHA256,
             HashSize);
 
-        string computedHash = Convert.ToBase64String(hashBytes);
+        byte[] storedHashBytes = Convert.FromBase64String(hash);
 
-        return computedHash == hash;
+        return CryptographicOperations.FixedTimeEquals(hashBytes, storedHashBytes);
     }
 }

@@ -255,6 +255,9 @@ public static class AppServiceFactory
     public static IAuthenticationService CreateAuthenticationService(
         IUserRepository userRepository, ICurrentUserContext currentUserContext)
     {
-        return new AuthenticationService(userRepository, currentUserContext);
+        return new AuthenticationService(
+            userRepository,
+            currentUserContext,
+            new PasswordHasher());
     }
 }

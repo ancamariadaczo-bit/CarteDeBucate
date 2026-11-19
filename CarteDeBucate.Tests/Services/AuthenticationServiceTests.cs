@@ -5,7 +5,11 @@ public class AuthenticationServiceTests
     {
         FakeUserRepository userRepository = new FakeUserRepository();
         CurrentUserContext currentUserContext = new CurrentUserContext();
-        AuthenticationService authenticationService = new AuthenticationService(userRepository, currentUserContext);
+        PasswordHasher passwordHasher = new PasswordHasher();
+        AuthenticationService authenticationService = new AuthenticationService(
+            userRepository,
+            currentUserContext,
+            passwordHasher);
 
         AuthenticationResult result = authenticationService.Register("anca", "secret-password");
 
@@ -18,6 +22,10 @@ public class AuthenticationServiceTests
         Assert.False(string.IsNullOrWhiteSpace(userRepository.AddedUser.PasswordHash));
         Assert.False(string.IsNullOrWhiteSpace(userRepository.AddedUser.PasswordSalt));
         Assert.NotEqual("secret-password", userRepository.AddedUser.PasswordHash);
+        Assert.True(passwordHasher.VerifyPassword(
+            "secret-password",
+            userRepository.AddedUser.PasswordHash,
+            userRepository.AddedUser.PasswordSalt));
         Assert.True(authenticationService.IsLoggedIn);
         Assert.True(currentUserContext.IsAuthenticated);
         Assert.Equal(userRepository.AddedUser.Id, currentUserContext.UserId);
@@ -37,7 +45,10 @@ public class AuthenticationServiceTests
             PasswordSalt = "salt"
         });
 
-        AuthenticationService authenticationService = new AuthenticationService(userRepository, currentUserContext);
+        AuthenticationService authenticationService = new AuthenticationService(
+            userRepository,
+            currentUserContext,
+            new PasswordHasher());
 
         AuthenticationResult result = authenticationService.Register("Anca", "secret-password");
 
@@ -53,7 +64,10 @@ public class AuthenticationServiceTests
     {
         FakeUserRepository userRepository = new FakeUserRepository();
         CurrentUserContext currentUserContext = new CurrentUserContext();
-        AuthenticationService authenticationService = new AuthenticationService(userRepository, currentUserContext);
+        AuthenticationService authenticationService = new AuthenticationService(
+            userRepository,
+            currentUserContext,
+            new PasswordHasher());
         authenticationService.Register("anca", "secret-password");
         authenticationService.Logout();
 
@@ -71,7 +85,10 @@ public class AuthenticationServiceTests
     {
         FakeUserRepository userRepository = new FakeUserRepository();
         CurrentUserContext currentUserContext = new CurrentUserContext();
-        AuthenticationService authenticationService = new AuthenticationService(userRepository, currentUserContext);
+        AuthenticationService authenticationService = new AuthenticationService(
+            userRepository,
+            currentUserContext,
+            new PasswordHasher());
         authenticationService.Register("anca", "secret-password");
         authenticationService.Logout();
 

@@ -1,23 +1,30 @@
-using System.Security.Cryptography;
-
 public class AuthenticationService : IAuthenticationService
 {
-    private const int SaltSize = 16;
-    private const int HashSize = 32;
-    private const int Iterations = 100_000;
-
     private readonly IUserRepository _userRepository;
     private readonly ICurrentUserContext? _currentUserContext;
+    private readonly PasswordHasher _passwordHasher;
 
     public AuthenticationService(IUserRepository userRepository)
-        : this(userRepository, null)
+        : this(userRepository, null, new PasswordHasher())
     {
     }
 
     public AuthenticationService(IUserRepository userRepository, ICurrentUserContext? currentUserContext)
+        : this(userRepository, currentUserContext, new PasswordHasher())
     {
+    }
+
+    public AuthenticationService(
+        IUserRepository userRepository,
+        ICurrentUserContext? currentUserContext,
+        PasswordHasher passwordHasher)
+    {
+        ArgumentNullException.ThrowIfNull(userRepository);
+        ArgumentNullException.ThrowIfNull(passwordHasher);
+
         _userRepository = userRepository;
         _currentUserContext = currentUserContext;
+        _passwordHasher = passwordHasher;
     }
 
     public bool IsLoggedIn => _currentUserContext?.IsAuthenticated == true;
@@ -55,20 +62,13 @@ public class AuthenticationService : IAuthenticationService
             };
         }
 
-        byte[] salt = RandomNumberGenerator.GetBytes(SaltSize);
-
-        byte[] hash = Rfc2898DeriveBytes.Pbkdf2(
-            password,
-            salt,
-            Iterations,
-            HashAlgorithmName.SHA256,
-            HashSize);
+        (string hash, string salt) = _passwordHasher.HashPassword(password);
 
         User user = new User
         {
             Username = username,
-            PasswordHash = Convert.ToBase64String(hash),
-            PasswordSalt = Convert.ToBase64String(salt),
+            PasswordHash = hash,
+            PasswordSalt = salt,
             CreatedAt = DateTime.Now
         };
 
@@ -117,7 +117,10 @@ public class AuthenticationService : IAuthenticationService
             };
         }
 
-        bool isPasswordValid = VerifyPassword(password, user.PasswordHash, user.PasswordSalt);
+        bool isPasswordValid = _passwordHasher.VerifyPassword(
+            password,
+            user.PasswordHash,
+            user.PasswordSalt);
 
         if (!isPasswordValid)
         {
@@ -141,21 +144,5 @@ public class AuthenticationService : IAuthenticationService
     public void Logout()
     {
         _currentUserContext?.Clear();
-    }
-
-    private static bool VerifyPassword(string password, string storedPasswordHash, string storedPasswordSalt)
-    {
-        byte[] salt = Convert.FromBase64String(storedPasswordSalt);
-
-        byte[] hash = Rfc2898DeriveBytes.Pbkdf2(
-            password,
-            salt,
-            Iterations,
-            HashAlgorithmName.SHA256,
-            HashSize);
-
-        string passwordHash = Convert.ToBase64String(hash);
-
-        return passwordHash == storedPasswordHash;
     }
 }
