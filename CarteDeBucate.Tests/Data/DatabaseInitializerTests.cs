@@ -71,6 +71,84 @@ public class DatabaseInitializerTests
     }
 
     [Fact]
+    public void Initialize_ShouldCreateExpectedUserEmailTokenColumns()
+    {
+        WithInitializedDatabase(databasePath =>
+        {
+            Dictionary<string, ColumnDefinition> columns =
+                ReadColumns(databasePath, "UserEmailTokens");
+
+            Assert.Equal(10, columns.Count);
+            AssertColumn(columns, "Id", "INTEGER", false, null, 1);
+            AssertColumn(columns, "UserId", "INTEGER", true, null, 0);
+            AssertColumn(columns, "Purpose", "INTEGER", true, null, 0);
+            AssertColumn(columns, "TokenHash", "BLOB", true, null, 0);
+            AssertColumn(columns, "TargetEmail", "TEXT", true, null, 0);
+            AssertColumn(columns, "Culture", "TEXT", true, null, 0);
+            AssertColumn(columns, "CreatedAtUtc", "TEXT", true, null, 0);
+            AssertColumn(columns, "ExpiresAtUtc", "TEXT", true, null, 0);
+            AssertColumn(columns, "UsedAtUtc", "TEXT", false, null, 0);
+            AssertColumn(columns, "RevokedAtUtc", "TEXT", false, null, 0);
+        });
+    }
+
+    [Fact]
+    public void Initialize_ShouldCreateUserEmailTokenIndexes()
+    {
+        WithInitializedDatabase(databasePath =>
+        {
+            using SqliteConnection connection = OpenConnection(databasePath);
+
+            Assert.True(IndexExists(connection, "IX_UserEmailTokens_TokenHash"));
+            Assert.True(IndexExists(connection, "IX_UserEmailTokens_ActivePurpose"));
+            Assert.True(IndexExists(connection, "IX_UserEmailTokens_UserPurposeExpiry"));
+        });
+    }
+
+    [Fact]
+    public void Initialize_ShouldEnforceUserEmailTokenConstraints()
+    {
+        WithInitializedDatabase(databasePath =>
+        {
+            using SqliteConnection connection = OpenConnection(databasePath);
+            int userId = InsertUserAndGetId(connection, "anca@example.com");
+            int secondUserId = InsertUserAndGetId(connection, "maria@example.com");
+            byte[] tokenHash = CreateTokenHash(1);
+
+            InsertUserEmailToken(connection, userId, 1, tokenHash);
+
+            Assert.Throws<SqliteException>(() =>
+                InsertUserEmailToken(connection, secondUserId, 2, tokenHash));
+            Assert.Throws<SqliteException>(() =>
+                InsertUserEmailToken(connection, userId, 1, CreateTokenHash(2)));
+            Assert.Throws<SqliteException>(() =>
+                InsertUserEmailToken(connection, userId, 3, CreateTokenHash(3)));
+            Assert.Throws<SqliteException>(() =>
+                InsertUserEmailToken(connection, userId, 2, new byte[31]));
+        });
+    }
+
+    [Fact]
+    public void Initialize_ShouldDeclareUserEmailTokenForeignKeyWithCascadeDelete()
+    {
+        WithInitializedDatabase(databasePath =>
+        {
+            using SqliteConnection connection = OpenConnection(databasePath);
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "PRAGMA foreign_key_list(UserEmailTokens);";
+
+            using SqliteDataReader reader = command.ExecuteReader();
+
+            Assert.True(reader.Read());
+            Assert.Equal("Users", reader.GetString(reader.GetOrdinal("table")));
+            Assert.Equal("UserId", reader.GetString(reader.GetOrdinal("from")));
+            Assert.Equal("Id", reader.GetString(reader.GetOrdinal("to")));
+            Assert.Equal("CASCADE", reader.GetString(reader.GetOrdinal("on_delete")));
+            Assert.False(reader.Read());
+        });
+    }
+
+    [Fact]
     public void Initialize_ShouldCreateExpectedRecipePhotosColumns()
     {
         WithInitializedDatabase(databasePath =>
@@ -302,10 +380,17 @@ public class DatabaseInitializerTests
 
     private static void InsertUser(SqliteConnection connection, string email)
     {
+        InsertUserAndGetId(connection, email);
+    }
+
+    private static int InsertUserAndGetId(SqliteConnection connection, string email)
+    {
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
             INSERT INTO Users (Email, PasswordHash, PasswordSalt, CreatedAt)
             VALUES (@Email, @PasswordHash, @PasswordSalt, @CreatedAt);
+
+            SELECT last_insert_rowid();
             """;
 
         command.Parameters.AddWithValue("@Email", email);
@@ -313,7 +398,49 @@ public class DatabaseInitializerTests
         command.Parameters.AddWithValue("@PasswordSalt", "salt");
         command.Parameters.AddWithValue("@CreatedAt", DateTime.UtcNow.ToString("O"));
 
+        return Convert.ToInt32(command.ExecuteScalar());
+    }
+
+    private static void InsertUserEmailToken(
+        SqliteConnection connection,
+        int userId,
+        int purpose,
+        byte[] tokenHash)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO UserEmailTokens (
+                UserId,
+                Purpose,
+                TokenHash,
+                TargetEmail,
+                Culture,
+                CreatedAtUtc,
+                ExpiresAtUtc)
+            VALUES (
+                @UserId,
+                @Purpose,
+                @TokenHash,
+                @TargetEmail,
+                @Culture,
+                @CreatedAtUtc,
+                @ExpiresAtUtc);
+            """;
+        command.Parameters.AddWithValue("@UserId", userId);
+        command.Parameters.AddWithValue("@Purpose", purpose);
+        command.Parameters.AddWithValue("@TokenHash", tokenHash);
+        command.Parameters.AddWithValue("@TargetEmail", "anca@example.com");
+        command.Parameters.AddWithValue("@Culture", "ro-RO");
+        command.Parameters.AddWithValue("@CreatedAtUtc", DateTime.UtcNow.ToString("O"));
+        command.Parameters.AddWithValue("@ExpiresAtUtc", DateTime.UtcNow.AddDays(1).ToString("O"));
         command.ExecuteNonQuery();
+    }
+
+    private static byte[] CreateTokenHash(byte marker)
+    {
+        byte[] tokenHash = new byte[32];
+        tokenHash[0] = marker;
+        return tokenHash;
     }
 
     private static bool IndexExists(SqliteConnection connection, string indexName)

@@ -18,6 +18,7 @@ public class DatabaseMigratorTests
             Assert.True(MigrationWasRecorded(databasePath, 1));
             Assert.True(MigrationWasRecorded(databasePath, 2));
             Assert.True(MigrationWasRecorded(databasePath, 3));
+            Assert.True(MigrationWasRecorded(databasePath, 7));
         }
         finally
         {
@@ -40,6 +41,7 @@ public class DatabaseMigratorTests
             Assert.True(ColumnExists(databasePath, "Recipes", "Status"));
             Assert.True(ColumnExists(databasePath, "Recipes", "UserId"));
             Assert.True(TableExists(databasePath, "Users"));
+            Assert.True(TableExists(databasePath, "UserEmailTokens"));
             Assert.True(MigrationWasRecorded(databasePath, 1));
             Assert.True(MigrationWasRecorded(databasePath, 2));
             Assert.True(MigrationWasRecorded(databasePath, 3));
@@ -87,6 +89,7 @@ public class DatabaseMigratorTests
             migrator.ApplyMigrations();
 
             Assert.True(MigrationWasRecorded(databasePath, 4));
+            Assert.True(MigrationWasRecorded(databasePath, 7));
         }
         finally
         {
@@ -109,6 +112,7 @@ public class DatabaseMigratorTests
 
             Assert.Equal(1L, MigrationRecordCount(databasePath, 4));
             Assert.Equal(1L, MigrationRecordCount(databasePath, 6));
+            Assert.Equal(1L, MigrationRecordCount(databasePath, 7));
         }
         finally
         {

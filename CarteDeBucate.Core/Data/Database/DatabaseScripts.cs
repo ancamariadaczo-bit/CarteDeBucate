@@ -4,6 +4,7 @@ public static class DatabaseScripts
     [
         CreateUsersTable,
         CreateUsersEmailNoCaseUniqueIndex,
+        CreateUserEmailTokensSchema,
         CreateRecipesTable,
         CreateRecipePhotosTable,
         CreateRecipePhotosIndex,
@@ -103,6 +104,46 @@ public static class DatabaseScripts
     CREATE UNIQUE INDEX IF NOT EXISTS IX_Users_Email_NoCase
         ON Users (Email COLLATE NOCASE);
     """;
+
+    public const string CreateUserEmailTokensTable = """
+    CREATE TABLE IF NOT EXISTS UserEmailTokens (
+        Id INTEGER PRIMARY KEY AUTOINCREMENT,
+        UserId INTEGER NOT NULL,
+        Purpose INTEGER NOT NULL,
+        TokenHash BLOB NOT NULL,
+        TargetEmail TEXT NOT NULL COLLATE NOCASE,
+        Culture TEXT NOT NULL,
+        CreatedAtUtc TEXT NOT NULL,
+        ExpiresAtUtc TEXT NOT NULL,
+        UsedAtUtc TEXT NULL,
+        RevokedAtUtc TEXT NULL,
+        FOREIGN KEY (UserId) REFERENCES Users(Id) ON DELETE CASCADE,
+        CHECK (Purpose IN (1, 2)),
+        CHECK (length(TokenHash) = 32)
+    );
+    """;
+
+    public const string CreateUserEmailTokensTokenHashIndex = """
+    CREATE UNIQUE INDEX IF NOT EXISTS IX_UserEmailTokens_TokenHash
+        ON UserEmailTokens (TokenHash);
+    """;
+
+    public const string CreateUserEmailTokensActivePurposeIndex = """
+    CREATE UNIQUE INDEX IF NOT EXISTS IX_UserEmailTokens_ActivePurpose
+        ON UserEmailTokens (UserId, Purpose)
+        WHERE UsedAtUtc IS NULL AND RevokedAtUtc IS NULL;
+    """;
+
+    public const string CreateUserEmailTokensUserPurposeExpiryIndex = """
+    CREATE INDEX IF NOT EXISTS IX_UserEmailTokens_UserPurposeExpiry
+        ON UserEmailTokens (UserId, Purpose, ExpiresAtUtc);
+    """;
+
+    public const string CreateUserEmailTokensSchema =
+        CreateUserEmailTokensTable + "\n" +
+        CreateUserEmailTokensTokenHashIndex + "\n" +
+        CreateUserEmailTokensActivePurposeIndex + "\n" +
+        CreateUserEmailTokensUserPurposeExpiryIndex;
 
     public const string AddUserIdToRecipes = """
     ALTER TABLE Recipes

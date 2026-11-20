@@ -41,7 +41,8 @@ public class DatabaseMigrator
             new DatabaseMigration(2, "Create Users table", DatabaseScripts.CreateUsersTable),
             new DatabaseMigration(3, "Add user id to recipes", DatabaseScripts.AddUserIdToRecipes),
             new DatabaseMigration(4, "Create RecipePhotos table", DatabaseScripts.CreateRecipePhotosSchema),
-            new DatabaseMigration(6, "Make recipe source URL optional", DatabaseScripts.MakeRecipeSourceUrlOptional)
+            new DatabaseMigration(6, "Make recipe source URL optional", DatabaseScripts.MakeRecipeSourceUrlOptional),
+            new DatabaseMigration(7, "Create user email tokens table", DatabaseScripts.CreateUserEmailTokensSchema)
         };
     }
 
@@ -78,8 +79,26 @@ public class DatabaseMigrator
             3 => ColumnExists(connection, "Recipes", "UserId"),
             4 => TableExists(connection, "RecipePhotos"),
             6 => IsColumnNullable(connection, "Recipes", "SourceUrl"),
+            7 => HasUserEmailTokenSchema(connection),
             _ => false
         };
+    }
+
+    private static bool HasUserEmailTokenSchema(SqliteConnection connection)
+    {
+        return TableExists(connection, "UserEmailTokens") &&
+            ColumnExists(connection, "UserEmailTokens", "UserId") &&
+            ColumnExists(connection, "UserEmailTokens", "Purpose") &&
+            ColumnExists(connection, "UserEmailTokens", "TokenHash") &&
+            ColumnExists(connection, "UserEmailTokens", "TargetEmail") &&
+            ColumnExists(connection, "UserEmailTokens", "Culture") &&
+            ColumnExists(connection, "UserEmailTokens", "CreatedAtUtc") &&
+            ColumnExists(connection, "UserEmailTokens", "ExpiresAtUtc") &&
+            ColumnExists(connection, "UserEmailTokens", "UsedAtUtc") &&
+            ColumnExists(connection, "UserEmailTokens", "RevokedAtUtc") &&
+            IndexExists(connection, "IX_UserEmailTokens_TokenHash") &&
+            IndexExists(connection, "IX_UserEmailTokens_ActivePurpose") &&
+            IndexExists(connection, "IX_UserEmailTokens_UserPurposeExpiry");
     }
 
     private static bool IsColumnNullable(SqliteConnection connection, string tableName, string columnName)
@@ -118,6 +137,20 @@ public class DatabaseMigrator
         }
 
         return false;
+    }
+
+    private static bool IndexExists(SqliteConnection connection, string indexName)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT COUNT(*)
+            FROM sqlite_master
+            WHERE type = 'index'
+            AND name = @IndexName;
+            """;
+        command.Parameters.AddWithValue("@IndexName", indexName);
+
+        return (long)command.ExecuteScalar()! > 0;
     }
 
     private static bool TableExists(SqliteConnection connection, string tableName)
