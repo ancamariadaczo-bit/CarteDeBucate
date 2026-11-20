@@ -104,11 +104,6 @@ public static class DatabaseScripts
         ON Users (Email COLLATE NOCASE);
     """;
 
-    public const string CreateUsersUsernameNoCaseUniqueIndex = """
-    CREATE UNIQUE INDEX IF NOT EXISTS IX_Users_Username_NoCase
-        ON Users (Username COLLATE NOCASE);
-    """;
-
     public const string AddUserIdToRecipes = """
     ALTER TABLE Recipes
         ADD COLUMN UserId INTEGER NULL REFERENCES Users(Id);
