@@ -4,17 +4,17 @@ public class CurrentUserContext : ICurrentUserContext
 
     public int? UserId { get; private set; }
 
-    public string? Username { get; private set; }
+    public string? Email { get; private set; }
 
     public void SetCurrentUser(User user)
     {
         UserId = user.Id;
-        Username = user.Username;
+        Email = user.Email;
     }
 
     public void Clear()
     {
         UserId = null;
-        Username = null;
+        Email = null;
     }
 }

@@ -37,7 +37,7 @@ public class RecipeLibraryServiceTests
         };
 
         CurrentUserContext currentUserContext = new CurrentUserContext();
-        currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
+        currentUserContext.SetCurrentUser(new User { Id = 7, Email = "ana" });
 
         RecipeLibraryService service = new RecipeLibraryService(
             repository,
@@ -88,7 +88,7 @@ public class RecipeLibraryServiceTests
         };
 
         CurrentUserContext currentUserContext = new CurrentUserContext();
-        currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
+        currentUserContext.SetCurrentUser(new User { Id = 7, Email = "ana" });
 
         RecipeLibraryService service = new RecipeLibraryService(repository, currentUserContext);
 
@@ -130,7 +130,7 @@ public class RecipeLibraryServiceTests
         };
 
         CurrentUserContext currentUserContext = new CurrentUserContext();
-        currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
+        currentUserContext.SetCurrentUser(new User { Id = 7, Email = "ana" });
 
         RecipeLibraryService service = new RecipeLibraryService(
             repository,
@@ -193,7 +193,7 @@ public class RecipeLibraryServiceTests
         };
 
         CurrentUserContext currentUserContext = new CurrentUserContext();
-        currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
+        currentUserContext.SetCurrentUser(new User { Id = 7, Email = "ana" });
 
         RecipeLibraryService service = new RecipeLibraryService(
             repository,
@@ -218,7 +218,7 @@ public class RecipeLibraryServiceTests
         };
 
         CurrentUserContext currentUserContext = new CurrentUserContext();
-        currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
+        currentUserContext.SetCurrentUser(new User { Id = 7, Email = "ana" });
 
         RecipeLibraryService service = new RecipeLibraryService(
             repository,
@@ -260,7 +260,7 @@ public class RecipeLibraryServiceTests
         };
 
         CurrentUserContext currentUserContext = new CurrentUserContext();
-        currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
+        currentUserContext.SetCurrentUser(new User { Id = 7, Email = "ana" });
 
         RecipeLibraryService service = new RecipeLibraryService(
             repository,
@@ -302,7 +302,7 @@ public class RecipeLibraryServiceTests
         };
 
         CurrentUserContext currentUserContext = new CurrentUserContext();
-        currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
+        currentUserContext.SetCurrentUser(new User { Id = 7, Email = "ana" });
 
         RecipeLibraryService service = new RecipeLibraryService(repository, currentUserContext);
 
@@ -399,7 +399,7 @@ public class RecipeLibraryServiceTests
             SourceUrlExists = true
         };
         CurrentUserContext currentUserContext = new CurrentUserContext();
-        currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
+        currentUserContext.SetCurrentUser(new User { Id = 7, Email = "ana" });
         RecipeLibraryService service = new RecipeLibraryService(
             repository,
             currentUserContext);
@@ -423,7 +423,7 @@ public class RecipeLibraryServiceTests
             }
         };
         CurrentUserContext currentUserContext = new CurrentUserContext();
-        currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
+        currentUserContext.SetCurrentUser(new User { Id = 7, Email = "ana" });
         RecipeLibraryService service = new RecipeLibraryService(
             repository,
             currentUserContext);
@@ -529,7 +529,7 @@ public class RecipeLibraryServiceTests
     {
         FakeRecipeRepository repository = new FakeRecipeRepository();
         CurrentUserContext currentUserContext = new CurrentUserContext();
-        currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
+        currentUserContext.SetCurrentUser(new User { Id = 7, Email = "ana" });
 
         RecipeLibraryService service = new RecipeLibraryService(
             repository,
@@ -621,7 +621,7 @@ public class RecipeLibraryServiceTests
         };
 
         CurrentUserContext currentUserContext = new CurrentUserContext();
-        currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
+        currentUserContext.SetCurrentUser(new User { Id = 7, Email = "ana" });
 
         RecipeLibraryService service = new RecipeLibraryService(
             repository,
@@ -652,7 +652,7 @@ public class RecipeLibraryServiceTests
         };
 
         CurrentUserContext currentUserContext = new CurrentUserContext();
-        currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
+        currentUserContext.SetCurrentUser(new User { Id = 7, Email = "ana" });
 
         RecipeLibraryService service = new RecipeLibraryService(
             repository,
@@ -731,7 +731,7 @@ public class RecipeLibraryServiceTests
         };
 
         CurrentUserContext currentUserContext = new CurrentUserContext();
-        currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
+        currentUserContext.SetCurrentUser(new User { Id = 7, Email = "ana" });
 
         RecipeLibraryService service = new RecipeLibraryService(
             repository,
@@ -759,7 +759,7 @@ public class RecipeLibraryServiceTests
         };
 
         CurrentUserContext currentUserContext = new CurrentUserContext();
-        currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
+        currentUserContext.SetCurrentUser(new User { Id = 7, Email = "ana" });
 
         RecipeLibraryService service = new RecipeLibraryService(
             repository,
@@ -913,7 +913,7 @@ public class RecipeLibraryServiceTests
         currentUserContext.SetCurrentUser(new User
         {
             Id = userId,
-            Username = "ana"
+            Email = "ana"
         });
         FakeRecipePhotoDeletionCoordinator coordinator = new();
         RecipeLibraryService service = new(
@@ -949,7 +949,7 @@ public class RecipeLibraryServiceTests
         currentUserContext.SetCurrentUser(new User
         {
             Id = userId,
-            Username = "ana"
+            Email = "ana"
         });
 
         ThrowingRecipeCacheService cache = new();
@@ -1241,7 +1241,7 @@ public class RecipeLibraryServiceTests
         currentUserContext.SetCurrentUser(new User
         {
             Id = userId,
-            Username = "ana"
+            Email = "ana"
         });
 
         return currentUserContext;

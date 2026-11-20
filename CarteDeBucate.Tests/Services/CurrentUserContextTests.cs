@@ -7,7 +7,7 @@ public class CurrentUserContextTests
 
         Assert.False(context.IsAuthenticated);
         Assert.Null(context.UserId);
-        Assert.Null(context.Username);
+        Assert.Null(context.Email);
     }
 
     [Fact]
@@ -18,12 +18,12 @@ public class CurrentUserContextTests
         context.SetCurrentUser(new User
         {
             Id = 12,
-            Username = "anca"
+            Email = "anca@example.com"
         });
 
         Assert.True(context.IsAuthenticated);
         Assert.Equal(12, context.UserId);
-        Assert.Equal("anca", context.Username);
+        Assert.Equal("anca@example.com", context.Email);
     }
 
     [Fact]
@@ -33,13 +33,13 @@ public class CurrentUserContextTests
         context.SetCurrentUser(new User
         {
             Id = 12,
-            Username = "anca"
+            Email = "anca@example.com"
         });
 
         context.Clear();
 
         Assert.False(context.IsAuthenticated);
         Assert.Null(context.UserId);
-        Assert.Null(context.Username);
+        Assert.Null(context.Email);
     }
 }

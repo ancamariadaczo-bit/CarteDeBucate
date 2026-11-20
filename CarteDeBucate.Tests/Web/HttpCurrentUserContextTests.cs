@@ -15,7 +15,7 @@ public class HttpCurrentUserContextTests
 
         Assert.False(context.IsAuthenticated);
         Assert.Null(context.UserId);
-        Assert.Null(context.Username);
+        Assert.Null(context.Email);
     }
 
     [Fact]
@@ -29,7 +29,7 @@ public class HttpCurrentUserContextTests
 
         Assert.True(context.IsAuthenticated);
         Assert.Equal(12, context.UserId);
-        Assert.Equal("anca", context.Username);
+        Assert.Equal("anca", context.Email);
     }
 
     [Fact]
@@ -44,12 +44,12 @@ public class HttpCurrentUserContextTests
         context.SetCurrentUser(new User
         {
             Id = 21,
-            Username = "maria"
+            Email = "maria@example.com"
         });
 
         Assert.True(context.IsAuthenticated);
         Assert.Equal(21, context.UserId);
-        Assert.Equal("maria", context.Username);
+        Assert.Equal("maria@example.com", context.Email);
     }
 
     [Fact]
@@ -63,14 +63,14 @@ public class HttpCurrentUserContextTests
         context.SetCurrentUser(new User
         {
             Id = 21,
-            Username = "maria"
+            Email = "maria@example.com"
         });
 
         context.Clear();
 
         Assert.False(context.IsAuthenticated);
         Assert.Null(context.UserId);
-        Assert.Null(context.Username);
+        Assert.Null(context.Email);
     }
 
     private static HttpCurrentUserContext CreateContext(IHttpContextAccessor httpContextAccessor)

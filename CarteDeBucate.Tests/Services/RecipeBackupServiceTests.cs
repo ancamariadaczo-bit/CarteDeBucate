@@ -93,7 +93,7 @@ public class RecipeBackupServiceTests
         currentUserContext.SetCurrentUser(new User
         {
             Id = 1,
-            Username = "ana"
+            Email = "ana"
         });
 
         RecipeBackupService service = new RecipeBackupService(repository, currentUserContext);
@@ -184,7 +184,7 @@ public class RecipeBackupServiceTests
         string json = JsonSerializer.Serialize(new List<Recipe> { legacyRecipe });
         FakeRecipeRepository repository = new FakeRecipeRepository();
         CurrentUserContext currentUserContext = new CurrentUserContext();
-        currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
+        currentUserContext.SetCurrentUser(new User { Id = 7, Email = "ana" });
         RecipeBackupService service = new RecipeBackupService(repository, currentUserContext);
 
         RecipeBackupResult result = service.ImportFromJsonContent(json);
@@ -249,7 +249,7 @@ public class RecipeBackupServiceTests
             """;
         FakeRecipeRepository repository = new FakeRecipeRepository();
         CurrentUserContext currentUserContext = new CurrentUserContext();
-        currentUserContext.SetCurrentUser(new User { Id = 7, Username = "ana" });
+        currentUserContext.SetCurrentUser(new User { Id = 7, Email = "ana" });
         RecipeBackupService service = new RecipeBackupService(repository, currentUserContext);
 
         RecipeBackupResult result = service.ImportFromJsonContent(json);

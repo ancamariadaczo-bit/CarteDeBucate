@@ -141,7 +141,7 @@ public sealed class RecipePhotoServiceSkeletonTests
         currentUserContext.SetCurrentUser(new User
         {
             Id = userId,
-            Username = $"user-{userId}"
+            Email = $"user-{userId}"
         });
 
         return currentUserContext;

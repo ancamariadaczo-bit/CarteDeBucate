@@ -236,7 +236,7 @@ public class AccountControllerTests
             User = new User
             {
                 Id = 12,
-                Username = "anca"
+                Email = "anca@anca.com"
             }
         };
     }

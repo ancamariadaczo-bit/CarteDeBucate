@@ -23,6 +23,6 @@ public class FakeUserRepository : IUserRepository
     public User? GetByUsername(string username)
     {
         return Users.FirstOrDefault(user =>
-            string.Equals(user.Username, username, StringComparison.OrdinalIgnoreCase));
+            string.Equals(user.Email, username, StringComparison.OrdinalIgnoreCase));
     }
 }

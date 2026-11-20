@@ -66,7 +66,7 @@ public class AuthenticationService : IAuthenticationService
 
         User user = new User
         {
-            Username = username,
+            Email = username,
             PasswordHash = hash,
             PasswordSalt = salt,
             CreatedAt = DateTime.Now

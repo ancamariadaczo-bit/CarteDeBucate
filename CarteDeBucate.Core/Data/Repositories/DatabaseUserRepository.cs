@@ -22,7 +22,7 @@ public class DatabaseUserRepository : IUserRepository
             SELECT last_insert_rowid();
         """;
 
-        command.Parameters.AddWithValue("$username", user.Username);
+        command.Parameters.AddWithValue("$username", user.Email);
         command.Parameters.AddWithValue("$hash", user.PasswordHash);
         command.Parameters.AddWithValue("$salt", user.PasswordSalt);
         command.Parameters.AddWithValue("$createdAt", user.CreatedAt.ToString("O"));
@@ -53,7 +53,7 @@ public class DatabaseUserRepository : IUserRepository
         return new User
         {
             Id = reader.GetInt32(0),
-            Username = reader.GetString(1),
+            Email = reader.GetString(1),
             PasswordHash = reader.GetString(2),
             PasswordSalt = reader.GetString(3),
             CreatedAt = DateTime.Parse(reader.GetString(4))

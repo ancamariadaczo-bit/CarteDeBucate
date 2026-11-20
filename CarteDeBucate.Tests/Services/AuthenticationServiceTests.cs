@@ -18,7 +18,7 @@ public class AuthenticationServiceTests
         Assert.NotNull(result.User);
         Assert.True(userRepository.AddWasCalled);
         Assert.NotNull(userRepository.AddedUser);
-        Assert.Equal("anca", userRepository.AddedUser.Username);
+        Assert.Equal("anca", userRepository.AddedUser.Email);
         Assert.False(string.IsNullOrWhiteSpace(userRepository.AddedUser.PasswordHash));
         Assert.False(string.IsNullOrWhiteSpace(userRepository.AddedUser.PasswordSalt));
         Assert.NotEqual("secret-password", userRepository.AddedUser.PasswordHash);
@@ -29,7 +29,7 @@ public class AuthenticationServiceTests
         Assert.True(authenticationService.IsLoggedIn);
         Assert.True(currentUserContext.IsAuthenticated);
         Assert.Equal(userRepository.AddedUser.Id, currentUserContext.UserId);
-        Assert.Equal("anca", currentUserContext.Username);
+        Assert.Equal("anca", currentUserContext.Email);
     }
 
     [Fact]
@@ -40,7 +40,7 @@ public class AuthenticationServiceTests
         userRepository.Users.Add(new User
         {
             Id = 1,
-            Username = "anca",
+            Email = "anca",
             PasswordHash = "hash",
             PasswordSalt = "salt"
         });
@@ -77,7 +77,7 @@ public class AuthenticationServiceTests
         Assert.Equal("Login successful.", result.Message);
         Assert.True(authenticationService.IsLoggedIn);
         Assert.True(currentUserContext.IsAuthenticated);
-        Assert.Equal("anca", currentUserContext.Username);
+        Assert.Equal("anca", currentUserContext.Email);
     }
 
     [Fact]
@@ -99,6 +99,6 @@ public class AuthenticationServiceTests
         Assert.False(authenticationService.IsLoggedIn);
         Assert.False(currentUserContext.IsAuthenticated);
         Assert.Null(currentUserContext.UserId);
-        Assert.Null(currentUserContext.Username);
+        Assert.Null(currentUserContext.Email);
     }
 }

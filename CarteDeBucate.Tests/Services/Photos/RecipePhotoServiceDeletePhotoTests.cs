@@ -238,7 +238,7 @@ public sealed class RecipePhotoServiceDeletePhotoTests
         context.SetCurrentUser(new User
         {
             Id = userId,
-            Username = $"user-{userId}"
+            Email = $"user-{userId}"
         });
         return context;
     }

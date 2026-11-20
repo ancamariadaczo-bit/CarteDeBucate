@@ -14,7 +14,7 @@ public class DatabaseUserRepositoryTests
 
             Assert.NotNull(result);
             Assert.Equal(user.Id, result.Id);
-            Assert.Equal("anca", result.Username);
+            Assert.Equal("anca", result.Email);
         });
     }
 
@@ -61,8 +61,8 @@ public class DatabaseUserRepositoryTests
                 authenticationService.Login("AnCa", "secret-password");
 
             Assert.True(result.IsSuccess);
-            Assert.Equal("anca", result.User?.Username);
-            Assert.Equal("anca", currentUserContext.Username);
+            Assert.Equal("anca", result.User?.Email);
+            Assert.Equal("anca", currentUserContext.Email);
         });
     }
 
@@ -70,7 +70,7 @@ public class DatabaseUserRepositoryTests
     {
         return new User
         {
-            Username = username,
+            Email = username,
             PasswordHash = "hash",
             PasswordSalt = "salt",
             CreatedAt = DateTime.UtcNow

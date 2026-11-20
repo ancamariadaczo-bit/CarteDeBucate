@@ -88,7 +88,7 @@ public class AuthenticationPipelineTests
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         Assert.True(_factory.SaveProbe.IsAuthenticated);
         Assert.Equal(42, _factory.SaveProbe.UserId);
-        Assert.Equal("chef", _factory.SaveProbe.Username);
+        Assert.Equal("chef", _factory.SaveProbe.Email);
     }
 
     [Fact]
@@ -140,7 +140,7 @@ public class AuthenticationPipelineTests
             _factory.ExistsProbe.SourceUrl);
         Assert.True(_factory.ExistsProbe.IsAuthenticated);
         Assert.Equal(42, _factory.ExistsProbe.UserId);
-        Assert.Equal("chef", _factory.ExistsProbe.Username);
+        Assert.Equal("chef", _factory.ExistsProbe.Email);
     }
 
     [Fact]
@@ -360,20 +360,20 @@ public sealed class RecipeSaveProbe
 
     public int? UserId { get; private set; }
 
-    public string? Username { get; private set; }
+    public string? Email { get; private set; }
 
     public void Capture(ICurrentUserContext currentUserContext)
     {
         IsAuthenticated = currentUserContext.IsAuthenticated;
         UserId = currentUserContext.UserId;
-        Username = currentUserContext.Username;
+        Email = currentUserContext.Email;
     }
 
     public void Reset()
     {
         IsAuthenticated = false;
         UserId = null;
-        Username = null;
+        Email = null;
     }
 }
 
@@ -389,7 +389,7 @@ public sealed class RecipeExistsProbe
 
     public int? UserId { get; private set; }
 
-    public string? Username { get; private set; }
+    public string? Email { get; private set; }
 
     public bool Capture(
         string sourceUrl,
@@ -399,7 +399,7 @@ public sealed class RecipeExistsProbe
         SourceUrl = sourceUrl;
         IsAuthenticated = currentUserContext.IsAuthenticated;
         UserId = currentUserContext.UserId;
-        Username = currentUserContext.Username;
+        Email = currentUserContext.Email;
 
         return ResultToReturn;
     }
@@ -411,7 +411,7 @@ public sealed class RecipeExistsProbe
         SourceUrl = null;
         IsAuthenticated = false;
         UserId = null;
-        Username = null;
+        Email = null;
     }
 }
 

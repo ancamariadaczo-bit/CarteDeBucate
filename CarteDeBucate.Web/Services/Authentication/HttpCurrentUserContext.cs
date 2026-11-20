@@ -32,9 +32,9 @@ public class HttpCurrentUserContext : ICurrentUserContext
         }
     }
 
-    public string? Username =>
+    public string? Email =>
         _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.Name)
-        ?? _currentRequestUser?.Username;
+        ?? _currentRequestUser?.Email;
 
     public void SetCurrentUser(User user)
     {
