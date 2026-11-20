@@ -11,6 +11,8 @@ public class DatabaseUserRepository : IUserRepository
 
     public void Add(User user)
     {
+        user.Email = EmailNormalizer.Normalize(user.Email);
+
         using var connection = new SqliteConnection(_connectionString);
         connection.Open();
 
@@ -33,6 +35,8 @@ public class DatabaseUserRepository : IUserRepository
 
     public User? GetByUsername(string username)
     {
+        string normalizedEmail = EmailNormalizer.Normalize(username);
+
         using var connection = new SqliteConnection(_connectionString);
         connection.Open();
 
@@ -43,7 +47,7 @@ public class DatabaseUserRepository : IUserRepository
             WHERE Username COLLATE NOCASE = $username;
         """;
 
-        command.Parameters.AddWithValue("$username", username);
+        command.Parameters.AddWithValue("$username", normalizedEmail);
 
         using var reader = command.ExecuteReader();
 
@@ -53,7 +57,7 @@ public class DatabaseUserRepository : IUserRepository
         return new User
         {
             Id = reader.GetInt32(0),
-            Email = reader.GetString(1),
+            Email = EmailNormalizer.Normalize(reader.GetString(1)),
             PasswordHash = reader.GetString(2),
             PasswordSalt = reader.GetString(3),
             CreatedAt = DateTime.Parse(reader.GetString(4))

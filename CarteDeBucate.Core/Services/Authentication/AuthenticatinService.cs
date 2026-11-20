@@ -31,14 +31,21 @@ public class AuthenticationService : IAuthenticationService
 
     public AuthenticationResult Register(string username, string password)
     {
-        username = username.Trim();
-
         if (string.IsNullOrWhiteSpace(username))
         {
             return new AuthenticationResult
             {
                 IsSuccess = false,
                 Message = "Username is required."
+            };
+        }
+
+        if (!EmailNormalizer.TryNormalize(username, out string normalizedEmail))
+        {
+            return new AuthenticationResult
+            {
+                IsSuccess = false,
+                Message = "Username must not exceed 254 characters."
             };
         }
 
@@ -51,7 +58,7 @@ public class AuthenticationService : IAuthenticationService
             };
         }
 
-        User? existingUser = _userRepository.GetByUsername(username);
+        User? existingUser = _userRepository.GetByUsername(normalizedEmail);
 
         if (existingUser is not null)
         {
@@ -66,7 +73,7 @@ public class AuthenticationService : IAuthenticationService
 
         User user = new User
         {
-            Email = username,
+            Email = normalizedEmail,
             PasswordHash = hash,
             PasswordSalt = salt,
             CreatedAt = DateTime.Now
@@ -86,14 +93,21 @@ public class AuthenticationService : IAuthenticationService
 
     public AuthenticationResult Login(string username, string password)
     {
-        username = username.Trim();
-
         if (string.IsNullOrWhiteSpace(username))
         {
             return new AuthenticationResult
             {
                 IsSuccess = false,
                 Message = "Username is required."
+            };
+        }
+
+        if (!EmailNormalizer.TryNormalize(username, out string normalizedEmail))
+        {
+            return new AuthenticationResult
+            {
+                IsSuccess = false,
+                Message = "Invalid username or password."
             };
         }
 
@@ -106,7 +120,7 @@ public class AuthenticationService : IAuthenticationService
             };
         }
 
-        User? user = _userRepository.GetByUsername(username);
+        User? user = _userRepository.GetByUsername(normalizedEmail);
 
         if (user is null)
         {

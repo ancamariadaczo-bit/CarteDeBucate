@@ -8,6 +8,8 @@ public class FakeUserRepository : IUserRepository
 
     public void Add(User user)
     {
+        user.Email = EmailNormalizer.Normalize(user.Email);
+
         if (user.Id == 0)
         {
             user.Id = Users.Count == 0
@@ -22,7 +24,9 @@ public class FakeUserRepository : IUserRepository
 
     public User? GetByUsername(string username)
     {
+        string normalizedEmail = EmailNormalizer.Normalize(username);
+
         return Users.FirstOrDefault(user =>
-            string.Equals(user.Email, username, StringComparison.OrdinalIgnoreCase));
+            string.Equals(user.Email, normalizedEmail, StringComparison.Ordinal));
     }
 }
