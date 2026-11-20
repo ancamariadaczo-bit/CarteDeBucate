@@ -37,17 +37,36 @@ public class DatabaseInitializerTests
     }
 
     [Fact]
-    public void Initialize_ShouldEnforceCaseInsensitiveUniqueUsername()
+    public void Initialize_ShouldCreateExpectedUserColumns()
+    {
+        WithInitializedDatabase(databasePath =>
+        {
+            Dictionary<string, ColumnDefinition> columns = ReadColumns(databasePath, "Users");
+
+            Assert.Equal(7, columns.Count);
+            AssertColumn(columns, "Id", "INTEGER", false, null, 1);
+            AssertColumn(columns, "Email", "TEXT", true, null, 0);
+            AssertColumn(columns, "PasswordHash", "TEXT", true, null, 0);
+            AssertColumn(columns, "PasswordSalt", "TEXT", true, null, 0);
+            AssertColumn(columns, "CreatedAt", "TEXT", true, null, 0);
+            AssertColumn(columns, "EmailVerifiedAtUtc", "TEXT", false, null, 0);
+            AssertColumn(columns, "PreferredCulture", "TEXT", false, null, 0);
+            Assert.DoesNotContain("Username", columns.Keys);
+        });
+    }
+
+    [Fact]
+    public void Initialize_ShouldEnforceCaseInsensitiveUniqueEmail()
     {
         WithInitializedDatabase(databasePath =>
         {
             using SqliteConnection connection = OpenConnection(databasePath);
 
-            Assert.True(IndexExists(connection, "IX_Users_Username_NoCase"));
+            Assert.True(IndexExists(connection, "IX_Users_Email_NoCase"));
 
-            InsertUser(connection, "anca");
+            InsertUser(connection, "anca@example.com");
 
-            Assert.Throws<SqliteException>(() => InsertUser(connection, "Anca"));
+            Assert.Throws<SqliteException>(() => InsertUser(connection, "AnCa@Example.com"));
         });
     }
 
@@ -281,15 +300,15 @@ public class DatabaseInitializerTests
         return Convert.ToInt32(command.ExecuteScalar());
     }
 
-    private static void InsertUser(SqliteConnection connection, string username)
+    private static void InsertUser(SqliteConnection connection, string email)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
-            INSERT INTO Users (Username, PasswordHash, PasswordSalt, CreatedAt)
-            VALUES (@Username, @PasswordHash, @PasswordSalt, @CreatedAt);
+            INSERT INTO Users (Email, PasswordHash, PasswordSalt, CreatedAt)
+            VALUES (@Email, @PasswordHash, @PasswordSalt, @CreatedAt);
             """;
 
-        command.Parameters.AddWithValue("@Username", username);
+        command.Parameters.AddWithValue("@Email", email);
         command.Parameters.AddWithValue("@PasswordHash", "hash");
         command.Parameters.AddWithValue("@PasswordSalt", "salt");
         command.Parameters.AddWithValue("@CreatedAt", DateTime.UtcNow.ToString("O"));

@@ -818,12 +818,12 @@ public class DatabaseRecipeRepositoryTests
 
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
-            INSERT INTO Users (Id, Username, PasswordHash, PasswordSalt, CreatedAt)
-            VALUES (@Id, @Username, @PasswordHash, @PasswordSalt, @CreatedAt);
+            INSERT INTO Users (Id, Email, PasswordHash, PasswordSalt, CreatedAt)
+            VALUES (@Id, @Email, @PasswordHash, @PasswordSalt, @CreatedAt);
             """;
 
         command.Parameters.AddWithValue("@Id", userId);
-        command.Parameters.AddWithValue("@Username", $"user-{userId}");
+        command.Parameters.AddWithValue("@Email", $"user-{userId}@example.com");
         command.Parameters.AddWithValue("@PasswordHash", "hash");
         command.Parameters.AddWithValue("@PasswordSalt", "salt");
         command.Parameters.AddWithValue("@CreatedAt", DateTime.UtcNow.ToString("O"));

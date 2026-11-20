@@ -505,18 +505,18 @@ public class DatabaseRecipePhotoRepositoryTests
         };
     }
 
-    private static int InsertUser(string databasePath, string username)
+    private static int InsertUser(string databasePath, string email)
     {
         using SqliteConnection connection = OpenConnection(databasePath);
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = """
-            INSERT INTO Users (Username, PasswordHash, PasswordSalt, CreatedAt)
-            VALUES (@Username, @PasswordHash, @PasswordSalt, @CreatedAt);
+            INSERT INTO Users (Email, PasswordHash, PasswordSalt, CreatedAt)
+            VALUES (@Email, @PasswordHash, @PasswordSalt, @CreatedAt);
 
             SELECT last_insert_rowid();
             """;
 
-        command.Parameters.AddWithValue("@Username", username);
+        command.Parameters.AddWithValue("@Email", email);
         command.Parameters.AddWithValue("@PasswordHash", "hash");
         command.Parameters.AddWithValue("@PasswordSalt", "salt");
         command.Parameters.AddWithValue("@CreatedAt", DateTime.UtcNow.ToString("O"));
