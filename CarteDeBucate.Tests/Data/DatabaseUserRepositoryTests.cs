@@ -3,42 +3,44 @@ using Microsoft.Data.Sqlite;
 public class DatabaseUserRepositoryTests
 {
     [Fact]
-    public void GetByUsername_WithDifferentCasing_ShouldReturnUser()
+    public void GetByEmail_WithDifferentCasing_ShouldReturnUser()
     {
         WithRepository(repository =>
         {
-            User user = CreateUser("anca");
+            User user = CreateUser("anca@example.com");
             repository.Add(user);
 
-            User? result = repository.GetByUsername("AnCa");
+            User? result = repository.GetByEmail("AnCa@Example.com");
 
             Assert.NotNull(result);
             Assert.Equal(user.Id, result.Id);
-            Assert.Equal("anca", result.Email);
+            Assert.Equal("anca@example.com", result.Email);
+            Assert.Equal(user.EmailVerifiedAtUtc, result.EmailVerifiedAtUtc);
+            Assert.Equal(user.PreferredCulture, result.PreferredCulture);
         });
     }
 
     [Fact]
-    public void Add_WhenUsernameDiffersOnlyByCasing_ShouldThrow()
+    public void Add_WhenEmailDiffersOnlyByCasing_ShouldThrow()
     {
         WithRepository(repository =>
         {
-            repository.Add(CreateUser("anca"));
+            repository.Add(CreateUser("anca@example.com"));
 
-            Assert.Throws<SqliteException>(() => repository.Add(CreateUser("Anca")));
+            Assert.Throws<SqliteException>(() => repository.Add(CreateUser("AnCa@example.com")));
         });
     }
 
     [Fact]
-    public void Register_WhenUsernameDiffersOnlyByCasing_ShouldReturnDuplicateMessage()
+    public void Register_WhenEmailDiffersOnlyByCasing_ShouldReturnDuplicateMessage()
     {
         WithRepository(repository =>
         {
             AuthenticationService authenticationService = new AuthenticationService(repository);
-            AuthenticationResult firstResult = authenticationService.Register("anca", "secret-password");
+            AuthenticationResult firstResult = authenticationService.Register("anca@example.com", "secret-password");
 
             AuthenticationResult duplicateResult =
-                authenticationService.Register("Anca", "another-password");
+                authenticationService.Register("AnCa@example.com", "another-password");
 
             Assert.True(firstResult.IsSuccess);
             Assert.False(duplicateResult.IsSuccess);
@@ -47,33 +49,50 @@ public class DatabaseUserRepositoryTests
     }
 
     [Fact]
-    public void Login_WithDifferentUsernameCasing_ShouldSucceed()
+    public void Login_WithDifferentEmailCasing_ShouldSucceed()
     {
         WithRepository(repository =>
         {
             CurrentUserContext currentUserContext = new CurrentUserContext();
             AuthenticationService authenticationService =
                 new AuthenticationService(repository, currentUserContext);
-            authenticationService.Register("anca", "secret-password");
+            authenticationService.Register("anca@example.com", "secret-password");
             authenticationService.Logout();
 
             AuthenticationResult result =
-                authenticationService.Login("AnCa", "secret-password");
+                authenticationService.Login("AnCa@Example.com", "secret-password");
 
             Assert.True(result.IsSuccess);
-            Assert.Equal("anca", result.User?.Email);
-            Assert.Equal("anca", currentUserContext.Email);
+            Assert.Equal("anca@example.com", result.User?.Email);
+            Assert.Equal("anca@example.com", currentUserContext.Email);
         });
     }
 
-    private static User CreateUser(string username)
+    [Fact]
+    public void GetById_ShouldReturnUser()
+    {
+        WithRepository(repository =>
+        {
+            User user = CreateUser("anca@example.com");
+            repository.Add(user);
+
+            User? result = repository.GetById(user.Id);
+
+            Assert.NotNull(result);
+            Assert.Equal(user.Email, result.Email);
+        });
+    }
+
+    private static User CreateUser(string email)
     {
         return new User
         {
-            Email = username,
+            Email = email,
             PasswordHash = "hash",
             PasswordSalt = "salt",
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            EmailVerifiedAtUtc = DateTime.UtcNow,
+            PreferredCulture = "ro-RO"
         };
     }
 

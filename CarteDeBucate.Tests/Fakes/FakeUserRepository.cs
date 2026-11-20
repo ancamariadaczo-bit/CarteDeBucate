@@ -22,11 +22,16 @@ public class FakeUserRepository : IUserRepository
         Users.Add(user);
     }
 
-    public User? GetByUsername(string username)
+    public User? GetByEmail(string email)
     {
-        string normalizedEmail = EmailNormalizer.Normalize(username);
+        string normalizedEmail = EmailNormalizer.Normalize(email);
 
         return Users.FirstOrDefault(user =>
             string.Equals(user.Email, normalizedEmail, StringComparison.Ordinal));
+    }
+
+    public User? GetById(int userId)
+    {
+        return Users.FirstOrDefault(user => user.Id == userId);
     }
 }

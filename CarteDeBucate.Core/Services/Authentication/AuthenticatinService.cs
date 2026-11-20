@@ -58,7 +58,7 @@ public class AuthenticationService : IAuthenticationService
             };
         }
 
-        User? existingUser = _userRepository.GetByUsername(normalizedEmail);
+        User? existingUser = _userRepository.GetByEmail(normalizedEmail);
 
         if (existingUser is not null)
         {
@@ -120,7 +120,7 @@ public class AuthenticationService : IAuthenticationService
             };
         }
 
-        User? user = _userRepository.GetByUsername(normalizedEmail);
+        User? user = _userRepository.GetByEmail(normalizedEmail);
 
         if (user is null)
         {
