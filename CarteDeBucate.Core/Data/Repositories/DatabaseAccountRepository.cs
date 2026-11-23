@@ -33,6 +33,8 @@ public class DatabaseAccountRepository : IAccountRepository
                 nameof(request));
         }
 
+        TryCleanUpOldTokens();
+
         using SqliteConnection connection = new SqliteConnection(_connectionString);
         connection.Open();
 
@@ -68,6 +70,8 @@ public class DatabaseAccountRepository : IAccountRepository
     {
         ArgumentNullException.ThrowIfNull(token);
         string targetEmail = ValidateAndNormalizeToken(token);
+
+        TryCleanUpOldTokens();
 
         using SqliteConnection connection = new SqliteConnection(_connectionString);
         connection.Open();
@@ -164,6 +168,8 @@ public class DatabaseAccountRepository : IAccountRepository
         }
 
         string targetEmail = ValidateAndNormalizeToken(token);
+
+        TryCleanUpOldTokens();
 
         using SqliteConnection connection = new SqliteConnection(_connectionString);
         connection.Open();
@@ -267,6 +273,31 @@ public class DatabaseAccountRepository : IAccountRepository
         {
             transaction.Rollback();
             throw;
+        }
+    }
+
+    private void TryCleanUpOldTokens()
+    {
+        try
+        {
+            using SqliteConnection connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = """
+                DELETE FROM UserEmailTokens
+                WHERE UsedAtUtc < $cutoffUtc
+                   OR RevokedAtUtc < $cutoffUtc
+                   OR ExpiresAtUtc < $cutoffUtc;
+                """;
+            command.Parameters.AddWithValue(
+                "$cutoffUtc",
+                DateTime.UtcNow.AddDays(-30).ToString("O"));
+            command.ExecuteNonQuery();
+        }
+        catch (SqliteException)
+        {
+            // Cleanup is best effort; token issuance must remain available.
         }
     }
 

@@ -360,6 +360,68 @@ public class DatabaseAccountRepositoryTests
         });
     }
 
+    [Fact]
+    public void TokenIssuance_ShouldRemoveOnlyTokensCompletedOrExpiredMoreThanThirtyDaysAgo()
+    {
+        WithRepository((repository, databasePath) =>
+        {
+            DateTime now = DateTime.UtcNow;
+            DateTime oldCreatedAtUtc = now.AddDays(-32);
+
+            repository.Register(
+                CreateRequest(
+                    "used-token@example.com",
+                    5,
+                    oldCreatedAtUtc,
+                    oldCreatedAtUtc.AddDays(1)));
+            repository.ConfirmRegistrationEmail(
+                CreateTokenHash(5),
+                oldCreatedAtUtc.AddMinutes(1));
+
+            repository.Register(CreateRequest("cleanup-trigger@example.com", 6, now));
+
+            Assert.False(TokenExists(databasePath, CreateTokenHash(5)));
+
+            repository.Register(
+                CreateRequest(
+                    "expired-token@example.com",
+                    7,
+                    oldCreatedAtUtc,
+                    oldCreatedAtUtc.AddDays(1)));
+            repository.Register(CreateRequest("active-token@example.com", 8, now));
+
+            Assert.False(TokenExists(databasePath, CreateTokenHash(7)));
+            Assert.True(TokenExists(databasePath, CreateTokenHash(8)));
+
+            repository.ConfirmRegistrationEmail(CreateTokenHash(8), now);
+            repository.Register(CreateRequest("recent-token@example.com", 9, now));
+
+            Assert.True(TokenExists(databasePath, CreateTokenHash(8)));
+
+            AccountRegistrationResult emailChangeRegistration =
+                repository.Register(CreateRequest("revoked-token@example.com", 10, now));
+            repository.RequestEmailChange(
+                emailChangeRegistration.UserId!.Value,
+                CreateEmailChangeToken(
+                    "first-target@example.com",
+                    11,
+                    oldCreatedAtUtc,
+                    now.AddDays(1)));
+            repository.RequestEmailChange(
+                emailChangeRegistration.UserId.Value,
+                CreateEmailChangeToken(
+                    "replacement-target@example.com",
+                    12,
+                    now.AddDays(-31),
+                    now.AddDays(1)));
+
+            repository.Register(CreateRequest("revocation-cleanup-trigger@example.com", 13, now));
+
+            Assert.False(TokenExists(databasePath, CreateTokenHash(11)));
+            Assert.True(TokenExists(databasePath, CreateTokenHash(12)));
+        });
+    }
+
     private static AccountRegistrationRequest CreateRequest(
         string email,
         byte tokenHashMarker,
@@ -488,6 +550,20 @@ public class DatabaseAccountRepositoryTests
             """;
         command.Parameters.AddWithValue("@TokenHash", tokenHash);
         return (string)command.ExecuteScalar()!;
+    }
+
+    private static bool TokenExists(string databasePath, byte[] tokenHash)
+    {
+        using SqliteConnection connection = OpenConnection(databasePath);
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT EXISTS (
+                SELECT 1
+                FROM UserEmailTokens
+                WHERE TokenHash = @TokenHash);
+            """;
+        command.Parameters.AddWithValue("@TokenHash", tokenHash);
+        return Convert.ToInt64(command.ExecuteScalar()) == 1;
     }
 
     private static SqliteConnection OpenConnection(string databasePath)
