@@ -75,23 +75,168 @@ public class DatabaseAccountRepositoryTests
         });
     }
 
-    private static AccountRegistrationRequest CreateRequest(string email, byte tokenHashMarker)
+    [Fact]
+    public void ReplaceEmailToken_ShouldRevokeTheActiveTokenBeforeCreatingItsReplacement()
     {
-        DateTime now = DateTime.UtcNow;
+        WithRepository((repository, databasePath) =>
+        {
+            AccountRegistrationResult registration =
+                repository.Register(CreateRequest("anca@example.com", 1));
+            DateTime replacementCreatedAtUtc = DateTime.UtcNow;
+
+            EmailTokenReplacementResult result = repository.ReplaceEmailToken(
+                registration.UserId!.Value,
+                CreateToken("anca@example.com", 2, replacementCreatedAtUtc));
+
+            Assert.Equal(EmailTokenReplacementResultCode.Success, result.Code);
+
+            using SqliteConnection connection = OpenConnection(databasePath);
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = """
+                SELECT TokenHash, RevokedAtUtc
+                FROM UserEmailTokens
+                ORDER BY Id;
+                """;
+
+            using SqliteDataReader reader = command.ExecuteReader();
+
+            Assert.True(reader.Read());
+            Assert.Equal(CreateTokenHash(1), (byte[])reader[0]);
+            Assert.False(reader.IsDBNull(1));
+            Assert.True(reader.Read());
+            Assert.Equal(CreateTokenHash(2), (byte[])reader[0]);
+            Assert.True(reader.IsDBNull(1));
+            Assert.False(reader.Read());
+
+            EmailVerificationResult revokedTokenResult = repository.ConfirmRegistrationEmail(
+                CreateTokenHash(1),
+                replacementCreatedAtUtc);
+
+            Assert.Equal(EmailVerificationResultCode.InvalidToken, revokedTokenResult.Code);
+        });
+    }
+
+    [Fact]
+    public void ConfirmRegistrationEmail_WhenTokenIsUsed_ShouldRejectReuse()
+    {
+        WithRepository((repository, databasePath) =>
+        {
+            repository.Register(CreateRequest("anca@example.com", 1));
+            DateTime confirmationTime = DateTime.UtcNow;
+
+            EmailVerificationResult firstResult =
+                repository.ConfirmRegistrationEmail(CreateTokenHash(1), confirmationTime);
+            EmailVerificationResult secondResult =
+                repository.ConfirmRegistrationEmail(CreateTokenHash(1), confirmationTime);
+
+            Assert.Equal(EmailVerificationResultCode.Success, firstResult.Code);
+            Assert.Equal(EmailVerificationResultCode.InvalidToken, secondResult.Code);
+            Assert.NotNull(ReadUserEmailVerifiedAtUtc(databasePath));
+            Assert.NotNull(ReadTokenUsedAtUtc(databasePath, CreateTokenHash(1)));
+        });
+    }
+
+    [Fact]
+    public void ConfirmRegistrationEmail_WhenTokenIsExpired_ShouldNotVerifyUser()
+    {
+        WithRepository((repository, databasePath) =>
+        {
+            DateTime confirmationTime = new DateTime(2026, 11, 23, 12, 0, 0, DateTimeKind.Utc);
+            repository.Register(CreateRequest(
+                "anca@example.com",
+                1,
+                confirmationTime.AddDays(-2),
+                confirmationTime.AddDays(-1)));
+
+            EmailVerificationResult result =
+                repository.ConfirmRegistrationEmail(CreateTokenHash(1), confirmationTime);
+
+            Assert.Equal(EmailVerificationResultCode.ExpiredToken, result.Code);
+            Assert.Null(ReadUserEmailVerifiedAtUtc(databasePath));
+            Assert.Null(ReadTokenUsedAtUtc(databasePath, CreateTokenHash(1)));
+        });
+    }
+
+    [Fact]
+    public void ConfirmRegistrationEmail_WhenTokenHasWrongPurpose_ShouldRejectIt()
+    {
+        WithRepository((repository, _) =>
+        {
+            AccountRegistrationResult registration =
+                repository.Register(CreateRequest("anca@example.com", 1));
+            DateTime tokenCreatedAtUtc = DateTime.UtcNow;
+
+            repository.ReplaceEmailToken(
+                registration.UserId!.Value,
+                new EmailTokenIssuance(
+                    EmailTokenPurpose.EmailChangeVerification,
+                    CreateTokenHash(2),
+                    "new-address@example.com",
+                    "ro-RO",
+                    tokenCreatedAtUtc,
+                    tokenCreatedAtUtc.AddDays(1)));
+
+            EmailVerificationResult result = repository.ConfirmRegistrationEmail(
+                CreateTokenHash(2),
+                tokenCreatedAtUtc);
+
+            Assert.Equal(EmailVerificationResultCode.InvalidToken, result.Code);
+        });
+    }
+
+    [Fact]
+    public async Task ConfirmRegistrationEmail_WhenTwoCallsCompete_ShouldAllowOnlyOneSuccess()
+    {
+        await WithRepositoryAsync(async (repository, databasePath) =>
+        {
+            repository.Register(CreateRequest("anca@example.com", 1));
+            DateTime confirmationTime = DateTime.UtcNow;
+            DatabaseAccountRepository competingRepository = new DatabaseAccountRepository(databasePath);
+
+            Task<EmailVerificationResult> firstConfirmation = Task.Run(() =>
+                repository.ConfirmRegistrationEmail(CreateTokenHash(1), confirmationTime));
+            Task<EmailVerificationResult> competingConfirmation = Task.Run(() =>
+                competingRepository.ConfirmRegistrationEmail(CreateTokenHash(1), confirmationTime));
+
+            EmailVerificationResult[] results = await Task.WhenAll(
+                firstConfirmation,
+                competingConfirmation);
+
+            Assert.Single(results, result => result.Code == EmailVerificationResultCode.Success);
+            Assert.Single(results, result => result.Code == EmailVerificationResultCode.InvalidToken);
+        });
+    }
+
+    private static AccountRegistrationRequest CreateRequest(
+        string email,
+        byte tokenHashMarker,
+        DateTime? createdAtUtc = null,
+        DateTime? expiresAtUtc = null)
+    {
+        DateTime createdAt = createdAtUtc ?? DateTime.UtcNow;
 
         return new AccountRegistrationRequest(
             email,
             "password-hash",
             "password-salt",
-            now,
+            createdAt,
             "ro-RO",
-            new EmailTokenIssuance(
-                EmailTokenPurpose.RegistrationVerification,
-                CreateTokenHash(tokenHashMarker),
-                email,
-                "ro-RO",
-                now,
-                now.AddDays(1)));
+            CreateToken(email, tokenHashMarker, createdAt, expiresAtUtc));
+    }
+
+    private static EmailTokenIssuance CreateToken(
+        string email,
+        byte tokenHashMarker,
+        DateTime createdAtUtc,
+        DateTime? expiresAtUtc = null)
+    {
+        return new EmailTokenIssuance(
+            EmailTokenPurpose.RegistrationVerification,
+            CreateTokenHash(tokenHashMarker),
+            email,
+            "ro-RO",
+            createdAtUtc,
+            expiresAtUtc ?? createdAtUtc.AddDays(1));
     }
 
     private static byte[] CreateTokenHash(byte marker)
@@ -107,6 +252,35 @@ public class DatabaseAccountRepositoryTests
         using SqliteCommand command = connection.CreateCommand();
         command.CommandText = $"SELECT COUNT(*) FROM {tableName};";
         return Convert.ToInt32(command.ExecuteScalar());
+    }
+
+    private static DateTime? ReadUserEmailVerifiedAtUtc(string databasePath)
+    {
+        using SqliteConnection connection = OpenConnection(databasePath);
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = "SELECT EmailVerifiedAtUtc FROM Users;";
+
+        object? value = command.ExecuteScalar();
+        return value is null or DBNull
+            ? null
+            : DateTime.Parse((string)value, null, System.Globalization.DateTimeStyles.RoundtripKind);
+    }
+
+    private static DateTime? ReadTokenUsedAtUtc(string databasePath, byte[] tokenHash)
+    {
+        using SqliteConnection connection = OpenConnection(databasePath);
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT UsedAtUtc
+            FROM UserEmailTokens
+            WHERE TokenHash = @TokenHash;
+            """;
+        command.Parameters.AddWithValue("@TokenHash", tokenHash);
+
+        object? value = command.ExecuteScalar();
+        return value is null or DBNull
+            ? null
+            : DateTime.Parse((string)value, null, System.Globalization.DateTimeStyles.RoundtripKind);
     }
 
     private static SqliteConnection OpenConnection(string databasePath)
@@ -130,6 +304,30 @@ public class DatabaseAccountRepositoryTests
 
             DatabaseAccountRepository repository = new DatabaseAccountRepository(databasePath);
             test(repository, databasePath);
+        }
+        finally
+        {
+            if (File.Exists(databasePath))
+            {
+                File.Delete(databasePath);
+            }
+        }
+    }
+
+    private static async Task WithRepositoryAsync(
+        Func<DatabaseAccountRepository, string, Task> test)
+    {
+        string databasePath = Path.Combine(
+            Path.GetTempPath(),
+            $"accounts-{Guid.NewGuid()}.db");
+
+        try
+        {
+            DatabaseInitializer initializer = new DatabaseInitializer(databasePath);
+            initializer.Initialize();
+
+            DatabaseAccountRepository repository = new DatabaseAccountRepository(databasePath);
+            await test(repository, databasePath);
         }
         finally
         {
