@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="RegistrationVerification_Subject" xml:space="preserve">
+    <value>Verify your CarteDeBucate email</value>
+  </data>
+  <data name="RegistrationVerification_HtmlBody" xml:space="preserve">
+    <value><![CDATA[<p>Welcome to CarteDeBucate.</p>
+<p>Verify your email address within 24 hours to activate your account.</p>
+<p><a href="{0}">Verify email address</a></p>]]></value>
+  </data>
+  <data name="RegistrationVerification_PlainTextBody" xml:space="preserve">
+    <value>Welcome to CarteDeBucate.
+
+Verify your email address within 24 hours to activate your account:
+{0}</value>
+  </data>
+  <data name="EmailChangeVerification_Subject" xml:space="preserve">
+    <value>Confirm your new CarteDeBucate email</value>
+  </data>
+  <data name="EmailChangeVerification_HtmlBody" xml:space="preserve">
+    <value><![CDATA[<p>Confirm your new email address within 24 hours.</p>
+<p>Your existing email address will remain active until you confirm the change.</p>
+<p><a href="{0}">Confirm email change</a></p>]]></value>
+  </data>
+  <data name="EmailChangeVerification_PlainTextBody" xml:space="preserve">
+    <value>Confirm your new email address within 24 hours.
+
+Your existing email address will remain active until you confirm the change:
+{0}</value>
+  </data>
+  <data name="PreviousAddressChangeNotification_Subject" xml:space="preserve">
+    <value>Your CarteDeBucate email address changed</value>
+  </data>
+  <data name="PreviousAddressChangeNotification_HtmlBody" xml:space="preserve">
+    <value><![CDATA[<p>The email address for your CarteDeBucate account was changed to {0}.</p>
+<p>If you did not make this change, contact support immediately.</p>]]></value>
+  </data>
+  <data name="PreviousAddressChangeNotification_PlainTextBody" xml:space="preserve">
+    <value>The email address for your CarteDeBucate account was changed to {0}.
+
+If you did not make this change, contact support immediately.</value>
+  </data>
+</root>
