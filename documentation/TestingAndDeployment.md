@@ -269,6 +269,39 @@ from the local key. The non-secret values are inherited from `appsettings.json`.
 Add Render overrides only when a production value genuinely differs from the
 shared value.
 
+#### Transactional email configuration
+
+Development and test environments use an in-memory email sender by default. It
+captures messages without contacting Resend. Real delivery is enabled only when
+`Resend:Enabled` is explicitly set to `true`.
+
+To test real delivery locally, configure the values with User Secrets:
+
+```bash
+dotnet user-secrets set "Resend:Enabled" "true" --project CarteDeBucate.Web/CarteDeBucate.Web.csproj
+dotnet user-secrets set "Resend:ApiToken" "<local-resend-api-token>" --project CarteDeBucate.Web/CarteDeBucate.Web.csproj
+dotnet user-secrets set "Resend:FromAddress" "<verified-sender-address>" --project CarteDeBucate.Web/CarteDeBucate.Web.csproj
+dotnet user-secrets set "Application:PublicBaseUrl" "<local-public-origin>" --project CarteDeBucate.Web/CarteDeBucate.Web.csproj
+```
+
+Do not commit the API token. Use a sending-only Resend key restricted to the
+verified sender domain. The public base URL must be an origin, without a path,
+query, or fragment; production requires HTTPS. Confirmation links are built
+from this configured origin and never from the incoming request `Host` header.
+
+Configure production through the hosting secret and environment-variable store:
+
+```text
+Resend__Enabled=true
+Resend__ApiToken=<production-resend-api-token>
+Resend__FromAddress=<verified-sender-address>
+Application__PublicBaseUrl=<production-https-origin>
+```
+
+Production startup fails when real delivery is disabled or any required value
+is missing. The API token must never be exposed to browser JavaScript or the
+Chrome extension.
+
 #### Optional Redis recipe cache
 
 The web application runs without Redis by default. Recipe reads use SQLite

@@ -11,6 +11,16 @@ using Microsoft.AspNetCore.Localization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+ApplicationOptions applicationOptions =
+    builder.Configuration.GetSection("Application").Get<ApplicationOptions>() ?? new();
+ResendOptions resendOptions =
+    builder.Configuration.GetSection("Resend").Get<ResendOptions>() ?? new();
+
+EmailConfigurationValidator.Validate(
+    applicationOptions,
+    resendOptions,
+    builder.Environment.IsProduction());
+
 string? configuredDatabasePath = builder.Configuration["DatabasePath"];
 
 if (string.IsNullOrWhiteSpace(configuredDatabasePath))
@@ -90,6 +100,20 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         });
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
+builder.Services.AddSingleton(applicationOptions);
+builder.Services.AddSingleton(resendOptions);
+builder.Services.AddSingleton<IEmailTemplateRenderer, EmailTemplateRenderer>();
+builder.Services.AddSingleton<IAccountLinkBuilder, AccountLinkBuilder>();
+
+if (resendOptions.Enabled)
+{
+    builder.Services.AddResendEmailDelivery(resendOptions);
+}
+else
+{
+    builder.Services.AddSingleton<IEmailSender, InMemoryEmailSender>();
+}
+
 RecipePhotoOptions recipePhotoOptions = new();
 builder.Services.AddSingleton(recipePhotoOptions);
 builder.Services.AddSingleton<IExtensionAuthenticationCodeService, ExtensionAuthenticationCodeService>();
@@ -101,6 +125,8 @@ builder.Services.AddScoped<IRecipeRepository>(serviceProvider =>
         serviceProvider.GetRequiredService<ILogger<DatabaseRecipeRepository>>()));
 builder.Services.AddScoped<IUserRepository>(_ =>
     AppServiceFactory.CreateDatabaseUserRepository(databasePath));
+builder.Services.AddScoped<IAccountRepository>(_ =>
+    AppServiceFactory.CreateDatabaseAccountRepository(databasePath));
 
 builder.Services.AddScoped<IRecipePhotoService>(serviceProvider =>
 {

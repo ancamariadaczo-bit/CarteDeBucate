@@ -33,6 +33,19 @@ public class AuthenticationPipelineTests
     }
 
     [Fact]
+    public void Services_InTestingEnvironment_ShouldUseNonDeliveringEmailSender()
+    {
+        IEmailSender emailSender =
+            _factory.Services.GetRequiredService<IEmailSender>();
+
+        Assert.IsType<InMemoryEmailSender>(emailSender);
+        Assert.IsType<EmailTemplateRenderer>(
+            _factory.Services.GetRequiredService<IEmailTemplateRenderer>());
+        Assert.IsType<AccountLinkBuilder>(
+            _factory.Services.GetRequiredService<IAccountLinkBuilder>());
+    }
+
+    [Fact]
     public void Services_WithRedisConnectionString_ShouldRegisterRecipeCache()
     {
         using AuthenticationApiWebApplicationFactory factory =
@@ -342,6 +355,7 @@ public sealed class AuthenticationApiWebApplicationFactory
         return new Dictionary<string, string?>
         {
             ["DatabasePath"] = Path.Combine(_temporaryDirectory, "recipes.db"),
+            ["Application:PublicBaseUrl"] = "https://integration.example.test",
             ["Jwt:Key"] = TestJwtKey,
             ["Jwt:Issuer"] = TestJwtIssuer,
             ["Jwt:Audience"] = TestJwtAudience,
