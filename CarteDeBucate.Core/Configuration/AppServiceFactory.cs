@@ -133,6 +133,11 @@ public static class AppServiceFactory
         return new DatabaseUserRepository(databasePath);
     }
 
+    public static IAccountRepository CreateDatabaseAccountRepository(string databasePath)
+    {
+        return new DatabaseAccountRepository(databasePath);
+    }
+
     public static IRecipeImporterService CreateRecipeImporterService(
         HttpClient httpClient,
         RecipeImportDestinationPolicy destinationPolicy)
