@@ -112,7 +112,11 @@ public class DatabaseAccountRepository : IAccountRepository
 
         try
         {
-            RegistrationTokenRecord? token = ReadRegistrationToken(connection, transaction, tokenHash);
+            UserEmailTokenRecord? token = ReadToken(
+                connection,
+                transaction,
+                tokenHash,
+                EmailTokenPurpose.RegistrationVerification);
 
             if (token is null || token.UsedAtUtc is not null || token.RevokedAtUtc is not null)
             {
@@ -150,12 +154,120 @@ public class DatabaseAccountRepository : IAccountRepository
 
     public EmailChangeRequestResult RequestEmailChange(int userId, EmailTokenIssuance token)
     {
-        throw new NotSupportedException("Email-change requests are not implemented yet.");
+        ArgumentNullException.ThrowIfNull(token);
+
+        if (token.Purpose != EmailTokenPurpose.EmailChangeVerification)
+        {
+            throw new ArgumentException(
+                "Email-change requests require an email-change verification token.",
+                nameof(token));
+        }
+
+        string targetEmail = ValidateAndNormalizeToken(token);
+
+        using SqliteConnection connection = new SqliteConnection(_connectionString);
+        connection.Open();
+
+        using SqliteTransaction transaction = connection.BeginTransaction();
+
+        try
+        {
+            if (!UserExists(connection, transaction, userId))
+            {
+                transaction.Rollback();
+                return new EmailChangeRequestResult(EmailChangeRequestResultCode.UserNotFound);
+            }
+
+            RevokeActiveTokens(connection, transaction, userId, token.Purpose, token.CreatedAtUtc);
+            InsertToken(connection, transaction, userId, token, targetEmail);
+
+            transaction.Commit();
+            return new EmailChangeRequestResult(EmailChangeRequestResultCode.Success);
+        }
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
     }
 
     public EmailChangeConfirmationResult ConfirmEmailChange(byte[] tokenHash, DateTime confirmedAtUtc)
     {
-        throw new NotSupportedException("Email-change confirmation is not implemented yet.");
+        if (tokenHash is null || tokenHash.Length != 32)
+        {
+            return new EmailChangeConfirmationResult(
+                EmailChangeConfirmationResultCode.InvalidToken);
+        }
+
+        DateTime confirmationTime = confirmedAtUtc.ToUniversalTime();
+
+        using SqliteConnection connection = new SqliteConnection(_connectionString);
+        connection.Open();
+
+        using SqliteTransaction transaction = connection.BeginTransaction();
+
+        try
+        {
+            UserEmailTokenRecord? token = ReadToken(
+                connection,
+                transaction,
+                tokenHash,
+                EmailTokenPurpose.EmailChangeVerification);
+
+            if (token is null || token.UsedAtUtc is not null || token.RevokedAtUtc is not null)
+            {
+                transaction.Rollback();
+                return new EmailChangeConfirmationResult(
+                    EmailChangeConfirmationResultCode.InvalidToken);
+            }
+
+            if (token.ExpiresAtUtc <= confirmationTime)
+            {
+                transaction.Rollback();
+                return new EmailChangeConfirmationResult(
+                    EmailChangeConfirmationResultCode.ExpiredToken);
+            }
+
+            if (EmailBelongsToDifferentUser(
+                    connection,
+                    transaction,
+                    token.UserId,
+                    token.TargetEmail))
+            {
+                transaction.Rollback();
+                return new EmailChangeConfirmationResult(
+                    EmailChangeConfirmationResultCode.DuplicateEmail);
+            }
+
+            if (UpdateUserEmail(connection, transaction, token.UserId, token.TargetEmail, confirmationTime) != 1 ||
+                MarkTokenUsed(connection, transaction, token.Id, confirmationTime) != 1)
+            {
+                transaction.Rollback();
+                return new EmailChangeConfirmationResult(
+                    EmailChangeConfirmationResultCode.InvalidToken);
+            }
+
+            RevokeActiveTokens(
+                connection,
+                transaction,
+                token.UserId,
+                EmailTokenPurpose.EmailChangeVerification,
+                confirmationTime);
+
+            transaction.Commit();
+            return new EmailChangeConfirmationResult(EmailChangeConfirmationResultCode.Success);
+        }
+        catch (SqliteException exception) when (IsDuplicateEmail(exception))
+        {
+            transaction.Rollback();
+            return new EmailChangeConfirmationResult(
+                EmailChangeConfirmationResultCode.DuplicateEmail);
+        }
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
     }
 
     private static string ValidateAndNormalizeToken(EmailTokenIssuance token)
@@ -217,10 +329,11 @@ public class DatabaseAccountRepository : IAccountRepository
         command.ExecuteNonQuery();
     }
 
-    private static RegistrationTokenRecord? ReadRegistrationToken(
+    private static UserEmailTokenRecord? ReadToken(
         SqliteConnection connection,
         SqliteTransaction transaction,
-        byte[] tokenHash)
+        byte[] tokenHash,
+        EmailTokenPurpose purpose)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.Transaction = transaction;
@@ -237,7 +350,7 @@ public class DatabaseAccountRepository : IAccountRepository
               AND tokens.Purpose = $purpose;
             """;
         command.Parameters.AddWithValue("$tokenHash", tokenHash);
-        command.Parameters.AddWithValue("$purpose", (int)EmailTokenPurpose.RegistrationVerification);
+        command.Parameters.AddWithValue("$purpose", (int)purpose);
 
         using SqliteDataReader reader = command.ExecuteReader();
 
@@ -246,7 +359,7 @@ public class DatabaseAccountRepository : IAccountRepository
             return null;
         }
 
-        return new RegistrationTokenRecord(
+        return new UserEmailTokenRecord(
             reader.GetInt32(0),
             reader.GetInt32(1),
             reader.GetString(2),
@@ -297,6 +410,48 @@ public class DatabaseAccountRepository : IAccountRepository
         command.Parameters.AddWithValue("$verifiedAtUtc", verifiedAtUtc.ToUniversalTime().ToString("O"));
         command.Parameters.AddWithValue("$userId", userId);
         command.Parameters.AddWithValue("$targetEmail", targetEmail);
+        return command.ExecuteNonQuery();
+    }
+
+    private static bool EmailBelongsToDifferentUser(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        int userId,
+        string email)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            SELECT EXISTS (
+                SELECT 1
+                FROM Users
+                WHERE Email COLLATE NOCASE = $email
+                  AND Id <> $userId);
+            """;
+        command.Parameters.AddWithValue("$email", email);
+        command.Parameters.AddWithValue("$userId", userId);
+
+        return Convert.ToInt64(command.ExecuteScalar()) == 1;
+    }
+
+    private static int UpdateUserEmail(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        int userId,
+        string email,
+        DateTime verifiedAtUtc)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            UPDATE Users
+            SET Email = $email,
+                EmailVerifiedAtUtc = $verifiedAtUtc
+            WHERE Id = $userId;
+            """;
+        command.Parameters.AddWithValue("$email", email);
+        command.Parameters.AddWithValue("$verifiedAtUtc", verifiedAtUtc.ToUniversalTime().ToString("O"));
+        command.Parameters.AddWithValue("$userId", userId);
         return command.ExecuteNonQuery();
     }
 
@@ -396,7 +551,7 @@ public class DatabaseAccountRepository : IAccountRepository
             exception.Message.Contains("Users.Email", StringComparison.Ordinal);
     }
 
-    private sealed record RegistrationTokenRecord(
+    private sealed record UserEmailTokenRecord(
         int Id,
         int UserId,
         string TargetEmail,
