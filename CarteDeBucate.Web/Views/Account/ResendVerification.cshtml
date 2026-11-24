@@ -1,0 +1,18 @@
+@model ResendVerificationViewModel
+@inject Microsoft.Extensions.Localization.IStringLocalizer<CarteDeBucate.Web.SharedResource> L
+@{
+    Layout = "_PublicLayout";
+    ViewData["Title"] = L["ResendVerification_Title"];
+    ViewData["Description"] = L["ResendVerification_Description"];
+}
+<header class="auth-header"><a class="public-wordmark" asp-controller="Home" asp-action="Index">@L["Site_Title"]</a></header>
+<main class="auth-main"><section class="auth-panel" aria-labelledby="resend-verification-title">
+    <h1 id="resend-verification-title">@L["ResendVerification_Title"]</h1>
+    <p class="auth-description">@L["ResendVerification_Description"]</p>
+    <form asp-action="ResendVerification" method="post" data-auth-form>
+        <div asp-validation-summary="ModelOnly" class="auth-summary" role="alert"></div>
+        <div class="auth-field"><label asp-for="Email">@L["Auth_Email"]</label><input asp-for="Email" type="email" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" /><span asp-validation-for="Email"></span></div>
+        <button class="public-button auth-submit" type="submit" data-submit-label="@L["ResendVerification_Action"]" data-loading-label="@L["Auth_Submitting"]">@L["ResendVerification_Action"]</button>
+    </form>
+</section></main>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

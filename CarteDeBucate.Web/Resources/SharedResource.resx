@@ -36,6 +36,11 @@
   <data name="VerifyEmail_Invalid_Description" xml:space="preserve"><value>Acest link de confirmare nu este valid sau a fost deja folosit.</value></data>
   <data name="VerifyEmail_Expired_Title" xml:space="preserve"><value>Link de confirmare expirat</value></data>
   <data name="VerifyEmail_Expired_Description" xml:space="preserve"><value>Acest link de confirmare a expirat. Poți solicita un mesaj nou.</value></data>
+  <data name="ResendVerification_Title" xml:space="preserve"><value>Trimite din nou e-mailul de confirmare</value></data>
+  <data name="ResendVerification_Description" xml:space="preserve"><value>Introdu adresa de e-mail. Dacă există un cont care așteaptă confirmarea, vom trimite un mesaj nou.</value></data>
+  <data name="ResendVerification_Action" xml:space="preserve"><value>Trimite e-mailul</value></data>
+  <data name="ResendVerification_Sent_Title" xml:space="preserve"><value>Verifică-ți e-mailul</value></data>
+  <data name="ResendVerification_Sent_Description" xml:space="preserve"><value>Dacă această adresă are un cont care așteaptă confirmarea, va fi trimis un mesaj nou.</value></data>
   <data name="Public_MetaDescription" xml:space="preserve"><value>Organizează toate rețetele tale într-o singură carte de bucate personală.</value></data>
   <data name="Hero_Title" xml:space="preserve"><value>Colecția ta de rețete, într-un singur loc.</value></data>
   <data name="Hero_Text" xml:space="preserve"><value>Salvează rețete de pe web sau adaugă-le manual. Organizează-le și găsește-le ușor când ai nevoie de inspirație.</value></data>

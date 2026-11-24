@@ -117,6 +117,137 @@ public class DatabaseAccountRepositoryTests
     }
 
     [Fact]
+    public void ResendRegistrationEmail_ShouldReplaceTheActiveToken()
+    {
+        WithRepository((repository, databasePath) =>
+        {
+            DateTime now = DateTime.UtcNow;
+            AccountRegistrationResult registration = repository.Register(
+                CreateRequest(
+                    "anca@example.com",
+                    1,
+                    now.AddMinutes(-2),
+                    now.AddDays(1)));
+
+            AccountRegistrationResendResult result =
+                repository.ResendRegistrationEmail(
+                    CreateRegistrationResendRequest(
+                        "anca@example.com",
+                        2,
+                        now));
+
+            Assert.Equal(AccountRegistrationResendResultCode.Issued, result.Code);
+            Assert.NotNull(registration.UserId);
+            Assert.NotNull(ReadTokenRevokedAtUtc(databasePath, CreateTokenHash(1)));
+            Assert.Null(ReadTokenRevokedAtUtc(databasePath, CreateTokenHash(2)));
+
+            EmailVerificationResult formerTokenResult =
+                repository.ConfirmRegistrationEmail(CreateTokenHash(1), now);
+            Assert.Equal(EmailVerificationResultCode.InvalidToken, formerTokenResult.Code);
+        });
+    }
+
+    [Fact]
+    public void ResendRegistrationEmail_WhenWithinCooldown_ShouldNotReplaceTheActiveToken()
+    {
+        WithRepository((repository, databasePath) =>
+        {
+            DateTime now = DateTime.UtcNow;
+            repository.Register(CreateRequest(
+                "anca@example.com",
+                1,
+                now.AddSeconds(-30),
+                now.AddDays(1)));
+
+            AccountRegistrationResendResult result =
+                repository.ResendRegistrationEmail(
+                    CreateRegistrationResendRequest(
+                        "anca@example.com",
+                        2,
+                        now));
+
+            Assert.Equal(AccountRegistrationResendResultCode.Cooldown, result.Code);
+            Assert.Null(ReadTokenRevokedAtUtc(databasePath, CreateTokenHash(1)));
+            Assert.False(TokenExists(databasePath, CreateTokenHash(2)));
+        });
+    }
+
+    [Fact]
+    public void ResendRegistrationEmail_WhenDailyLimitIsReached_ShouldNotReplaceTheActiveToken()
+    {
+        WithRepository((repository, databasePath) =>
+        {
+            DateTime now = DateTime.UtcNow;
+            repository.Register(CreateRequest(
+                "anca@example.com",
+                1,
+                now.AddMinutes(-10),
+                now.AddDays(1)));
+
+            for (byte marker = 2; marker <= 5; marker++)
+            {
+                DateTime issuedAtUtc = now.AddMinutes(-10 + (marker - 1) * 2);
+                AccountRegistrationResendResult replacementResult =
+                    repository.ResendRegistrationEmail(
+                        CreateRegistrationResendRequest(
+                            "anca@example.com",
+                            marker,
+                            issuedAtUtc));
+
+                Assert.Equal(
+                    AccountRegistrationResendResultCode.Issued,
+                    replacementResult.Code);
+            }
+
+            AccountRegistrationResendResult result =
+                repository.ResendRegistrationEmail(
+                    CreateRegistrationResendRequest(
+                        "anca@example.com",
+                        6,
+                        now));
+
+            Assert.Equal(AccountRegistrationResendResultCode.DailyLimit, result.Code);
+            Assert.Null(ReadTokenRevokedAtUtc(databasePath, CreateTokenHash(5)));
+            Assert.False(TokenExists(databasePath, CreateTokenHash(6)));
+        });
+    }
+
+    [Fact]
+    public void ResendRegistrationEmail_ForUnknownOrVerifiedEmail_ShouldNotIssueAToken()
+    {
+        WithRepository((repository, databasePath) =>
+        {
+            DateTime now = DateTime.UtcNow;
+
+            AccountRegistrationResendResult unknownResult =
+                repository.ResendRegistrationEmail(
+                    CreateRegistrationResendRequest(
+                        "unknown@example.com",
+                        1,
+                        now));
+
+            repository.Register(CreateRequest(
+                "anca@example.com",
+                2,
+                now.AddMinutes(-2),
+                now.AddDays(1)));
+            repository.ConfirmRegistrationEmail(CreateTokenHash(2), now);
+
+            AccountRegistrationResendResult verifiedResult =
+                repository.ResendRegistrationEmail(
+                    CreateRegistrationResendRequest(
+                        "anca@example.com",
+                        3,
+                        now.AddMinutes(1)));
+
+            Assert.Equal(AccountRegistrationResendResultCode.NotEligible, unknownResult.Code);
+            Assert.Equal(AccountRegistrationResendResultCode.NotEligible, verifiedResult.Code);
+            Assert.False(TokenExists(databasePath, CreateTokenHash(1)));
+            Assert.False(TokenExists(databasePath, CreateTokenHash(3)));
+        });
+    }
+
+    [Fact]
     public void ConfirmRegistrationEmail_WhenTokenIsUsed_ShouldRejectReuse()
     {
         WithRepository((repository, databasePath) =>
@@ -508,6 +639,16 @@ public class DatabaseAccountRepositoryTests
             "ro-RO",
             createdAtUtc,
             expiresAtUtc ?? createdAtUtc.AddDays(1));
+    }
+
+    private static AccountRegistrationResendRequest CreateRegistrationResendRequest(
+        string email,
+        byte tokenHashMarker,
+        DateTime issuedAtUtc)
+    {
+        return new AccountRegistrationResendRequest(
+            email,
+            CreateToken(email, tokenHashMarker, issuedAtUtc));
     }
 
     private static EmailTokenIssuance CreateEmailChangeToken(

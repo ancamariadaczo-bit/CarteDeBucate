@@ -32,6 +32,21 @@ public enum EmailTokenReplacementResultCode
 
 public sealed record EmailTokenReplacementResult(EmailTokenReplacementResultCode Code);
 
+public sealed record AccountRegistrationResendRequest(
+    string Email,
+    EmailTokenIssuance VerificationToken);
+
+public enum AccountRegistrationResendResultCode
+{
+    Issued,
+    NotEligible,
+    Cooldown,
+    DailyLimit
+}
+
+public sealed record AccountRegistrationResendResult(
+    AccountRegistrationResendResultCode Code);
+
 public enum EmailVerificationReviewResultCode
 {
     Valid,

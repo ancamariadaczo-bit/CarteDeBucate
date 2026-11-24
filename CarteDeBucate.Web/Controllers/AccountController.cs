@@ -131,6 +131,42 @@ public class AccountController : Controller
 
     [AllowAnonymous]
     [HttpGet]
+    public IActionResult ResendVerification()
+    {
+        return View(new ResendVerificationViewModel());
+    }
+
+    [AllowAnonymous]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResendVerification(
+        ResendVerificationViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        await _accountRegistrationService.ResendVerificationAsync(
+            new AccountRegistrationResendInput(
+                model.Email,
+                CultureInfo.CurrentUICulture.Name),
+            HttpContext.RequestAborted);
+
+        _logger.LogInformation("Verification resend request completed");
+
+        return RedirectToAction(nameof(ResendVerificationSent));
+    }
+
+    [AllowAnonymous]
+    [HttpGet]
+    public IActionResult ResendVerificationSent()
+    {
+        return View();
+    }
+
+    [AllowAnonymous]
+    [HttpGet]
     public IActionResult VerifyEmail(string? token)
     {
         AccountEmailVerificationReviewResult result =

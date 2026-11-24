@@ -3,6 +3,10 @@ using System.Globalization;
 
 public class DatabaseAccountRepository : IAccountRepository
 {
+    private const int MaximumRegistrationTokensPerDay = 5;
+    private static readonly TimeSpan RegistrationResendCooldown = TimeSpan.FromMinutes(1);
+    private static readonly TimeSpan RegistrationResendPeriod = TimeSpan.FromHours(24);
+
     private readonly string _connectionString;
 
     public DatabaseAccountRepository(string databasePath)
@@ -92,6 +96,99 @@ public class DatabaseAccountRepository : IAccountRepository
 
             transaction.Commit();
             return new EmailTokenReplacementResult(EmailTokenReplacementResultCode.Success);
+        }
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
+    }
+
+    public AccountRegistrationResendResult ResendRegistrationEmail(
+        AccountRegistrationResendRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(request.VerificationToken);
+
+        string email = EmailNormalizer.Normalize(request.Email);
+        EmailTokenIssuance verificationToken = request.VerificationToken;
+        string targetEmail = ValidateAndNormalizeToken(verificationToken);
+
+        if (verificationToken.Purpose != EmailTokenPurpose.RegistrationVerification)
+        {
+            throw new ArgumentException(
+                "Registration resend requires a registration-verification token.",
+                nameof(request));
+        }
+
+        if (!string.Equals(email, targetEmail, StringComparison.Ordinal))
+        {
+            throw new ArgumentException(
+                "The resend email must match the verification token target email.",
+                nameof(request));
+        }
+
+        TryCleanUpOldTokens();
+
+        using SqliteConnection connection = new SqliteConnection(_connectionString);
+        connection.Open();
+
+        using SqliteTransaction transaction = connection.BeginTransaction();
+
+        try
+        {
+            UserRegistrationRecord? user = ReadUserRegistration(
+                connection,
+                transaction,
+                email);
+
+            if (user is null || user.EmailVerifiedAtUtc is not null)
+            {
+                transaction.Rollback();
+                return new AccountRegistrationResendResult(
+                    AccountRegistrationResendResultCode.NotEligible);
+            }
+
+            DateTime issuedAtUtc = verificationToken.CreatedAtUtc.ToUniversalTime();
+            DateTime? latestIssuedAtUtc = ReadLatestTokenCreatedAtUtc(
+                connection,
+                transaction,
+                user.Id,
+                EmailTokenPurpose.RegistrationVerification);
+
+            if (latestIssuedAtUtc is not null &&
+                issuedAtUtc - latestIssuedAtUtc.Value < RegistrationResendCooldown)
+            {
+                transaction.Rollback();
+                return new AccountRegistrationResendResult(
+                    AccountRegistrationResendResultCode.Cooldown);
+            }
+
+            int issuedInPeriod = CountTokensCreatedSince(
+                connection,
+                transaction,
+                user.Id,
+                EmailTokenPurpose.RegistrationVerification,
+                issuedAtUtc.Subtract(RegistrationResendPeriod));
+
+            if (issuedInPeriod >= MaximumRegistrationTokensPerDay)
+            {
+                transaction.Rollback();
+                return new AccountRegistrationResendResult(
+                    AccountRegistrationResendResultCode.DailyLimit);
+            }
+
+            RevokeActiveTokens(
+                connection,
+                transaction,
+                user.Id,
+                EmailTokenPurpose.RegistrationVerification,
+                issuedAtUtc);
+            InsertToken(connection, transaction, user.Id, verificationToken, targetEmail);
+
+            transaction.Commit();
+            return new AccountRegistrationResendResult(
+                AccountRegistrationResendResultCode.Issued);
         }
         catch
         {
@@ -377,6 +474,81 @@ public class DatabaseAccountRepository : IAccountRepository
         return Convert.ToInt64(command.ExecuteScalar()) == 1;
     }
 
+    private static UserRegistrationRecord? ReadUserRegistration(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        string email)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            SELECT Id, EmailVerifiedAtUtc
+            FROM Users
+            WHERE Email COLLATE NOCASE = $email;
+            """;
+        command.Parameters.AddWithValue("$email", email);
+
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        if (!reader.Read())
+        {
+            return null;
+        }
+
+        return new UserRegistrationRecord(
+            reader.GetInt32(0),
+            reader.IsDBNull(1)
+                ? null
+                : DateTime.Parse(reader.GetString(1), null, DateTimeStyles.RoundtripKind));
+    }
+
+    private static DateTime? ReadLatestTokenCreatedAtUtc(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        int userId,
+        EmailTokenPurpose purpose)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            SELECT MAX(CreatedAtUtc)
+            FROM UserEmailTokens
+            WHERE UserId = $userId
+              AND Purpose = $purpose;
+            """;
+        command.Parameters.AddWithValue("$userId", userId);
+        command.Parameters.AddWithValue("$purpose", (int)purpose);
+
+        object? result = command.ExecuteScalar();
+
+        return result is string createdAtUtc
+            ? DateTime.Parse(createdAtUtc, null, DateTimeStyles.RoundtripKind)
+            : null;
+    }
+
+    private static int CountTokensCreatedSince(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        int userId,
+        EmailTokenPurpose purpose,
+        DateTime cutoffUtc)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            SELECT COUNT(*)
+            FROM UserEmailTokens
+            WHERE UserId = $userId
+              AND Purpose = $purpose
+              AND CreatedAtUtc >= $cutoffUtc;
+            """;
+        command.Parameters.AddWithValue("$userId", userId);
+        command.Parameters.AddWithValue("$purpose", (int)purpose);
+        command.Parameters.AddWithValue("$cutoffUtc", cutoffUtc.ToUniversalTime().ToString("O"));
+
+        return Convert.ToInt32(command.ExecuteScalar());
+    }
+
     private static void RevokeActiveTokens(
         SqliteConnection connection,
         SqliteTransaction transaction,
@@ -629,4 +801,8 @@ public class DatabaseAccountRepository : IAccountRepository
         DateTime ExpiresAtUtc,
         DateTime? UsedAtUtc,
         DateTime? RevokedAtUtc);
+
+    private sealed record UserRegistrationRecord(
+        int Id,
+        DateTime? EmailVerifiedAtUtc);
 }

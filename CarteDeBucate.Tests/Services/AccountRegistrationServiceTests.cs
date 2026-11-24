@@ -234,6 +234,94 @@ public class AccountRegistrationServiceTests
         Assert.Null(repository.ReviewedTokenHash);
     }
 
+    [Fact]
+    public async Task ResendVerificationAsync_ForEligibleAccount_ShouldReplaceThenSend()
+    {
+        RecordingAccountRepository repository = new();
+        RecordingLinkBuilder linkBuilder = new();
+        RecordingTemplateRenderer renderer = new();
+        FakeEmailSender emailSender = new();
+        AccountRegistrationService service = CreateService(
+            repository,
+            linkBuilder,
+            renderer,
+            emailSender);
+
+        AccountRegistrationResendServiceResult result =
+            await service.ResendVerificationAsync(
+                new AccountRegistrationResendInput("Anca@Example.com", "ro-RO"));
+
+        Assert.Equal(AccountRegistrationResendServiceResultCode.Sent, result.Code);
+        Assert.True(result.TokenWasPersisted);
+        AccountRegistrationResendRequest request =
+            Assert.IsType<AccountRegistrationResendRequest>(repository.ResendRequest);
+        Assert.Equal("anca@example.com", request.Email);
+        Assert.Equal("anca@example.com", request.VerificationToken.TargetEmail);
+        Assert.Equal("ro-RO", request.VerificationToken.Culture);
+        Assert.Equal(IssuedAt.UtcDateTime, request.VerificationToken.CreatedAtUtc);
+        Assert.Equal(
+            IssuedAt.UtcDateTime.AddHours(24),
+            request.VerificationToken.ExpiresAtUtc);
+        Assert.Equal(
+            SHA256.HashData(WebEncoders.Base64UrlDecode(linkBuilder.Token!)),
+            request.VerificationToken.TokenHash);
+        Assert.Single(emailSender.SentMessages);
+    }
+
+    [Theory]
+    [InlineData(AccountRegistrationResendResultCode.NotEligible, AccountRegistrationResendServiceResultCode.NotEligible)]
+    [InlineData(AccountRegistrationResendResultCode.Cooldown, AccountRegistrationResendServiceResultCode.Cooldown)]
+    [InlineData(AccountRegistrationResendResultCode.DailyLimit, AccountRegistrationResendServiceResultCode.DailyLimit)]
+    public async Task ResendVerificationAsync_WhenTokenIsNotIssued_ShouldNotSend(
+        AccountRegistrationResendResultCode persistenceCode,
+        AccountRegistrationResendServiceResultCode expectedCode)
+    {
+        RecordingAccountRepository repository = new()
+        {
+            ResendResult = new AccountRegistrationResendResult(persistenceCode)
+        };
+        RecordingLinkBuilder linkBuilder = new();
+        RecordingTemplateRenderer renderer = new();
+        FakeEmailSender emailSender = new();
+        AccountRegistrationService service = CreateService(
+            repository,
+            linkBuilder,
+            renderer,
+            emailSender);
+
+        AccountRegistrationResendServiceResult result =
+            await service.ResendVerificationAsync(
+                new AccountRegistrationResendInput("anca@example.com", "en-US"));
+
+        Assert.Equal(expectedCode, result.Code);
+        Assert.False(result.TokenWasPersisted);
+        Assert.NotNull(repository.ResendRequest);
+        Assert.Null(linkBuilder.Token);
+        Assert.Null(renderer.Request);
+        Assert.Empty(emailSender.SentMessages);
+    }
+
+    [Fact]
+    public async Task ResendVerificationAsync_WhenDeliveryFails_ShouldKeepTheNewToken()
+    {
+        RecordingAccountRepository repository = new();
+        ThrowingEmailSender emailSender = new();
+        AccountRegistrationService service = CreateService(
+            repository,
+            new RecordingLinkBuilder(),
+            new RecordingTemplateRenderer(),
+            emailSender);
+
+        AccountRegistrationResendServiceResult result =
+            await service.ResendVerificationAsync(
+                new AccountRegistrationResendInput("anca@example.com", "en-US"));
+
+        Assert.Equal(AccountRegistrationResendServiceResultCode.DeliveryFailed, result.Code);
+        Assert.True(result.TokenWasPersisted);
+        Assert.NotNull(repository.ResendRequest);
+        Assert.Equal(1, emailSender.SendAttempts);
+    }
+
     private static AccountRegistrationService CreateService(
         IAccountRepository repository,
         IAccountLinkBuilder linkBuilder,
@@ -271,6 +359,11 @@ public class AccountRegistrationServiceTests
         public AccountRegistrationResult RegistrationResult { get; init; } =
             new(AccountRegistrationResultCode.Success, 42);
 
+        public AccountRegistrationResendRequest? ResendRequest { get; private set; }
+
+        public AccountRegistrationResendResult ResendResult { get; init; } =
+            new(AccountRegistrationResendResultCode.Issued);
+
         public EmailVerificationReviewResult ReviewResult { get; init; } =
             new(EmailVerificationReviewResultCode.Valid);
 
@@ -298,6 +391,13 @@ public class AccountRegistrationServiceTests
             ReviewedTokenHash = tokenHash.ToArray();
             ReviewedAtUtc = reviewedAtUtc;
             return ReviewResult;
+        }
+
+        public AccountRegistrationResendResult ResendRegistrationEmail(
+            AccountRegistrationResendRequest request)
+        {
+            ResendRequest = request;
+            return ResendResult;
         }
 
         public EmailTokenReplacementResult ReplaceEmailToken(

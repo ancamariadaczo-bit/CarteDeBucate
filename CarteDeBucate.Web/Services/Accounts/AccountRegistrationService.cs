@@ -148,6 +148,80 @@ public sealed class AccountRegistrationService : IAccountRegistrationService
         return new AccountEmailVerificationReviewResult(code);
     }
 
+    public async Task<AccountRegistrationResendServiceResult> ResendVerificationAsync(
+        AccountRegistrationResendInput input,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (!TryNormalizeValidEmail(input.Email, out string normalizedEmail))
+        {
+            return new AccountRegistrationResendServiceResult(
+                AccountRegistrationResendServiceResultCode.InvalidEmail);
+        }
+
+        string culture = ResolveCulture(input.Culture);
+        DateTime issuedAtUtc = _timeProvider.GetUtcNow().UtcDateTime;
+        byte[] rawTokenBytes = RandomNumberGenerator.GetBytes(TokenSize);
+        string rawToken = WebEncoders.Base64UrlEncode(rawTokenBytes);
+        byte[] tokenHash = SHA256.HashData(rawTokenBytes);
+        EmailTokenIssuance token = new(
+            EmailTokenPurpose.RegistrationVerification,
+            tokenHash,
+            normalizedEmail,
+            culture,
+            issuedAtUtc,
+            issuedAtUtc.Add(TokenLifetime));
+
+        AccountRegistrationResendResult persistenceResult =
+            _accountRepository.ResendRegistrationEmail(
+                new AccountRegistrationResendRequest(normalizedEmail, token));
+
+        if (persistenceResult.Code != AccountRegistrationResendResultCode.Issued)
+        {
+            return new AccountRegistrationResendServiceResult(
+                persistenceResult.Code switch
+                {
+                    AccountRegistrationResendResultCode.NotEligible =>
+                        AccountRegistrationResendServiceResultCode.NotEligible,
+                    AccountRegistrationResendResultCode.Cooldown =>
+                        AccountRegistrationResendServiceResultCode.Cooldown,
+                    AccountRegistrationResendResultCode.DailyLimit =>
+                        AccountRegistrationResendServiceResultCode.DailyLimit,
+                    _ => throw new InvalidOperationException(
+                        $"Unexpected registration resend result: {persistenceResult.Code}.")
+                });
+        }
+
+        string confirmationUrl =
+            _linkBuilder.BuildConfirmationUrl(ConfirmationPath, rawToken);
+        RenderedEmailTemplate template = _templateRenderer.Render(
+            new EmailTemplateRenderRequest(
+                EmailTemplateId.RegistrationVerification,
+                culture,
+                confirmationUrl));
+        EmailMessage message = new(
+            normalizedEmail,
+            template.Subject,
+            template.HtmlBody,
+            template.PlainTextBody,
+            CreateIdempotencyKey(tokenHash));
+
+        try
+        {
+            await _emailSender.SendAsync(message, cancellationToken);
+        }
+        catch (EmailDeliveryException)
+        {
+            return new AccountRegistrationResendServiceResult(
+                AccountRegistrationResendServiceResultCode.DeliveryFailed);
+        }
+
+        return new AccountRegistrationResendServiceResult(
+            AccountRegistrationResendServiceResultCode.Sent);
+    }
+
     public AccountEmailVerificationResult ConfirmEmailVerification(string? token)
     {
         if (!TryHashVerificationToken(token, out byte[] tokenHash))
@@ -179,12 +253,7 @@ public sealed class AccountRegistrationService : IAccountRegistrationService
     private static AccountRegistrationServiceResult? Validate(
         AccountRegistrationInput input)
     {
-        if (!EmailNormalizer.TryNormalize(input.Email, out string normalizedEmail) ||
-            !MailAddress.TryCreate(normalizedEmail, out MailAddress? mailAddress) ||
-            !string.Equals(
-                mailAddress.Address,
-                normalizedEmail,
-                StringComparison.OrdinalIgnoreCase))
+        if (!TryNormalizeValidEmail(input.Email, out _))
         {
             return new AccountRegistrationServiceResult(
                 AccountRegistrationServiceResultCode.InvalidEmail);
@@ -218,6 +287,20 @@ public sealed class AccountRegistrationService : IAccountRegistrationService
         }
 
         return null;
+    }
+
+    private static bool TryNormalizeValidEmail(
+        string? email,
+        out string normalizedEmail)
+    {
+        normalizedEmail = string.Empty;
+
+        return EmailNormalizer.TryNormalize(email, out normalizedEmail) &&
+            MailAddress.TryCreate(normalizedEmail, out MailAddress? mailAddress) &&
+            string.Equals(
+                mailAddress.Address,
+                normalizedEmail,
+                StringComparison.OrdinalIgnoreCase);
     }
 
     private static string ResolveCulture(string? culture)

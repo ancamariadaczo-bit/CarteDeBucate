@@ -9,6 +9,15 @@ public sealed class FakeAccountRegistrationService : IAccountRegistrationService
     public AccountRegistrationServiceResult Result { get; set; } =
         new(AccountRegistrationServiceResultCode.Success);
 
+    public bool ResendWasCalled { get; private set; }
+
+    public AccountRegistrationResendInput? ResendInput { get; private set; }
+
+    public CancellationToken ResendCancellationToken { get; private set; }
+
+    public AccountRegistrationResendServiceResult ResendResult { get; set; } =
+        new(AccountRegistrationResendServiceResultCode.Sent);
+
     public bool ReviewWasCalled { get; private set; }
 
     public string? ReviewedToken { get; private set; }
@@ -32,6 +41,17 @@ public sealed class FakeAccountRegistrationService : IAccountRegistrationService
         CancellationToken = cancellationToken;
 
         return Task.FromResult(Result);
+    }
+
+    public Task<AccountRegistrationResendServiceResult> ResendVerificationAsync(
+        AccountRegistrationResendInput input,
+        CancellationToken cancellationToken = default)
+    {
+        ResendWasCalled = true;
+        ResendInput = input;
+        ResendCancellationToken = cancellationToken;
+
+        return Task.FromResult(ResendResult);
     }
 
     public AccountEmailVerificationReviewResult ReviewEmailVerification(

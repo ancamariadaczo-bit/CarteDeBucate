@@ -268,6 +268,83 @@ public class AccountControllerTests
     }
 
     [Fact]
+    public void ResendVerificationGet_ShouldReturnEmptyModel()
+    {
+        AccountController controller = CreateController(
+            new FakeAuthenticationService());
+
+        IActionResult result = controller.ResendVerification();
+
+        ViewResult viewResult = Assert.IsType<ViewResult>(result);
+        Assert.IsType<ResendVerificationViewModel>(viewResult.Model);
+    }
+
+    [Fact]
+    public async Task ResendVerificationPost_WithInvalidModel_ShouldNotCallService()
+    {
+        FakeAccountRegistrationService registrationService = new();
+        AccountController controller = CreateController(
+            new FakeAuthenticationService(),
+            registrationService);
+        ResendVerificationViewModel model = new();
+        controller.ModelState.AddModelError(
+            nameof(ResendVerificationViewModel.Email),
+            "Adresa de e-mail este obligatorie.");
+
+        IActionResult result = await controller.ResendVerification(model);
+
+        ViewResult viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Same(model, viewResult.Model);
+        Assert.False(registrationService.ResendWasCalled);
+    }
+
+    [Theory]
+    [InlineData(AccountRegistrationResendServiceResultCode.Sent)]
+    [InlineData(AccountRegistrationResendServiceResultCode.NotEligible)]
+    [InlineData(AccountRegistrationResendServiceResultCode.Cooldown)]
+    [InlineData(AccountRegistrationResendServiceResultCode.DailyLimit)]
+    [InlineData(AccountRegistrationResendServiceResultCode.DeliveryFailed)]
+    [InlineData(AccountRegistrationResendServiceResultCode.InvalidEmail)]
+    public async Task ResendVerificationPost_ShouldReturnTheSameGenericResponse(
+        AccountRegistrationResendServiceResultCode resultCode)
+    {
+        FakeAccountRegistrationService registrationService = new()
+        {
+            ResendResult = new AccountRegistrationResendServiceResult(resultCode)
+        };
+        AccountController controller = CreateController(
+            new FakeAuthenticationService(),
+            registrationService);
+        ResendVerificationViewModel model = new()
+        {
+            Email = "anca@example.com"
+        };
+
+        IActionResult result = await controller.ResendVerification(model);
+
+        RedirectToActionResult redirectResult =
+            Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(
+            nameof(AccountController.ResendVerificationSent),
+            redirectResult.ActionName);
+        Assert.Null(redirectResult.RouteValues);
+        Assert.True(registrationService.ResendWasCalled);
+        Assert.Equal("anca@example.com", registrationService.ResendInput?.Email);
+    }
+
+    [Fact]
+    public void ResendVerificationSent_ShouldReturnViewWithoutAddressModel()
+    {
+        AccountController controller = CreateController(
+            new FakeAuthenticationService());
+
+        IActionResult result = controller.ResendVerificationSent();
+
+        ViewResult viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Null(viewResult.Model);
+    }
+
+    [Fact]
     public void VerifyEmailGet_WithValidToken_ShouldRenderReviewWithoutConfirming()
     {
         FakeAccountRegistrationService registrationService = new();

@@ -4,6 +4,9 @@ public interface IAccountRepository
 
     EmailTokenReplacementResult ReplaceEmailToken(int userId, EmailTokenIssuance token);
 
+    AccountRegistrationResendResult ResendRegistrationEmail(
+        AccountRegistrationResendRequest request);
+
     EmailVerificationReviewResult ReviewRegistrationEmail(
         byte[] tokenHash,
         DateTime reviewedAtUtc);
