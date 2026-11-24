@@ -11,7 +11,7 @@ public sealed class AccountLinkBuilder : IAccountLinkBuilder
     public string BuildConfirmationUrl(string relativePath, string token)
     {
         if (string.IsNullOrWhiteSpace(relativePath) ||
-            !relativePath.StartsWith('/', StringComparison.Ordinal) ||
+            !relativePath.StartsWith("/", StringComparison.Ordinal) ||
             relativePath.StartsWith("//", StringComparison.Ordinal) ||
             relativePath.Contains('?') ||
             relativePath.Contains('#') ||

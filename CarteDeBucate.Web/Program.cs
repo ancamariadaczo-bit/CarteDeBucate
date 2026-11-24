@@ -102,8 +102,10 @@ builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
 builder.Services.AddSingleton(applicationOptions);
 builder.Services.AddSingleton(resendOptions);
+builder.Services.AddSingleton<PasswordHasher>();
 builder.Services.AddSingleton<IEmailTemplateRenderer, EmailTemplateRenderer>();
 builder.Services.AddSingleton<IAccountLinkBuilder, AccountLinkBuilder>();
+builder.Services.AddScoped<IAccountRegistrationService, AccountRegistrationService>();
 
 if (resendOptions.Enabled)
 {
