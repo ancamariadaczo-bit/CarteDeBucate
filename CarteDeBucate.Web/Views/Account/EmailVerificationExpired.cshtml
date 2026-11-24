@@ -1,0 +1,12 @@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<CarteDeBucate.Web.SharedResource> L
+@{
+    Layout = "_PublicLayout";
+    ViewData["Title"] = L["VerifyEmail_Expired_Title"];
+    ViewData["Description"] = L["VerifyEmail_Expired_Description"];
+}
+<header class="auth-header"><a class="public-wordmark" asp-controller="Home" asp-action="Index">@L["Site_Title"]</a></header>
+<main class="auth-main"><section class="auth-panel" aria-labelledby="email-verification-expired-title">
+    <h1 id="email-verification-expired-title">@L["VerifyEmail_Expired_Title"]</h1>
+    <p class="auth-description">@L["VerifyEmail_Expired_Description"]</p>
+    <p class="auth-switch"><a asp-action="Register">@L["Auth_Register"]</a></p>
+</section></main>

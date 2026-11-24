@@ -27,6 +27,15 @@
   <data name="Register_CheckEmail_Title" xml:space="preserve"><value>Verifică-ți e-mailul</value></data>
   <data name="Register_CheckEmail_Description" xml:space="preserve"><value>Dacă adresa poate fi înregistrată, vei primi un mesaj cu pașii pentru confirmarea contului.</value></data>
   <data name="Register_CheckEmail_Help" xml:space="preserve"><value>Mesajul poate ajunge în câteva minute. Verifică și folderul de mesaje nedorite.</value></data>
+  <data name="VerifyEmail_Title" xml:space="preserve"><value>Confirmă adresa de e-mail</value></data>
+  <data name="VerifyEmail_Description" xml:space="preserve"><value>Confirmă adresa de e-mail pentru a activa contul.</value></data>
+  <data name="VerifyEmail_Action" xml:space="preserve"><value>Confirmă adresa</value></data>
+  <data name="VerifyEmail_Success_Title" xml:space="preserve"><value>Adresa a fost confirmată</value></data>
+  <data name="VerifyEmail_Success_Description" xml:space="preserve"><value>Contul tău este activ. Acum te poți autentifica.</value></data>
+  <data name="VerifyEmail_Invalid_Title" xml:space="preserve"><value>Link de confirmare invalid</value></data>
+  <data name="VerifyEmail_Invalid_Description" xml:space="preserve"><value>Acest link de confirmare nu este valid sau a fost deja folosit.</value></data>
+  <data name="VerifyEmail_Expired_Title" xml:space="preserve"><value>Link de confirmare expirat</value></data>
+  <data name="VerifyEmail_Expired_Description" xml:space="preserve"><value>Acest link de confirmare a expirat. Poți solicita un mesaj nou.</value></data>
   <data name="Public_MetaDescription" xml:space="preserve"><value>Organizează toate rețetele tale într-o singură carte de bucate personală.</value></data>
   <data name="Hero_Title" xml:space="preserve"><value>Colecția ta de rețete, într-un singur loc.</value></data>
   <data name="Hero_Text" xml:space="preserve"><value>Salvează rețete de pe web sau adaugă-le manual. Organizează-le și găsește-le ușor când ai nevoie de inspirație.</value></data>

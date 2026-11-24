@@ -8,6 +8,7 @@ public sealed class AccountRegistrationService : IAccountRegistrationService
     public const int MinimumPasswordLength = 12;
 
     private const int TokenSize = 32;
+    private const int EncodedTokenLength = 43;
     private const string ConfirmationPath = "/Account/VerifyEmail";
     private const string FallbackCulture = "en-US";
     private static readonly TimeSpan TokenLifetime = TimeSpan.FromHours(24);
@@ -118,6 +119,63 @@ public sealed class AccountRegistrationService : IAccountRegistrationService
             AccountRegistrationServiceResultCode.Success);
     }
 
+    public AccountEmailVerificationReviewResult ReviewEmailVerification(
+        string? token)
+    {
+        if (!TryHashVerificationToken(token, out byte[] tokenHash))
+        {
+            return new AccountEmailVerificationReviewResult(
+                AccountEmailVerificationReviewResultCode.InvalidToken);
+        }
+
+        EmailVerificationReviewResult result =
+            _accountRepository.ReviewRegistrationEmail(
+                tokenHash,
+                _timeProvider.GetUtcNow().UtcDateTime);
+
+        AccountEmailVerificationReviewResultCode code = result.Code switch
+        {
+            EmailVerificationReviewResultCode.Valid =>
+                AccountEmailVerificationReviewResultCode.Valid,
+            EmailVerificationReviewResultCode.InvalidToken =>
+                AccountEmailVerificationReviewResultCode.InvalidToken,
+            EmailVerificationReviewResultCode.ExpiredToken =>
+                AccountEmailVerificationReviewResultCode.ExpiredToken,
+            _ => throw new InvalidOperationException(
+                $"Unexpected email verification review result: {result.Code}.")
+        };
+
+        return new AccountEmailVerificationReviewResult(code);
+    }
+
+    public AccountEmailVerificationResult ConfirmEmailVerification(string? token)
+    {
+        if (!TryHashVerificationToken(token, out byte[] tokenHash))
+        {
+            return new AccountEmailVerificationResult(
+                AccountEmailVerificationResultCode.InvalidToken);
+        }
+
+        EmailVerificationResult result =
+            _accountRepository.ConfirmRegistrationEmail(
+                tokenHash,
+                _timeProvider.GetUtcNow().UtcDateTime);
+
+        AccountEmailVerificationResultCode code = result.Code switch
+        {
+            EmailVerificationResultCode.Success =>
+                AccountEmailVerificationResultCode.Success,
+            EmailVerificationResultCode.InvalidToken =>
+                AccountEmailVerificationResultCode.InvalidToken,
+            EmailVerificationResultCode.ExpiredToken =>
+                AccountEmailVerificationResultCode.ExpiredToken,
+            _ => throw new InvalidOperationException(
+                $"Unexpected email verification result: {result.Code}.")
+        };
+
+        return new AccountEmailVerificationResult(code);
+    }
+
     private static AccountRegistrationServiceResult? Validate(
         AccountRegistrationInput input)
     {
@@ -182,5 +240,43 @@ public sealed class AccountRegistrationService : IAccountRegistrationService
     private static string CreateIdempotencyKey(byte[] tokenHash)
     {
         return $"registration-verification-{Convert.ToHexString(tokenHash)}";
+    }
+
+    private static bool TryHashVerificationToken(
+        string? token,
+        out byte[] tokenHash)
+    {
+        tokenHash = [];
+
+        if (token is null || token.Length != EncodedTokenLength)
+        {
+            return false;
+        }
+
+        byte[] rawToken;
+
+        try
+        {
+            rawToken = WebEncoders.Base64UrlDecode(token);
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+
+        try
+        {
+            if (rawToken.Length != TokenSize)
+            {
+                return false;
+            }
+
+            tokenHash = SHA256.HashData(rawToken);
+            return true;
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(rawToken);
+        }
     }
 }

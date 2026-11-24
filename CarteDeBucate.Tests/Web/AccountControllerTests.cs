@@ -268,6 +268,103 @@ public class AccountControllerTests
     }
 
     [Fact]
+    public void VerifyEmailGet_WithValidToken_ShouldRenderReviewWithoutConfirming()
+    {
+        FakeAccountRegistrationService registrationService = new();
+        AccountController controller = CreateController(
+            new FakeAuthenticationService(),
+            registrationService);
+
+        IActionResult result = controller.VerifyEmail("raw-token");
+
+        ViewResult viewResult = Assert.IsType<ViewResult>(result);
+        VerifyEmailViewModel model =
+            Assert.IsType<VerifyEmailViewModel>(viewResult.Model);
+        Assert.Equal("raw-token", model.Token);
+        Assert.True(registrationService.ReviewWasCalled);
+        Assert.False(registrationService.ConfirmWasCalled);
+    }
+
+    [Theory]
+    [InlineData(
+        AccountEmailVerificationReviewResultCode.InvalidToken,
+        nameof(AccountController.EmailVerificationInvalid))]
+    [InlineData(
+        AccountEmailVerificationReviewResultCode.ExpiredToken,
+        nameof(AccountController.EmailVerificationExpired))]
+    public void VerifyEmailGet_WithUnusableToken_ShouldRedirectWithoutTokenDetails(
+        AccountEmailVerificationReviewResultCode resultCode,
+        string expectedAction)
+    {
+        FakeAccountRegistrationService registrationService = new()
+        {
+            ReviewResult = new AccountEmailVerificationReviewResult(resultCode)
+        };
+        AccountController controller = CreateController(
+            new FakeAuthenticationService(),
+            registrationService);
+
+        IActionResult result = controller.VerifyEmail("raw-token");
+
+        RedirectToActionResult redirectResult =
+            Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(expectedAction, redirectResult.ActionName);
+        Assert.Null(redirectResult.RouteValues);
+        Assert.False(registrationService.ConfirmWasCalled);
+    }
+
+    [Fact]
+    public void VerifyEmailPost_WhenConfirmationSucceeds_ShouldRedirectWithoutSigningIn()
+    {
+        FakeAccountRegistrationService registrationService = new();
+        TestHttpAuthenticationService httpAuthenticationService =
+            new TestHttpAuthenticationService();
+        AccountController controller = CreateController(
+            new FakeAuthenticationService(),
+            registrationService,
+            httpAuthenticationService);
+
+        IActionResult result = controller.VerifyEmail(
+            new VerifyEmailViewModel { Token = "raw-token" });
+
+        RedirectToActionResult redirectResult =
+            Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(nameof(AccountController.EmailVerified), redirectResult.ActionName);
+        Assert.Null(redirectResult.RouteValues);
+        Assert.True(registrationService.ConfirmWasCalled);
+        Assert.Equal("raw-token", registrationService.ConfirmedToken);
+        Assert.False(httpAuthenticationService.SignInWasCalled);
+    }
+
+    [Theory]
+    [InlineData(
+        AccountEmailVerificationResultCode.InvalidToken,
+        nameof(AccountController.EmailVerificationInvalid))]
+    [InlineData(
+        AccountEmailVerificationResultCode.ExpiredToken,
+        nameof(AccountController.EmailVerificationExpired))]
+    public void VerifyEmailPost_WhenConfirmationFails_ShouldRedirectWithoutTokenDetails(
+        AccountEmailVerificationResultCode resultCode,
+        string expectedAction)
+    {
+        FakeAccountRegistrationService registrationService = new()
+        {
+            ConfirmationResult = new AccountEmailVerificationResult(resultCode)
+        };
+        AccountController controller = CreateController(
+            new FakeAuthenticationService(),
+            registrationService);
+
+        IActionResult result = controller.VerifyEmail(
+            new VerifyEmailViewModel { Token = "raw-token" });
+
+        RedirectToActionResult redirectResult =
+            Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(expectedAction, redirectResult.ActionName);
+        Assert.Null(redirectResult.RouteValues);
+    }
+
+    [Fact]
     public async Task Logout_ShouldSignOutAndRedirectToLogin()
     {
         FakeAuthenticationService authenticationService = new FakeAuthenticationService();

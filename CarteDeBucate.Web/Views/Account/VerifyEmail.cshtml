@@ -1,0 +1,16 @@
+@model VerifyEmailViewModel
+@inject Microsoft.Extensions.Localization.IStringLocalizer<CarteDeBucate.Web.SharedResource> L
+@{
+    Layout = "_PublicLayout";
+    ViewData["Title"] = L["VerifyEmail_Title"];
+    ViewData["Description"] = L["VerifyEmail_Description"];
+}
+<header class="auth-header"><a class="public-wordmark" asp-controller="Home" asp-action="Index">@L["Site_Title"]</a></header>
+<main class="auth-main"><section class="auth-panel" aria-labelledby="verify-email-title">
+    <h1 id="verify-email-title">@L["VerifyEmail_Title"]</h1>
+    <p class="auth-description">@L["VerifyEmail_Description"]</p>
+    <form asp-action="VerifyEmail" method="post" data-auth-form>
+        <input asp-for="Token" type="hidden" />
+        <button class="public-button auth-submit" type="submit">@L["VerifyEmail_Action"]</button>
+    </form>
+</section></main>

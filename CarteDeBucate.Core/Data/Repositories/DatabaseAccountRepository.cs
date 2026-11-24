@@ -100,6 +100,46 @@ public class DatabaseAccountRepository : IAccountRepository
         }
     }
 
+    public EmailVerificationReviewResult ReviewRegistrationEmail(
+        byte[] tokenHash,
+        DateTime reviewedAtUtc)
+    {
+        if (tokenHash is null || tokenHash.Length != 32)
+        {
+            return new EmailVerificationReviewResult(
+                EmailVerificationReviewResultCode.InvalidToken);
+        }
+
+        DateTime reviewTime = reviewedAtUtc.ToUniversalTime();
+
+        using SqliteConnection connection = new SqliteConnection(_connectionString);
+        connection.Open();
+
+        using SqliteTransaction transaction = connection.BeginTransaction();
+        UserEmailTokenRecord? token = ReadToken(
+            connection,
+            transaction,
+            tokenHash,
+            EmailTokenPurpose.RegistrationVerification);
+
+        transaction.Commit();
+
+        if (token is null || token.UsedAtUtc is not null || token.RevokedAtUtc is not null)
+        {
+            return new EmailVerificationReviewResult(
+                EmailVerificationReviewResultCode.InvalidToken);
+        }
+
+        if (token.ExpiresAtUtc <= reviewTime)
+        {
+            return new EmailVerificationReviewResult(
+                EmailVerificationReviewResultCode.ExpiredToken);
+        }
+
+        return new EmailVerificationReviewResult(
+            EmailVerificationReviewResultCode.Valid);
+    }
+
     public EmailVerificationResult ConfirmRegistrationEmail(byte[] tokenHash, DateTime confirmedAtUtc)
     {
         if (tokenHash is null || tokenHash.Length != 32)

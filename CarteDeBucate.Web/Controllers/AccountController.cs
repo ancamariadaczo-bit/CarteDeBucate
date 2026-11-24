@@ -129,6 +129,73 @@ public class AccountController : Controller
         return View();
     }
 
+    [AllowAnonymous]
+    [HttpGet]
+    public IActionResult VerifyEmail(string? token)
+    {
+        AccountEmailVerificationReviewResult result =
+            _accountRegistrationService.ReviewEmailVerification(token);
+
+        return result.Code switch
+        {
+            AccountEmailVerificationReviewResultCode.Valid =>
+                View(new VerifyEmailViewModel { Token = token! }),
+            AccountEmailVerificationReviewResultCode.ExpiredToken =>
+                RedirectToAction(nameof(EmailVerificationExpired)),
+            AccountEmailVerificationReviewResultCode.InvalidToken =>
+                RedirectToAction(nameof(EmailVerificationInvalid)),
+            _ => throw new InvalidOperationException(
+                $"Unexpected email verification review result: {result.Code}.")
+        };
+    }
+
+    [AllowAnonymous]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult VerifyEmail(VerifyEmailViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return RedirectToAction(nameof(EmailVerificationInvalid));
+        }
+
+        AccountEmailVerificationResult result =
+            _accountRegistrationService.ConfirmEmailVerification(model.Token);
+
+        return result.Code switch
+        {
+            AccountEmailVerificationResultCode.Success =>
+                RedirectToAction(nameof(EmailVerified)),
+            AccountEmailVerificationResultCode.ExpiredToken =>
+                RedirectToAction(nameof(EmailVerificationExpired)),
+            AccountEmailVerificationResultCode.InvalidToken =>
+                RedirectToAction(nameof(EmailVerificationInvalid)),
+            _ => throw new InvalidOperationException(
+                $"Unexpected email verification result: {result.Code}.")
+        };
+    }
+
+    [AllowAnonymous]
+    [HttpGet]
+    public IActionResult EmailVerified()
+    {
+        return View();
+    }
+
+    [AllowAnonymous]
+    [HttpGet]
+    public IActionResult EmailVerificationInvalid()
+    {
+        return View();
+    }
+
+    [AllowAnonymous]
+    [HttpGet]
+    public IActionResult EmailVerificationExpired()
+    {
+        return View();
+    }
+
     private void AddRegistrationValidationError(
         AccountRegistrationServiceResultCode resultCode)
     {

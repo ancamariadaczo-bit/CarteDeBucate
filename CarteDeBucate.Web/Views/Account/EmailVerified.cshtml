@@ -1,0 +1,12 @@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<CarteDeBucate.Web.SharedResource> L
+@{
+    Layout = "_PublicLayout";
+    ViewData["Title"] = L["VerifyEmail_Success_Title"];
+    ViewData["Description"] = L["VerifyEmail_Success_Description"];
+}
+<header class="auth-header"><a class="public-wordmark" asp-controller="Home" asp-action="Index">@L["Site_Title"]</a></header>
+<main class="auth-main"><section class="auth-panel" aria-labelledby="email-verified-title">
+    <h1 id="email-verified-title">@L["VerifyEmail_Success_Title"]</h1>
+    <p class="auth-description">@L["VerifyEmail_Success_Description"]</p>
+    <p class="auth-switch"><a asp-action="Login">@L["Auth_LoginAction"]</a></p>
+</section></main>

@@ -32,6 +32,16 @@ public enum EmailTokenReplacementResultCode
 
 public sealed record EmailTokenReplacementResult(EmailTokenReplacementResultCode Code);
 
+public enum EmailVerificationReviewResultCode
+{
+    Valid,
+    InvalidToken,
+    ExpiredToken
+}
+
+public sealed record EmailVerificationReviewResult(
+    EmailVerificationReviewResultCode Code);
+
 public enum EmailVerificationResultCode
 {
     Success,

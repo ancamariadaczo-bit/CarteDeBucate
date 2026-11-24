@@ -151,6 +151,89 @@ public class AccountRegistrationServiceTests
         Assert.Empty(emailSender.SentMessages);
     }
 
+    [Fact]
+    public void ReviewEmailVerification_WithValidToken_ShouldHashWithoutConsumingIt()
+    {
+        RecordingAccountRepository repository = new();
+        AccountRegistrationService service = CreateService(
+            repository,
+            new RecordingLinkBuilder(),
+            new RecordingTemplateRenderer(),
+            new FakeEmailSender());
+        string rawToken = CreateVerificationToken(7);
+
+        AccountEmailVerificationReviewResult result =
+            service.ReviewEmailVerification(rawToken);
+
+        Assert.Equal(AccountEmailVerificationReviewResultCode.Valid, result.Code);
+        Assert.Equal(
+            SHA256.HashData(WebEncoders.Base64UrlDecode(rawToken)),
+            repository.ReviewedTokenHash);
+        Assert.Equal(IssuedAt.UtcDateTime, repository.ReviewedAtUtc);
+        Assert.Null(repository.ConfirmedTokenHash);
+    }
+
+    [Fact]
+    public void ReviewEmailVerification_WithExpiredToken_ShouldReturnExpired()
+    {
+        RecordingAccountRepository repository = new()
+        {
+            ReviewResult = new EmailVerificationReviewResult(
+                EmailVerificationReviewResultCode.ExpiredToken)
+        };
+        AccountRegistrationService service = CreateService(
+            repository,
+            new RecordingLinkBuilder(),
+            new RecordingTemplateRenderer(),
+            new FakeEmailSender());
+
+        AccountEmailVerificationReviewResult result =
+            service.ReviewEmailVerification(CreateVerificationToken(8));
+
+        Assert.Equal(
+            AccountEmailVerificationReviewResultCode.ExpiredToken,
+            result.Code);
+    }
+
+    [Fact]
+    public void ConfirmEmailVerification_WithValidToken_ShouldCallAtomicConsumption()
+    {
+        RecordingAccountRepository repository = new();
+        AccountRegistrationService service = CreateService(
+            repository,
+            new RecordingLinkBuilder(),
+            new RecordingTemplateRenderer(),
+            new FakeEmailSender());
+        string rawToken = CreateVerificationToken(9);
+
+        AccountEmailVerificationResult result =
+            service.ConfirmEmailVerification(rawToken);
+
+        Assert.Equal(AccountEmailVerificationResultCode.Success, result.Code);
+        Assert.Equal(
+            SHA256.HashData(WebEncoders.Base64UrlDecode(rawToken)),
+            repository.ConfirmedTokenHash);
+        Assert.Equal(IssuedAt.UtcDateTime, repository.ConfirmedAtUtc);
+    }
+
+    [Fact]
+    public void ConfirmEmailVerification_WithMalformedToken_ShouldNotCallRepository()
+    {
+        RecordingAccountRepository repository = new();
+        AccountRegistrationService service = CreateService(
+            repository,
+            new RecordingLinkBuilder(),
+            new RecordingTemplateRenderer(),
+            new FakeEmailSender());
+
+        AccountEmailVerificationResult result =
+            service.ConfirmEmailVerification("not-a-token");
+
+        Assert.Equal(AccountEmailVerificationResultCode.InvalidToken, result.Code);
+        Assert.Null(repository.ConfirmedTokenHash);
+        Assert.Null(repository.ReviewedTokenHash);
+    }
+
     private static AccountRegistrationService CreateService(
         IAccountRepository repository,
         IAccountLinkBuilder linkBuilder,
@@ -175,6 +258,12 @@ public class AccountRegistrationServiceTests
             "en-US");
     }
 
+    private static string CreateVerificationToken(byte marker)
+    {
+        return WebEncoders.Base64UrlEncode(
+            Enumerable.Repeat(marker, 32).ToArray());
+    }
+
     private sealed class RecordingAccountRepository : IAccountRepository
     {
         public AccountRegistrationRequest? RegistrationRequest { get; private set; }
@@ -182,10 +271,33 @@ public class AccountRegistrationServiceTests
         public AccountRegistrationResult RegistrationResult { get; init; } =
             new(AccountRegistrationResultCode.Success, 42);
 
+        public EmailVerificationReviewResult ReviewResult { get; init; } =
+            new(EmailVerificationReviewResultCode.Valid);
+
+        public byte[]? ReviewedTokenHash { get; private set; }
+
+        public DateTime? ReviewedAtUtc { get; private set; }
+
+        public EmailVerificationResult ConfirmationResult { get; init; } =
+            new(EmailVerificationResultCode.Success);
+
+        public byte[]? ConfirmedTokenHash { get; private set; }
+
+        public DateTime? ConfirmedAtUtc { get; private set; }
+
         public AccountRegistrationResult Register(AccountRegistrationRequest request)
         {
             RegistrationRequest = request;
             return RegistrationResult;
+        }
+
+        public EmailVerificationReviewResult ReviewRegistrationEmail(
+            byte[] tokenHash,
+            DateTime reviewedAtUtc)
+        {
+            ReviewedTokenHash = tokenHash.ToArray();
+            ReviewedAtUtc = reviewedAtUtc;
+            return ReviewResult;
         }
 
         public EmailTokenReplacementResult ReplaceEmailToken(
@@ -194,7 +306,12 @@ public class AccountRegistrationServiceTests
 
         public EmailVerificationResult ConfirmRegistrationEmail(
             byte[] tokenHash,
-            DateTime confirmedAtUtc) => throw new NotSupportedException();
+            DateTime confirmedAtUtc)
+        {
+            ConfirmedTokenHash = tokenHash.ToArray();
+            ConfirmedAtUtc = confirmedAtUtc;
+            return ConfirmationResult;
+        }
 
         public EmailChangeRequestResult RequestEmailChange(
             int userId,

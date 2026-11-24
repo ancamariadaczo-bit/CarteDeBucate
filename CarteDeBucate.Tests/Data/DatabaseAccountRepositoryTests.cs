@@ -137,6 +137,62 @@ public class DatabaseAccountRepositoryTests
     }
 
     [Fact]
+    public void ReviewRegistrationEmail_WithValidToken_ShouldNotConsumeIt()
+    {
+        WithRepository((repository, databasePath) =>
+        {
+            repository.Register(CreateRequest("anca@example.com", 1));
+            DateTime reviewTime = DateTime.UtcNow;
+
+            EmailVerificationReviewResult reviewResult =
+                repository.ReviewRegistrationEmail(
+                    CreateTokenHash(1),
+                    reviewTime);
+
+            Assert.Equal(EmailVerificationReviewResultCode.Valid, reviewResult.Code);
+            Assert.Null(ReadUserEmailVerifiedAtUtc(databasePath));
+            Assert.Null(ReadTokenUsedAtUtc(databasePath, CreateTokenHash(1)));
+
+            EmailVerificationResult confirmationResult =
+                repository.ConfirmRegistrationEmail(
+                    CreateTokenHash(1),
+                    reviewTime);
+
+            Assert.Equal(EmailVerificationResultCode.Success, confirmationResult.Code);
+        });
+    }
+
+    [Fact]
+    public void ReviewRegistrationEmail_WithExpiredToken_ShouldReturnExpired()
+    {
+        WithRepository((repository, databasePath) =>
+        {
+            DateTime reviewTime = new DateTime(
+                2026,
+                11,
+                24,
+                12,
+                0,
+                0,
+                DateTimeKind.Utc);
+            repository.Register(CreateRequest(
+                "anca@example.com",
+                1,
+                reviewTime.AddDays(-2),
+                reviewTime.AddDays(-1)));
+
+            EmailVerificationReviewResult result =
+                repository.ReviewRegistrationEmail(
+                    CreateTokenHash(1),
+                    reviewTime);
+
+            Assert.Equal(EmailVerificationReviewResultCode.ExpiredToken, result.Code);
+            Assert.Null(ReadUserEmailVerifiedAtUtc(databasePath));
+            Assert.Null(ReadTokenUsedAtUtc(databasePath, CreateTokenHash(1)));
+        });
+    }
+
+    [Fact]
     public void ConfirmRegistrationEmail_WhenTokenIsExpired_ShouldNotVerifyUser()
     {
         WithRepository((repository, databasePath) =>
