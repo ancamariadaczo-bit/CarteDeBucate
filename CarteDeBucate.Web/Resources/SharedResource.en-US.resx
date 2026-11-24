@@ -11,7 +11,6 @@
   <data name="Auth_Login" xml:space="preserve"><value>Log in</value></data>
   <data name="Auth_LoginAction" xml:space="preserve"><value>Log in</value></data>
   <data name="Auth_Register" xml:space="preserve"><value>Create account</value></data>
-  <data name="Auth_Username" xml:space="preserve"><value>Username</value></data>
   <data name="Auth_Email" xml:space="preserve"><value>Email address</value></data>
   <data name="Auth_Password" xml:space="preserve"><value>Password</value></data>
   <data name="Auth_ConfirmPassword" xml:space="preserve"><value>Confirm password</value></data>

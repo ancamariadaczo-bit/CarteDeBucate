@@ -406,6 +406,9 @@ public class AccountControllerTests
         Assert.Equal("raw-token", model.Token);
         Assert.True(registrationService.ReviewWasCalled);
         Assert.False(registrationService.ConfirmWasCalled);
+        Assert.Equal(
+            "no-referrer",
+            controller.Response.Headers["Referrer-Policy"].ToString());
     }
 
     [Theory]

@@ -3,6 +3,10 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    @if (ViewData["ReferrerPolicy"] is string referrerPolicy)
+    {
+        <meta name="referrer" content="@referrerPolicy" />
+    }
     <title>@ViewData["Title"] - Carte de bucate</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />

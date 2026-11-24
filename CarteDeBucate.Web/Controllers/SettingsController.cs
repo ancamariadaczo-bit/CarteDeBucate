@@ -153,6 +153,8 @@ public class SettingsController : Controller
     [HttpGet]
     public IActionResult ConfirmEmailChange(string? token)
     {
+        Response.Headers["Referrer-Policy"] = "no-referrer";
+
         User? user = GetCurrentUser();
 
         if (user is null)

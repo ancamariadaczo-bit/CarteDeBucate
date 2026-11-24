@@ -302,6 +302,33 @@ Production startup fails when real delivery is disabled or any required value
 is missing. The API token must never be exposed to browser JavaScript or the
 Chrome extension.
 
+#### Account-email deployment checklist
+
+Before enabling production email delivery, verify the sender domain in Resend
+and configure its required DNS records. Use a sending-only API token restricted
+to that verified domain. Keep `Resend__ApiToken` in the hosting secret store;
+do not put it in an application-settings file, browser code, logs, or support
+messages.
+
+`Application__PublicBaseUrl` is security-sensitive: it is the configured HTTPS
+origin used to create registration and email-change confirmation links. It must
+not be inferred from an incoming `Host` header.
+
+The repository does not include a username-to-email conversion utility. The
+one-time local conversion was completed separately and is not an application
+startup operation. Do not deploy the application against a legacy
+username-based database. If a future recovery requires a conversion utility,
+keep it separate from the web application and require explicit inputs for the
+database path and private user-to-email mapping. Take and retain a timestamped
+database backup before the dry run and before the confirmed write; rollback is
+performed by restoring that backup, not by re-running the conversion in reverse.
+
+When deploying a change that invalidates existing authentication identity
+formats, rotate the JWT signing key and change the authentication-cookie name or
+version. The current cookie name is `CarteDeBucate.Auth.v2`; JWTs have a
+60-minute lifetime, so rotating `Jwt__Key` invalidates tokens from an earlier
+deployment immediately.
+
 #### Optional Redis recipe cache
 
 The web application runs without Redis by default. Recipe reads use SQLite

@@ -1,6 +1,9 @@
 @model ConfirmEmailChangeViewModel
 @inject Microsoft.Extensions.Localization.IStringLocalizer<CarteDeBucate.Web.SharedResource> L
-@{ ViewData["Title"] = L["EmailChangeConfirm_Title"]; }
+@{
+    ViewData["Title"] = L["EmailChangeConfirm_Title"];
+    ViewData["ReferrerPolicy"] = "no-referrer";
+}
 
 <div class="mb-4">
     <h1 class="h2">@L["EmailChangeConfirm_Title"]</h1>

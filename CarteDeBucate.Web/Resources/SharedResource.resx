@@ -11,7 +11,6 @@
   <data name="Auth_Login" xml:space="preserve"><value>Autentificare</value></data>
   <data name="Auth_LoginAction" xml:space="preserve"><value>Autentifică-te</value></data>
   <data name="Auth_Register" xml:space="preserve"><value>Creează cont</value></data>
-  <data name="Auth_Username" xml:space="preserve"><value>Nume de utilizator</value></data>
   <data name="Auth_Email" xml:space="preserve"><value>Adresă de e-mail</value></data>
   <data name="Auth_Password" xml:space="preserve"><value>Parolă</value></data>
   <data name="Auth_ConfirmPassword" xml:space="preserve"><value>Confirmă parola</value></data>

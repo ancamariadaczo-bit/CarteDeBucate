@@ -12,7 +12,7 @@ I had recipes saved in many different places: browser bookmarks, notes, screensh
 
 CarteDeBucate brings those recipes together in one personal library where they can be added, imported, searched and updated.
 
-The project can be used through a web interface or a console application. It also includes Recipe Clipper, a companion Chrome extension that extracts a recipe from the current web page so it can be reviewed, edited and printed or saved as a PDF directly from the browser.
+The web application also includes Recipe Clipper, a companion Chrome extension that extracts a recipe from the current web page so it can be reviewed, edited and printed or saved as a PDF directly from the browser.
 
 ## Current functionality
 
@@ -24,9 +24,9 @@ The project currently supports:
 * organizing recipes by status, such as **To try**, **Tried** or **Favorite**
 * searching the recipe library and browsing longer result lists page by page
 * exporting recipes to a JSON backup and importing them again later
-* keeping each registered user's recipes separate when authentication is enabled
-* choosing between a web interface and two console interface styles
-* storing application data in SQLite, with JSON storage also available to the console application
+* registering and verifying email-based accounts, including safe email-address changes
+* keeping each user's recipes separate when authentication is enabled
+* storing application data in SQLite
 * extracting, reviewing and printing recipes with the Recipe Clipper Chrome extension
 * automated C# and JavaScript tests, continuous integration with GitHub Actions and deployment through Render
 
@@ -35,9 +35,6 @@ The project currently supports:
 ```text
 CarteDeBucate.Core
     Shared recipe models, storage, importing and application logic
-
-CarteDeBucate.App
-    Console application with classic and rich interface modes
 
 CarteDeBucate.Web
     ASP.NET Core MVC web application
@@ -58,7 +55,6 @@ The project uses:
 * ASP.NET Core MVC
 * SQLite
 * JSON
-* Spectre.Console
 * HtmlAgilityPack
 * HTML / CSS / JavaScript
 * Chrome Extension Manifest V3

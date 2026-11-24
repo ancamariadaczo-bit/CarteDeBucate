@@ -8,9 +8,6 @@ public static class ValidationMessages
         "CarteDeBucate.Web.Resources.ValidationMessages",
         typeof(ValidationMessages).Assembly);
 
-    public static string UsernameRequired => Get(nameof(UsernameRequired));
-    public static string UsernameLength => Get(nameof(UsernameLength));
-    public static string UsernameCharacters => Get(nameof(UsernameCharacters));
     public static string EmailRequired => Get(nameof(EmailRequired));
     public static string EmailInvalid => Get(nameof(EmailInvalid));
     public static string EmailLength => Get(nameof(EmailLength));

@@ -4,6 +4,10 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    @if (ViewData["ReferrerPolicy"] is string referrerPolicy)
+    {
+        <meta name="referrer" content="@referrerPolicy" />
+    }
     <meta name="description" content="@ViewData["Description"]" />
     <title>@ViewData["Title"] - @L["Site_Title"]</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />

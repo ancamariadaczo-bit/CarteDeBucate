@@ -103,6 +103,23 @@ public class SettingsControllerTests
         Assert.Equal(
             CookieAuthenticationDefaults.AuthenticationScheme,
             authenticationService.SignOutScheme);
+        Assert.Null(redirect.RouteValues);
+    }
+
+    [Fact]
+    public void ConfirmEmailChangeGet_ShouldApplyNoReferrerPolicy()
+    {
+        SettingsController controller = CreateController(CreateUserRepository("en-US"));
+
+        IActionResult result = controller.ConfirmEmailChange("raw-token");
+
+        ViewResult viewResult = Assert.IsType<ViewResult>(result);
+        ConfirmEmailChangeViewModel model =
+            Assert.IsType<ConfirmEmailChangeViewModel>(viewResult.Model);
+        Assert.Equal("raw-token", model.Token);
+        Assert.Equal(
+            "no-referrer",
+            controller.Response.Headers["Referrer-Policy"].ToString());
     }
 
     private static SettingsController CreateController(

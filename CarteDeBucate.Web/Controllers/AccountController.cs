@@ -173,6 +173,8 @@ public class AccountController : Controller
     [HttpGet]
     public IActionResult VerifyEmail(string? token)
     {
+        Response.Headers["Referrer-Policy"] = "no-referrer";
+
         AccountEmailVerificationReviewResult result =
             _accountRegistrationService.ReviewEmailVerification(token);
 
