@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using CarteDeBucate.Web.Models.Api;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -9,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 public class AuthenticationPipelineTests
     : IClassFixture<AuthenticationApiWebApplicationFactory>
@@ -43,6 +45,19 @@ public class AuthenticationPipelineTests
             _factory.Services.GetRequiredService<IEmailTemplateRenderer>());
         Assert.IsType<AccountLinkBuilder>(
             _factory.Services.GetRequiredService<IAccountLinkBuilder>());
+    }
+
+    [Fact]
+    public void AuthenticationCookie_ShouldUseTheEmailAuthenticationVersion()
+    {
+        IOptionsMonitor<CookieAuthenticationOptions> optionsMonitor =
+            _factory.Services.GetRequiredService<
+                IOptionsMonitor<CookieAuthenticationOptions>>();
+
+        CookieAuthenticationOptions options = optionsMonitor.Get(
+            CookieAuthenticationDefaults.AuthenticationScheme);
+
+        Assert.Equal("CarteDeBucate.Auth.v2", options.Cookie.Name);
     }
 
     [Fact]
@@ -92,7 +107,7 @@ public class AuthenticationPipelineTests
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue(
                 "Bearer",
-                _factory.CreateToken("42", "chef"));
+                _factory.CreateToken("42", "chef@example.com"));
 
         HttpResponseMessage response = await client.PostAsJsonAsync(
             "/api/recipes",
@@ -101,7 +116,7 @@ public class AuthenticationPipelineTests
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         Assert.True(_factory.SaveProbe.IsAuthenticated);
         Assert.Equal(42, _factory.SaveProbe.UserId);
-        Assert.Equal("chef", _factory.SaveProbe.Email);
+        Assert.Equal("chef@example.com", _factory.SaveProbe.Email);
     }
 
     [Fact]
@@ -137,7 +152,7 @@ public class AuthenticationPipelineTests
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue(
                 "Bearer",
-                _factory.CreateToken("42", "chef"));
+                _factory.CreateToken("42", "chef@example.com"));
 
         HttpResponseMessage response = await client.GetAsync(
             CreateRecipeExistsRequestUri());
@@ -153,7 +168,7 @@ public class AuthenticationPipelineTests
             _factory.ExistsProbe.SourceUrl);
         Assert.True(_factory.ExistsProbe.IsAuthenticated);
         Assert.Equal(42, _factory.ExistsProbe.UserId);
-        Assert.Equal("chef", _factory.ExistsProbe.Email);
+        Assert.Equal("chef@example.com", _factory.ExistsProbe.Email);
     }
 
     [Fact]
@@ -174,7 +189,7 @@ public class AuthenticationPipelineTests
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue(
                 "Bearer",
-                _factory.CreateToken("42", "chef"));
+                _factory.CreateToken("42", "chef@example.com"));
 
         HttpResponseMessage response = await client.GetAsync(
             "/api/authentication/me");
@@ -184,7 +199,7 @@ public class AuthenticationPipelineTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.NotNull(currentUser);
         Assert.Equal("42", currentUser.UserId);
-        Assert.Equal("chef", currentUser.Username);
+        Assert.Equal("chef@example.com", currentUser.Email);
     }
 
     [Fact]
@@ -259,7 +274,7 @@ public class AuthenticationPipelineTests
     {
         public string? UserId { get; init; }
 
-        public string? Username { get; init; }
+        public string? Email { get; init; }
     }
 
     private sealed class RecipeExistsResponse
@@ -300,14 +315,14 @@ public sealed class AuthenticationApiWebApplicationFactory
     public RecipeSaveProbe SaveProbe { get; } = new();
     public RecipeExistsProbe ExistsProbe { get; } = new();
 
-    public string CreateToken(string userId, string username)
+    public string CreateToken(string userId, string email)
     {
         IConfiguration configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(CreateSettings())
             .Build();
 
         return new JwtTokenService(configuration)
-            .CreateToken(userId, username);
+            .CreateToken(userId, email);
     }
 
     protected override IHost CreateHost(IHostBuilder builder)

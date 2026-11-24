@@ -29,106 +29,28 @@ public class AuthenticationService : IAuthenticationService
 
     public bool IsLoggedIn => _currentUserContext?.IsAuthenticated == true;
 
-    public AuthenticationResult Register(string username, string password)
+    public AuthenticationResult Login(string email, string password)
     {
-        if (string.IsNullOrWhiteSpace(username))
+        if (string.IsNullOrWhiteSpace(email))
         {
-            return new AuthenticationResult
-            {
-                IsSuccess = false,
-                Message = "Username is required."
-            };
+            return InvalidCredentials();
         }
 
-        if (!EmailNormalizer.TryNormalize(username, out string normalizedEmail))
+        if (!EmailNormalizer.TryNormalize(email, out string normalizedEmail))
         {
-            return new AuthenticationResult
-            {
-                IsSuccess = false,
-                Message = "Username must not exceed 254 characters."
-            };
+            return InvalidCredentials();
         }
 
         if (string.IsNullOrWhiteSpace(password))
         {
-            return new AuthenticationResult
-            {
-                IsSuccess = false,
-                Message = "Password is required."
-            };
-        }
-
-        User? existingUser = _userRepository.GetByEmail(normalizedEmail);
-
-        if (existingUser is not null)
-        {
-            return new AuthenticationResult
-            {
-                IsSuccess = false,
-                Message = "This username already exists."
-            };
-        }
-
-        (string hash, string salt) = _passwordHasher.HashPassword(password);
-
-        User user = new User
-        {
-            Email = normalizedEmail,
-            PasswordHash = hash,
-            PasswordSalt = salt,
-            CreatedAt = DateTime.Now
-        };
-
-        _userRepository.Add(user);
-
-        _currentUserContext?.SetCurrentUser(user);
-
-        return new AuthenticationResult
-        {
-            IsSuccess = true,
-            Message = "User registered successfully.",
-            User = user
-        };
-    }
-
-    public AuthenticationResult Login(string username, string password)
-    {
-        if (string.IsNullOrWhiteSpace(username))
-        {
-            return new AuthenticationResult
-            {
-                IsSuccess = false,
-                Message = "Username is required."
-            };
-        }
-
-        if (!EmailNormalizer.TryNormalize(username, out string normalizedEmail))
-        {
-            return new AuthenticationResult
-            {
-                IsSuccess = false,
-                Message = "Invalid username or password."
-            };
-        }
-
-        if (string.IsNullOrWhiteSpace(password))
-        {
-            return new AuthenticationResult
-            {
-                IsSuccess = false,
-                Message = "Password is required."
-            };
+            return InvalidCredentials();
         }
 
         User? user = _userRepository.GetByEmail(normalizedEmail);
 
         if (user is null)
         {
-            return new AuthenticationResult
-            {
-                IsSuccess = false,
-                Message = "Invalid username or password."
-            };
+            return InvalidCredentials();
         }
 
         bool isPasswordValid = _passwordHasher.VerifyPassword(
@@ -136,13 +58,9 @@ public class AuthenticationService : IAuthenticationService
             user.PasswordHash,
             user.PasswordSalt);
 
-        if (!isPasswordValid)
+        if (!isPasswordValid || user.EmailVerifiedAtUtc is null)
         {
-            return new AuthenticationResult
-            {
-                IsSuccess = false,
-                Message = "Invalid username or password."
-            };
+            return InvalidCredentials();
         }
 
         _currentUserContext?.SetCurrentUser(user);
@@ -158,5 +76,14 @@ public class AuthenticationService : IAuthenticationService
     public void Logout()
     {
         _currentUserContext?.Clear();
+    }
+
+    private static AuthenticationResult InvalidCredentials()
+    {
+        return new AuthenticationResult
+        {
+            IsSuccess = false,
+            Message = "Invalid email or password."
+        };
     }
 }

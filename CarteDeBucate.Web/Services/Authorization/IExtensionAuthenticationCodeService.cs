@@ -1,7 +1,7 @@
 
 public interface IExtensionAuthenticationCodeService
 {
-    string CreateCode(string userId, string username);
+    string CreateCode(int userId);
 
     ExtensionAuthenticationCodeData? ConsumeCode(string code);
 }

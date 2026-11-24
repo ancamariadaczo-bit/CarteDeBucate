@@ -32,23 +32,6 @@ public class DatabaseUserRepositoryTests
     }
 
     [Fact]
-    public void Register_WhenEmailDiffersOnlyByCasing_ShouldReturnDuplicateMessage()
-    {
-        WithRepository(repository =>
-        {
-            AuthenticationService authenticationService = new AuthenticationService(repository);
-            AuthenticationResult firstResult = authenticationService.Register("anca@example.com", "secret-password");
-
-            AuthenticationResult duplicateResult =
-                authenticationService.Register("AnCa@example.com", "another-password");
-
-            Assert.True(firstResult.IsSuccess);
-            Assert.False(duplicateResult.IsSuccess);
-            Assert.Equal("This username already exists.", duplicateResult.Message);
-        });
-    }
-
-    [Fact]
     public void Login_WithDifferentEmailCasing_ShouldSucceed()
     {
         WithRepository(repository =>
@@ -56,8 +39,16 @@ public class DatabaseUserRepositoryTests
             CurrentUserContext currentUserContext = new CurrentUserContext();
             AuthenticationService authenticationService =
                 new AuthenticationService(repository, currentUserContext);
-            authenticationService.Register("anca@example.com", "secret-password");
-            authenticationService.Logout();
+            PasswordHasher passwordHasher = new PasswordHasher();
+            (string hash, string salt) = passwordHasher.HashPassword("secret-password");
+            repository.Add(new User
+            {
+                Email = "anca@example.com",
+                PasswordHash = hash,
+                PasswordSalt = salt,
+                CreatedAt = DateTime.UtcNow,
+                EmailVerifiedAtUtc = DateTime.UtcNow
+            });
 
             AuthenticationResult result =
                 authenticationService.Login("AnCa@Example.com", "secret-password");

@@ -1,101 +1,88 @@
 public class AuthenticationServiceTests
 {
     [Fact]
-    public void Register_WithValidCredentials_ShouldAddUserAndLogIn()
+    public void Login_WithVerifiedEmailAndValidPassword_ShouldLogInUser()
     {
         FakeUserRepository userRepository = new FakeUserRepository();
         CurrentUserContext currentUserContext = new CurrentUserContext();
         PasswordHasher passwordHasher = new PasswordHasher();
+        (string hash, string salt) = passwordHasher.HashPassword("secret-password");
+        userRepository.Users.Add(new User
+        {
+            Id = 1,
+            Email = "anca@example.com",
+            PasswordHash = hash,
+            PasswordSalt = salt,
+            EmailVerifiedAtUtc = DateTime.UtcNow
+        });
         AuthenticationService authenticationService = new AuthenticationService(
             userRepository,
             currentUserContext,
             passwordHasher);
 
-        AuthenticationResult result = authenticationService.Register("anca", "secret-password");
+        AuthenticationResult result = authenticationService.Login(
+            "AnCa@Example.com",
+            "secret-password");
 
         Assert.True(result.IsSuccess);
-        Assert.Equal("User registered successfully.", result.Message);
-        Assert.NotNull(result.User);
-        Assert.True(userRepository.AddWasCalled);
-        Assert.NotNull(userRepository.AddedUser);
-        Assert.Equal("anca", userRepository.AddedUser.Email);
-        Assert.False(string.IsNullOrWhiteSpace(userRepository.AddedUser.PasswordHash));
-        Assert.False(string.IsNullOrWhiteSpace(userRepository.AddedUser.PasswordSalt));
-        Assert.NotEqual("secret-password", userRepository.AddedUser.PasswordHash);
-        Assert.True(passwordHasher.VerifyPassword(
-            "secret-password",
-            userRepository.AddedUser.PasswordHash,
-            userRepository.AddedUser.PasswordSalt));
+        Assert.Equal("Login successful.", result.Message);
+        Assert.Equal("anca@example.com", result.User?.Email);
         Assert.True(authenticationService.IsLoggedIn);
         Assert.True(currentUserContext.IsAuthenticated);
-        Assert.Equal(userRepository.AddedUser.Id, currentUserContext.UserId);
-        Assert.Equal("anca", currentUserContext.Email);
+        Assert.Equal(1, currentUserContext.UserId);
+        Assert.Equal("anca@example.com", currentUserContext.Email);
     }
 
     [Fact]
-    public void Register_WhenUsernameAlreadyExists_ShouldNotAddUser()
+    public void Login_WithUnverifiedEmail_ShouldFailWithTheGenericCredentialsMessage()
     {
         FakeUserRepository userRepository = new FakeUserRepository();
         CurrentUserContext currentUserContext = new CurrentUserContext();
-        userRepository.Users.Add(new User
-        {
-            Id = 1,
-            Email = "anca",
-            PasswordHash = "hash",
-            PasswordSalt = "salt"
-        });
+        PasswordHasher passwordHasher = new PasswordHasher();
+        (string hash, string salt) = passwordHasher.HashPassword("secret-password");
+        userRepository.Users.Add(new User { Id = 1, Email = "anca@example.com", PasswordHash = hash, PasswordSalt = salt });
 
         AuthenticationService authenticationService = new AuthenticationService(
             userRepository,
             currentUserContext,
-            new PasswordHasher());
+            passwordHasher);
 
-        AuthenticationResult result = authenticationService.Register("Anca", "secret-password");
+        AuthenticationResult result = authenticationService.Login(
+            "anca@example.com",
+            "secret-password");
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("This username already exists.", result.Message);
-        Assert.False(userRepository.AddWasCalled);
+        Assert.Equal("Invalid email or password.", result.Message);
         Assert.False(authenticationService.IsLoggedIn);
         Assert.False(currentUserContext.IsAuthenticated);
     }
 
     [Fact]
-    public void Login_WithRegisteredCredentials_ShouldLogInUser()
+    public void Login_WithWrongPassword_ShouldFailWithTheGenericCredentialsMessage()
     {
         FakeUserRepository userRepository = new FakeUserRepository();
         CurrentUserContext currentUserContext = new CurrentUserContext();
+        PasswordHasher passwordHasher = new PasswordHasher();
+        (string hash, string salt) = passwordHasher.HashPassword("secret-password");
+        userRepository.Users.Add(new User
+        {
+            Id = 1,
+            Email = "anca@example.com",
+            PasswordHash = hash,
+            PasswordSalt = salt,
+            EmailVerifiedAtUtc = DateTime.UtcNow
+        });
         AuthenticationService authenticationService = new AuthenticationService(
             userRepository,
             currentUserContext,
-            new PasswordHasher());
-        authenticationService.Register("anca", "secret-password");
-        authenticationService.Logout();
+            passwordHasher);
 
-        AuthenticationResult result = authenticationService.Login("anca", "secret-password");
-
-        Assert.True(result.IsSuccess);
-        Assert.Equal("Login successful.", result.Message);
-        Assert.True(authenticationService.IsLoggedIn);
-        Assert.True(currentUserContext.IsAuthenticated);
-        Assert.Equal("anca", currentUserContext.Email);
-    }
-
-    [Fact]
-    public void Login_WithWrongPassword_ShouldFailAndKeepUserLoggedOut()
-    {
-        FakeUserRepository userRepository = new FakeUserRepository();
-        CurrentUserContext currentUserContext = new CurrentUserContext();
-        AuthenticationService authenticationService = new AuthenticationService(
-            userRepository,
-            currentUserContext,
-            new PasswordHasher());
-        authenticationService.Register("anca", "secret-password");
-        authenticationService.Logout();
-
-        AuthenticationResult result = authenticationService.Login("anca", "wrong-password");
+        AuthenticationResult result = authenticationService.Login(
+            "anca@example.com",
+            "wrong-password");
 
         Assert.False(result.IsSuccess);
-        Assert.Equal("Invalid username or password.", result.Message);
+        Assert.Equal("Invalid email or password.", result.Message);
         Assert.False(authenticationService.IsLoggedIn);
         Assert.False(currentUserContext.IsAuthenticated);
         Assert.Null(currentUserContext.UserId);

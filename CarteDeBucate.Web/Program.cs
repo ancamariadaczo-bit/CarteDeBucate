@@ -77,6 +77,7 @@ string jwtAudience = builder.Configuration["Jwt:Audience"]
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
+        options.Cookie.Name = "CarteDeBucate.Auth.v2";
         options.LoginPath = "/Account/Login";
         options.LogoutPath = "/Account/Logout";
         options.AccessDeniedPath = "/Account/AccessDenied";
@@ -252,10 +253,13 @@ builder.Services.AddScoped<IAuthenticationService>(serviceProvider =>
         serviceProvider.GetRequiredService<IUserRepository>();
     ICurrentUserContext currentUserContext =
         serviceProvider.GetRequiredService<ICurrentUserContext>();
+    PasswordHasher passwordHasher =
+        serviceProvider.GetRequiredService<PasswordHasher>();
 
     return AppServiceFactory.CreateAuthenticationService(
         userRepository,
-        currentUserContext);
+        currentUserContext,
+        passwordHasher);
 });
 
 builder.Services.AddSingleton<IDatabaseBackupService>(serviceProvider =>

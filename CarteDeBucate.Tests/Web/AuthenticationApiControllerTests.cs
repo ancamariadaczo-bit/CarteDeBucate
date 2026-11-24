@@ -11,33 +11,28 @@ public class AuthenticationApiControllerTests
         "https://extension-id.chromiumapp.org/authentication-callback";
 
     [Fact]
-    public void GetCurrentUser_ShouldReturnUserIdAndUsernameFromClaims()
+    public void GetCurrentUser_ShouldReturnUserIdAndEmailFromClaims()
     {
         AuthenticationApiController controller = CreateController(
-            user: CreateUser("user-42", "chef"));
+            user: CreatePrincipal("42", "anca@example.com"));
 
         IActionResult result = controller.GetCurrentUser();
 
         OkObjectResult okResult = Assert.IsType<OkObjectResult>(result);
+        Assert.Equal("42", GetResponseProperty<string>(okResult.Value, "userId"));
         Assert.Equal(
-            "user-42",
-            GetResponseProperty<string>(okResult.Value, "userId"));
-        Assert.Equal(
-            "chef",
-            GetResponseProperty<string>(okResult.Value, "username"));
+            "anca@example.com",
+            GetResponseProperty<string>(okResult.Value, "email"));
+        Assert.Null(okResult.Value!.GetType().GetProperty("username"));
     }
 
-    [Theory]
-    [InlineData(null, "chef")]
-    [InlineData("user-42", null)]
-    public void CompleteExtensionAuthentication_WhenARequiredClaimIsMissing_ShouldReturnUnauthorized(
-        string? userId,
-        string? username)
+    [Fact]
+    public void CompleteExtensionAuthentication_WithInvalidUserIdClaim_ShouldReturnUnauthorized()
     {
         FakeExtensionAuthenticationCodeService codeService = new();
         AuthenticationApiController controller = CreateController(
             codeService: codeService,
-            user: CreateUser(userId, username));
+            user: CreatePrincipal("not-an-id", "anca@example.com"));
 
         IActionResult result = controller.CompleteExtensionAuthentication();
 
@@ -46,7 +41,7 @@ public class AuthenticationApiControllerTests
     }
 
     [Fact]
-    public void CompleteExtensionAuthentication_ShouldCreateCodeAndRedirectWithEncodedCode()
+    public void CompleteExtensionAuthentication_WhenCurrentUserIsVerified_ShouldCreateCode()
     {
         const string authenticationCode = "code with spaces/+?=";
         FakeExtensionAuthenticationCodeService codeService = new()
@@ -55,53 +50,92 @@ public class AuthenticationApiControllerTests
         };
         AuthenticationApiController controller = CreateController(
             codeService: codeService,
-            user: CreateUser("user-42", "chef"));
+            userRepository: CreateUserRepository(CreateVerifiedUser(42)),
+            user: CreatePrincipal("42", "stale@example.com"));
 
         IActionResult result = controller.CompleteExtensionAuthentication();
 
         RedirectResult redirectResult = Assert.IsType<RedirectResult>(result);
-        Assert.Equal(
-            ("user-42", "chef"),
-            Assert.Single(codeService.CreateCodeCalls));
+        Assert.Equal([42], codeService.CreateCodeCalls);
         Assert.Equal(
             $"{AuthenticationRedirectUrl}?code={Uri.EscapeDataString(authenticationCode)}",
             redirectResult.Url);
         Assert.DoesNotContain(authenticationCode, redirectResult.Url);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void CompleteExtensionAuthentication_WhenCurrentUserIsMissingOrUnverified_ShouldReturnUnauthorized(
+        bool userExists)
+    {
+        FakeExtensionAuthenticationCodeService codeService = new();
+        FakeUserRepository userRepository = userExists
+            ? CreateUserRepository(CreateVerifiedUser(42, emailVerified: false))
+            : CreateUserRepository();
+        AuthenticationApiController controller = CreateController(
+            codeService: codeService,
+            userRepository: userRepository,
+            user: CreatePrincipal("42", "stale@example.com"));
+
+        IActionResult result = controller.CompleteExtensionAuthentication();
+
+        Assert.IsType<UnauthorizedResult>(result);
+        Assert.Empty(codeService.CreateCodeCalls);
+    }
+
     [Fact]
-    public void ExchangeCode_WithValidCode_ShouldCreateAndReturnJwt()
+    public void ExchangeCode_WithVerifiedCurrentUser_ShouldCreateAndReturnJwt()
     {
         FakeJwtTokenService jwtTokenService = new()
         {
             TokenToReturn = "issued-jwt"
         };
         FakeExtensionAuthenticationCodeService codeService = new();
-        codeService.AddCode(
-            "valid-code",
-            new ExtensionAuthenticationCodeData
-            {
-                UserId = "user-42",
-                Username = "chef",
-                ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(1)
-            });
+        codeService.AddCode("valid-code", CreateCodeData(42));
         AuthenticationApiController controller = CreateController(
             jwtTokenService,
-            codeService);
+            codeService,
+            CreateUserRepository(CreateVerifiedUser(42)));
 
         IActionResult result = controller.ExchangeCode(
-            new ExchangeAuthenticationCodeRequest
-            {
-                Code = "valid-code"
-            });
+            new ExchangeAuthenticationCodeRequest { Code = "valid-code" });
 
         OkObjectResult okResult = Assert.IsType<OkObjectResult>(result);
         Assert.Equal(
             "issued-jwt",
             GetResponseProperty<string>(okResult.Value, "accessToken"));
         Assert.Equal(
-            ("user-42", "chef"),
+            ("42", "anca@example.com"),
             Assert.Single(jwtTokenService.CreateTokenCalls));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void ExchangeCode_WhenUserIsMissingOrUnverified_ShouldConsumeCodeWithoutIssuingJwt(
+        bool userExists)
+    {
+        FakeJwtTokenService jwtTokenService = new();
+        FakeExtensionAuthenticationCodeService codeService = new();
+        codeService.AddCode("valid-code", CreateCodeData(42));
+        FakeUserRepository userRepository = userExists
+            ? CreateUserRepository(CreateVerifiedUser(42, emailVerified: false))
+            : CreateUserRepository();
+        AuthenticationApiController controller = CreateController(
+            jwtTokenService,
+            codeService,
+            userRepository);
+
+        IActionResult firstResult = controller.ExchangeCode(
+            new ExchangeAuthenticationCodeRequest { Code = "valid-code" });
+        IActionResult secondResult = controller.ExchangeCode(
+            new ExchangeAuthenticationCodeRequest { Code = "valid-code" });
+
+        Assert.IsType<BadRequestObjectResult>(firstResult);
+        Assert.IsType<BadRequestObjectResult>(secondResult);
+        Assert.Empty(jwtTokenService.CreateTokenCalls);
+        Assert.Equal(["valid-code", "valid-code"], codeService.ConsumeCodeCalls);
     }
 
     [Theory]
@@ -110,7 +144,6 @@ public class AuthenticationApiControllerTests
     [InlineData("", false)]
     [InlineData("   ", false)]
     [InlineData("unknown-code", false)]
-    [InlineData("expired-code", false)]
     public void ExchangeCode_WithInvalidRequest_ShouldReturnBadRequestWithoutCreatingJwt(
         string? code,
         bool bodyIsMissing)
@@ -122,10 +155,7 @@ public class AuthenticationApiControllerTests
             codeService);
         ExchangeAuthenticationCodeRequest? request = bodyIsMissing
             ? null
-            : new ExchangeAuthenticationCodeRequest
-            {
-                Code = code
-            };
+            : new ExchangeAuthenticationCodeRequest { Code = code };
 
         IActionResult result = controller.ExchangeCode(request);
 
@@ -142,41 +172,10 @@ public class AuthenticationApiControllerTests
         }
     }
 
-    [Fact]
-    public void ExchangeCode_ShouldConsumeAValidCodeOnlyOnce()
-    {
-        FakeJwtTokenService jwtTokenService = new();
-        FakeExtensionAuthenticationCodeService codeService = new();
-        codeService.AddCode(
-            "single-use-code",
-            new ExtensionAuthenticationCodeData
-            {
-                UserId = "user-42",
-                Username = "chef",
-                ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(1)
-            });
-        AuthenticationApiController controller = CreateController(
-            jwtTokenService,
-            codeService);
-        ExchangeAuthenticationCodeRequest request = new()
-        {
-            Code = "single-use-code"
-        };
-
-        IActionResult firstResult = controller.ExchangeCode(request);
-        IActionResult secondResult = controller.ExchangeCode(request);
-
-        Assert.IsType<OkObjectResult>(firstResult);
-        Assert.IsType<BadRequestObjectResult>(secondResult);
-        Assert.Single(jwtTokenService.CreateTokenCalls);
-        Assert.Equal(
-            ["single-use-code", "single-use-code"],
-            codeService.ConsumeCodeCalls);
-    }
-
     private static AuthenticationApiController CreateController(
         FakeJwtTokenService? jwtTokenService = null,
         FakeExtensionAuthenticationCodeService? codeService = null,
+        FakeUserRepository? userRepository = null,
         ClaimsPrincipal? user = null)
     {
         IConfiguration configuration = new ConfigurationBuilder()
@@ -189,7 +188,8 @@ public class AuthenticationApiControllerTests
         AuthenticationApiController controller = new(
             jwtTokenService ?? new FakeJwtTokenService(),
             configuration,
-            codeService ?? new FakeExtensionAuthenticationCodeService())
+            codeService ?? new FakeExtensionAuthenticationCodeService(),
+            userRepository ?? CreateUserRepository())
         {
             ControllerContext = new ControllerContext
             {
@@ -203,18 +203,45 @@ public class AuthenticationApiControllerTests
         return controller;
     }
 
-    private static ClaimsPrincipal CreateUser(string? userId, string? username)
+    private static FakeUserRepository CreateUserRepository(params User[] users)
+    {
+        FakeUserRepository repository = new();
+        repository.Users.AddRange(users);
+        return repository;
+    }
+
+    private static User CreateVerifiedUser(int id, bool emailVerified = true)
+    {
+        return new User
+        {
+            Id = id,
+            Email = "anca@example.com",
+            EmailVerifiedAtUtc = emailVerified ? DateTime.UtcNow : null
+        };
+    }
+
+    private static ExtensionAuthenticationCodeData CreateCodeData(int userId)
+    {
+        return new ExtensionAuthenticationCodeData
+        {
+            UserId = userId,
+            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(1)
+        };
+    }
+
+    private static ClaimsPrincipal CreatePrincipal(string? userId, string? email)
     {
         List<Claim> claims = [];
 
-        if (userId != null)
+        if (userId is not null)
         {
             claims.Add(new Claim(ClaimTypes.NameIdentifier, userId));
         }
 
-        if (username != null)
+        if (email is not null)
         {
-            claims.Add(new Claim(ClaimTypes.Name, username));
+            claims.Add(new Claim(ClaimTypes.Name, email));
+            claims.Add(new Claim(ClaimTypes.Email, email));
         }
 
         return new ClaimsPrincipal(new ClaimsIdentity(claims, "Test"));
@@ -223,11 +250,8 @@ public class AuthenticationApiControllerTests
     private static T GetResponseProperty<T>(object? response, string propertyName)
     {
         Assert.NotNull(response);
-
         PropertyInfo? property = response.GetType().GetProperty(propertyName);
-
         Assert.NotNull(property);
-
         return Assert.IsType<T>(property.GetValue(response));
     }
 
@@ -235,12 +259,11 @@ public class AuthenticationApiControllerTests
     {
         public string TokenToReturn { get; init; } = "test-jwt";
 
-        public List<(string UserId, string Username)> CreateTokenCalls { get; } = [];
+        public List<(string UserId, string Email)> CreateTokenCalls { get; } = [];
 
-        public string CreateToken(string userId, string username)
+        public string CreateToken(string userId, string email)
         {
-            CreateTokenCalls.Add((userId, username));
-
+            CreateTokenCalls.Add((userId, email));
             return TokenToReturn;
         }
     }
@@ -252,29 +275,25 @@ public class AuthenticationApiControllerTests
 
         public string CodeToCreate { get; init; } = "created-code";
 
-        public List<(string UserId, string Username)> CreateCodeCalls { get; } = [];
+        public List<int> CreateCodeCalls { get; } = [];
 
         public List<string> ConsumeCodeCalls { get; } = [];
 
-        public string CreateCode(string userId, string username)
+        public string CreateCode(int userId)
         {
-            CreateCodeCalls.Add((userId, username));
-
+            CreateCodeCalls.Add(userId);
             return CodeToCreate;
         }
 
         public ExtensionAuthenticationCodeData? ConsumeCode(string code)
         {
             ConsumeCodeCalls.Add(code);
-
             return _codes.Remove(code, out ExtensionAuthenticationCodeData? data)
                 ? data
                 : null;
         }
 
-        public void AddCode(
-            string code,
-            ExtensionAuthenticationCodeData codeData)
+        public void AddCode(string code, ExtensionAuthenticationCodeData codeData)
         {
             _codes.Add(code, codeData);
         }

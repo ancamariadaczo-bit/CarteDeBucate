@@ -15,7 +15,7 @@ public class ExtensionAuthenticationCodeService
         _timeProvider = timeProvider;
     }
 
-    public string CreateCode(string userId, string username)
+    public string CreateCode(int userId)
     {
         DateTimeOffset now = _timeProvider.GetUtcNow();
 
@@ -33,7 +33,6 @@ public class ExtensionAuthenticationCodeService
         _codes[code] = new ExtensionAuthenticationCodeData
         {
             UserId = userId,
-            Username = username,
             ExpiresAt = now.AddMinutes(2)
         };
 

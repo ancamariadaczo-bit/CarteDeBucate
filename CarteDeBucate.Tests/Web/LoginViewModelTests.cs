@@ -4,17 +4,17 @@ using CarteDeBucate.Web.Models;
 public class LoginViewModelTests
 {
     [Fact]
-    public void Username_WhenEmpty_ShouldReturnRequiredValidationError()
+    public void Email_WhenEmpty_ShouldReturnRequiredValidationError()
     {
         LoginViewModel model = CreateValidModel();
-        model.Username = "";
+        model.Email = "";
 
         List<ValidationResult> results = Validate(model);
 
         Assert.Contains(
             results,
-            result => HasError(result, nameof(LoginViewModel.Username),
-                "Username-ul este obligatoriu."));
+            result => HasError(result, nameof(LoginViewModel.Email),
+                "Adresa de e-mail este obligatorie."));
     }
 
     [Fact]
@@ -45,7 +45,7 @@ public class LoginViewModelTests
     {
         return new LoginViewModel
         {
-            Username = "anca",
+            Email = "anca@example.com",
             Password = "password"
         };
     }

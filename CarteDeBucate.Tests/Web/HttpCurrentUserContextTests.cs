@@ -23,13 +23,13 @@ public class HttpCurrentUserContextTests
     {
         HttpContextAccessor httpContextAccessor = new HttpContextAccessor
         {
-            HttpContext = CreateHttpContextWithUser("12", "anca")
+            HttpContext = CreateHttpContextWithUser("12", "anca@example.com")
         };
         HttpCurrentUserContext context = CreateContext(httpContextAccessor);
 
         Assert.True(context.IsAuthenticated);
         Assert.Equal(12, context.UserId);
-        Assert.Equal("anca", context.Email);
+        Assert.Equal("anca@example.com", context.Email);
     }
 
     [Fact]
@@ -78,12 +78,13 @@ public class HttpCurrentUserContextTests
         return new HttpCurrentUserContext(httpContextAccessor);
     }
 
-    private static HttpContext CreateHttpContextWithUser(string userId, string username)
+    private static HttpContext CreateHttpContextWithUser(string userId, string email)
     {
         Claim[] claims =
         {
             new Claim(ClaimTypes.NameIdentifier, userId),
-            new Claim(ClaimTypes.Name, username)
+            new Claim(ClaimTypes.Name, email),
+            new Claim(ClaimTypes.Email, email)
         };
         ClaimsIdentity identity = new ClaimsIdentity(claims, "Test");
         ClaimsPrincipal user = new ClaimsPrincipal(identity);

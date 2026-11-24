@@ -263,7 +263,7 @@ public class RecipesApiControllerTests
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue(
                 "Bearer",
-                factory.CreateToken("42", "chef"));
+                factory.CreateToken("42", "chef@example.com"));
         CreateRecipeRequest request = CreateRequest();
         request.SourceUrl = "javascript:alert(1)";
 
@@ -303,7 +303,7 @@ public class RecipesApiControllerTests
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue(
                 "Bearer",
-                factory.CreateToken("42", "chef"));
+                factory.CreateToken("42", "chef@example.com"));
         CreateRecipeRequest request = CreateRequest();
         request.ImageUrl = "file:///tmp/recipe.jpg";
 

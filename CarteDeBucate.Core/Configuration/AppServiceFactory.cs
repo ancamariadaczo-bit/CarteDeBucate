@@ -258,11 +258,13 @@ public static class AppServiceFactory
     }
 
     public static IAuthenticationService CreateAuthenticationService(
-        IUserRepository userRepository, ICurrentUserContext currentUserContext)
+        IUserRepository userRepository,
+        ICurrentUserContext currentUserContext,
+        PasswordHasher passwordHasher)
     {
         return new AuthenticationService(
             userRepository,
             currentUserContext,
-            new PasswordHasher());
+            passwordHasher);
     }
 }

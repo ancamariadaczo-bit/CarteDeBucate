@@ -52,7 +52,7 @@ public class AccountController : Controller
         }
 
         AuthenticationResult result =
-            _authenticationService.Login(model.Username, model.Password);
+            _authenticationService.Login(model.Email, model.Password);
 
         if (!result.IsSuccess || result.User == null)
         {
@@ -292,7 +292,8 @@ public class AccountController : Controller
         List<Claim> claims =
         [
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Name, user.Email)
+            new Claim(ClaimTypes.Name, user.Email),
+            new Claim(ClaimTypes.Email, user.Email)
         ];
         ClaimsIdentity identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         ClaimsPrincipal principal = new ClaimsPrincipal(identity);

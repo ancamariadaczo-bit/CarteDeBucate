@@ -122,7 +122,7 @@ public class AccountControllerTests
         FakeAuthenticationService authenticationService = new FakeAuthenticationService();
         AccountController controller = CreateController(authenticationService);
         LoginViewModel model = new LoginViewModel();
-        controller.ModelState.AddModelError("Username", "Username-ul este obligatoriu.");
+        controller.ModelState.AddModelError("Email", "Adresa de e-mail este obligatorie.");
 
         IActionResult result = await controller.Login(model);
 
@@ -139,7 +139,7 @@ public class AccountControllerTests
             LoginResult = new AuthenticationResult
             {
                 IsSuccess = false,
-                Message = "Invalid username or password."
+                Message = "Invalid email or password."
             }
         };
         AccountController controller = CreateController(authenticationService);
@@ -150,7 +150,7 @@ public class AccountControllerTests
         ViewResult viewResult = Assert.IsType<ViewResult>(result);
         Assert.Same(model, viewResult.Model);
         Assert.True(authenticationService.LoginWasCalled);
-        Assert.Equal("anca", authenticationService.UsernamePassedToLogin);
+        Assert.Equal("anca@example.com", authenticationService.EmailPassedToLogin);
         Assert.Equal("secret-password", authenticationService.PasswordPassedToLogin);
         Assert.False(controller.ModelState.IsValid);
     }
@@ -182,6 +182,10 @@ public class AccountControllerTests
             "12",
             httpAuthenticationService.SignedInPrincipal?.FindFirst(
                 System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+        Assert.Equal(
+            "anca@anca.com",
+            httpAuthenticationService.SignedInPrincipal?.FindFirst(
+                System.Security.Claims.ClaimTypes.Email)?.Value);
     }
 
     [Fact]
@@ -212,7 +216,6 @@ public class AccountControllerTests
         ViewResult viewResult = Assert.IsType<ViewResult>(result);
         Assert.Same(model, viewResult.Model);
         Assert.False(registrationService.RegisterWasCalled);
-        Assert.False(authenticationService.RegisterWasCalled);
     }
 
     [Fact]
@@ -247,7 +250,6 @@ public class AccountControllerTests
         Assert.Equal("Anca@Example.com", registrationService.Input?.Email);
         Assert.Equal("secret-password", registrationService.Input?.Password);
         Assert.Equal("secret-password", registrationService.Input?.PasswordConfirmation);
-        Assert.False(authenticationService.RegisterWasCalled);
         Assert.False(httpAuthenticationService.SignInWasCalled);
     }
 
@@ -511,7 +513,7 @@ public class AccountControllerTests
     {
         return new LoginViewModel
         {
-            Username = "anca",
+            Email = "anca@example.com",
             Password = "secret-password"
         };
     }

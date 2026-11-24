@@ -40,7 +40,7 @@ test("resolveAuthenticationState returns true and keeps a valid token", async ()
 
             return {
                 userId: "user-42",
-                username: "chef"
+                email: "chef@example.com"
             };
         },
         removeAccessToken: async () => {

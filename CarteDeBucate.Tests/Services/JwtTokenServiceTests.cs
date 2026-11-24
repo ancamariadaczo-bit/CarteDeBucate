@@ -16,7 +16,7 @@ public class JwtTokenServiceTests
     public void CreateToken_ShouldUseTheConfiguredIssuerAudienceAndValidSignature()
     {
         JwtTokenService service = CreateService();
-        string token = service.CreateToken("user-42", "chef");
+        string token = service.CreateToken("user-42", "chef@example.com");
         JwtSecurityTokenHandler tokenHandler = new();
 
         ClaimsPrincipal principal = tokenHandler.ValidateToken(
@@ -33,10 +33,10 @@ public class JwtTokenServiceTests
     }
 
     [Fact]
-    public void CreateToken_ShouldContainUserIdAndUsernameClaimsWithoutEmail()
+    public void CreateToken_ShouldContainUserIdAndEmailClaims()
     {
         JwtTokenService service = CreateService();
-        string token = service.CreateToken("user-42", "chef-anca");
+        string token = service.CreateToken("user-42", "anca@example.com");
         JwtSecurityToken jwtToken = new JwtSecurityTokenHandler()
             .ReadJwtToken(token);
 
@@ -51,10 +51,11 @@ public class JwtTokenServiceTests
         Assert.Contains(
             jwtToken.Claims,
             claim => claim.Type == ClaimTypes.Name &&
-                claim.Value == "chef-anca");
-        Assert.DoesNotContain(
+                claim.Value == "anca@example.com");
+        Assert.Contains(
             jwtToken.Claims,
-            claim => claim.Type == ClaimTypes.Email);
+            claim => claim.Type == ClaimTypes.Email &&
+                claim.Value == "anca@example.com");
     }
 
     [Fact]
@@ -63,7 +64,7 @@ public class JwtTokenServiceTests
         JwtTokenService service = CreateService();
         DateTime beforeCreation = DateTime.UtcNow;
 
-        string token = service.CreateToken("user-42", "chef");
+        string token = service.CreateToken("user-42", "chef@example.com");
 
         DateTime afterCreation = DateTime.UtcNow;
         JwtSecurityToken jwtToken = new JwtSecurityTokenHandler()

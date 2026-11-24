@@ -35,7 +35,7 @@ test("getCurrentUser sends the Bearer token and returns the current user", async
     const accessToken = "test-access-token";
     const currentUser = {
         userId: "user-42",
-        username: "chef"
+        email: "chef@example.com"
     };
     const fetchRequest = async (...request) => {
         requests.push(request);

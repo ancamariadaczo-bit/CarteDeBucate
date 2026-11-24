@@ -12,7 +12,7 @@ public class JwtTokenService : IJwtTokenService
         _configuration = configuration;
     }
 
-    public string CreateToken(string userId, string username)
+    public string CreateToken(string userId, string email)
     {
         string key = _configuration["Jwt:Key"]
             ?? throw new InvalidOperationException("Jwt:Key is not configured.");
@@ -29,7 +29,8 @@ public class JwtTokenService : IJwtTokenService
         {
             new(JwtRegisteredClaimNames.Sub, userId),
             new(ClaimTypes.NameIdentifier, userId),
-            new(ClaimTypes.Name, username)
+            new(ClaimTypes.Name, email),
+            new(ClaimTypes.Email, email)
         };
 
         var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));

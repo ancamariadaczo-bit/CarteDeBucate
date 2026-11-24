@@ -602,13 +602,25 @@ public class AppServiceFactoryTests
     {
         FakeUserRepository repository = new FakeUserRepository();
         CurrentUserContext currentUserContext = new CurrentUserContext();
+        PasswordHasher passwordHasher = new PasswordHasher();
+        (string hash, string salt) = passwordHasher.HashPassword("secret-password");
+        repository.Users.Add(new User
+        {
+            Id = 1,
+            Email = "anca@example.com",
+            PasswordHash = hash,
+            PasswordSalt = salt,
+            EmailVerifiedAtUtc = DateTime.UtcNow
+        });
         IAuthenticationService service =
-            AppServiceFactory.CreateAuthenticationService(repository, currentUserContext);
+            AppServiceFactory.CreateAuthenticationService(
+                repository,
+                currentUserContext,
+                passwordHasher);
 
-        AuthenticationResult result = service.Register("anca", "secret-password");
+        AuthenticationResult result = service.Login("anca@example.com", "secret-password");
 
         Assert.True(result.IsSuccess);
-        Assert.True(repository.AddWasCalled);
         Assert.True(currentUserContext.IsAuthenticated);
     }
 
