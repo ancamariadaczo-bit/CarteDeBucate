@@ -269,6 +269,18 @@ from the local key. The non-secret values are inherited from `appsettings.json`.
 Add Render overrides only when a production value genuinely differs from the
 shared value.
 
+#### Render forwarded headers
+
+Render sets `RENDER=true` automatically. The application uses that platform
+marker to enable ASP.NET Core forwarded-header processing before HTTPS
+redirection and rate limiting. Render's full trusted ingress chain is processed,
+so `HttpContext.Connection.RemoteIpAddress` contains the original client address
+from `X-Forwarded-For` instead of the shared load-balancer address.
+
+Do not set `RENDER=true` outside Render. Enabling it on a server whose application
+port is directly reachable would allow clients to spoof `X-Forwarded-For`. No
+additional Render environment variable is required for this behavior.
+
 #### Transactional email configuration
 
 Development and test environments use an in-memory email sender by default. It

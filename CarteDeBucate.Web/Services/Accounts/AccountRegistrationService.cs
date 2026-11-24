@@ -5,7 +5,6 @@ using System.Security.Cryptography;
 public sealed class AccountRegistrationService : IAccountRegistrationService
 {
     public const int MinimumPasswordLength = 12;
-
     private const int TokenSize = 32;
     private const int EncodedTokenLength = 43;
     private const string ConfirmationPath = "/Account/VerifyEmail";
@@ -63,8 +62,7 @@ public sealed class AccountRegistrationService : IAccountRegistrationService
         byte[] rawTokenBytes = RandomNumberGenerator.GetBytes(TokenSize);
         string rawToken = WebEncoders.Base64UrlEncode(rawTokenBytes);
         byte[] tokenHash = SHA256.HashData(rawTokenBytes);
-        (string passwordHash, string passwordSalt) =
-            _passwordHasher.HashPassword(password);
+        (string passwordHash, string passwordSalt) = _passwordHasher.HashPassword(password);
 
         EmailTokenIssuance token = new(
             EmailTokenPurpose.RegistrationVerification,
@@ -89,8 +87,7 @@ public sealed class AccountRegistrationService : IAccountRegistrationService
                 AccountRegistrationServiceResultCode.DuplicateEmail);
         }
 
-        string confirmationUrl =
-            _linkBuilder.BuildConfirmationUrl(ConfirmationPath, rawToken);
+        string confirmationUrl = _linkBuilder.BuildConfirmationUrl(ConfirmationPath, rawToken);
         RenderedEmailTemplate template = _templateRenderer.Render(
             new EmailTemplateRenderRequest(
                 EmailTemplateId.RegistrationVerification,
@@ -117,8 +114,7 @@ public sealed class AccountRegistrationService : IAccountRegistrationService
             AccountRegistrationServiceResultCode.Success);
     }
 
-    public AccountEmailVerificationReviewResult ReviewEmailVerification(
-        string? token)
+    public AccountEmailVerificationReviewResult ReviewEmailVerification(string? token)
     {
         if (!TryHashVerificationToken(token, out byte[] tokenHash))
         {
@@ -192,8 +188,7 @@ public sealed class AccountRegistrationService : IAccountRegistrationService
                 });
         }
 
-        string confirmationUrl =
-            _linkBuilder.BuildConfirmationUrl(ConfirmationPath, rawToken);
+        string confirmationUrl = _linkBuilder.BuildConfirmationUrl(ConfirmationPath, rawToken);
         RenderedEmailTemplate template = _templateRenderer.Render(
             new EmailTemplateRenderRequest(
                 EmailTemplateId.RegistrationVerification,
@@ -248,8 +243,7 @@ public sealed class AccountRegistrationService : IAccountRegistrationService
         return new AccountEmailVerificationResult(code);
     }
 
-    private static AccountRegistrationServiceResult? Validate(
-        AccountRegistrationInput input)
+    private static AccountRegistrationServiceResult? Validate(AccountRegistrationInput input)
     {
         if (!TryNormalizeValidEmail(input.Email, out _))
         {
@@ -275,10 +269,7 @@ public sealed class AccountRegistrationService : IAccountRegistrationService
                 AccountRegistrationServiceResultCode.PasswordConfirmationRequired);
         }
 
-        if (!string.Equals(
-                input.Password,
-                input.PasswordConfirmation,
-                StringComparison.Ordinal))
+        if (!string.Equals(input.Password, input.PasswordConfirmation, StringComparison.Ordinal))
         {
             return new AccountRegistrationServiceResult(
                 AccountRegistrationServiceResultCode.PasswordConfirmationMismatch);
@@ -287,9 +278,7 @@ public sealed class AccountRegistrationService : IAccountRegistrationService
         return null;
     }
 
-    private static bool TryNormalizeValidEmail(
-        string? email,
-        out string normalizedEmail)
+    private static bool TryNormalizeValidEmail(string? email, out string normalizedEmail)
     {
         normalizedEmail = string.Empty;
 
@@ -313,9 +302,7 @@ public sealed class AccountRegistrationService : IAccountRegistrationService
         return $"registration-verification-{Convert.ToHexString(tokenHash)}";
     }
 
-    private static bool TryHashVerificationToken(
-        string? token,
-        out byte[] tokenHash)
+    private static bool TryHashVerificationToken(string? token, out byte[] tokenHash)
     {
         tokenHash = [];
 

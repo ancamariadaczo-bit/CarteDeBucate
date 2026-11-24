@@ -6,9 +6,14 @@ using Microsoft.IdentityModel.Tokens;
 using CarteDeBucate.Web.BackgroundServices;
 using CarteDeBucate.Web.Services;
 using CarteDeBucate.Web.Services.Photos;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Localization;
 
 var builder = WebApplication.CreateBuilder(args);
+
+ForwardedHeadersOptions? renderForwardedHeadersOptions =
+    RenderForwardedHeadersConfiguration.CreateOptions(
+        Environment.GetEnvironmentVariable("RENDER"));
 
 ApplicationOptions applicationOptions =
     builder.Configuration.GetSection("Application").Get<ApplicationOptions>() ?? new();
@@ -299,6 +304,11 @@ catch (Exception exception)
 }
 
 // Configure the HTTP request pipeline.
+if (renderForwardedHeadersOptions is not null)
+{
+    app.UseForwardedHeaders(renderForwardedHeadersOptions);
+}
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler(new ExceptionHandlerOptions
