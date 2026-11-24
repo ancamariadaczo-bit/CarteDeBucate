@@ -298,7 +298,7 @@ public class AccountControllerTests
         Assert.Same(model, viewResult.Model);
         Assert.Contains(
             controller.ModelState[nameof(RegisterViewModel.Email)]!.Errors,
-            error => error.ErrorMessage == "Introdu o adresă de e-mail validă.");
+            error => error.ErrorMessage == "Enter a valid email address.");
     }
 
     [Fact]

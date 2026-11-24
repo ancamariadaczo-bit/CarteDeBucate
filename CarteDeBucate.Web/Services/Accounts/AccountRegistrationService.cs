@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.WebUtilities;
-using System.Globalization;
 using System.Net.Mail;
 using System.Security.Cryptography;
 
@@ -10,7 +9,6 @@ public sealed class AccountRegistrationService : IAccountRegistrationService
     private const int TokenSize = 32;
     private const int EncodedTokenLength = 43;
     private const string ConfirmationPath = "/Account/VerifyEmail";
-    private const string FallbackCulture = "en-US";
     private static readonly TimeSpan TokenLifetime = TimeSpan.FromHours(24);
 
     private readonly IAccountRepository _accountRepository;
@@ -305,19 +303,9 @@ public sealed class AccountRegistrationService : IAccountRegistrationService
 
     private static string ResolveCulture(string? culture)
     {
-        if (string.IsNullOrWhiteSpace(culture))
-        {
-            return FallbackCulture;
-        }
-
-        try
-        {
-            return CultureInfo.GetCultureInfo(culture).Name;
-        }
-        catch (CultureNotFoundException)
-        {
-            return FallbackCulture;
-        }
+        return ApplicationLocalization
+            .GetSupportedCultureOrFallback(culture)
+            .Name;
     }
 
     private static string CreateIdempotencyKey(byte[] tokenHash)

@@ -15,7 +15,7 @@ public class ResendVerificationViewModelTests
             result => HasError(
                 result,
                 nameof(ResendVerificationViewModel.Email),
-                "Adresa de e-mail este obligatorie."));
+                "Email address is required."));
     }
 
     [Fact]
@@ -33,7 +33,7 @@ public class ResendVerificationViewModelTests
             result => HasError(
                 result,
                 nameof(ResendVerificationViewModel.Email),
-                "Introdu o adresă de e-mail validă."));
+                "Enter a valid email address."));
     }
 
     [Fact]

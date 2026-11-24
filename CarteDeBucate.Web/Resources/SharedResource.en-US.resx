@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Site_Title" xml:space="preserve"><value>Carte de bucate</value></data>
+  <data name="Public_HowItWorks" xml:space="preserve"><value>How it works</value></data>
+  <data name="Public_Capabilities" xml:space="preserve"><value>What you can do</value></data>
+  <data name="Public_About" xml:space="preserve"><value>About</value></data>
+  <data name="Auth_Login" xml:space="preserve"><value>Log in</value></data>
+  <data name="Auth_LoginAction" xml:space="preserve"><value>Log in</value></data>
+  <data name="Auth_Register" xml:space="preserve"><value>Create account</value></data>
+  <data name="Auth_Username" xml:space="preserve"><value>Username</value></data>
+  <data name="Auth_Email" xml:space="preserve"><value>Email address</value></data>
+  <data name="Auth_Password" xml:space="preserve"><value>Password</value></data>
+  <data name="Auth_ConfirmPassword" xml:space="preserve"><value>Confirm password</value></data>
+  <data name="Auth_ShowPassword" xml:space="preserve"><value>Show password</value></data>
+  <data name="Auth_HidePassword" xml:space="preserve"><value>Hide password</value></data>
+  <data name="Auth_Submitting" xml:space="preserve"><value>Submitting…</value></data>
+  <data name="Auth_InvalidCredentials" xml:space="preserve"><value>Invalid email or password.</value></data>
+  <data name="Login_Description" xml:space="preserve"><value>Log in to continue to your recipe collection.</value></data>
+  <data name="Login_Prompt" xml:space="preserve"><value>Do not have an account yet?</value></data>
+  <data name="Register_Description" xml:space="preserve"><value>Create your account and organise your recipes in one place.</value></data>
+  <data name="Register_PasswordRequirement" xml:space="preserve"><value>Password must be at least 12 characters.</value></data>
+  <data name="Register_Prompt" xml:space="preserve"><value>Already have an account?</value></data>
+  <data name="Register_CheckEmail_Title" xml:space="preserve"><value>Check your email</value></data>
+  <data name="Register_CheckEmail_Description" xml:space="preserve"><value>If this address can be registered, you will receive an email with the steps to confirm your account.</value></data>
+  <data name="Register_CheckEmail_Help" xml:space="preserve"><value>The message may take a few minutes. Check your spam folder too.</value></data>
+  <data name="VerifyEmail_Title" xml:space="preserve"><value>Confirm your email address</value></data>
+  <data name="VerifyEmail_Description" xml:space="preserve"><value>Confirm your email address to activate your account.</value></data>
+  <data name="VerifyEmail_Action" xml:space="preserve"><value>Confirm address</value></data>
+  <data name="VerifyEmail_Success_Title" xml:space="preserve"><value>Email address confirmed</value></data>
+  <data name="VerifyEmail_Success_Description" xml:space="preserve"><value>Your account is active. You can now log in.</value></data>
+  <data name="VerifyEmail_Invalid_Title" xml:space="preserve"><value>Invalid confirmation link</value></data>
+  <data name="VerifyEmail_Invalid_Description" xml:space="preserve"><value>This confirmation link is invalid or has already been used.</value></data>
+  <data name="VerifyEmail_Expired_Title" xml:space="preserve"><value>Confirmation link expired</value></data>
+  <data name="VerifyEmail_Expired_Description" xml:space="preserve"><value>This confirmation link has expired. You can request another email.</value></data>
+  <data name="ResendVerification_Title" xml:space="preserve"><value>Resend confirmation email</value></data>
+  <data name="ResendVerification_Description" xml:space="preserve"><value>Enter your email address. If an account is awaiting confirmation, we will send a new email.</value></data>
+  <data name="ResendVerification_Action" xml:space="preserve"><value>Send email</value></data>
+  <data name="ResendVerification_Sent_Title" xml:space="preserve"><value>Check your email</value></data>
+  <data name="ResendVerification_Sent_Description" xml:space="preserve"><value>If this address has an account awaiting confirmation, a new email will be sent.</value></data>
+  <data name="Public_MetaDescription" xml:space="preserve"><value>Organise all your recipes in one personal cookbook.</value></data>
+  <data name="Hero_Title" xml:space="preserve"><value>Your recipe collection, all in one place.</value></data>
+  <data name="Hero_Text" xml:space="preserve"><value>Save recipes from the web or add them manually. Organise them and find them easily when you need inspiration.</value></data>
+  <data name="How_Add_Title" xml:space="preserve"><value>Add a recipe</value></data>
+  <data name="How_Add_Text" xml:space="preserve"><value>Enter it manually or import it from a web page address.</value></data>
+  <data name="How_Organize_Title" xml:space="preserve"><value>Organise your collection</value></data>
+  <data name="How_Organize_Text" xml:space="preserve"><value>Edit details, add notes, and use labels to organise your recipes.</value></data>
+  <data name="How_Find_Title" xml:space="preserve"><value>Find a recipe</value></data>
+  <data name="How_Find_Text" xml:space="preserve"><value>Use search to quickly find the recipe you need.</value></data>
+  <data name="Feature_Details_Title" xml:space="preserve"><value>Keep every detail</value></data>
+  <data name="Feature_Details_Text" xml:space="preserve"><value>Add ingredients, instructions, notes, and the original source.</value></data>
+  <data name="Feature_Photos_Title" xml:space="preserve"><value>Add photos</value></data>
+  <data name="Feature_Photos_Text" xml:space="preserve"><value>Keep useful recipe images alongside the recipe.</value></data>
+  <data name="Feature_Favorites_Title" xml:space="preserve"><value>Track favourite recipes</value></data>
+  <data name="Feature_Favorites_Text" xml:space="preserve"><value>Use labels to see what you want to try, have tried, and added to favourites.</value></data>
+  <data name="Feature_Print_Title" xml:space="preserve"><value>Print recipes</value></data>
+  <data name="Feature_Print_Text" xml:space="preserve"><value>Prepare a simple, clear version to print or save as a PDF.</value></data>
+  <data name="Feature_Backup_Title" xml:space="preserve"><value>Create backups</value></data>
+  <data name="Feature_Backup_Text" xml:space="preserve"><value>Export your collection and import it again whenever you need to.</value></data>
+  <data name="Feature_Clipper_Title" xml:space="preserve"><value>Use Recipe Clipper</value></data>
+  <data name="Feature_Clipper_Text" xml:space="preserve"><value>Extract a recipe directly from a web page and review it before saving.</value></data>
+  <data name="About_Text1" xml:space="preserve"><value>Recipes are often scattered across bookmarks, notes, screenshots, and websites. Carte de bucate brings them together in one simple, easy-to-use place.</value></data>
+  <data name="About_Text2" xml:space="preserve"><value>Your personal recipe collection is a place to keep recipes to try, favourites, and the details you need while cooking.</value></data>
+  <data name="About_Invitation" xml:space="preserve"><value>Start your recipe collection</value></data>
+  <data name="Settings_Title" xml:space="preserve"><value>Settings</value></data>
+  <data name="Settings_Description" xml:space="preserve"><value>Manage your preferences, saved data, and account options.</value></data>
+  <data name="Settings_Preferences" xml:space="preserve"><value>Preferences</value></data>
+  <data name="Settings_Language_Title" xml:space="preserve"><value>Language</value></data>
+  <data name="Settings_Language_Description" xml:space="preserve"><value>Choose the language used in the application and your account emails.</value></data>
+  <data name="Settings_Language_Label" xml:space="preserve"><value>Preferred language</value></data>
+  <data name="Settings_Save" xml:space="preserve"><value>Save preference</value></data>
+  <data name="Culture_English" xml:space="preserve"><value>English</value></data>
+  <data name="Culture_Romanian" xml:space="preserve"><value>Romanian</value></data>
+</root>

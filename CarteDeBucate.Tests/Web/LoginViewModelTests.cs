@@ -14,7 +14,7 @@ public class LoginViewModelTests
         Assert.Contains(
             results,
             result => HasError(result, nameof(LoginViewModel.Email),
-                "Adresa de e-mail este obligatorie."));
+                "Email address is required."));
     }
 
     [Fact]
@@ -28,7 +28,7 @@ public class LoginViewModelTests
         Assert.Contains(
             results,
             result => HasError(result, nameof(LoginViewModel.Password),
-                "Parola este obligatorie."));
+                "Password is required."));
     }
 
     [Fact]

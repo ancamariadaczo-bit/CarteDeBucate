@@ -6,7 +6,6 @@ using Microsoft.IdentityModel.Tokens;
 using CarteDeBucate.Web.BackgroundServices;
 using CarteDeBucate.Web.Services;
 using CarteDeBucate.Web.Services.Photos;
-using System.Globalization;
 using Microsoft.AspNetCore.Localization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -271,13 +270,8 @@ builder.Services.AddHostedService<DatabaseBackupWorker>();
 
 var app = builder.Build();
 
-CultureInfo romanianCulture = CultureInfo.GetCultureInfo("ro-RO");
-RequestLocalizationOptions localizationOptions = new()
-{
-    DefaultRequestCulture = new RequestCulture(romanianCulture),
-    SupportedCultures = [romanianCulture],
-    SupportedUICultures = [romanianCulture]
-};
+RequestLocalizationOptions localizationOptions =
+    ApplicationLocalization.CreateOptions();
 
 app.Logger.LogInformation(
     "Application starting in {EnvironmentName} environment",
@@ -316,12 +310,12 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseRequestLocalization(localizationOptions);
 app.UseRouting();
 
 app.UseCors("ChromeExtension");
 
 app.UseAuthentication();
+app.UseRequestLocalization(localizationOptions);
 app.UseRateLimiter();
 app.UseAuthorization();
 

@@ -34,4 +34,17 @@ public class FakeUserRepository : IUserRepository
     {
         return Users.FirstOrDefault(user => user.Id == userId);
     }
+
+    public bool UpdatePreferredCulture(int userId, string preferredCulture)
+    {
+        User? user = GetById(userId);
+
+        if (user is null)
+        {
+            return false;
+        }
+
+        user.PreferredCulture = preferredCulture;
+        return true;
+    }
 }

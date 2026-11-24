@@ -74,6 +74,21 @@ public class DatabaseUserRepositoryTests
         });
     }
 
+    [Fact]
+    public void UpdatePreferredCulture_ShouldPersistTheSupportedCulture()
+    {
+        WithRepository(repository =>
+        {
+            User user = CreateUser("anca@example.com");
+            repository.Add(user);
+
+            bool wasUpdated = repository.UpdatePreferredCulture(user.Id, "en-US");
+
+            Assert.True(wasUpdated);
+            Assert.Equal("en-US", repository.GetById(user.Id)?.PreferredCulture);
+        });
+    }
+
     private static User CreateUser(string email)
     {
         return new User

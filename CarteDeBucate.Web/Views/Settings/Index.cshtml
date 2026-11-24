@@ -1,17 +1,31 @@
-@{
-    ViewData["Title"] = "Setări";
-}
+@model PreferredCultureViewModel
+@inject Microsoft.Extensions.Localization.IStringLocalizer<CarteDeBucate.Web.SharedResource> L
+@{ ViewData["Title"] = L["Settings_Title"]; }
 
 <div class="mb-4">
-    <h1 class="h2">Setări</h1>
-    <p class="text-muted mb-0">Gestionează preferințele, datele salvate și opțiunile contului.</p>
+    <h1 class="h2">@L["Settings_Title"]</h1>
+    <p class="text-muted mb-0">@L["Settings_Description"]</p>
 </div>
 
 <section class="settings-section" aria-labelledby="preferences-heading">
-    <h2 id="preferences-heading" class="h4">Preferințe</h2>
-    <p class="text-muted mb-0">
-        În curând vei putea alege limba, unitățile de măsură și aspectul aplicației.
-    </p>
+    <h2 id="preferences-heading" class="h4">@L["Settings_Preferences"]</h2>
+    <div class="settings-action">
+        <div>
+            <h3 class="h5">@L["Settings_Language_Title"]</h3>
+            <p class="text-muted mb-0">@L["Settings_Language_Description"]</p>
+        </div>
+        <form asp-action="UpdatePreferredCulture" method="post">
+            <div class="mb-3">
+                <label asp-for="PreferredCulture" class="form-label">@L["Settings_Language_Label"]</label>
+                <select asp-for="PreferredCulture" class="form-select">
+                    <option value="en-US">@L["Culture_English"]</option>
+                    <option value="ro-RO">@L["Culture_Romanian"]</option>
+                </select>
+                <span asp-validation-for="PreferredCulture" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-primary">@L["Settings_Save"]</button>
+        </form>
+    </div>
 </section>
 
 <section class="settings-section" aria-labelledby="backup-heading">

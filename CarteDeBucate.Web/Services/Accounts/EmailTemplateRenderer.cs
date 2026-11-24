@@ -73,19 +73,7 @@ public sealed class EmailTemplateRenderer : IEmailTemplateRenderer
 
     private static CultureInfo ResolveCulture(string? culture)
     {
-        if (string.IsNullOrWhiteSpace(culture))
-        {
-            return CultureInfo.InvariantCulture;
-        }
-
-        try
-        {
-            return CultureInfo.GetCultureInfo(culture);
-        }
-        catch (CultureNotFoundException)
-        {
-            return CultureInfo.InvariantCulture;
-        }
+        return ApplicationLocalization.GetSupportedCultureOrFallback(culture);
     }
 
     private static string GetConfirmationUrl(EmailTemplateRenderRequest request)

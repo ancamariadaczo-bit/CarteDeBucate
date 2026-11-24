@@ -15,4 +15,6 @@
   <data name="RegistrationPasswordLength" xml:space="preserve"><value>Parola trebuie să aibă cel puțin 12 caractere.</value></data>
   <data name="ConfirmPasswordRequired" xml:space="preserve"><value>Confirmarea parolei este obligatorie.</value></data>
   <data name="PasswordMismatch" xml:space="preserve"><value>Parolele nu coincid.</value></data>
+  <data name="CultureRequired" xml:space="preserve"><value>Selectează limba preferată.</value></data>
+  <data name="CultureInvalid" xml:space="preserve"><value>Selectează una dintre limbile disponibile.</value></data>
 </root>

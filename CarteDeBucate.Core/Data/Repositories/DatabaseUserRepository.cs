@@ -85,6 +85,23 @@ public class DatabaseUserRepository : IUserRepository
         return ReadUser(reader);
     }
 
+    public bool UpdatePreferredCulture(int userId, string preferredCulture)
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        connection.Open();
+
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            UPDATE Users
+            SET PreferredCulture = $preferredCulture
+            WHERE Id = $userId;
+        """;
+        command.Parameters.AddWithValue("$preferredCulture", preferredCulture);
+        command.Parameters.AddWithValue("$userId", userId);
+
+        return command.ExecuteNonQuery() == 1;
+    }
+
     private static User? ReadUser(SqliteDataReader reader)
     {
         if (!reader.Read())

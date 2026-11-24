@@ -14,7 +14,7 @@ public class RegisterViewModelTests
         Assert.Contains(
             results,
             result => HasError(result, nameof(RegisterViewModel.Email),
-                "Adresa de e-mail este obligatorie."));
+                "Email address is required."));
     }
 
     [Fact]
@@ -28,7 +28,7 @@ public class RegisterViewModelTests
         Assert.Contains(
             results,
             result => HasError(result, nameof(RegisterViewModel.Email),
-                "Introdu o adresă de e-mail validă."));
+                "Enter a valid email address."));
     }
 
     [Fact]
@@ -42,7 +42,7 @@ public class RegisterViewModelTests
         Assert.Contains(
             results,
             result => HasError(result, nameof(RegisterViewModel.Password),
-                "Parola este obligatorie."));
+                "Password is required."));
     }
 
     [Fact]
@@ -57,7 +57,7 @@ public class RegisterViewModelTests
         Assert.Contains(
             results,
             result => HasError(result, nameof(RegisterViewModel.Password),
-                "Parola trebuie să aibă cel puțin 12 caractere."));
+                "Password must be at least 12 characters."));
     }
 
     [Fact]
@@ -71,7 +71,7 @@ public class RegisterViewModelTests
         Assert.Contains(
             results,
             result => HasError(result, nameof(RegisterViewModel.ConfirmPassword),
-                "Confirmarea parolei este obligatorie."));
+                "Password confirmation is required."));
     }
 
     [Fact]
@@ -85,7 +85,7 @@ public class RegisterViewModelTests
         Assert.Contains(
             results,
             result => HasError(result, nameof(RegisterViewModel.ConfirmPassword),
-                "Parolele nu coincid."));
+                "Passwords do not match."));
     }
 
     [Fact]

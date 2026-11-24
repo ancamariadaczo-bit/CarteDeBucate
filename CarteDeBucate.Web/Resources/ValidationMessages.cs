@@ -20,6 +20,8 @@ public static class ValidationMessages
         Get(nameof(RegistrationPasswordLength));
     public static string ConfirmPasswordRequired => Get(nameof(ConfirmPasswordRequired));
     public static string PasswordMismatch => Get(nameof(PasswordMismatch));
+    public static string CultureRequired => Get(nameof(CultureRequired));
+    public static string CultureInvalid => Get(nameof(CultureInvalid));
 
     private static string Get(string name) => ResourceManager.GetString(name) ?? name;
 }
