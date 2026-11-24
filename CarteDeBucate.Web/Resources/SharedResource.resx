@@ -12,18 +12,21 @@
   <data name="Auth_LoginAction" xml:space="preserve"><value>Autentifică-te</value></data>
   <data name="Auth_Register" xml:space="preserve"><value>Creează cont</value></data>
   <data name="Auth_Username" xml:space="preserve"><value>Nume de utilizator</value></data>
+  <data name="Auth_Email" xml:space="preserve"><value>Adresă de e-mail</value></data>
   <data name="Auth_Password" xml:space="preserve"><value>Parolă</value></data>
   <data name="Auth_ConfirmPassword" xml:space="preserve"><value>Confirmă parola</value></data>
   <data name="Auth_ShowPassword" xml:space="preserve"><value>Arată parola</value></data>
   <data name="Auth_HidePassword" xml:space="preserve"><value>Ascunde parola</value></data>
   <data name="Auth_Submitting" xml:space="preserve"><value>Se trimite…</value></data>
   <data name="Auth_InvalidCredentials" xml:space="preserve"><value>Numele de utilizator sau parola sunt incorecte.</value></data>
-  <data name="Register_DuplicateUsername" xml:space="preserve"><value>Acest nume de utilizator este deja folosit. Alege altul.</value></data>
   <data name="Login_Description" xml:space="preserve"><value>Autentifică-te pentru a continua către colecția ta de rețete.</value></data>
   <data name="Login_Prompt" xml:space="preserve"><value>Nu ai încă un cont?</value></data>
   <data name="Register_Description" xml:space="preserve"><value>Creează-ți contul și începe să-ți organizezi rețetele într-un singur loc.</value></data>
-  <data name="Register_PasswordRequirement" xml:space="preserve"><value>Parola trebuie să aibă cel puțin 5 caractere.</value></data>
+  <data name="Register_PasswordRequirement" xml:space="preserve"><value>Parola trebuie să aibă cel puțin 12 caractere.</value></data>
   <data name="Register_Prompt" xml:space="preserve"><value>Ai deja un cont?</value></data>
+  <data name="Register_CheckEmail_Title" xml:space="preserve"><value>Verifică-ți e-mailul</value></data>
+  <data name="Register_CheckEmail_Description" xml:space="preserve"><value>Dacă adresa poate fi înregistrată, vei primi un mesaj cu pașii pentru confirmarea contului.</value></data>
+  <data name="Register_CheckEmail_Help" xml:space="preserve"><value>Mesajul poate ajunge în câteva minute. Verifică și folderul de mesaje nedorite.</value></data>
   <data name="Public_MetaDescription" xml:space="preserve"><value>Organizează toate rețetele tale într-o singură carte de bucate personală.</value></data>
   <data name="Hero_Title" xml:space="preserve"><value>Colecția ta de rețete, într-un singur loc.</value></data>
   <data name="Hero_Text" xml:space="preserve"><value>Salvează rețete de pe web sau adaugă-le manual. Organizează-le și găsește-le ușor când ai nevoie de inspirație.</value></data>

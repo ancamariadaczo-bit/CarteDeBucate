@@ -7,7 +7,6 @@ namespace CarteDeBucate.Web.Resources
             typeof(global::CarteDeBucate.Web.SharedResource).Assembly);
 
         public static string AuthInvalidCredentials => Get("Auth_InvalidCredentials");
-        public static string RegisterDuplicateUsername => Get("Register_DuplicateUsername");
 
         private static string Get(string name) => ResourceManager.GetString(name) ?? name;
     }

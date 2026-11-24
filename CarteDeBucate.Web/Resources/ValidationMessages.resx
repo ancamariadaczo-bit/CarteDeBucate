@@ -7,8 +7,12 @@
   <data name="UsernameRequired" xml:space="preserve"><value>Username-ul este obligatoriu.</value></data>
   <data name="UsernameLength" xml:space="preserve"><value>Numele de utilizator trebuie să aibă între 3 și 30 de caractere.</value></data>
   <data name="UsernameCharacters" xml:space="preserve"><value>Numele de utilizator poate conține litere, cifre, spații, puncte, cratime și liniuțe de subliniere.</value></data>
+  <data name="EmailRequired" xml:space="preserve"><value>Adresa de e-mail este obligatorie.</value></data>
+  <data name="EmailInvalid" xml:space="preserve"><value>Introdu o adresă de e-mail validă.</value></data>
+  <data name="EmailLength" xml:space="preserve"><value>Adresa de e-mail nu poate depăși 254 de caractere.</value></data>
   <data name="PasswordRequired" xml:space="preserve"><value>Parola este obligatorie.</value></data>
   <data name="PasswordLength" xml:space="preserve"><value>Parola trebuie să aibă cel puțin 5 caractere.</value></data>
+  <data name="RegistrationPasswordLength" xml:space="preserve"><value>Parola trebuie să aibă cel puțin 12 caractere.</value></data>
   <data name="ConfirmPasswordRequired" xml:space="preserve"><value>Confirmarea parolei este obligatorie.</value></data>
   <data name="PasswordMismatch" xml:space="preserve"><value>Parolele nu coincid.</value></data>
 </root>

@@ -11,8 +11,13 @@ public static class ValidationMessages
     public static string UsernameRequired => Get(nameof(UsernameRequired));
     public static string UsernameLength => Get(nameof(UsernameLength));
     public static string UsernameCharacters => Get(nameof(UsernameCharacters));
+    public static string EmailRequired => Get(nameof(EmailRequired));
+    public static string EmailInvalid => Get(nameof(EmailInvalid));
+    public static string EmailLength => Get(nameof(EmailLength));
     public static string PasswordRequired => Get(nameof(PasswordRequired));
     public static string PasswordLength => Get(nameof(PasswordLength));
+    public static string RegistrationPasswordLength =>
+        Get(nameof(RegistrationPasswordLength));
     public static string ConfirmPasswordRequired => Get(nameof(ConfirmPasswordRequired));
     public static string PasswordMismatch => Get(nameof(PasswordMismatch));
 

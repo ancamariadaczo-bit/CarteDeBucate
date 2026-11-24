@@ -6,21 +6,22 @@ public class RegisterViewModel
 {
     [Required(
         ErrorMessageResourceType = typeof(Resources.ValidationMessages),
-        ErrorMessageResourceName = nameof(Resources.ValidationMessages.UsernameRequired))]
-    [StringLength(30, MinimumLength = 3,
+        ErrorMessageResourceName = nameof(Resources.ValidationMessages.EmailRequired))]
+    [EmailAddress(
         ErrorMessageResourceType = typeof(Resources.ValidationMessages),
-        ErrorMessageResourceName = nameof(Resources.ValidationMessages.UsernameLength))]
-    [RegularExpression(@"^[\p{L}\p{N} ._-]+$",
+        ErrorMessageResourceName = nameof(Resources.ValidationMessages.EmailInvalid))]
+    [StringLength(EmailNormalizer.MaximumEmailLength,
         ErrorMessageResourceType = typeof(Resources.ValidationMessages),
-        ErrorMessageResourceName = nameof(Resources.ValidationMessages.UsernameCharacters))]
-    public string Username { get; set; } = "";
+        ErrorMessageResourceName = nameof(Resources.ValidationMessages.EmailLength))]
+    [DataType(DataType.EmailAddress)]
+    public string Email { get; set; } = "";
 
     [Required(
         ErrorMessageResourceType = typeof(Resources.ValidationMessages),
         ErrorMessageResourceName = nameof(Resources.ValidationMessages.PasswordRequired))]
-    [MinLength(5,
+    [MinLength(AccountRegistrationService.MinimumPasswordLength,
         ErrorMessageResourceType = typeof(Resources.ValidationMessages),
-        ErrorMessageResourceName = nameof(Resources.ValidationMessages.PasswordLength))]
+        ErrorMessageResourceName = nameof(Resources.ValidationMessages.RegistrationPasswordLength))]
     [DataType(DataType.Password)]
     public string Password { get; set; } = "";
 

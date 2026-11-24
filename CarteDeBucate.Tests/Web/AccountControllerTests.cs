@@ -156,32 +156,39 @@ public class AccountControllerTests
     public async Task RegisterPost_WithInvalidModel_ShouldReturnViewAndNotCallService()
     {
         FakeAuthenticationService authenticationService = new FakeAuthenticationService();
-        AccountController controller = CreateController(authenticationService);
+        FakeAccountRegistrationService registrationService = new();
+        AccountController controller = CreateController(
+            authenticationService,
+            registrationService);
         RegisterViewModel model = new RegisterViewModel();
-        controller.ModelState.AddModelError("Username", "Username-ul este obligatoriu.");
+        controller.ModelState.AddModelError("Email", "Adresa de e-mail este obligatorie.");
 
         IActionResult result = await controller.Register(model);
 
         ViewResult viewResult = Assert.IsType<ViewResult>(result);
         Assert.Same(model, viewResult.Model);
+        Assert.False(registrationService.RegisterWasCalled);
         Assert.False(authenticationService.RegisterWasCalled);
     }
 
     [Fact]
-    public async Task RegisterPost_WhenRegisterSucceeds_ShouldSignInAndRedirectToRecipes()
+    public async Task RegisterPost_WhenRegisterSucceeds_ShouldRedirectWithoutSigningIn()
     {
-        FakeAuthenticationService authenticationService = new FakeAuthenticationService
+        FakeAuthenticationService authenticationService = new();
+        FakeAccountRegistrationService registrationService = new()
         {
-            RegisterResult = CreateSuccessfulAuthenticationResult()
+            Result = new AccountRegistrationServiceResult(
+                AccountRegistrationServiceResultCode.Success)
         };
         TestHttpAuthenticationService httpAuthenticationService =
             new TestHttpAuthenticationService();
         AccountController controller = CreateController(
             authenticationService,
+            registrationService,
             httpAuthenticationService: httpAuthenticationService);
         RegisterViewModel model = new RegisterViewModel
         {
-            Username = "anca",
+            Email = "Anca@Example.com",
             Password = "secret-password",
             ConfirmPassword = "secret-password"
         };
@@ -190,10 +197,74 @@ public class AccountControllerTests
 
         RedirectToActionResult redirectResult =
             Assert.IsType<RedirectToActionResult>(result);
-        Assert.Equal(nameof(RecipesController.Index), redirectResult.ActionName);
-        Assert.Equal("Recipes", redirectResult.ControllerName);
-        Assert.True(authenticationService.RegisterWasCalled);
-        Assert.True(httpAuthenticationService.SignInWasCalled);
+        Assert.Equal(nameof(AccountController.CheckEmail), redirectResult.ActionName);
+        Assert.Null(redirectResult.ControllerName);
+        Assert.True(registrationService.RegisterWasCalled);
+        Assert.Equal("Anca@Example.com", registrationService.Input?.Email);
+        Assert.Equal("secret-password", registrationService.Input?.Password);
+        Assert.Equal("secret-password", registrationService.Input?.PasswordConfirmation);
+        Assert.False(authenticationService.RegisterWasCalled);
+        Assert.False(httpAuthenticationService.SignInWasCalled);
+    }
+
+    [Theory]
+    [InlineData(AccountRegistrationServiceResultCode.DuplicateEmail)]
+    [InlineData(AccountRegistrationServiceResultCode.DeliveryFailed)]
+    public async Task RegisterPost_WithNonDisclosableOutcome_ShouldUseSameResponse(
+        AccountRegistrationServiceResultCode resultCode)
+    {
+        FakeAccountRegistrationService registrationService = new()
+        {
+            Result = new AccountRegistrationServiceResult(resultCode)
+        };
+        TestHttpAuthenticationService httpAuthenticationService =
+            new TestHttpAuthenticationService();
+        AccountController controller = CreateController(
+            new FakeAuthenticationService(),
+            registrationService,
+            httpAuthenticationService);
+
+        IActionResult result = await controller.Register(CreateRegisterModel());
+
+        RedirectToActionResult redirectResult =
+            Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal(nameof(AccountController.CheckEmail), redirectResult.ActionName);
+        Assert.Null(redirectResult.ControllerName);
+        Assert.False(httpAuthenticationService.SignInWasCalled);
+    }
+
+    [Fact]
+    public async Task RegisterPost_WhenServiceRejectsInput_ShouldReturnFieldError()
+    {
+        FakeAccountRegistrationService registrationService = new()
+        {
+            Result = new AccountRegistrationServiceResult(
+                AccountRegistrationServiceResultCode.InvalidEmail)
+        };
+        AccountController controller = CreateController(
+            new FakeAuthenticationService(),
+            registrationService);
+        RegisterViewModel model = CreateRegisterModel();
+
+        IActionResult result = await controller.Register(model);
+
+        ViewResult viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Same(model, viewResult.Model);
+        Assert.Contains(
+            controller.ModelState[nameof(RegisterViewModel.Email)]!.Errors,
+            error => error.ErrorMessage == "Introdu o adresă de e-mail validă.");
+    }
+
+    [Fact]
+    public void CheckEmail_ShouldReturnViewWithoutAddressModel()
+    {
+        AccountController controller = CreateController(
+            new FakeAuthenticationService());
+
+        IActionResult result = controller.CheckEmail();
+
+        ViewResult viewResult = Assert.IsType<ViewResult>(result);
+        Assert.Null(viewResult.Model);
     }
 
     [Fact]
@@ -227,6 +298,16 @@ public class AccountControllerTests
         };
     }
 
+    private static RegisterViewModel CreateRegisterModel()
+    {
+        return new RegisterViewModel
+        {
+            Email = "anca@example.com",
+            Password = "secret-password",
+            ConfirmPassword = "secret-password"
+        };
+    }
+
     private static AuthenticationResult CreateSuccessfulAuthenticationResult()
     {
         return new AuthenticationResult
@@ -255,6 +336,7 @@ public class AccountControllerTests
 
     private static AccountController CreateController(
         FakeAuthenticationService authenticationService,
+        FakeAccountRegistrationService? registrationService = null,
         TestHttpAuthenticationService? httpAuthenticationService = null,
         ClaimsPrincipal? user = null)
     {
@@ -270,6 +352,7 @@ public class AccountControllerTests
         };
         AccountController controller = new AccountController(
             authenticationService,
+            registrationService ?? new FakeAccountRegistrationService(),
             NullLogger<AccountController>.Instance)
         {
             ControllerContext = new ControllerContext

@@ -5,19 +5,23 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using CarteDeBucate.Web.Resources;
+using System.Globalization;
 
 namespace CarteDeBucate.Web.Controllers;
 
 public class AccountController : Controller
 {
     private readonly IAuthenticationService _authenticationService;
+    private readonly IAccountRegistrationService _accountRegistrationService;
     private readonly ILogger<AccountController> _logger;
 
     public AccountController(
         IAuthenticationService authenticationService,
+        IAccountRegistrationService accountRegistrationService,
         ILogger<AccountController> logger)
     {
         _authenticationService = authenticationService;
+        _accountRegistrationService = accountRegistrationService;
         _logger = logger;
     }
 
@@ -67,6 +71,7 @@ public class AccountController : Controller
     }
 
     [AllowAnonymous]
+    [HttpGet]
     public IActionResult Register()
     {
         if (User.Identity?.IsAuthenticated == true)
@@ -87,27 +92,66 @@ public class AccountController : Controller
             return View(model);
         }
 
-        AuthenticationResult result =
-            _authenticationService.Register(model.Username, model.Password);
+        AccountRegistrationServiceResult result =
+            await _accountRegistrationService.RegisterAsync(
+                new AccountRegistrationInput(
+                    model.Email,
+                    model.Password,
+                    model.ConfirmPassword,
+                    CultureInfo.CurrentUICulture.Name),
+                HttpContext.RequestAborted);
 
-        if (!result.IsSuccess || result.User == null)
+        if (result.Code is AccountRegistrationServiceResultCode.Success
+            or AccountRegistrationServiceResultCode.DuplicateEmail
+            or AccountRegistrationServiceResultCode.DeliveryFailed)
         {
-            _logger.LogWarning("User registration failed");
+            if (result.Code == AccountRegistrationServiceResultCode.DeliveryFailed)
+            {
+                _logger.LogWarning(
+                    "Registration was persisted, but verification email delivery failed");
+            }
+            else
+            {
+                _logger.LogInformation("Registration request completed");
+            }
 
-            ModelState.AddModelError("", SharedMessages.RegisterDuplicateUsername);
-
-            return View(model);
+            return RedirectToAction(nameof(CheckEmail));
         }
 
-        await SignInUser(result.User);
+        AddRegistrationValidationError(result.Code);
+        return View(model);
+    }
 
-        _logger.LogInformation(
-            "User registration succeeded. User identifier: {UserId}",
-            result.User.Id);
+    [AllowAnonymous]
+    [HttpGet]
+    public IActionResult CheckEmail()
+    {
+        return View();
+    }
 
-        return RedirectToAction(
-            nameof(RecipesController.Index),
-            "Recipes");
+    private void AddRegistrationValidationError(
+        AccountRegistrationServiceResultCode resultCode)
+    {
+        (string field, string message) = resultCode switch
+        {
+            AccountRegistrationServiceResultCode.InvalidEmail =>
+                (nameof(RegisterViewModel.Email), ValidationMessages.EmailInvalid),
+            AccountRegistrationServiceResultCode.PasswordRequired =>
+                (nameof(RegisterViewModel.Password), ValidationMessages.PasswordRequired),
+            AccountRegistrationServiceResultCode.PasswordTooShort =>
+                (nameof(RegisterViewModel.Password),
+                    ValidationMessages.RegistrationPasswordLength),
+            AccountRegistrationServiceResultCode.PasswordConfirmationRequired =>
+                (nameof(RegisterViewModel.ConfirmPassword),
+                    ValidationMessages.ConfirmPasswordRequired),
+            AccountRegistrationServiceResultCode.PasswordConfirmationMismatch =>
+                (nameof(RegisterViewModel.ConfirmPassword),
+                    ValidationMessages.PasswordMismatch),
+            _ => throw new InvalidOperationException(
+                $"Unexpected registration result: {resultCode}.")
+        };
+
+        ModelState.AddModelError(field, message);
     }
 
     [HttpPost]

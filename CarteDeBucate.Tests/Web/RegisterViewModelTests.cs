@@ -4,17 +4,31 @@ using CarteDeBucate.Web.Models;
 public class RegisterViewModelTests
 {
     [Fact]
-    public void Username_WhenEmpty_ShouldReturnRequiredValidationError()
+    public void Email_WhenEmpty_ShouldReturnRequiredValidationError()
     {
         RegisterViewModel model = CreateValidModel();
-        model.Username = "";
+        model.Email = "";
 
         List<ValidationResult> results = Validate(model);
 
         Assert.Contains(
             results,
-            result => HasError(result, nameof(RegisterViewModel.Username),
-                "Username-ul este obligatoriu."));
+            result => HasError(result, nameof(RegisterViewModel.Email),
+                "Adresa de e-mail este obligatorie."));
+    }
+
+    [Fact]
+    public void Email_WhenInvalid_ShouldReturnEmailValidationError()
+    {
+        RegisterViewModel model = CreateValidModel();
+        model.Email = "not-an-email";
+
+        List<ValidationResult> results = Validate(model);
+
+        Assert.Contains(
+            results,
+            result => HasError(result, nameof(RegisterViewModel.Email),
+                "Introdu o adresă de e-mail validă."));
     }
 
     [Fact]
@@ -29,6 +43,21 @@ public class RegisterViewModelTests
             results,
             result => HasError(result, nameof(RegisterViewModel.Password),
                 "Parola este obligatorie."));
+    }
+
+    [Fact]
+    public void Password_WhenShorterThanTwelveCharacters_ShouldReturnLengthError()
+    {
+        RegisterViewModel model = CreateValidModel();
+        model.Password = "too-short";
+        model.ConfirmPassword = "too-short";
+
+        List<ValidationResult> results = Validate(model);
+
+        Assert.Contains(
+            results,
+            result => HasError(result, nameof(RegisterViewModel.Password),
+                "Parola trebuie să aibă cel puțin 12 caractere."));
     }
 
     [Fact]
@@ -73,9 +102,9 @@ public class RegisterViewModelTests
     {
         return new RegisterViewModel
         {
-            Username = "anca",
-            Password = "password",
-            ConfirmPassword = "password"
+            Email = "anca@example.com",
+            Password = "secure-password",
+            ConfirmPassword = "secure-password"
         };
     }
 
