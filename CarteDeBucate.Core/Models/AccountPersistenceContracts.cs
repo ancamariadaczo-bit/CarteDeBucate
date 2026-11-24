@@ -69,10 +69,38 @@ public sealed record EmailVerificationResult(EmailVerificationResultCode Code);
 public enum EmailChangeRequestResultCode
 {
     Success,
-    UserNotFound
+    UserNotFound,
+    DuplicateEmail
 }
 
 public sealed record EmailChangeRequestResult(EmailChangeRequestResultCode Code);
+
+public sealed record EmailChangeResendIssuance(
+    byte[] TokenHash,
+    string Culture,
+    DateTime CreatedAtUtc,
+    DateTime ExpiresAtUtc);
+
+public enum EmailChangeResendResultCode
+{
+    Issued,
+    NotEligible,
+    Cooldown,
+    DailyLimit
+}
+
+public sealed record EmailChangeResendResult(
+    EmailChangeResendResultCode Code,
+    string? TargetEmail = null);
+
+public enum EmailChangeReviewResultCode
+{
+    Valid,
+    InvalidToken,
+    ExpiredToken
+}
+
+public sealed record EmailChangeReviewResult(EmailChangeReviewResultCode Code);
 
 public enum EmailChangeConfirmationResultCode
 {
@@ -82,4 +110,7 @@ public enum EmailChangeConfirmationResultCode
     ExpiredToken
 }
 
-public sealed record EmailChangeConfirmationResult(EmailChangeConfirmationResultCode Code);
+public sealed record EmailChangeConfirmationResult(
+    EmailChangeConfirmationResultCode Code,
+    string? PreviousEmail = null,
+    string? NewEmail = null);

@@ -17,4 +17,6 @@
   <data name="PasswordMismatch" xml:space="preserve"><value>Passwords do not match.</value></data>
   <data name="CultureRequired" xml:space="preserve"><value>Select a preferred language.</value></data>
   <data name="CultureInvalid" xml:space="preserve"><value>Select one of the available languages.</value></data>
+  <data name="CurrentPasswordInvalid" xml:space="preserve"><value>The current password is incorrect.</value></data>
+  <data name="EmailAlreadyInUse" xml:space="preserve"><value>This email address is already in use.</value></data>
 </root>

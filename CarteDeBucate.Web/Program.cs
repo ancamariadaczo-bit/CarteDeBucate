@@ -107,6 +107,7 @@ builder.Services.AddSingleton<PasswordHasher>();
 builder.Services.AddSingleton<IEmailTemplateRenderer, EmailTemplateRenderer>();
 builder.Services.AddSingleton<IAccountLinkBuilder, AccountLinkBuilder>();
 builder.Services.AddScoped<IAccountRegistrationService, AccountRegistrationService>();
+builder.Services.AddScoped<IAccountEmailService, AccountEmailService>();
 
 if (resendOptions.Enabled)
 {

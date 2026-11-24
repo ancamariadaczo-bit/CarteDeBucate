@@ -15,5 +15,17 @@ public interface IAccountRepository
 
     EmailChangeRequestResult RequestEmailChange(int userId, EmailTokenIssuance token);
 
-    EmailChangeConfirmationResult ConfirmEmailChange(byte[] tokenHash, DateTime confirmedAtUtc);
+    EmailChangeResendResult ResendEmailChange(
+        int userId,
+        EmailChangeResendIssuance issuance);
+
+    EmailChangeReviewResult ReviewEmailChange(
+        int userId,
+        byte[] tokenHash,
+        DateTime reviewedAtUtc);
+
+    EmailChangeConfirmationResult ConfirmEmailChange(
+        int userId,
+        byte[] tokenHash,
+        DateTime confirmedAtUtc);
 }

@@ -17,4 +17,6 @@
   <data name="PasswordMismatch" xml:space="preserve"><value>Parolele nu coincid.</value></data>
   <data name="CultureRequired" xml:space="preserve"><value>Selectează limba preferată.</value></data>
   <data name="CultureInvalid" xml:space="preserve"><value>Selectează una dintre limbile disponibile.</value></data>
+  <data name="CurrentPasswordInvalid" xml:space="preserve"><value>Parola curentă este incorectă.</value></data>
+  <data name="EmailAlreadyInUse" xml:space="preserve"><value>Această adresă de e-mail este deja utilizată.</value></data>
 </root>

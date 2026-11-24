@@ -22,6 +22,8 @@ public static class ValidationMessages
     public static string PasswordMismatch => Get(nameof(PasswordMismatch));
     public static string CultureRequired => Get(nameof(CultureRequired));
     public static string CultureInvalid => Get(nameof(CultureInvalid));
+    public static string CurrentPasswordInvalid => Get(nameof(CurrentPasswordInvalid));
+    public static string EmailAlreadyInUse => Get(nameof(EmailAlreadyInUse));
 
     private static string Get(string name) => ResourceManager.GetString(name) ?? name;
 }

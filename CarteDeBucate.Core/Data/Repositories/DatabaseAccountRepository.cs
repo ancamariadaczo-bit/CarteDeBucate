@@ -3,9 +3,9 @@ using System.Globalization;
 
 public class DatabaseAccountRepository : IAccountRepository
 {
-    private const int MaximumRegistrationTokensPerDay = 5;
-    private static readonly TimeSpan RegistrationResendCooldown = TimeSpan.FromMinutes(1);
-    private static readonly TimeSpan RegistrationResendPeriod = TimeSpan.FromHours(24);
+    private const int MaximumTokensPerDay = 5;
+    private static readonly TimeSpan EmailTokenResendCooldown = TimeSpan.FromMinutes(1);
+    private static readonly TimeSpan EmailTokenResendPeriod = TimeSpan.FromHours(24);
 
     private readonly string _connectionString;
 
@@ -157,7 +157,7 @@ public class DatabaseAccountRepository : IAccountRepository
                 EmailTokenPurpose.RegistrationVerification);
 
             if (latestIssuedAtUtc is not null &&
-                issuedAtUtc - latestIssuedAtUtc.Value < RegistrationResendCooldown)
+                issuedAtUtc - latestIssuedAtUtc.Value < EmailTokenResendCooldown)
             {
                 transaction.Rollback();
                 return new AccountRegistrationResendResult(
@@ -169,9 +169,9 @@ public class DatabaseAccountRepository : IAccountRepository
                 transaction,
                 user.Id,
                 EmailTokenPurpose.RegistrationVerification,
-                issuedAtUtc.Subtract(RegistrationResendPeriod));
+                    issuedAtUtc.Subtract(EmailTokenResendPeriod));
 
-            if (issuedInPeriod >= MaximumRegistrationTokensPerDay)
+            if (issuedInPeriod >= MaximumTokensPerDay)
             {
                 transaction.Rollback();
                 return new AccountRegistrationResendResult(
@@ -321,6 +321,12 @@ public class DatabaseAccountRepository : IAccountRepository
                 return new EmailChangeRequestResult(EmailChangeRequestResultCode.UserNotFound);
             }
 
+            if (EmailExists(connection, transaction, targetEmail))
+            {
+                transaction.Rollback();
+                return new EmailChangeRequestResult(EmailChangeRequestResultCode.DuplicateEmail);
+            }
+
             RevokeActiveTokens(connection, transaction, userId, token.Purpose, token.CreatedAtUtc);
             InsertToken(connection, transaction, userId, token, targetEmail);
 
@@ -334,7 +340,139 @@ public class DatabaseAccountRepository : IAccountRepository
         }
     }
 
-    public EmailChangeConfirmationResult ConfirmEmailChange(byte[] tokenHash, DateTime confirmedAtUtc)
+    public EmailChangeResendResult ResendEmailChange(
+        int userId,
+        EmailChangeResendIssuance issuance)
+    {
+        ArgumentNullException.ThrowIfNull(issuance);
+
+        if (issuance.TokenHash is null || issuance.TokenHash.Length != 32)
+        {
+            throw new ArgumentException(
+                "The verification token hash must contain 32 bytes.",
+                nameof(issuance));
+        }
+
+        if (string.IsNullOrWhiteSpace(issuance.Culture))
+        {
+            throw new ArgumentException("The token culture is required.", nameof(issuance));
+        }
+
+        TryCleanUpOldTokens();
+
+        using SqliteConnection connection = new SqliteConnection(_connectionString);
+        connection.Open();
+
+        using SqliteTransaction transaction = connection.BeginTransaction();
+
+        try
+        {
+            UserEmailTokenRecord? pendingToken = ReadLatestActiveToken(
+                connection,
+                transaction,
+                userId,
+                EmailTokenPurpose.EmailChangeVerification);
+
+            if (pendingToken is null)
+            {
+                transaction.Rollback();
+                return new EmailChangeResendResult(EmailChangeResendResultCode.NotEligible);
+            }
+
+            DateTime issuedAtUtc = issuance.CreatedAtUtc.ToUniversalTime();
+            DateTime? latestIssuedAtUtc = ReadLatestTokenCreatedAtUtc(
+                connection,
+                transaction,
+                userId,
+                EmailTokenPurpose.EmailChangeVerification);
+
+            if (latestIssuedAtUtc is not null &&
+                issuedAtUtc - latestIssuedAtUtc.Value < EmailTokenResendCooldown)
+            {
+                transaction.Rollback();
+                return new EmailChangeResendResult(EmailChangeResendResultCode.Cooldown);
+            }
+
+            int issuedInPeriod = CountTokensCreatedSince(
+                connection,
+                transaction,
+                userId,
+                EmailTokenPurpose.EmailChangeVerification,
+                issuedAtUtc.Subtract(EmailTokenResendPeriod));
+
+            if (issuedInPeriod >= MaximumTokensPerDay)
+            {
+                transaction.Rollback();
+                return new EmailChangeResendResult(EmailChangeResendResultCode.DailyLimit);
+            }
+
+            RevokeActiveTokens(
+                connection,
+                transaction,
+                userId,
+                EmailTokenPurpose.EmailChangeVerification,
+                issuedAtUtc);
+            InsertToken(
+                connection,
+                transaction,
+                userId,
+                new EmailTokenIssuance(
+                    EmailTokenPurpose.EmailChangeVerification,
+                    issuance.TokenHash,
+                    pendingToken.TargetEmail,
+                    issuance.Culture,
+                    issuedAtUtc,
+                    issuance.ExpiresAtUtc),
+                pendingToken.TargetEmail);
+
+            transaction.Commit();
+            return new EmailChangeResendResult(
+                EmailChangeResendResultCode.Issued,
+                pendingToken.TargetEmail);
+        }
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
+    }
+
+    public EmailChangeReviewResult ReviewEmailChange(
+        int userId,
+        byte[] tokenHash,
+        DateTime reviewedAtUtc)
+    {
+        if (tokenHash is null || tokenHash.Length != 32)
+        {
+            return new EmailChangeReviewResult(EmailChangeReviewResultCode.InvalidToken);
+        }
+
+        using SqliteConnection connection = new SqliteConnection(_connectionString);
+        connection.Open();
+
+        using SqliteTransaction transaction = connection.BeginTransaction();
+        UserEmailTokenRecord? token = ReadToken(
+            connection,
+            transaction,
+            tokenHash,
+            EmailTokenPurpose.EmailChangeVerification,
+            userId);
+        transaction.Commit();
+
+        if (token is null || token.UsedAtUtc is not null || token.RevokedAtUtc is not null)
+        {
+            return new EmailChangeReviewResult(EmailChangeReviewResultCode.InvalidToken);
+        }
+
+        return token.ExpiresAtUtc <= reviewedAtUtc.ToUniversalTime()
+            ? new EmailChangeReviewResult(EmailChangeReviewResultCode.ExpiredToken)
+            : new EmailChangeReviewResult(EmailChangeReviewResultCode.Valid);
+    }
+
+    public EmailChangeConfirmationResult ConfirmEmailChange(
+        int userId,
+        byte[] tokenHash,
+        DateTime confirmedAtUtc)
     {
         if (tokenHash is null || tokenHash.Length != 32)
         {
@@ -355,7 +493,8 @@ public class DatabaseAccountRepository : IAccountRepository
                 connection,
                 transaction,
                 tokenHash,
-                EmailTokenPurpose.EmailChangeVerification);
+                EmailTokenPurpose.EmailChangeVerification,
+                userId);
 
             if (token is null || token.UsedAtUtc is not null || token.RevokedAtUtc is not null)
             {
@@ -382,6 +521,15 @@ public class DatabaseAccountRepository : IAccountRepository
                     EmailChangeConfirmationResultCode.DuplicateEmail);
             }
 
+            string? previousEmail = ReadUserEmail(connection, transaction, userId);
+
+            if (previousEmail is null)
+            {
+                transaction.Rollback();
+                return new EmailChangeConfirmationResult(
+                    EmailChangeConfirmationResultCode.InvalidToken);
+            }
+
             if (UpdateUserEmail(connection, transaction, token.UserId, token.TargetEmail, confirmationTime) != 1 ||
                 MarkTokenUsed(connection, transaction, token.Id, confirmationTime) != 1)
             {
@@ -398,7 +546,10 @@ public class DatabaseAccountRepository : IAccountRepository
                 confirmationTime);
 
             transaction.Commit();
-            return new EmailChangeConfirmationResult(EmailChangeConfirmationResultCode.Success);
+            return new EmailChangeConfirmationResult(
+                EmailChangeConfirmationResultCode.Success,
+                previousEmail,
+                token.TargetEmail);
         }
         catch (SqliteException exception) when (IsDuplicateEmail(exception))
         {
@@ -526,6 +677,38 @@ public class DatabaseAccountRepository : IAccountRepository
             : null;
     }
 
+    private static UserEmailTokenRecord? ReadLatestActiveToken(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        int userId,
+        EmailTokenPurpose purpose)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = """
+            SELECT
+                Id,
+                UserId,
+                TargetEmail,
+                ExpiresAtUtc,
+                UsedAtUtc,
+                RevokedAtUtc
+            FROM UserEmailTokens
+            WHERE UserId = $userId
+              AND Purpose = $purpose
+              AND UsedAtUtc IS NULL
+              AND RevokedAtUtc IS NULL
+            ORDER BY Id DESC
+            LIMIT 1;
+            """;
+        command.Parameters.AddWithValue("$userId", userId);
+        command.Parameters.AddWithValue("$purpose", (int)purpose);
+
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        return reader.Read() ? ReadTokenRecord(reader) : null;
+    }
+
     private static int CountTokensCreatedSince(
         SqliteConnection connection,
         SqliteTransaction transaction,
@@ -576,7 +759,8 @@ public class DatabaseAccountRepository : IAccountRepository
         SqliteConnection connection,
         SqliteTransaction transaction,
         byte[] tokenHash,
-        EmailTokenPurpose purpose)
+        EmailTokenPurpose purpose,
+        int? userId = null)
     {
         using SqliteCommand command = connection.CreateCommand();
         command.Transaction = transaction;
@@ -590,10 +774,14 @@ public class DatabaseAccountRepository : IAccountRepository
                 tokens.RevokedAtUtc
             FROM UserEmailTokens AS tokens
             WHERE tokens.TokenHash = $tokenHash
-              AND tokens.Purpose = $purpose;
+              AND tokens.Purpose = $purpose
+              AND ($userId IS NULL OR tokens.UserId = $userId);
             """;
         command.Parameters.AddWithValue("$tokenHash", tokenHash);
         command.Parameters.AddWithValue("$purpose", (int)purpose);
+        command.Parameters.AddWithValue(
+            "$userId",
+            userId.HasValue ? userId.Value : DBNull.Value);
 
         using SqliteDataReader reader = command.ExecuteReader();
 
@@ -602,6 +790,11 @@ public class DatabaseAccountRepository : IAccountRepository
             return null;
         }
 
+        return ReadTokenRecord(reader);
+    }
+
+    private static UserEmailTokenRecord ReadTokenRecord(SqliteDataReader reader)
+    {
         return new UserEmailTokenRecord(
             reader.GetInt32(0),
             reader.GetInt32(1),
@@ -613,6 +806,19 @@ public class DatabaseAccountRepository : IAccountRepository
             reader.IsDBNull(5)
                 ? null
                 : DateTime.Parse(reader.GetString(5), null, DateTimeStyles.RoundtripKind));
+    }
+
+    private static string? ReadUserEmail(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        int userId)
+    {
+        using SqliteCommand command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "SELECT Email FROM Users WHERE Id = $userId;";
+        command.Parameters.AddWithValue("$userId", userId);
+
+        return command.ExecuteScalar() as string;
     }
 
     private static int MarkTokenUsed(

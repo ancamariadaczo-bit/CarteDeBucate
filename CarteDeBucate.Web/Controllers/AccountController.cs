@@ -237,6 +237,13 @@ public class AccountController : Controller
         return View();
     }
 
+    [AllowAnonymous]
+    [HttpGet]
+    public IActionResult EmailChanged()
+    {
+        return View();
+    }
+
     private void AddRegistrationValidationError(
         AccountRegistrationServiceResultCode resultCode)
     {

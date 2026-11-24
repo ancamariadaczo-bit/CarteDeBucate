@@ -1,4 +1,4 @@
-@model PreferredCultureViewModel
+@model SettingsIndexViewModel
 @inject Microsoft.Extensions.Localization.IStringLocalizer<CarteDeBucate.Web.SharedResource> L
 @{ ViewData["Title"] = L["Settings_Title"]; }
 
@@ -16,12 +16,12 @@
         </div>
         <form asp-action="UpdatePreferredCulture" method="post">
             <div class="mb-3">
-                <label asp-for="PreferredCulture" class="form-label">@L["Settings_Language_Label"]</label>
-                <select asp-for="PreferredCulture" class="form-select">
+                <label asp-for="PreferredCulture.PreferredCulture" class="form-label">@L["Settings_Language_Label"]</label>
+                <select asp-for="PreferredCulture.PreferredCulture" class="form-select">
                     <option value="en-US">@L["Culture_English"]</option>
                     <option value="ro-RO">@L["Culture_Romanian"]</option>
                 </select>
-                <span asp-validation-for="PreferredCulture" class="text-danger"></span>
+                <span asp-validation-for="PreferredCulture.PreferredCulture" class="text-danger"></span>
             </div>
             <button type="submit" class="btn btn-primary">@L["Settings_Save"]</button>
         </form>
@@ -64,6 +64,26 @@
 
 <section class="settings-section mb-0" aria-labelledby="account-heading">
     <h2 id="account-heading" class="h4">Cont</h2>
+
+    <div class="settings-action">
+        <div>
+            <h3 class="h5">@L["Settings_EmailChange_Title"]</h3>
+            <p class="text-muted mb-0">@L["Settings_EmailChange_Description", Model.CurrentEmail]</p>
+        </div>
+        <form asp-action="RequestEmailChange" method="post">
+            <div class="mb-3">
+                <label asp-for="EmailChange.NewEmail" class="form-label">@L["Settings_EmailChange_NewEmail"]</label>
+                <input asp-for="EmailChange.NewEmail" class="form-control" autocomplete="email" />
+                <span asp-validation-for="EmailChange.NewEmail" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="EmailChange.CurrentPassword" class="form-label">@L["Settings_EmailChange_CurrentPassword"]</label>
+                <input asp-for="EmailChange.CurrentPassword" class="form-control" autocomplete="current-password" />
+                <span asp-validation-for="EmailChange.CurrentPassword" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-primary">@L["Settings_EmailChange_Submit"]</button>
+        </form>
+    </div>
 
     <div class="settings-placeholder">
         <div>

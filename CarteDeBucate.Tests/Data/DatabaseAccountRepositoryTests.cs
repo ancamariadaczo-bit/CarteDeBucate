@@ -447,7 +447,7 @@ public class DatabaseAccountRepositoryTests
     }
 
     [Fact]
-    public void ConfirmEmailChange_WhenTargetEmailAlreadyBelongsToAnotherUser_ShouldReturnDuplicate()
+    public void RequestEmailChange_WhenTargetEmailAlreadyBelongsToAnotherUser_ShouldReturnDuplicate()
     {
         WithRepository((repository, databasePath) =>
         {
@@ -456,19 +456,15 @@ public class DatabaseAccountRepositoryTests
                 repository.Register(CreateRequest("maria@example.com", 2));
             DateTime tokenCreatedAtUtc = DateTime.UtcNow;
 
-            repository.RequestEmailChange(
+            EmailChangeRequestResult result = repository.RequestEmailChange(
                 registration.UserId!.Value,
                 CreateEmailChangeToken("anca@example.com", 3, tokenCreatedAtUtc));
 
-            EmailChangeConfirmationResult result = repository.ConfirmEmailChange(
-                CreateTokenHash(3),
-                tokenCreatedAtUtc);
-
-            Assert.Equal(EmailChangeConfirmationResultCode.DuplicateEmail, result.Code);
+            Assert.Equal(EmailChangeRequestResultCode.DuplicateEmail, result.Code);
             Assert.Equal(
                 "maria@example.com",
                 ReadUserEmail(databasePath, registration.UserId.Value));
-            Assert.Null(ReadTokenUsedAtUtc(databasePath, CreateTokenHash(3)));
+            Assert.False(TokenExists(databasePath, CreateTokenHash(3)));
         });
     }
 
@@ -485,6 +481,7 @@ public class DatabaseAccountRepositoryTests
                 CreateEmailChangeToken("new-address@example.com", 2, tokenCreatedAtUtc));
 
             EmailChangeConfirmationResult result = repository.ConfirmEmailChange(
+                registration.UserId!.Value,
                 CreateTokenHash(2),
                 tokenCreatedAtUtc);
 
@@ -498,17 +495,74 @@ public class DatabaseAccountRepositoryTests
     }
 
     [Fact]
+    public void ReviewEmailChange_WhenTokenBelongsToAnotherUser_ShouldRejectIt()
+    {
+        WithRepository((repository, _) =>
+        {
+            AccountRegistrationResult firstRegistration =
+                repository.Register(CreateRequest("anca@example.com", 1));
+            AccountRegistrationResult secondRegistration =
+                repository.Register(CreateRequest("maria@example.com", 2));
+            DateTime reviewTime = DateTime.UtcNow;
+            repository.RequestEmailChange(
+                firstRegistration.UserId!.Value,
+                CreateEmailChangeToken("new-address@example.com", 3, reviewTime));
+
+            EmailChangeReviewResult result = repository.ReviewEmailChange(
+                secondRegistration.UserId!.Value,
+                CreateTokenHash(3),
+                reviewTime);
+
+            Assert.Equal(EmailChangeReviewResultCode.InvalidToken, result.Code);
+        });
+    }
+
+    [Fact]
     public void ConfirmEmailChange_WhenTokenHasRegistrationPurpose_ShouldRejectIt()
     {
         WithRepository((repository, _) =>
         {
-            repository.Register(CreateRequest("anca@example.com", 1));
+            AccountRegistrationResult registration =
+                repository.Register(CreateRequest("anca@example.com", 1));
 
             EmailChangeConfirmationResult result = repository.ConfirmEmailChange(
+                registration.UserId!.Value,
                 CreateTokenHash(1),
                 DateTime.UtcNow);
 
             Assert.Equal(EmailChangeConfirmationResultCode.InvalidToken, result.Code);
+        });
+    }
+
+    [Fact]
+    public void ResendEmailChange_ShouldReplaceTheActiveTokenForThePendingAddress()
+    {
+        WithRepository((repository, databasePath) =>
+        {
+            DateTime now = DateTime.UtcNow;
+            AccountRegistrationResult registration =
+                repository.Register(CreateRequest("anca@example.com", 1));
+            repository.RequestEmailChange(
+                registration.UserId!.Value,
+                CreateEmailChangeToken(
+                    "pending@example.com",
+                    2,
+                    now.AddMinutes(-2)));
+
+            EmailChangeResendResult result = repository.ResendEmailChange(
+                registration.UserId.Value,
+                new EmailChangeResendIssuance(
+                    CreateTokenHash(3),
+                    "en-US",
+                    now,
+                    now.AddDays(1)));
+
+            Assert.Equal(EmailChangeResendResultCode.Issued, result.Code);
+            Assert.Equal("pending@example.com", result.TargetEmail);
+            Assert.NotNull(ReadTokenRevokedAtUtc(databasePath, CreateTokenHash(2)));
+            Assert.Equal(
+                "pending@example.com",
+                ReadTokenTargetEmail(databasePath, CreateTokenHash(3)));
         });
     }
 
@@ -532,9 +586,15 @@ public class DatabaseAccountRepositoryTests
 
             DatabaseAccountRepository competingRepository = new DatabaseAccountRepository(databasePath);
             Task<EmailChangeConfirmationResult> firstConfirmation = Task.Run(() =>
-                repository.ConfirmEmailChange(CreateTokenHash(3), tokenCreatedAtUtc));
+                repository.ConfirmEmailChange(
+                    firstRegistration.UserId!.Value,
+                    CreateTokenHash(3),
+                    tokenCreatedAtUtc));
             Task<EmailChangeConfirmationResult> competingConfirmation = Task.Run(() =>
-                competingRepository.ConfirmEmailChange(CreateTokenHash(4), tokenCreatedAtUtc));
+                competingRepository.ConfirmEmailChange(
+                    secondRegistration.UserId!.Value,
+                    CreateTokenHash(4),
+                    tokenCreatedAtUtc));
 
             EmailChangeConfirmationResult[] results = await Task.WhenAll(
                 firstConfirmation,

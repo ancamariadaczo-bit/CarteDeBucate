@@ -72,6 +72,25 @@
   <data name="Settings_Language_Description" xml:space="preserve"><value>Alege limba folosită în aplicație și în mesajele de e-mail ale contului.</value></data>
   <data name="Settings_Language_Label" xml:space="preserve"><value>Limba preferată</value></data>
   <data name="Settings_Save" xml:space="preserve"><value>Salvează preferința</value></data>
+  <data name="Settings_EmailChange_Title" xml:space="preserve"><value>Schimbă adresa de e-mail</value></data>
+  <data name="Settings_EmailChange_Description" xml:space="preserve"><value>Adresa actuală este {0}. Confirmă noua adresă prin e-mail.</value></data>
+  <data name="Settings_EmailChange_NewEmail" xml:space="preserve"><value>Adresă nouă de e-mail</value></data>
+  <data name="Settings_EmailChange_CurrentPassword" xml:space="preserve"><value>Parola curentă</value></data>
+  <data name="Settings_EmailChange_Submit" xml:space="preserve"><value>Trimite e-mailul de confirmare</value></data>
+  <data name="EmailChangePending_Title" xml:space="preserve"><value>Confirmă noua adresă de e-mail</value></data>
+  <data name="EmailChangePending_Description" xml:space="preserve"><value>Dacă solicitarea este validă, vei primi un mesaj la noua adresă. Adresa curentă rămâne activă până la confirmare.</value></data>
+  <data name="EmailChangePending_Resend" xml:space="preserve"><value>Retrimite mesajul de confirmare</value></data>
+  <data name="EmailChangeConfirm_Title" xml:space="preserve"><value>Confirmă schimbarea adresei de e-mail</value></data>
+  <data name="EmailChangeConfirm_Description" xml:space="preserve"><value>După confirmare vei fi deconectat și va trebui să te autentifici cu noua adresă.</value></data>
+  <data name="EmailChangeConfirm_Action" xml:space="preserve"><value>Confirmă schimbarea</value></data>
+  <data name="EmailChangeInvalid_Title" xml:space="preserve"><value>Link de confirmare invalid</value></data>
+  <data name="EmailChangeInvalid_Description" xml:space="preserve"><value>Acest link nu este valid, a fost deja folosit sau adresa nu mai este disponibilă.</value></data>
+  <data name="EmailChangeExpired_Title" xml:space="preserve"><value>Link de confirmare expirat</value></data>
+  <data name="EmailChangeExpired_Description" xml:space="preserve"><value>Solicită un nou mesaj de confirmare din setări.</value></data>
+  <data name="EmailChange_BackToSettings" xml:space="preserve"><value>Înapoi la setări</value></data>
+  <data name="EmailChangeCompleted_Title" xml:space="preserve"><value>Adresa de e-mail a fost schimbată</value></data>
+  <data name="EmailChangeCompleted_Description" xml:space="preserve"><value>Te-am deconectat pentru siguranță. Autentifică-te cu noua adresă de e-mail.</value></data>
+  <data name="EmailChangeCompleted_Login" xml:space="preserve"><value>Autentificare</value></data>
   <data name="Culture_English" xml:space="preserve"><value>Engleză</value></data>
   <data name="Culture_Romanian" xml:space="preserve"><value>Română</value></data>
 </root>

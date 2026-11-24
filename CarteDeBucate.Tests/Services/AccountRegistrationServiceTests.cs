@@ -417,7 +417,17 @@ public class AccountRegistrationServiceTests
             int userId,
             EmailTokenIssuance token) => throw new NotSupportedException();
 
+        public EmailChangeResendResult ResendEmailChange(
+            int userId,
+            EmailChangeResendIssuance issuance) => throw new NotSupportedException();
+
+        public EmailChangeReviewResult ReviewEmailChange(
+            int userId,
+            byte[] tokenHash,
+            DateTime reviewedAtUtc) => throw new NotSupportedException();
+
         public EmailChangeConfirmationResult ConfirmEmailChange(
+            int userId,
             byte[] tokenHash,
             DateTime confirmedAtUtc) => throw new NotSupportedException();
     }

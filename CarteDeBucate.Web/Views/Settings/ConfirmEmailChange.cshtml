@@ -1,0 +1,13 @@
+@model ConfirmEmailChangeViewModel
+@inject Microsoft.Extensions.Localization.IStringLocalizer<CarteDeBucate.Web.SharedResource> L
+@{ ViewData["Title"] = L["EmailChangeConfirm_Title"]; }
+
+<div class="mb-4">
+    <h1 class="h2">@L["EmailChangeConfirm_Title"]</h1>
+    <p class="text-muted">@L["EmailChangeConfirm_Description"]</p>
+</div>
+
+<form asp-action="ConfirmEmailChange" method="post">
+    <input asp-for="Token" type="hidden" />
+    <button type="submit" class="btn btn-primary">@L["EmailChangeConfirm_Action"]</button>
+</form>
