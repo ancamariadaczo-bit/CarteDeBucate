@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Reflection;
 using CarteDeBucate.Web.Controllers;
 using CarteDeBucate.Web.Models;
 using Microsoft.AspNetCore.Authentication;
@@ -6,12 +7,55 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 
 public class AccountControllerTests
 {
+    [Theory]
+    [InlineData(
+        nameof(AccountController.Login),
+        typeof(LoginViewModel),
+        AuthenticationRateLimitPolicies.Login)]
+    [InlineData(
+        nameof(AccountController.Register),
+        typeof(RegisterViewModel),
+        AuthenticationRateLimitPolicies.Registration)]
+    [InlineData(
+        nameof(AccountController.ResendVerification),
+        typeof(ResendVerificationViewModel),
+        AuthenticationRateLimitPolicies.ResendVerification)]
+    [InlineData(
+        nameof(AccountController.VerifyEmail),
+        typeof(VerifyEmailViewModel),
+        AuthenticationRateLimitPolicies.EmailVerification)]
+    public void AuthenticationPostActions_ShouldUseExpectedRateLimitPolicy(
+        string actionName,
+        Type modelType,
+        string expectedPolicyName)
+    {
+        MethodInfo action = typeof(AccountController).GetMethod(
+            actionName,
+            [modelType])!;
+
+        EnableRateLimitingAttribute attribute = Assert.IsType<EnableRateLimitingAttribute>(
+            Assert.Single(action.GetCustomAttributes<EnableRateLimitingAttribute>()));
+
+        Assert.Equal(expectedPolicyName, attribute.PolicyName);
+    }
+
+    [Fact]
+    public void VerifyEmailGet_ShouldNotUseRateLimitPolicy()
+    {
+        MethodInfo action = typeof(AccountController).GetMethod(
+            nameof(AccountController.VerifyEmail),
+            [typeof(string)])!;
+
+        Assert.Empty(action.GetCustomAttributes<EnableRateLimitingAttribute>());
+    }
+
     [Fact]
     public void LoginGet_ShouldReturnViewWithReturnUrl()
     {

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 using CarteDeBucate.Web.Resources;
 using System.Globalization;
 
@@ -42,6 +43,7 @@ public class AccountController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting(AuthenticationRateLimitPolicies.Login)]
     public async Task<IActionResult> Login(LoginViewModel model)
     {
         if (!ModelState.IsValid)
@@ -85,6 +87,7 @@ public class AccountController : Controller
     [AllowAnonymous]
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting(AuthenticationRateLimitPolicies.Registration)]
     public async Task<IActionResult> Register(RegisterViewModel model)
     {
         if (!ModelState.IsValid)
@@ -139,6 +142,7 @@ public class AccountController : Controller
     [AllowAnonymous]
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting(AuthenticationRateLimitPolicies.ResendVerification)]
     public async Task<IActionResult> ResendVerification(
         ResendVerificationViewModel model)
     {
@@ -188,6 +192,7 @@ public class AccountController : Controller
     [AllowAnonymous]
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting(AuthenticationRateLimitPolicies.EmailVerification)]
     public IActionResult VerifyEmail(VerifyEmailViewModel model)
     {
         if (!ModelState.IsValid)

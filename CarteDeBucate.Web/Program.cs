@@ -49,6 +49,7 @@ string recipePhotosPath = Path.IsPathFullyQualified(configuredRecipePhotosPath)
 // Add services to the container.
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 builder.Services.AddControllersWithViews().AddViewLocalization();
+builder.Services.AddAuthenticationEndpointRateLimiting();
 
 string[] allowedOrigins =
     builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
@@ -317,6 +318,7 @@ app.UseRouting();
 app.UseCors("ChromeExtension");
 
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
 
 app.MapStaticAssets();
