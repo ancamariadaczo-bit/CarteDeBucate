@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using CarteDeBucate.Web.Models;
+using CarteDeBucate.Web.Resources;
 
 public class LoginViewModelTests
 {
@@ -14,7 +15,7 @@ public class LoginViewModelTests
         Assert.Contains(
             results,
             result => HasError(result, nameof(LoginViewModel.Email),
-                "Email address is required."));
+                ValidationMessages.EmailRequired));
     }
 
     [Fact]
@@ -28,7 +29,7 @@ public class LoginViewModelTests
         Assert.Contains(
             results,
             result => HasError(result, nameof(LoginViewModel.Password),
-                "Password is required."));
+                ValidationMessages.PasswordRequired));
     }
 
     [Fact]

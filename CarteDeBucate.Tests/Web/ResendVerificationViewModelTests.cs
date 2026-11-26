@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using CarteDeBucate.Web.Models;
+using CarteDeBucate.Web.Resources;
 
 public class ResendVerificationViewModelTests
 {
@@ -15,7 +16,7 @@ public class ResendVerificationViewModelTests
             result => HasError(
                 result,
                 nameof(ResendVerificationViewModel.Email),
-                "Email address is required."));
+                ValidationMessages.EmailRequired));
     }
 
     [Fact]
@@ -33,7 +34,7 @@ public class ResendVerificationViewModelTests
             result => HasError(
                 result,
                 nameof(ResendVerificationViewModel.Email),
-                "Enter a valid email address."));
+                ValidationMessages.EmailInvalid));
     }
 
     [Fact]

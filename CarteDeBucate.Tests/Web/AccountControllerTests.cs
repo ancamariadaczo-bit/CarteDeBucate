@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Reflection;
 using CarteDeBucate.Web.Controllers;
 using CarteDeBucate.Web.Models;
+using CarteDeBucate.Web.Resources;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
@@ -298,7 +299,7 @@ public class AccountControllerTests
         Assert.Same(model, viewResult.Model);
         Assert.Contains(
             controller.ModelState[nameof(RegisterViewModel.Email)]!.Errors,
-            error => error.ErrorMessage == "Enter a valid email address.");
+            error => error.ErrorMessage == ValidationMessages.EmailInvalid);
     }
 
     [Fact]

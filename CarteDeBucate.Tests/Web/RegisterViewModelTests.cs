@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using CarteDeBucate.Web.Models;
+using CarteDeBucate.Web.Resources;
 
 public class RegisterViewModelTests
 {
@@ -14,7 +15,7 @@ public class RegisterViewModelTests
         Assert.Contains(
             results,
             result => HasError(result, nameof(RegisterViewModel.Email),
-                "Email address is required."));
+                ValidationMessages.EmailRequired));
     }
 
     [Fact]
@@ -28,7 +29,7 @@ public class RegisterViewModelTests
         Assert.Contains(
             results,
             result => HasError(result, nameof(RegisterViewModel.Email),
-                "Enter a valid email address."));
+                ValidationMessages.EmailInvalid));
     }
 
     [Fact]
@@ -42,7 +43,7 @@ public class RegisterViewModelTests
         Assert.Contains(
             results,
             result => HasError(result, nameof(RegisterViewModel.Password),
-                "Password is required."));
+                ValidationMessages.PasswordRequired));
     }
 
     [Fact]
@@ -57,7 +58,7 @@ public class RegisterViewModelTests
         Assert.Contains(
             results,
             result => HasError(result, nameof(RegisterViewModel.Password),
-                "Password must be at least 12 characters."));
+                ValidationMessages.RegistrationPasswordLength));
     }
 
     [Fact]
@@ -71,7 +72,7 @@ public class RegisterViewModelTests
         Assert.Contains(
             results,
             result => HasError(result, nameof(RegisterViewModel.ConfirmPassword),
-                "Password confirmation is required."));
+                ValidationMessages.ConfirmPasswordRequired));
     }
 
     [Fact]
@@ -85,7 +86,7 @@ public class RegisterViewModelTests
         Assert.Contains(
             results,
             result => HasError(result, nameof(RegisterViewModel.ConfirmPassword),
-                "Passwords do not match."));
+                ValidationMessages.PasswordMismatch));
     }
 
     [Fact]
