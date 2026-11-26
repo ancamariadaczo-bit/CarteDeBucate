@@ -43,7 +43,7 @@ public class DatabaseInitializerTests
         {
             Dictionary<string, ColumnDefinition> columns = ReadColumns(databasePath, "Users");
 
-            Assert.Equal(7, columns.Count);
+            Assert.Equal(8, columns.Count);
             AssertColumn(columns, "Id", "INTEGER", false, null, 1);
             AssertColumn(columns, "Email", "TEXT", true, null, 0);
             AssertColumn(columns, "PasswordHash", "TEXT", true, null, 0);
@@ -51,7 +51,24 @@ public class DatabaseInitializerTests
             AssertColumn(columns, "CreatedAt", "TEXT", true, null, 0);
             AssertColumn(columns, "EmailVerifiedAtUtc", "TEXT", false, null, 0);
             AssertColumn(columns, "PreferredCulture", "TEXT", false, null, 0);
+            AssertColumn(columns, "SecurityVersion", "INTEGER", true, "1", 0);
             Assert.DoesNotContain("Username", columns.Keys);
+        });
+    }
+
+    [Fact]
+    public void Initialize_ShouldDefaultNewUsersSecurityVersionToOne()
+    {
+        WithInitializedDatabase(databasePath =>
+        {
+            using SqliteConnection connection = OpenConnection(databasePath);
+            int userId = InsertUserAndGetId(connection, "anca@example.com");
+
+            using SqliteCommand command = connection.CreateCommand();
+            command.CommandText = "SELECT SecurityVersion FROM Users WHERE Id = @Id;";
+            command.Parameters.AddWithValue("@Id", userId);
+
+            Assert.Equal(1L, (long)command.ExecuteScalar()!);
         });
     }
 

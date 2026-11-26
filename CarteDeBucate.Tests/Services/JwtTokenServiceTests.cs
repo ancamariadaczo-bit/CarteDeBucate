@@ -16,7 +16,7 @@ public class JwtTokenServiceTests
     public void CreateToken_ShouldUseTheConfiguredIssuerAudienceAndValidSignature()
     {
         JwtTokenService service = CreateService();
-        string token = service.CreateToken("user-42", "chef@example.com");
+        string token = service.CreateToken("user-42", "chef@example.com", 7);
         JwtSecurityTokenHandler tokenHandler = new();
 
         ClaimsPrincipal principal = tokenHandler.ValidateToken(
@@ -36,7 +36,7 @@ public class JwtTokenServiceTests
     public void CreateToken_ShouldContainUserIdAndEmailClaims()
     {
         JwtTokenService service = CreateService();
-        string token = service.CreateToken("user-42", "anca@example.com");
+        string token = service.CreateToken("user-42", "anca@example.com", 7);
         JwtSecurityToken jwtToken = new JwtSecurityTokenHandler()
             .ReadJwtToken(token);
 
@@ -56,6 +56,10 @@ public class JwtTokenServiceTests
             jwtToken.Claims,
             claim => claim.Type == ClaimTypes.Email &&
                 claim.Value == "anca@example.com");
+        Claim securityVersionClaim = Assert.Single(
+            jwtToken.Claims.Where(
+                claim => claim.Type == AuthenticationClaimTypes.SecurityVersion));
+        Assert.Equal("7", securityVersionClaim.Value);
     }
 
     [Fact]
@@ -64,7 +68,7 @@ public class JwtTokenServiceTests
         JwtTokenService service = CreateService();
         DateTime beforeCreation = DateTime.UtcNow;
 
-        string token = service.CreateToken("user-42", "chef@example.com");
+        string token = service.CreateToken("user-42", "chef@example.com", 7);
 
         DateTime afterCreation = DateTime.UtcNow;
         JwtSecurityToken jwtToken = new JwtSecurityTokenHandler()

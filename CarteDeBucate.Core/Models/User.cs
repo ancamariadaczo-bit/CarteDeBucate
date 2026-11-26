@@ -7,4 +7,5 @@ public class User
     public DateTime CreatedAt { get; set; }
     public DateTime? EmailVerifiedAtUtc { get; set; }
     public string? PreferredCulture { get; set; }
+    public long SecurityVersion { get; set; } = 1;
 }

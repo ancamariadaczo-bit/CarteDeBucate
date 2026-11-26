@@ -85,11 +85,13 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.LoginPath = "/Account/Login";
         options.LogoutPath = "/Account/Logout";
         options.AccessDeniedPath = "/Account/AccessDenied";
+        options.EventsType = typeof(SecurityVersionCookieAuthenticationEvents);
     })
     .AddJwtBearer(
         JwtBearerDefaults.AuthenticationScheme,
         options =>
         {
+            options.MapInboundClaims = false;
             options.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
@@ -103,6 +105,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
             };
+            options.EventsType = typeof(SecurityVersionJwtBearerEvents);
         });
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
@@ -134,6 +137,10 @@ builder.Services.AddScoped<IRecipeRepository>(serviceProvider =>
         serviceProvider.GetRequiredService<ILogger<DatabaseRecipeRepository>>()));
 builder.Services.AddScoped<IUserRepository>(_ =>
     AppServiceFactory.CreateDatabaseUserRepository(databasePath));
+builder.Services.AddScoped<IAuthenticatedSessionValidator, AuthenticatedSessionValidator>();
+builder.Services.AddScoped<SecurityVersionCookieAuthenticationEvents>();
+builder.Services.AddScoped<SecurityVersionJwtBearerEvents>();
+builder.Services.AddScoped<IGlobalSessionInvalidationService, GlobalSessionInvalidationService>();
 builder.Services.AddScoped<IAccountRepository>(_ =>
     AppServiceFactory.CreateDatabaseAccountRepository(databasePath));
 

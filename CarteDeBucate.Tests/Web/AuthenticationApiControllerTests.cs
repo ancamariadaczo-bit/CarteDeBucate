@@ -56,11 +56,26 @@ public class AuthenticationApiControllerTests
         IActionResult result = controller.CompleteExtensionAuthentication();
 
         RedirectResult redirectResult = Assert.IsType<RedirectResult>(result);
-        Assert.Equal([42], codeService.CreateCodeCalls);
+        Assert.Equal((42, 1L), Assert.Single(codeService.CreateCodeCalls));
         Assert.Equal(
             $"{AuthenticationRedirectUrl}?code={Uri.EscapeDataString(authenticationCode)}",
             redirectResult.Url);
         Assert.DoesNotContain(authenticationCode, redirectResult.Url);
+    }
+
+    [Fact]
+    public void CompleteExtensionAuthentication_WithoutSecurityVersionClaim_ShouldReturnUnauthorized()
+    {
+        FakeExtensionAuthenticationCodeService codeService = new();
+        AuthenticationApiController controller = CreateController(
+            codeService: codeService,
+            userRepository: CreateUserRepository(CreateVerifiedUser(42)),
+            user: CreatePrincipal("42", "anca@example.com", securityVersion: null));
+
+        IActionResult result = controller.CompleteExtensionAuthentication();
+
+        Assert.IsType<UnauthorizedResult>(result);
+        Assert.Empty(codeService.CreateCodeCalls);
     }
 
     [Theory]
@@ -106,8 +121,29 @@ public class AuthenticationApiControllerTests
             "issued-jwt",
             GetResponseProperty<string>(okResult.Value, "accessToken"));
         Assert.Equal(
-            ("42", "anca@example.com"),
+            ("42", "anca@example.com", 1L),
             Assert.Single(jwtTokenService.CreateTokenCalls));
+    }
+
+    [Fact]
+    public void ExchangeCode_WhenSecurityVersionIsStale_ShouldConsumeCodeWithoutIssuingJwt()
+    {
+        FakeJwtTokenService jwtTokenService = new();
+        FakeExtensionAuthenticationCodeService codeService = new();
+        codeService.AddCode("old-code", CreateCodeData(42, securityVersion: 1));
+        AuthenticationApiController controller = CreateController(
+            jwtTokenService,
+            codeService,
+            CreateUserRepository(CreateVerifiedUser(42, securityVersion: 2)));
+
+        IActionResult firstResult = controller.ExchangeCode(
+            new ExchangeAuthenticationCodeRequest { Code = "old-code" });
+        IActionResult secondResult = controller.ExchangeCode(
+            new ExchangeAuthenticationCodeRequest { Code = "old-code" });
+
+        Assert.IsType<BadRequestObjectResult>(firstResult);
+        Assert.IsType<BadRequestObjectResult>(secondResult);
+        Assert.Empty(jwtTokenService.CreateTokenCalls);
     }
 
     [Theory]
@@ -210,26 +246,36 @@ public class AuthenticationApiControllerTests
         return repository;
     }
 
-    private static User CreateVerifiedUser(int id, bool emailVerified = true)
+    private static User CreateVerifiedUser(
+        int id,
+        bool emailVerified = true,
+        long securityVersion = 1)
     {
         return new User
         {
             Id = id,
             Email = "anca@example.com",
-            EmailVerifiedAtUtc = emailVerified ? DateTime.UtcNow : null
+            EmailVerifiedAtUtc = emailVerified ? DateTime.UtcNow : null,
+            SecurityVersion = securityVersion
         };
     }
 
-    private static ExtensionAuthenticationCodeData CreateCodeData(int userId)
+    private static ExtensionAuthenticationCodeData CreateCodeData(
+        int userId,
+        long securityVersion = 1)
     {
         return new ExtensionAuthenticationCodeData
         {
             UserId = userId,
+            SecurityVersion = securityVersion,
             ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(1)
         };
     }
 
-    private static ClaimsPrincipal CreatePrincipal(string? userId, string? email)
+    private static ClaimsPrincipal CreatePrincipal(
+        string? userId,
+        string? email,
+        long? securityVersion = 1)
     {
         List<Claim> claims = [];
 
@@ -242,6 +288,13 @@ public class AuthenticationApiControllerTests
         {
             claims.Add(new Claim(ClaimTypes.Name, email));
             claims.Add(new Claim(ClaimTypes.Email, email));
+        }
+
+        if (securityVersion.HasValue)
+        {
+            claims.Add(new Claim(
+                AuthenticationClaimTypes.SecurityVersion,
+                securityVersion.Value.ToString()));
         }
 
         return new ClaimsPrincipal(new ClaimsIdentity(claims, "Test"));
@@ -259,11 +312,11 @@ public class AuthenticationApiControllerTests
     {
         public string TokenToReturn { get; init; } = "test-jwt";
 
-        public List<(string UserId, string Email)> CreateTokenCalls { get; } = [];
+        public List<(string UserId, string Email, long SecurityVersion)> CreateTokenCalls { get; } = [];
 
-        public string CreateToken(string userId, string email)
+        public string CreateToken(string userId, string email, long securityVersion)
         {
-            CreateTokenCalls.Add((userId, email));
+            CreateTokenCalls.Add((userId, email, securityVersion));
             return TokenToReturn;
         }
     }
@@ -275,13 +328,13 @@ public class AuthenticationApiControllerTests
 
         public string CodeToCreate { get; init; } = "created-code";
 
-        public List<int> CreateCodeCalls { get; } = [];
+        public List<(int UserId, long SecurityVersion)> CreateCodeCalls { get; } = [];
 
         public List<string> ConsumeCodeCalls { get; } = [];
 
-        public string CreateCode(int userId)
+        public string CreateCode(int userId, long securityVersion)
         {
-            CreateCodeCalls.Add(userId);
+            CreateCodeCalls.Add((userId, securityVersion));
             return CodeToCreate;
         }
 

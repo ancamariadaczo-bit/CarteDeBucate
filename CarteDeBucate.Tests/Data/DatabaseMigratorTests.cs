@@ -19,6 +19,7 @@ public class DatabaseMigratorTests
             Assert.True(MigrationWasRecorded(databasePath, 2));
             Assert.True(MigrationWasRecorded(databasePath, 3));
             Assert.True(MigrationWasRecorded(databasePath, 7));
+            Assert.True(MigrationWasRecorded(databasePath, 8));
         }
         finally
         {
@@ -41,6 +42,7 @@ public class DatabaseMigratorTests
             Assert.True(ColumnExists(databasePath, "Recipes", "Status"));
             Assert.True(ColumnExists(databasePath, "Recipes", "UserId"));
             Assert.True(TableExists(databasePath, "Users"));
+            Assert.True(ColumnExists(databasePath, "Users", "SecurityVersion"));
             Assert.True(TableExists(databasePath, "UserEmailTokens"));
             Assert.True(MigrationWasRecorded(databasePath, 1));
             Assert.True(MigrationWasRecorded(databasePath, 2));
@@ -113,6 +115,7 @@ public class DatabaseMigratorTests
             Assert.Equal(1L, MigrationRecordCount(databasePath, 4));
             Assert.Equal(1L, MigrationRecordCount(databasePath, 6));
             Assert.Equal(1L, MigrationRecordCount(databasePath, 7));
+            Assert.Equal(1L, MigrationRecordCount(databasePath, 8));
         }
         finally
         {
@@ -159,6 +162,30 @@ public class DatabaseMigratorTests
             AssertOldRecipeWasPreserved(databasePath, recipeId);
             Assert.IsType<DBNull>(InsertRecipeWithNullSourceUrl(databasePath));
             Assert.Empty(ReadForeignKeyCheck(databasePath));
+        }
+        finally
+        {
+            DeleteDatabaseFile(databasePath);
+        }
+    }
+
+    [Fact]
+    public void ApplyMigrations_WhenUsersExistWithoutSecurityVersion_ShouldPreserveUsersAndDefaultVersion()
+    {
+        string databasePath = CreateTemporaryDatabasePath();
+
+        try
+        {
+            CreateOldRecipesTable(databasePath);
+            CreateOldUsersTable(databasePath);
+            int userId = InsertOldUser(databasePath);
+
+            DatabaseMigrator migrator = new DatabaseMigrator(databasePath);
+            migrator.ApplyMigrations();
+
+            Assert.True(MigrationWasRecorded(databasePath, 8));
+            Assert.True(ColumnExists(databasePath, "Users", "SecurityVersion"));
+            AssertOldUserWasPreservedWithDefaultSecurityVersion(databasePath, userId);
         }
         finally
         {
@@ -236,6 +263,83 @@ public class DatabaseMigratorTests
         Assert.Equal("https://example.com/existing-recipe", reader.GetString(1));
         Assert.Equal("2026-09-01T10:00:00.0000000Z", reader.GetString(2));
         Assert.Equal("Existing notes", reader.GetString(3));
+        Assert.False(reader.Read());
+    }
+
+    private static void CreateOldUsersTable(string databasePath)
+    {
+        using SqliteConnection connection = new SqliteConnection($"Data Source={databasePath}");
+        connection.Open();
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            CREATE TABLE Users (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Email TEXT NOT NULL COLLATE NOCASE,
+                PasswordHash TEXT NOT NULL,
+                PasswordSalt TEXT NOT NULL,
+                CreatedAt TEXT NOT NULL,
+                EmailVerifiedAtUtc TEXT NULL,
+                PreferredCulture TEXT NULL
+            );
+            """;
+        command.ExecuteNonQuery();
+    }
+
+    private static int InsertOldUser(string databasePath)
+    {
+        using SqliteConnection connection = new SqliteConnection($"Data Source={databasePath}");
+        connection.Open();
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO Users (
+                Email,
+                PasswordHash,
+                PasswordSalt,
+                CreatedAt,
+                EmailVerifiedAtUtc,
+                PreferredCulture)
+            VALUES (@Email, @PasswordHash, @PasswordSalt, @CreatedAt, @EmailVerifiedAtUtc, @PreferredCulture);
+
+            SELECT last_insert_rowid();
+            """;
+        command.Parameters.AddWithValue("@Email", "anca@example.com");
+        command.Parameters.AddWithValue("@PasswordHash", "hash");
+        command.Parameters.AddWithValue("@PasswordSalt", "salt");
+        command.Parameters.AddWithValue("@CreatedAt", "2026-09-01T10:00:00.0000000Z");
+        command.Parameters.AddWithValue("@EmailVerifiedAtUtc", "2026-09-02T10:00:00.0000000Z");
+        command.Parameters.AddWithValue("@PreferredCulture", "ro-RO");
+
+        return Convert.ToInt32(command.ExecuteScalar());
+    }
+
+    private static void AssertOldUserWasPreservedWithDefaultSecurityVersion(
+        string databasePath,
+        int userId)
+    {
+        using SqliteConnection connection = new SqliteConnection($"Data Source={databasePath}");
+        connection.Open();
+
+        using SqliteCommand command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT Email, PasswordHash, PasswordSalt, CreatedAt, EmailVerifiedAtUtc, PreferredCulture,
+                   SecurityVersion
+            FROM Users
+            WHERE Id = @Id;
+            """;
+        command.Parameters.AddWithValue("@Id", userId);
+
+        using SqliteDataReader reader = command.ExecuteReader();
+
+        Assert.True(reader.Read());
+        Assert.Equal("anca@example.com", reader.GetString(0));
+        Assert.Equal("hash", reader.GetString(1));
+        Assert.Equal("salt", reader.GetString(2));
+        Assert.Equal("2026-09-01T10:00:00.0000000Z", reader.GetString(3));
+        Assert.Equal("2026-09-02T10:00:00.0000000Z", reader.GetString(4));
+        Assert.Equal("ro-RO", reader.GetString(5));
+        Assert.Equal(1L, reader.GetInt64(6));
         Assert.False(reader.Read());
     }
 

@@ -35,6 +35,24 @@ public class FakeUserRepository : IUserRepository
         return Users.FirstOrDefault(user => user.Id == userId);
     }
 
+    public long? GetSecurityVersion(int userId)
+    {
+        return GetById(userId)?.SecurityVersion;
+    }
+
+    public bool IncrementSecurityVersion(int userId)
+    {
+        User? user = GetById(userId);
+
+        if (user is null)
+        {
+            return false;
+        }
+
+        user.SecurityVersion++;
+        return true;
+    }
+
     public bool UpdatePreferredCulture(int userId, string preferredCulture)
     {
         User? user = GetById(userId);

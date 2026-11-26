@@ -187,6 +187,10 @@ public class AccountControllerTests
             "anca@anca.com",
             httpAuthenticationService.SignedInPrincipal?.FindFirst(
                 System.Security.Claims.ClaimTypes.Email)?.Value);
+        Claim securityVersionClaim = Assert.Single(
+            httpAuthenticationService.SignedInPrincipal!.FindAll(
+                AuthenticationClaimTypes.SecurityVersion));
+        Assert.Equal("7", securityVersionClaim.Value);
     }
 
     [Fact]
@@ -541,7 +545,8 @@ public class AccountControllerTests
             User = new User
             {
                 Id = 12,
-                Email = "anca@anca.com"
+                Email = "anca@anca.com",
+                SecurityVersion = 7
             }
         };
     }

@@ -96,8 +96,14 @@ public static class DatabaseScripts
         PasswordSalt TEXT NOT NULL,
         CreatedAt TEXT NOT NULL,
         EmailVerifiedAtUtc TEXT NULL,
-        PreferredCulture TEXT NULL
+        PreferredCulture TEXT NULL,
+        SecurityVersion INTEGER NOT NULL DEFAULT 1
     );
+    """;
+
+    public const string AddUserSecurityVersionColumn = """
+    ALTER TABLE Users
+    ADD COLUMN SecurityVersion INTEGER NOT NULL DEFAULT 1;
     """;
 
     public const string CreateUsersEmailNoCaseUniqueIndex = """

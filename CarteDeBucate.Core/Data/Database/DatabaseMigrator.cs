@@ -42,7 +42,8 @@ public class DatabaseMigrator
             new DatabaseMigration(3, "Add user id to recipes", DatabaseScripts.AddUserIdToRecipes),
             new DatabaseMigration(4, "Create RecipePhotos table", DatabaseScripts.CreateRecipePhotosSchema),
             new DatabaseMigration(6, "Make recipe source URL optional", DatabaseScripts.MakeRecipeSourceUrlOptional),
-            new DatabaseMigration(7, "Create user email tokens table", DatabaseScripts.CreateUserEmailTokensSchema)
+            new DatabaseMigration(7, "Create user email tokens table", DatabaseScripts.CreateUserEmailTokensSchema),
+            new DatabaseMigration(8, "Add user security version column", DatabaseScripts.AddUserSecurityVersionColumn)
         };
     }
 
@@ -80,6 +81,7 @@ public class DatabaseMigrator
             4 => TableExists(connection, "RecipePhotos"),
             6 => IsColumnNullable(connection, "Recipes", "SourceUrl"),
             7 => HasUserEmailTokenSchema(connection),
+            8 => ColumnExists(connection, "Users", "SecurityVersion"),
             _ => false
         };
     }

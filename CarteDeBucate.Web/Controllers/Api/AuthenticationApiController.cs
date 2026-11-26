@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Globalization;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -53,6 +54,18 @@ public class AuthenticationApiController : ControllerBase
             return Unauthorized();
         }
 
+        string? securityVersion = User.FindFirstValue(AuthenticationClaimTypes.SecurityVersion);
+
+        if (!long.TryParse(
+                securityVersion,
+                NumberStyles.None,
+                CultureInfo.InvariantCulture,
+                out long parsedSecurityVersion)
+            || parsedSecurityVersion <= 0)
+        {
+            return Unauthorized();
+        }
+
         User? user = _userRepository.GetById(parsedUserId);
 
         if (user is null || user.EmailVerifiedAtUtc is null)
@@ -60,7 +73,7 @@ public class AuthenticationApiController : ControllerBase
             return Unauthorized();
         }
 
-        string code = _extensionAuthenticationCodeService.CreateCode(user.Id);
+        string code = _extensionAuthenticationCodeService.CreateCode(user.Id, parsedSecurityVersion);
 
         string redirectUrl =
             _configuration["ChromeExtension:AuthenticationRedirectUrl"]
@@ -98,7 +111,9 @@ public class AuthenticationApiController : ControllerBase
 
         User? user = _userRepository.GetById(codeData.UserId);
 
-        if (user is null || user.EmailVerifiedAtUtc is null)
+        if (user is null
+            || user.EmailVerifiedAtUtc is null
+            || user.SecurityVersion != codeData.SecurityVersion)
         {
             return BadRequest(new
             {
@@ -107,8 +122,9 @@ public class AuthenticationApiController : ControllerBase
         }
 
         string accessToken = _jwtTokenService.CreateToken(
-            user.Id.ToString(),
-            user.Email);
+            user.Id.ToString(CultureInfo.InvariantCulture),
+            user.Email,
+            user.SecurityVersion);
 
         return Ok(new
         {

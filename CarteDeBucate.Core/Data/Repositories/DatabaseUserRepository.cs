@@ -55,7 +55,8 @@ public class DatabaseUserRepository : IUserRepository
 
         using var command = connection.CreateCommand();
         command.CommandText = """
-            SELECT Id, Email, PasswordHash, PasswordSalt, CreatedAt, EmailVerifiedAtUtc, PreferredCulture
+            SELECT Id, Email, PasswordHash, PasswordSalt, CreatedAt, EmailVerifiedAtUtc, PreferredCulture,
+                   SecurityVersion
             FROM Users
             WHERE Email COLLATE NOCASE = $email;
         """;
@@ -74,7 +75,8 @@ public class DatabaseUserRepository : IUserRepository
 
         using var command = connection.CreateCommand();
         command.CommandText = """
-            SELECT Id, Email, PasswordHash, PasswordSalt, CreatedAt, EmailVerifiedAtUtc, PreferredCulture
+            SELECT Id, Email, PasswordHash, PasswordSalt, CreatedAt, EmailVerifiedAtUtc, PreferredCulture,
+                   SecurityVersion
             FROM Users
             WHERE Id = $userId;
         """;
@@ -83,6 +85,40 @@ public class DatabaseUserRepository : IUserRepository
         using var reader = command.ExecuteReader();
 
         return ReadUser(reader);
+    }
+
+    public long? GetSecurityVersion(int userId)
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        connection.Open();
+
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT SecurityVersion
+            FROM Users
+            WHERE Id = $userId;
+        """;
+        command.Parameters.AddWithValue("$userId", userId);
+
+        object? result = command.ExecuteScalar();
+
+        return result is null ? null : (long)result;
+    }
+
+    public bool IncrementSecurityVersion(int userId)
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        connection.Open();
+
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            UPDATE Users
+            SET SecurityVersion = SecurityVersion + 1
+            WHERE Id = $userId;
+        """;
+        command.Parameters.AddWithValue("$userId", userId);
+
+        return command.ExecuteNonQuery() == 1;
     }
 
     public bool UpdatePreferredCulture(int userId, string preferredCulture)
@@ -119,7 +155,8 @@ public class DatabaseUserRepository : IUserRepository
             EmailVerifiedAtUtc = reader.IsDBNull(5)
                 ? null
                 : DateTime.Parse(reader.GetString(5), null, DateTimeStyles.RoundtripKind),
-            PreferredCulture = reader.IsDBNull(6) ? null : reader.GetString(6)
+            PreferredCulture = reader.IsDBNull(6) ? null : reader.GetString(6),
+            SecurityVersion = reader.GetInt64(7)
         };
     }
 }

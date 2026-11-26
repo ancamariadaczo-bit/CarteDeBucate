@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Globalization;
 using Microsoft.IdentityModel.Tokens;
 
 public class JwtTokenService : IJwtTokenService
@@ -12,7 +13,7 @@ public class JwtTokenService : IJwtTokenService
         _configuration = configuration;
     }
 
-    public string CreateToken(string userId, string email)
+    public string CreateToken(string userId, string email, long securityVersion)
     {
         string key = _configuration["Jwt:Key"]
             ?? throw new InvalidOperationException("Jwt:Key is not configured.");
@@ -30,7 +31,10 @@ public class JwtTokenService : IJwtTokenService
             new(JwtRegisteredClaimNames.Sub, userId),
             new(ClaimTypes.NameIdentifier, userId),
             new(ClaimTypes.Name, email),
-            new(ClaimTypes.Email, email)
+            new(ClaimTypes.Email, email),
+            new(
+                AuthenticationClaimTypes.SecurityVersion,
+                securityVersion.ToString(CultureInfo.InvariantCulture))
         };
 
         var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));

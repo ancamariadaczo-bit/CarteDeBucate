@@ -12,8 +12,8 @@ public class ExtensionAuthenticationCodeServiceTests
         TestTimeProvider timeProvider = new(InitialTime);
         ExtensionAuthenticationCodeService service = new(timeProvider);
 
-        string firstCode = service.CreateCode(1);
-        string secondCode = service.CreateCode(2);
+        string firstCode = service.CreateCode(1, 3);
+        string secondCode = service.CreateCode(2, 4);
 
         Assert.Matches("^[0-9A-F]{64}$", firstCode);
         Assert.Matches("^[0-9A-F]{64}$", secondCode);
@@ -25,12 +25,13 @@ public class ExtensionAuthenticationCodeServiceTests
     {
         TestTimeProvider timeProvider = new(InitialTime);
         ExtensionAuthenticationCodeService service = new(timeProvider);
-        string code = service.CreateCode(42);
+        string code = service.CreateCode(42, 3);
 
         ExtensionAuthenticationCodeData? result = service.ConsumeCode(code);
 
         Assert.NotNull(result);
         Assert.Equal(42, result.UserId);
+        Assert.Equal(3L, result.SecurityVersion);
         Assert.Equal(InitialTime.AddMinutes(2), result.ExpiresAt);
     }
 
@@ -39,7 +40,7 @@ public class ExtensionAuthenticationCodeServiceTests
     {
         TestTimeProvider timeProvider = new(InitialTime);
         ExtensionAuthenticationCodeService service = new(timeProvider);
-        string code = service.CreateCode(42);
+        string code = service.CreateCode(42, 1);
 
         ExtensionAuthenticationCodeData? firstResult = service.ConsumeCode(code);
         ExtensionAuthenticationCodeData? secondResult = service.ConsumeCode(code);
@@ -65,7 +66,7 @@ public class ExtensionAuthenticationCodeServiceTests
     {
         TestTimeProvider timeProvider = new(InitialTime);
         ExtensionAuthenticationCodeService service = new(timeProvider);
-        string code = service.CreateCode(42);
+        string code = service.CreateCode(42, 1);
         timeProvider.Advance(TimeSpan.FromMinutes(2));
 
         ExtensionAuthenticationCodeData? result = service.ConsumeCode(code);
@@ -78,10 +79,10 @@ public class ExtensionAuthenticationCodeServiceTests
     {
         TestTimeProvider timeProvider = new(InitialTime);
         ExtensionAuthenticationCodeService service = new(timeProvider);
-        string existingCode = service.CreateCode(1);
+        string existingCode = service.CreateCode(1, 1);
         timeProvider.Advance(TimeSpan.FromMinutes(1));
 
-        service.CreateCode(2);
+        service.CreateCode(2, 1);
         ExtensionAuthenticationCodeData? result =
             service.ConsumeCode(existingCode);
 
@@ -94,13 +95,13 @@ public class ExtensionAuthenticationCodeServiceTests
     {
         TestTimeProvider timeProvider = new(InitialTime);
         ExtensionAuthenticationCodeService service = new(timeProvider);
-        string expiredCode = service.CreateCode(1);
+        string expiredCode = service.CreateCode(1, 1);
         ConcurrentDictionary<string, ExtensionAuthenticationCodeData> storedCodes =
             GetStoredCodes(service);
         Assert.Contains(expiredCode, storedCodes.Keys);
         timeProvider.Advance(TimeSpan.FromMinutes(2));
 
-        string newCode = service.CreateCode(2);
+        string newCode = service.CreateCode(2, 1);
 
         Assert.DoesNotContain(expiredCode, storedCodes.Keys);
         Assert.Contains(newCode, storedCodes.Keys);
