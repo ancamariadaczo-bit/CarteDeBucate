@@ -37,11 +37,25 @@ An idea is something nobody has committed to yet. When someone says "I have an i
 
 1. Search Plane for a work item or page that already covers it. If one exists, add to it instead.
 2. Create a work item in Backlog with the label `Idea`, named `Idea: <short name>`. Its description says the idea in a few lines, why it is not for now, and links.
-3. If the idea carries real thinking (research, options, a recommendation), write a `[BRIEF]` page with the template in `Start here`, attach it to the work item and add it to the index in `Start here`. A small idea stays as the work item alone.
+3. If the idea carries real thinking (research, options, a recommendation), write a `[BRIEF]` page with the template in `Start here`, link it from the work item (a link at the top of the description and one under Links; the free plan does not show attached pages) and add it to the index in `Start here`. A small idea stays as the work item alone.
 4. Write it as a suggestion: the reason, the alternatives and the open questions. Do not specify behaviour; that is the PRD's job later.
 5. Leave it in Backlog. Do not groom it, and do not start work on it.
 
+When a person and an agent talk through an idea, the agent asks on its own whether to write a `[BRIEF]` page for it. The person does not have to ask.
+
 A person moves an idea to To Do once Attila and Anca agree it will be done. If it has a brief, the brief is Ready by then and is the starting point for the PRD. A dropped idea goes to Won't Do with the reason.
+
+## Ending a step
+
+The agent stays one step ahead. When it finishes a step of the process, it ends its reply with:
+
+1. **Done:** what this step produced, with links.
+2. **Where we are:** the item's path with arrows and the current step in bold, for example `Idea ✓ → Brief ✓ → **To Do** → PRD → HLD → DTD → Sub-items → Build → Review → Done`.
+3. **Next:** the next step, who it waits on, and one recommendation, asked as a question.
+
+The agent does not start a step that needs a person's yes, such as moving an item to To Do or marking a page Ready. It asks.
+
+At a handoff (a PRD, HLD or DTD becomes Ready, or a sub-item is merged and the next one starts), or when its conversation has grown long, the agent recommends continuing in a new chat. Before that it saves everything: pages written, the work item updated, and decisions from the conversation written into the page or the work item, never left only in the chat. Then it gives a short handoff prompt any agent can start from: the work item, "read AGENTS.md and Start here", links to the Ready pages, the next step and any open question.
 
 ## The board
 
