@@ -37,7 +37,7 @@ An idea is something nobody has committed to yet. When someone says "I have an i
 
 1. Search Plane for a work item or page that already covers it. If one exists, add to it instead.
 2. Create a work item in Backlog with the label `Idea`, named `Idea: <short name>`. Its description says the idea in a few lines, why it is not for now, and links.
-3. If the idea carries real thinking (research, options, a recommendation), write a `[BRIEF]` page with the template in `Start here`, attach it to the work item and add it to the index in `Start here`. A small idea stays as the work item alone.
+3. If the idea carries real thinking (research, options, a recommendation), write a `[BRIEF]` page with the template in `Start here`, link it from the work item (a link at the top of the description and one under Links; the free plan does not show attached pages) and add it to the index in `Start here`. A small idea stays as the work item alone.
 4. Write it as a suggestion: the reason, the alternatives and the open questions. Do not specify behaviour; that is the PRD's job later.
 5. Leave it in Backlog. Do not groom it, and do not start work on it.
 
