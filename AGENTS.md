@@ -41,6 +41,8 @@ An idea is something nobody has committed to yet. When someone says "I have an i
 4. Write it as a suggestion: the reason, the alternatives and the open questions. Do not specify behaviour; that is the PRD's job later.
 5. Leave it in Backlog. Do not groom it, and do not start work on it.
 
+When a person and an agent talk through an idea, the agent asks on its own whether to write a `[BRIEF]` page for it. The person does not have to ask.
+
 A person moves an idea to To Do once Attila and Anca agree it will be done. If it has a brief, the brief is Ready by then and is the starting point for the PRD. A dropped idea goes to Won't Do with the reason.
 
 ## The board
