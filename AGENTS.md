@@ -26,9 +26,22 @@ A feature is a change to the product. A change that alters behaviour goes throug
 4. Task breakdown: sub-items under the work item in Plane. Each one is small and complete enough to be implemented on its own.
 
 - The PRD, HLD and DTD are pages in Plane, named `[TYPE] YYYY-MM-DD Area: Change (CDB-N)`. Each starts with a status line that is either Draft or Ready.
+- An idea that comes before a PRD can have a `[BRIEF]` page with the same naming and status line (see Ideas below).
 - Do not implement from a page whose status is Draft.
 - Small changes such as bug fixes and chores skip the four steps. They need only a work item with enough detail.
 - If you find that a page and the code disagree, or that a page is missing something you need, stop and say so. Do not fill the gap with a guess.
+
+## Ideas
+
+An idea is something nobody has committed to yet. When someone says "I have an idea", or suggests something for later:
+
+1. Search Plane for a work item or page that already covers it. If one exists, add to it instead.
+2. Create a work item in the Ideas column with the label `Idea`, named `Idea: <short name>`. Its description says the idea in a few lines, why it is not for now, and links.
+3. If the idea carries real thinking (research, options, a recommendation), write a `[BRIEF]` page with the template in `Start here`, attach it to the work item and add it to the index in `Start here`. A small idea stays as the work item alone.
+4. Write it as a suggestion: the reason, the alternatives and the open questions. Do not specify behaviour; that is the PRD's job later.
+5. Leave it in Ideas. Do not groom it, and do not start work on it.
+
+A person moves an idea to Backlog once Attila and Anca agree it will be done. If it has a brief, the brief is Ready by then and is the starting point for the PRD. A dropped idea goes to Won't Do with the reason.
 
 ## The board
 
@@ -36,16 +49,17 @@ Work items are in Plane, project CDB. They move through the columns from left to
 
 | Column | Meaning | Who moves an item here |
 | --- | --- | --- |
-| Backlog | An idea or a need. Not specified yet. | Anyone |
+| Ideas | An idea nobody has committed to yet. May have a `[BRIEF]` page. | Anyone |
+| Backlog | Agreed to be done. Not specified yet. | A person, when the idea or need is agreed |
 | Grooming | Someone is writing the specification right now: PRD, HLD, DTD, sub-items. | The person or agent writing it |
 | Ready for dev | Fully specified. Work may start. | A person, or an agent once a person has agreed |
 | In Progress | Someone is implementing it. | The person or agent who starts |
 | In Review | A pull request is open. | The person or agent who opened it |
 | Done | The pull request is merged. | The person or agent who merged it |
-| Won't Do | Dropped, with the reason in a comment. | A person only |
+| Won't Do | Dropped, with the reason in a comment. Also for dropped ideas. | A person only |
 
 - An item enters Ready for dev only when its PRD, HLD and DTD are Ready and its sub-items exist. For a small change, the work item itself has enough detail instead.
-- Start only on items in Ready for dev. Never start on an item in Backlog or Grooming, even if it looks simple.
+- Start only on items in Ready for dev. Never start on an item in Ideas, Backlog or Grooming, even if it looks simple.
 - When you start, move the item to In Progress and assign it. One item, one owner.
 - Work on one sub-item at a time. One sub-item is one pull request.
 - Do not skip columns and do not move an item backwards without saying why in a comment.
