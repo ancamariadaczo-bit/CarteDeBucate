@@ -38,7 +38,7 @@ Work items are in Plane, project CDB. They move through the columns from left to
 | --- | --- | --- |
 | Backlog | An idea or a need. Not specified yet. | Anyone |
 | Grooming | Someone is writing the specification right now: PRD, HLD, DTD, sub-items. | The person or agent writing it |
-| Ready for dev | Fully specified. Work may start. | A person only |
+| Ready for dev | Fully specified. Work may start. | A person, or an agent once a person has agreed |
 | In Progress | Someone is implementing it. | The person or agent who starts |
 | In Review | A pull request is open. | The person or agent who opened it |
 | Done | The pull request is merged. | The person or agent who merged it |
