@@ -53,7 +53,7 @@ Work items are in Plane, project CDB. They move through the columns from left to
 ## Pull requests
 
 - Every code change goes through a pull request. Do not push to `main`.
-- Name the work item in the branch and in the pull request title, for example `CDB-49`.
+- Name the work item in the branch and in the pull request title. The title starts with the work item and continues with a short name a person can read, for example `CDB-49 Forgot password`. The branch follows the same idea, for example `cdb-49-forgot-password`.
 - Fill in the pull request template. Do not delete its checklist.
 - When the pull request is open, move the work item to In Review. When it is merged, move it to Done.
 - An agent merges a pull request only when a person tells it to merge that pull request. Never enable auto-merge.

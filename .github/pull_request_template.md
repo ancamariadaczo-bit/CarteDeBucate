@@ -4,7 +4,7 @@
 
 ## Work item
 
-<!-- The Plane work item, for example CDB-49. Small changes: the bug or chore item. -->
+<!-- The Plane work item, for example CDB-49. Small changes: the bug or chore item. The title of this pull request starts with it and a short readable name, for example: CDB-49 Forgot password -->
 
 CDB-
 
