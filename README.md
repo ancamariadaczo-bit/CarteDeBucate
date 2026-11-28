@@ -113,7 +113,7 @@ After a successful push, GitHub Actions builds the .NET projects and runs the C#
 
 Render is configured to deploy only after the CI checks pass.
 
-For more information, see [Testing and Deployment](documentation/TestingAndDeployment.md).
+For more information, see the page [How to: test and deploy](https://app.plane.so/cartedebucate/projects/79a91058-4927-469c-a296-cf8b04f74799/pages/abdb14b3-d4ac-4b43-baa6-fe88f6360541) in Plane.
 
 ## Development workflow
 
@@ -160,16 +160,11 @@ Ideas for future versions include:
 
 ## Documentation
 
-The documentation is split into two directories with different purposes:
+Product and technical documentation is in Plane, project CDB, under Pages. The working rules for people and agents are in [`AGENTS.md`](AGENTS.md).
 
-* [`docs`](docs/) contains the Recipe Clipper privacy policy published through GitHub Pages
-* [`documentation`](documentation/) contains internal project documentation and development notes
-
-Current documentation includes:
-
-* [Testing and Deployment](documentation/TestingAndDeployment.md)
-* [Recipe Clipper release checklist](documentation/RecipeClipperRelease.md)
-* [Recipe Clipper privacy policy](docs/index.html)
+* [How to: test and deploy](https://app.plane.so/cartedebucate/projects/79a91058-4927-469c-a296-cf8b04f74799/pages/abdb14b3-d4ac-4b43-baa6-fe88f6360541)
+* [How to: release the extension](https://app.plane.so/cartedebucate/projects/79a91058-4927-469c-a296-cf8b04f74799/pages/d7e1ed0b-aa91-4473-8c61-d13f8b875b16)
+* [Recipe Clipper privacy policy](docs/index.html), published through GitHub Pages from [`docs`](docs/)
 
 ## Status
 
