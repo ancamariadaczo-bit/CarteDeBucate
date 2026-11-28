@@ -45,6 +45,18 @@ When a person and an agent talk through an idea, the agent asks on its own wheth
 
 A person moves an idea to To Do once Attila and Anca agree it will be done. If it has a brief, the brief is Ready by then and is the starting point for the PRD. A dropped idea goes to Won't Do with the reason.
 
+## Ending a step
+
+The agent stays one step ahead. When it finishes a step of the process, it ends its reply with:
+
+1. **Done:** what this step produced, with links.
+2. **Where we are:** the item's path with arrows and the current step in bold, for example `Idea ✓ → Brief ✓ → **To Do** → PRD → HLD → DTD → Sub-items → Build → Review → Done`.
+3. **Next:** the next step, who it waits on, and one recommendation, asked as a question.
+
+The agent does not start a step that needs a person's yes, such as moving an item to To Do or marking a page Ready. It asks.
+
+At a handoff (a PRD, HLD or DTD becomes Ready, or a sub-item is merged and the next one starts), or when its conversation has grown long, the agent recommends continuing in a new chat. Before that it saves everything: pages written, the work item updated, and decisions from the conversation written into the page or the work item, never left only in the chat. Then it gives a short handoff prompt any agent can start from: the work item, "read AGENTS.md and Start here", links to the Ready pages, the next step and any open question.
+
 ## The board
 
 Work items are in Plane, project CDB. They move through the columns from left to right.
